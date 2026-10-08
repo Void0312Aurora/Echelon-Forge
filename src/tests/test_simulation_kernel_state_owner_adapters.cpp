@@ -1152,14 +1152,14 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         std::filesystem::remove(target_path, remove_error);
     }
 
-    TEST_CASE("N-1 legacy ship payload imports durably and resumes native motion") {
+    TEST_CASE("expired generation-2 ship producer is refused before mutation") {
         using Bridge = integration::SimulationKernelStateOwnerBridge;
         using json = nlohmann::json;
         // Audited pre-#117 producer: main@cedfa01c35cb9b9c0b03f2ee9b3f211c893cd8a5,
         // runtime_state_transfer_candidate.h: kRuntimeStateTransferContractGeneration = 2.
         // Freeze the producer's wire generation independently of the target reader.
         constexpr std::uint32_t kPreNavalS1ProducerGeneration = 2;
-        CHECK(host::kRuntimeStateTransferPreviousGeneration == kPreNavalS1ProducerGeneration);
+        CHECK(kPreNavalS1ProducerGeneration < host::kRuntimeStateTransferPreviousGeneration);
         double economic_speed = 10.29;
         double turn_rate = 2.4;
         bool retained_yaw = false;
@@ -1274,46 +1274,11 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         CHECK_FALSE(refused.status);
         CHECK(refused.transaction == nullptr);
         CHECK(Bridge::serialize_world(target) == before);
-        auto imported =
+        const auto old_producer =
             target_registry->import_and_observe(profile, exported, {.high = 480, .low = 481});
-        INFO(imported.status.detail);
-        REQUIRE(imported.status);
-        REQUIRE(imported.transaction != nullptr);
-        CHECK(imported.observations.size() == host::kRuntimeStateCategoryCount);
-        for (const auto &observation : imported.observations) {
-            CHECK(observation.source_schema_generation == kPreNavalS1ProducerGeneration);
-            CHECK(observation.schema_generation == host::kRuntimeStateTransferContractGeneration);
-        }
-        const auto committed = imported.transaction->commit_with_deadline(20, 100);
-        REQUIRE(committed.phase == host::RuntimeStateOwnerImportTransactionPhase::Committed);
-        CHECK(committed.durable);
-        {
-            auto lease = target.acquire_world_lease();
-            const auto restored = lease.world().lookup("LegacyShip");
-            REQUIRE(restored.is_valid());
-            const auto *hull = restored.get<ShipPlatform>();
-            const auto *yaw = restored.get<AngularVelocity>();
-            REQUIRE(hull != nullptr);
-            REQUIRE(yaw != nullptr);
-            const double reference = economic_speed > 0 ? economic_speed : 15.43;
-            const double expected_diameter =
-                turn_rate > 0 ? 2 * reference / (turn_rate * 3.14159265358979323846 / 180) : 0;
-            CHECK(hull->steady_turning_diameter_m == doctest::Approx(expected_diameter));
-            CHECK(hull->nomoto_time_constant == 1.0);
-            CHECK(hull->steady_turn_speed_ratio == 1.0);
-            CHECK(yaw->p == (retained_yaw ? 0.01 : 0.0));
-            CHECK(yaw->q == (retained_yaw ? 0.02 : 0.0));
-            CHECK(yaw->r == (retained_yaw ? 0.03 : 0.0));
-        }
-        target.step();
-        {
-            auto lease = target.acquire_world_lease();
-            const auto restored = lease.world().lookup("LegacyShip");
-            REQUIRE(restored.is_alive());
-            CHECK(restored.get<Transform>()->y > 200.0);
-            if (turn_rate > 0) CHECK(restored.get<Transform>()->heading > 0.0);
-        }
-        imported.transaction.reset();
+        CHECK_FALSE(old_producer.status);
+        CHECK(old_producer.transaction == nullptr);
+        CHECK(Bridge::serialize_world(target) == before);
         source_registry.reset();
         target_registry.reset();
         std::filesystem::remove(source_path, remove_error);
@@ -1393,7 +1358,8 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         std::filesystem::remove(journal_path, remove_error);
     }
 
-    TEST_CASE("ECS owner preserves additive AeroTuning fields and legacy defaults") {
+    TEST_CASE(
+        "ECS owner preserves current additive AeroTuning fields and rejects incomplete truth") {
         using Bridge = integration::SimulationKernelStateOwnerBridge;
         using json = nlohmann::json;
         SimulationKernel source;
@@ -1429,15 +1395,9 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             {"flaps_drag_coefficient_per_full_deflection",
              &AeroTuning::flaps_drag_coefficient_per_full_deflection},
         }};
-        bool legacy = false;
-        SUBCASE("current wire overrides round trip") {}
-        SUBCASE("wire omitting new fields retains constructor defaults") {
-            legacy = true;
-        }
         for (const auto &[name, member] : fields) {
             REQUIRE(encoded.contains(name));
             CHECK(encoded[name].get<double>() == tuning.*member);
-            if (legacy) encoded.erase(name);
         }
         const auto wire = document.dump();
         REQUIRE(Bridge::restore_world(target, {wire.begin(), wire.end()}));
@@ -1448,17 +1408,174 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             const auto *restored = entity.get<AeroTuning>();
             REQUIRE(restored != nullptr);
             CHECK(restored->enabled);
-            const AeroTuning defaults;
             for (const auto &[name, member] : fields) {
                 INFO(name);
-                CHECK(restored->*member == (legacy ? defaults.*member : tuning.*member));
+                CHECK(restored->*member == tuning.*member);
             }
         }
         const auto before = Bridge::serialize_world(target);
+        for (const auto &[name, member] : fields) {
+            const auto value = encoded[name];
+            encoded.erase(name);
+            const auto incomplete_wire = document.dump();
+            CHECK_FALSE(
+                Bridge::restore_world(target, {incomplete_wire.begin(), incomplete_wire.end()}));
+            CHECK(Bridge::serialize_world(target) == before);
+            encoded[name] = value;
+        }
         encoded["unknown_truth"] = 1.0;
         const auto invalid_wire = document.dump();
         CHECK_FALSE(Bridge::restore_world(target, {invalid_wire.begin(), invalid_wire.end()}));
         CHECK(Bridge::serialize_world(target) == before);
+    }
+
+    TEST_CASE("generation-3 AeroTuning imports commits and recovers after journal reopen") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        // The audited pre-#122 producer (PR #175) emitted generation 3 and
+        // the 45-field AeroTuning reflection. Freeze that version independently.
+        constexpr std::uint32_t producer_generation = 3;
+        REQUIRE(host::kRuntimeStateTransferPreviousGeneration == producer_generation);
+        SimulationKernel source;
+        SimulationKernel target;
+        source.reset(51);
+        target.reset(52);
+        const auto aircraft =
+            source.spawn_unit(Side::Blue, "Aircraft", 0, 0, 3000, 0, 0, 0, 150, 0, 0);
+        REQUIRE(aircraft.is_valid());
+        {
+            auto lease = source.acquire_world_lease();
+            AeroTuning tuning;
+            tuning.enabled = true;
+            tuning.cd0_clean = 0.031;
+            lease.world()
+                .entity(aircraft.id())
+                .set_name("LegacyTuningAircraft")
+                .set<AeroTuning>(tuning);
+        }
+        const auto source_path = std::filesystem::temp_directory_path() / "ef_aero_v3_source.wal";
+        const auto target_path = std::filesystem::temp_directory_path() / "ef_aero_v3_target.wal";
+        std::error_code remove_error;
+        std::filesystem::remove(source_path, remove_error);
+        std::filesystem::remove(target_path, remove_error);
+        auto source_registry = Bridge::create_registry({
+            .kernel = &source,
+            .journal =
+                std::make_shared<host::RuntimeStateTransferFileJournal>(source_path.string()),
+            .transaction_namespace = "aero-v3-source",
+        });
+        const auto caches_applied = std::make_shared<bool>(false);
+        const auto make_target_registry = [&] {
+            return Bridge::create_registry({
+                .kernel = &target,
+                .journal =
+                    std::make_shared<host::RuntimeStateTransferFileJournal>(target_path.string()),
+                .transaction_namespace = "aero-v3-target",
+                .rederive_python_caches =
+                    [caches_applied] {
+                        *caches_applied = true;
+                        return true;
+                    },
+                .snapshot_python_caches =
+                    [caches_applied] {
+                        return std::vector<std::uint8_t>{*caches_applied ? 1U : 0U};
+                    },
+                .rollback_python_caches =
+                    [caches_applied](const auto &before) {
+                        if (before.size() != 1) return false;
+                        *caches_applied = before.front() != 0;
+                        return true;
+                    },
+                .recover_python_caches =
+                    [caches_applied](const auto &) {
+                        return *caches_applied
+                                   ? host::RuntimeStateOwnerImportTransactionPhase::Committed
+                                   : host::RuntimeStateOwnerImportTransactionPhase::Aborted;
+                    },
+            });
+        };
+        auto target_registry = make_target_registry();
+        REQUIRE(source_registry != nullptr);
+        REQUIRE(target_registry != nullptr);
+        const auto plan = source.resolved_composition_sha256();
+        const auto profile = host::runtime_state_transfer_profile_from_decoder_matrix(
+            "aero-v3-recovery.v1", 1, plan, plan);
+        auto exported = source_registry->export_source(
+            profile, integration_slot(), integration_export_context(integration_barrier()));
+        REQUIRE(exported.status);
+        auto artifact =
+            std::find_if(exported.artifacts.begin(), exported.artifacts.end(), [](const auto &row) {
+                return row.category == host::RuntimeStateCategory::EcsComponentTruth;
+            });
+        REQUIRE(artifact != exported.artifacts.end());
+        auto document = json::parse(artifact->payload);
+        auto &encoded = document["results"][0]["components"]["AeroTuning"];
+        for (const char *name :
+             {"flap_lift_coefficient_per_full_deflection", "stores_drag_coefficient_per_drag_index",
+              "landing_gear_drag_coefficient_per_extension",
+              "speedbrake_drag_coefficient_per_full_extension",
+              "flaps_drag_coefficient_per_full_deflection"}) {
+            REQUIRE(encoded.erase(name) == 1);
+        }
+        REQUIRE(encoded.size() == 45);
+        const auto legacy_text = document.dump();
+        artifact->payload = {legacy_text.begin(), legacy_text.end()};
+        artifact->payload_sha256 = host::runtime_state_payload_sha256(artifact->payload);
+        auto entry = std::find_if(
+            exported.census.entries.begin(), exported.census.entries.end(), [](const auto &row) {
+                return row.category == host::RuntimeStateCategory::EcsComponentTruth;
+            });
+        REQUIRE(entry != exported.census.entries.end());
+        entry->state_content_sha256 = artifact->payload_sha256;
+        exported.census.contract_generation = producer_generation;
+        for (auto &row : exported.artifacts)
+            row.schema_generation = producer_generation;
+        for (auto &row : exported.census.entries) {
+            row.schema_generation = producer_generation;
+            if (!row.canonical_payload.empty()) {
+                row.canonical_payload = host::runtime_state_canonical_payload(row);
+                row.canonical_payload_sha256 =
+                    host::runtime_state_payload_sha256(row.canonical_payload);
+            }
+        }
+        const RuntimeIdentity128 candidate_identity{.high = 482, .low = 483};
+        auto imported = target_registry->import_and_observe(profile, exported, candidate_identity);
+        INFO(imported.status.detail);
+        REQUIRE(imported.status);
+        REQUIRE(imported.transaction != nullptr);
+        REQUIRE(imported.observations.size() == host::kRuntimeStateCategoryCount);
+        for (const auto &observation : imported.observations) {
+            CHECK(observation.source_schema_generation == producer_generation);
+            CHECK(observation.schema_generation == host::kRuntimeStateTransferContractGeneration);
+        }
+        const auto committed = imported.transaction->commit_with_deadline(20, 100);
+        REQUIRE(committed.phase == host::RuntimeStateOwnerImportTransactionPhase::Committed);
+        REQUIRE(committed.durable);
+        CHECK(Bridge::serialize_world(target) == Bridge::serialize_world(source));
+        const auto restored = json::parse(Bridge::serialize_world(target));
+        const auto &tuning = restored["results"][0]["components"]["AeroTuning"];
+        CHECK(tuning["flap_lift_coefficient_per_full_deflection"] == 0.35);
+        CHECK(tuning["stores_drag_coefficient_per_drag_index"] == 0.001);
+        CHECK(tuning["landing_gear_drag_coefficient_per_extension"] == 0.04);
+        CHECK(tuning["speedbrake_drag_coefficient_per_full_extension"] == 0.08);
+        CHECK(tuning["flaps_drag_coefficient_per_full_deflection"] == 0.02);
+        CHECK(tuning["cd0_clean"] == 0.031);
+        imported.transaction.reset();
+        target_registry.reset();
+        target_registry = make_target_registry();
+        auto reopened = target_registry->import_and_observe(profile, exported, candidate_identity);
+        INFO(reopened.status.detail);
+        REQUIRE(reopened.status);
+        REQUIRE(reopened.transaction != nullptr);
+        const auto recovered = reopened.transaction->recover_with_deadline(21, 100);
+        CHECK(recovered.phase == host::RuntimeStateOwnerImportTransactionPhase::Committed);
+        CHECK(recovered.durable);
+        CHECK(Bridge::serialize_world(target) == Bridge::serialize_world(source));
+        reopened.transaction.reset();
+        source_registry.reset();
+        target_registry.reset();
+        std::filesystem::remove(source_path, remove_error);
+        std::filesystem::remove(target_path, remove_error);
     }
 
     TEST_CASE("ECS owner covers every generic platform family") {

@@ -1827,6 +1827,38 @@ bool normalize_legacy_ecs_ships(nlohmann::json &document) {
     return true;
 }
 
+// ECS truth migration implementation: normalize_legacy_ecs_aero_tuning
+bool normalize_legacy_ecs_aero_tuning(nlohmann::json &document) {
+    if (!document.is_object() || !document.contains("results") || !document["results"].is_array())
+        return false;
+    const AeroTuning defaults;
+    for (auto &result : document["results"]) {
+        if (!result.is_object() || !result.contains("components") ||
+            !result["components"].is_object())
+            return false;
+        auto &components = result["components"];
+        if (!components.contains("AeroTuning")) continue;
+        auto &tuning = components["AeroTuning"];
+        if (!tuning.is_object()) return false;
+        const std::array<std::pair<const char *, double>, 5> fields{{
+            {"flap_lift_coefficient_per_full_deflection",
+             defaults.flap_lift_coefficient_per_full_deflection},
+            {"stores_drag_coefficient_per_drag_index",
+             defaults.stores_drag_coefficient_per_drag_index},
+            {"landing_gear_drag_coefficient_per_extension",
+             defaults.landing_gear_drag_coefficient_per_extension},
+            {"speedbrake_drag_coefficient_per_full_extension",
+             defaults.speedbrake_drag_coefficient_per_full_extension},
+            {"flaps_drag_coefficient_per_full_deflection",
+             defaults.flaps_drag_coefficient_per_full_deflection},
+        }};
+        for (const auto &[name, value] : fields) {
+            if (!tuning.contains(name)) tuning[name] = value;
+        }
+    }
+    return true;
+}
+
 bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
                                                      const std::vector<std::uint8_t> &payload) {
     // Validate and stage the complete document before mutating the live ECS.
@@ -1858,6 +1890,23 @@ bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
             return false;
         }
         if (!normalize_legacy_ecs_sensors(document)) return false;
+        // Current producer bytes must contain the complete additive contract.
+        // Missing N-1 members are materialized only by explicit generation admission.
+        for (const auto &result : document.at("results")) {
+            if (!result.is_object() || !result.contains("components") ||
+                !result["components"].is_object())
+                return false;
+            const auto &components = result["components"];
+            if (!components.contains("AeroTuning")) continue;
+            const auto &tuning = components["AeroTuning"];
+            for (const char *name : {"flap_lift_coefficient_per_full_deflection",
+                                     "stores_drag_coefficient_per_drag_index",
+                                     "landing_gear_drag_coefficient_per_extension",
+                                     "speedbrake_drag_coefficient_per_full_extension",
+                                     "flaps_drag_coefficient_per_full_deflection"}) {
+                if (!tuning.is_object() || !tuning.contains(name)) return false;
+            }
+        }
         std::unordered_map<std::string, std::uint64_t> logical_entities;
         logical_entities.reserve(document.at("results").size());
         std::uint64_t logical_entity_id = 1;
@@ -2647,9 +2696,10 @@ SimulationKernelStateOwnerBridge::create_registry(SimulationKernelStateOwnerRegi
                             "ECS byte migration requires an admitted N-1 artifact");
                     }
                     auto document = nlohmann::json::parse(text(source.payload));
-                    if (!normalize_legacy_ecs_ships(document)) {
+                    if (!normalize_legacy_ecs_ships(document) ||
+                        !normalize_legacy_ecs_aero_tuning(document)) {
                         throw std::runtime_error(
-                            "N-1 ECS ship state is malformed or mixes hull schemas");
+                            "N-1 ECS state is malformed or mixes component schemas");
                     }
                     migrated.payload = bytes(document.dump());
                 }
