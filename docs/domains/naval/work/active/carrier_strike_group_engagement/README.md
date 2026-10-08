@@ -30,8 +30,9 @@ Inputs:
 - [Air owner README](../../../../air/README.md)
 - [Gradient Realism Principles](../../../../../systems/standards/gradient_realism_principles.md)
 - [Subproject Creation Standard](../../../../../engineering/automation/rules/subproject_creation_standard.md)
-- Unmerged equipment research catalog on `origin/codex/database-scaffold`
-  (`database/research/equipment/catalog/**`), used as a parameter source only
+- Equipment research catalog under `database/research/equipment/catalog/**` on
+  `main`, used as parameter/source references only; inventory coverage does not
+  constitute an admitted combat platform or CSG capability
 
 ## Purpose
 
