@@ -1,3 +1,7 @@
+"""AST import ownership plus literal shim checks; dynamic alias imports are limited.
+
+These static checks complement the live facade runtime tests, not replace them.
+"""
 from __future__ import annotations
 
 import ast
@@ -43,6 +47,19 @@ def _shim_import_violations(path: Path) -> list[tuple[int, str]]:
             violations.append((node.lineno, "from python.rl.runtime import world_batch_vec_env"))
 
   return violations
+
+
+def test_owner_import_guard_rejects_alias_spelling_and_ignores_comments(tmp_path: Path) -> None:
+  path = tmp_path / "renamed_caller.py"
+  for spelling in (
+      "import python.rl.runtime.world_batch_vec_env as renamed",
+      "from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv as Renamed",
+      "from python.rl.runtime import world_batch_vec_env as renamed",
+  ):
+    path.write_text(spelling + "\n", encoding="utf-8")
+    assert _shim_import_violations(path), spelling
+  path.write_text("# import python.rl.runtime.world_batch_vec_env\n", encoding="utf-8")
+  assert _shim_import_violations(path) == []
 
 
 def test_maintained_python_paths_do_not_import_world_batch_vec_env_shim() -> None:

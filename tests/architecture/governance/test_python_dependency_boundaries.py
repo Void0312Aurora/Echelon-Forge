@@ -39,6 +39,40 @@ def test_real_native_dependency_graphs_have_no_cycles(inventory: Inventory) -> N
   _assert_native_dependency_graphs_acyclic(inventory)
 
 
+def _assert_candidate_targets_unreachable(edges) -> None:
+  graph: dict[str, set[str]] = {}
+  for edge in edges:
+    graph.setdefault(edge.source, set()).add(edge.target)
+  candidates = {"ef_runtime_host_candidate", "ef_runtime_kernel_candidate",
+                "ef_runtime_state_transfer_candidate", "ef_runtime_state_owner_adapters_candidate"}
+  for production in ("ef_py", "ef_facade", "ef_facade_backend"):
+    pending, seen = [production], set()
+    while pending:
+      node = pending.pop()
+      if node in seen:
+        continue
+      seen.add(node)
+      assert node not in candidates, f"candidate target reachable from {production}: {node}"
+      pending.extend(graph.get(node, ()))
+
+
+def test_candidate_targets_are_transitively_excluded_from_production(inventory: Inventory) -> None:
+  _assert_candidate_targets_unreachable(inventory.cmake_edges)
+
+
+def test_candidate_link_guard_rejects_a_renamed_intermediate_target(tmp_path: Path) -> None:
+  path = tmp_path / "CMakeLists.txt"
+  path.write_text("""
+add_library(ef_facade STATIC facade.cpp)
+add_library(ef_hidden_adapter STATIC helper.cpp)
+add_library(ef_runtime_host_candidate STATIC candidate.cpp)
+target_link_libraries(ef_facade PRIVATE ef_hidden_adapter)
+target_link_libraries(ef_hidden_adapter PRIVATE ef_runtime_host_candidate)
+""", encoding="utf-8")
+  with pytest.raises(AssertionError, match="candidate target reachable from ef_facade"):
+    _assert_candidate_targets_unreachable(build_edges(path))
+
+
 def test_python_policy_classifies_every_inventory_site_once(inventory: Inventory) -> None:
   states = classify_python_edges(inventory, load_transitions())
   assert sum(states.values()) == len(inventory.python_edges)
