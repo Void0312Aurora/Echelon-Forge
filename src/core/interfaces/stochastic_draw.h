@@ -103,9 +103,16 @@ namespace detail {
 // Quantizes simulation time to whole milliseconds, the resolution every draw site uses. Two
 // draws at one site with the same participants in the same millisecond stay correlated, as
 // they are today (held out of scope by the package).
+// Safe public-boundary predicate; also excludes integer-conversion overflow.
+[[nodiscard]] inline bool valid_time(double sim_time_s) noexcept {
+    return std::isfinite(sim_time_s) && sim_time_s >= 0.0 &&
+           sim_time_s * 1000.0 < std::ldexp(1.0, 64);
+}
+
 [[nodiscard]] inline std::uint64_t quantize_time_ms(DrawSite site, double sim_time_s) noexcept {
-    if (!std::isfinite(sim_time_s) || sim_time_s < 0.0) {
-        detail::draw_invariant_violation(site, "simulation time is negative or non-finite", 0);
+    if (!valid_time(sim_time_s)) {
+        detail::draw_invariant_violation(site, "simulation time is outside the draw clock range",
+                                         0);
     }
     return static_cast<std::uint64_t>(sim_time_s * 1000.0);
 }

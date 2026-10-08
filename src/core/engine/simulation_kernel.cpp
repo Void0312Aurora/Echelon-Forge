@@ -10,6 +10,7 @@
 #include "core/interfaces/environment_model.h"
 #include "core/interfaces/guidance_model.h"
 #include "core/interfaces/sensor_model.h"
+#include "core/interfaces/stochastic_draw.h"
 #include "core/interfaces/unit_factory.h"
 #include "models/weapons/missile_guidance_types.h"
 #include "runtime/providers/default_simulation_provider_catalog.h"
@@ -213,6 +214,15 @@ void SimulationKernel::step() {
     // Fixed timestep update
     // We pass the fixed delta_time to progress
     // This overrides the internal clock measuring
+    const auto *world_info = ecs_get_world_info(ecs.c_ptr());
+    const double current_time = world_info ? world_info->world_time_total : 0.0;
+    if (!stochastic_draw::valid_time(current_time + static_cast<float>(time_step))) {
+        throw std::invalid_argument(
+            "SimulationKernel step exceeds the stochastic draw clock range");
+    }
+    if (ecs.get<StableIdentityState>() == nullptr) {
+        throw std::logic_error("SimulationKernel step requires StableIdentityState");
+    }
     world_state_mutated_ = true;
     ecs.progress(time_step);
 }
@@ -237,6 +247,10 @@ void SimulationKernel::set_time_step(double dt) {
     if (!std::isfinite(dt) || dt <= 0.0) {
         throw std::invalid_argument(
             "SimulationKernel time step must be finite and greater than zero");
+    }
+    if (!stochastic_draw::valid_time(dt) || static_cast<float>(dt) <= 0.0f) {
+        throw std::invalid_argument(
+            "SimulationKernel time step is outside the supported clock range");
     }
     time_step = dt;
     world_state_mutated_ = true;
