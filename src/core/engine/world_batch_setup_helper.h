@@ -11,6 +11,12 @@
 
 namespace world_batch_setup {
 
+inline void validate_reset_seeds(std::size_t world_count, const std::vector<std::uint32_t> &seeds) {
+    if (!seeds.empty() && seeds.size() != 1 && seeds.size() != world_count) {
+        throw std::invalid_argument("seeds must have size 0, 1, or world_count");
+    }
+}
+
 inline void validate_time_steps(std::size_t world_count, const std::vector<double> &time_steps) {
     if (!time_steps.empty() && time_steps.size() != 1 && time_steps.size() != world_count) {
         throw std::invalid_argument("time_steps must have size 0, 1, or world_count");
@@ -134,6 +140,7 @@ apply_setup_maritime_assignments(SimulationKernel &world,
 
 inline std::uint32_t resolve_reset_seed(std::size_t world_index, std::size_t world_count,
                                         const std::vector<std::uint32_t> &seeds) {
+    validate_reset_seeds(world_count, seeds);
     std::uint32_t seed = static_cast<std::uint32_t>(42 + world_index);
     if (seeds.size() == world_count) {
         seed = seeds[world_index];

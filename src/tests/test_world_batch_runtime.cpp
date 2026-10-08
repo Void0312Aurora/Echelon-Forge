@@ -1,4 +1,5 @@
 #include "core/engine/world_batch_runtime.h"
+#include "components/basic/stable_identity.h"
 #include "core/engine/world_batch_visual_binding_compatibility_helper.h"
 #include "runtime/facade/runtime_facade.h"
 
@@ -13,6 +14,59 @@ static_assert(!std::is_polymorphic_v<WorldBatchRuntime>,
               "WorldBatchRuntime compatibility ABI must remain non-polymorphic");
 
 TEST_SUITE("world_batch_runtime") {
+
+    TEST_CASE("batch reset and setup resolve documented effective seeds") {
+        WorldBatchRuntime runtime(4);
+        auto effective_seed = [&](std::size_t index) {
+            auto lease = runtime.world_raw_quarantine(index).acquire_world_lease();
+            const auto *state = lease.world().get<StableIdentityState>();
+            REQUIRE(state != nullptr);
+            return state->episode_seed;
+        };
+        const std::vector<std::vector<std::uint32_t>> modes{
+            {}, {11}, {11, 22, 33, 44}, {UINT32_MAX}};
+        const std::vector<std::vector<std::uint32_t>> expected{
+            {42, 43, 44, 45}, {11, 12, 13, 14}, {11, 22, 33, 44}, {UINT32_MAX, 0, 1, 2}};
+        for (std::size_t mode = 0; mode < modes.size(); ++mode) {
+            runtime.reset_batch(modes[mode]);
+            for (std::size_t i = 0; i < 4; ++i)
+                CHECK(effective_seed(i) == expected[mode][i]);
+            runtime.apply_world_setup_batch(modes[mode], {}, {}, {}, {});
+            for (std::size_t i = 0; i < 4; ++i)
+                CHECK(effective_seed(i) == expected[mode][i]);
+        }
+    }
+
+    TEST_CASE("unsupported seed counts reject reset and setup before any mutation") {
+        WorldBatchRuntime runtime(4);
+        runtime.set_worker_threads(4);
+        runtime.reset_batch({11, 22, 33, 44});
+        std::vector<flecs::entity> entities;
+        for (std::size_t i = 0; i < 4; ++i) {
+            auto &world = runtime.world_raw_quarantine(i);
+            world.set_time_step(0.2);
+            entities.push_back(
+                world.spawn_unit(Side::Blue, "Aircraft", 0, 0, 1000, 0, 0, 0, 0, 0, 0));
+        }
+        for (const auto &invalid : std::vector<std::vector<std::uint32_t>>{
+                 {11, 22}, {11, 22, 33}, {11, 22, 33, 44, 55}}) {
+            CHECK_THROWS_AS(runtime.reset_batch(invalid), std::invalid_argument);
+            CHECK_THROWS_AS(runtime.apply_world_setup_batch(invalid, {}, {}, {}, {}, {0.1}),
+                            std::invalid_argument);
+            for (std::size_t i = 0; i < 4; ++i) {
+                auto lease = runtime.world_raw_quarantine(i).acquire_world_lease();
+                CHECK(lease.world().get<StableIdentityState>()->episode_seed == (i + 1) * 11);
+                CHECK(entities[i].is_alive());
+                CHECK(runtime.world_time_step(i) == 0.2);
+            }
+        }
+        WorldBatchRuntime single(1);
+        CHECK_THROWS_AS(single.reset_batch({11, 22}), std::invalid_argument);
+        WorldBatchRuntime empty(0);
+        CHECK_NOTHROW(empty.reset_batch({}));
+        CHECK_NOTHROW(empty.reset_batch({11}));
+        CHECK_THROWS_AS(empty.reset_batch({11, 22}), std::invalid_argument);
+    }
 
     TEST_CASE("full setup restores canonical timestep for absent native values") {
         WorldBatchRuntime runtime(2);

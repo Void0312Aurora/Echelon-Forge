@@ -13,6 +13,18 @@ from python.scenario.compiler import (
 )
 
 
+def normalize_world_setup_seeds(seeds: Any, world_count: int) -> list[int]:
+    """Resolve the same empty/base/per-world uint32 modes as native setup."""
+    values = [int(seed) & 0xFFFFFFFF for seed in seeds]
+    if not values:
+        return [(42 + index) & 0xFFFFFFFF for index in range(world_count)]
+    if len(values) == 1:
+        return [(values[0] + index) & 0xFFFFFFFF for index in range(world_count)]
+    if len(values) != world_count:
+        raise ValueError(f"seeds must have size 0, 1, or world_count ({world_count}); got {len(values)}")
+    return values
+
+
 def normalize_world_setup_terrain_assignments(
     terrain_assignments: list[Any],
     *,

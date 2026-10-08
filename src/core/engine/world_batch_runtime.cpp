@@ -381,14 +381,9 @@ WorldBatchRuntime::export_recent_engagement_events(size_t world_index) const {
 }
 
 void WorldBatchRuntime::reset_batch(const std::vector<uint32_t> &seeds) {
+    world_batch_setup::validate_reset_seeds(worlds_.size(), seeds);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t i) {
-        uint32_t seed = static_cast<uint32_t>(42 + i);
-        if (seeds.size() == worlds_.size()) {
-            seed = seeds[i];
-        } else if (seeds.size() == 1) {
-            seed = static_cast<uint32_t>(seeds[0] + static_cast<uint32_t>(i));
-        }
-        worlds_[i]->reset(seed);
+        worlds_[i]->reset(world_batch_setup::resolve_reset_seed(i, worlds_.size(), seeds));
     });
 }
 
@@ -477,6 +472,7 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
     const std::vector<double> &time_steps, const std::vector<WorldSunAssignment> &sun_assignments,
     const std::vector<WorldGeodeticAnchorAssignment> &geodetic_anchor_assignments,
     const std::vector<WorldMaritimeAssignment> &maritime_assignments) {
+    world_batch_setup::validate_reset_seeds(worlds_.size(), seeds);
     world_batch_setup::validate_time_steps(worlds_.size(), time_steps);
 
     std::vector<uint64_t> out(requests.size(), 0);
