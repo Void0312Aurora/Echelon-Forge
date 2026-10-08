@@ -39,7 +39,7 @@ recovery. A green fixture or mirror test is not sufficient for acceptance.
 - Import transactions have an abort guard on every validation failure and are
   committed outside transfer and host mutexes. Host/native/state-transfer
   in-flight counters prevent reclaim, shutdown, timeout, fault, or abort races.
-- The current contract accepts schema generation N=3 and N-1=2 only, normalizes
+- The current contract accepts schema generation N=5 and N-1=4 only, normalizes
   the candidate entry hash to N, and explicitly rejects multi-world replacement
   until a per-world transfer protocol is admitted.
 - The candidate now exposes one twelve-row decoder/replay matrix with explicit
@@ -53,7 +53,18 @@ recovery. A green fixture or mirror test is not sufficient for acceptance.
   categories are tracked in
   [p4b_owner_adapter_inventory_20260830.md](p4b_owner_adapter_inventory_20260830.md).
 
-## AeroTuning schema and durable recovery repair (2026-10-08)
+## Ground stance schema repair (2026-10-09)
+
+Generation 5 transports all six `MissionCommandGround` members, including
+`stance`, both as a component and inside a `MissionCommand` shell. Current
+bytes without stance are refused before mutation. Admitted generation-4 bytes
+materialize the old implied `Stand` value before durable staging, so reopen
+recovery still compares exact normalized bytes. Stand/Crouch/Prone round-trip
+checks also assert complete reflected member coverage. The frozen generation-4
+bundle exercises durable commit and journal reopen; generation 3 is now expired.
+The existing sensor, ship and AeroTuning normalization helpers remain retained.
+
+## Historical AeroTuning schema and durable recovery repair (2026-10-08)
 
 The pre-#122 producer emits generation 3 and a 45-field `AeroTuning`.
 The five new reflected members advance the contract to 4. Generation-3
@@ -67,7 +78,7 @@ the frozen historical producer generation 3, removes precisely the five new
 members, imports through the registry, commits durably, destroys the registry,
 reopens its file journal, and requires durable `Committed` recovery. Existing
 field values survive and all five defaults are explicit in restored truth.
-The current N/N-1 window is exactly 3/4. The audited generation-2 ship producer
+At that repair the N/N-1 window was exactly 4/3. The audited generation-2 ship producer
 is now expired and its complete bundle is refused before target mutation.
 This is candidate compatibility evidence; production rollout remains gated.
 

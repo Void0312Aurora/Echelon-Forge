@@ -1429,12 +1429,11 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         CHECK(Bridge::serialize_world(target) == before);
     }
 
-    TEST_CASE("generation-3 AeroTuning imports commits and recovers after journal reopen") {
+    TEST_CASE("generation-4 ground stance imports commits and recovers after journal reopen") {
         using Bridge = integration::SimulationKernelStateOwnerBridge;
         using json = nlohmann::json;
-        // The audited pre-#122 producer (PR #175) emitted generation 3 and
-        // the 45-field AeroTuning reflection. Freeze that version independently.
-        constexpr std::uint32_t producer_generation = 3;
+        // The audited generation-4 producer omitted ground stance, including nested shells.
+        constexpr std::uint32_t producer_generation = 4;
         REQUIRE(host::kRuntimeStateTransferPreviousGeneration == producer_generation);
         SimulationKernel source;
         SimulationKernel target;
@@ -1451,10 +1450,14 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             lease.world()
                 .entity(aircraft.id())
                 .set_name("LegacyTuningAircraft")
-                .set<AeroTuning>(tuning);
+                .set<AeroTuning>(tuning)
+                .set<MissionCommandGround>({.ground_task_mode = GroundTaskMode::OccupyStatic,
+                                            .objective_area_id = 4242,
+                                            .objective_node_id = 7777,
+                                            .tactical_cadence_hz = 0.125});
         }
-        const auto source_path = std::filesystem::temp_directory_path() / "ef_aero_v3_source.wal";
-        const auto target_path = std::filesystem::temp_directory_path() / "ef_aero_v3_target.wal";
+        const auto source_path = std::filesystem::temp_directory_path() / "ef_ground_v4_source.wal";
+        const auto target_path = std::filesystem::temp_directory_path() / "ef_ground_v4_target.wal";
         std::error_code remove_error;
         std::filesystem::remove(source_path, remove_error);
         std::filesystem::remove(target_path, remove_error);
@@ -1462,7 +1465,7 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             .kernel = &source,
             .journal =
                 std::make_shared<host::RuntimeStateTransferFileJournal>(source_path.string()),
-            .transaction_namespace = "aero-v3-source",
+            .transaction_namespace = "ground-v4-source",
         });
         const auto caches_applied = std::make_shared<bool>(false);
         const auto make_target_registry = [&] {
@@ -1470,7 +1473,7 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
                 .kernel = &target,
                 .journal =
                     std::make_shared<host::RuntimeStateTransferFileJournal>(target_path.string()),
-                .transaction_namespace = "aero-v3-target",
+                .transaction_namespace = "ground-v4-target",
                 .rederive_python_caches =
                     [caches_applied] {
                         *caches_applied = true;
@@ -1499,7 +1502,7 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         REQUIRE(target_registry != nullptr);
         const auto plan = source.resolved_composition_sha256();
         const auto profile = host::runtime_state_transfer_profile_from_decoder_matrix(
-            "aero-v3-recovery.v1", 1, plan, plan);
+            "ground-v4-recovery.v1", 1, plan, plan);
         auto exported = source_registry->export_source(
             profile, integration_slot(), integration_export_context(integration_barrier()));
         REQUIRE(exported.status);
@@ -1509,15 +1512,13 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             });
         REQUIRE(artifact != exported.artifacts.end());
         auto document = json::parse(artifact->payload);
-        auto &encoded = document["results"][0]["components"]["AeroTuning"];
-        for (const char *name :
-             {"flap_lift_coefficient_per_full_deflection", "stores_drag_coefficient_per_drag_index",
-              "landing_gear_drag_coefficient_per_extension",
-              "speedbrake_drag_coefficient_per_full_extension",
-              "flaps_drag_coefficient_per_full_deflection"}) {
-            REQUIRE(encoded.erase(name) == 1);
-        }
-        REQUIRE(encoded.size() == 45);
+        auto &components = document["results"][0]["components"];
+        auto &ground = components["MissionCommandGround"];
+        REQUIRE(ground.erase("stance") == 1);
+        REQUIRE(ground.size() == 5);
+        if (components.contains("MissionCommand"))
+            REQUIRE(components["MissionCommand"]["ground"].erase("stance") == 1);
+        REQUIRE(components["AeroTuning"].size() == 50);
         const auto legacy_text = document.dump();
         artifact->payload = {legacy_text.begin(), legacy_text.end()};
         artifact->payload_sha256 = host::runtime_state_payload_sha256(artifact->payload);
@@ -1538,6 +1539,12 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
                     host::runtime_state_payload_sha256(row.canonical_payload);
             }
         }
+        auto expired = exported;
+        expired.census.contract_generation = 3; // N-2 no longer admitted
+        const auto before = Bridge::serialize_world(target);
+        CHECK_FALSE(target_registry->import_and_observe(profile, expired, {.high = 480, .low = 481})
+                        .status);
+        CHECK(Bridge::serialize_world(target) == before);
         const RuntimeIdentity128 candidate_identity{.high = 482, .low = 483};
         auto imported = target_registry->import_and_observe(profile, exported, candidate_identity);
         INFO(imported.status.detail);
@@ -1560,6 +1567,10 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         CHECK(tuning["speedbrake_drag_coefficient_per_full_extension"] == 0.08);
         CHECK(tuning["flaps_drag_coefficient_per_full_deflection"] == 0.02);
         CHECK(tuning["cd0_clean"] == 0.031);
+        CHECK(restored["results"][0]["components"]["MissionCommandGround"]["stance"] == 0);
+        CHECK(restored["results"][0]["components"]["MissionCommandGround"]["objective_area_id"] ==
+              4242);
+
         imported.transaction.reset();
         target_registry.reset();
         target_registry = make_target_registry();
@@ -1576,6 +1587,70 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         target_registry.reset();
         std::filesystem::remove(source_path, remove_error);
         std::filesystem::remove(target_path, remove_error);
+    }
+
+    TEST_CASE("ground stance and complete command members survive whole world transfer") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        for (const auto stance : {GroundStance::Stand, GroundStance::Crouch, GroundStance::Prone}) {
+            SimulationKernel source;
+            SimulationKernel target;
+            source.reset(51);
+            target.reset(52);
+            const auto unit =
+                source.spawn_unit(Side::Blue, "Aircraft", 0, 0, 3000, 0, 0, 0, 150, 0, 0);
+            REQUIRE(unit.is_valid());
+            MissionCommandGround ground{.ground_task_mode = GroundTaskMode::OccupyStatic,
+                                        .objective_area_id = 4242,
+                                        .objective_node_id = 7777,
+                                        .ground_commander_id = unit.id(),
+                                        .tactical_cadence_hz = 0.125,
+                                        .stance = stance};
+            {
+                auto lease = source.acquire_world_lease();
+                MissionCommand command{};
+                static_cast<MissionCommandGround &>(command) = ground;
+                lease.world()
+                    .entity(unit.id())
+                    .set_name("GroundCommandUnit")
+                    .set<MissionCommandGround>(ground)
+                    .set<MissionCommand>(command);
+            }
+            const auto wire = Bridge::serialize_world(source);
+            auto document = nlohmann::json::parse(wire);
+            const auto &encoded = document["results"][0]["components"]["MissionCommandGround"];
+            REQUIRE(encoded.size() == 6);
+            CHECK(encoded["stance"] == static_cast<int>(stance));
+            CHECK(encoded["ground_task_mode"] == static_cast<int>(ground.ground_task_mode));
+            CHECK(encoded["objective_area_id"] == ground.objective_area_id);
+            CHECK(encoded["objective_node_id"] == ground.objective_node_id);
+            CHECK(encoded["ground_commander_id"]["$entity"] == "GroundCommandUnit");
+            CHECK(encoded["tactical_cadence_hz"] == ground.tactical_cadence_hz);
+            REQUIRE(Bridge::restore_world(target, {wire.begin(), wire.end()}));
+            CHECK(Bridge::serialize_world(target) == wire);
+            {
+                auto lease = target.acquire_world_lease();
+                const auto entity = lease.world().lookup("GroundCommandUnit");
+                REQUIRE(entity.is_valid());
+                REQUIRE(entity.get<MissionCommandGround>() != nullptr);
+                REQUIRE(entity.get<MissionCommand>() != nullptr);
+                auto expected = ground;
+                expected.ground_commander_id = entity.id();
+                CHECK(mission_command_ground_static_task_directive(
+                          *entity.get<MissionCommandGround>()) ==
+                      mission_command_ground_static_task_directive(expected));
+                CHECK(entity.get<MissionCommand>()->stance == stance);
+            }
+            for (bool nested : {false, true}) {
+                auto malformed = document;
+                auto &components = malformed["results"][0]["components"];
+                auto &slice = nested ? components["MissionCommand"]["ground"]
+                                     : components["MissionCommandGround"];
+                slice.erase("stance");
+                const auto invalid = malformed.dump();
+                CHECK_FALSE(Bridge::restore_world(target, {invalid.begin(), invalid.end()}));
+                CHECK(Bridge::serialize_world(target) == wire);
+            }
+        }
     }
 
     TEST_CASE("ECS owner covers every generic platform family") {
