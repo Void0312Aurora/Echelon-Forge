@@ -35,6 +35,7 @@ from python.training.action_bias import (
     maybe_initialize_hmoe_from_shared,
 )
 from python.training.bootstrap import apply_global_seed
+from python.training.curriculum import apply_initial_curriculum_stage
 from python.training.deps import (
     apply_policy_kwargs_feature_extractor_classes,
     get_policy_kwargs,
@@ -182,23 +183,23 @@ def main():
         vec_env = build_leader_vec_env(bootstrap)
 
     effective_n_envs = int(getattr(vec_env, "num_envs", n_envs))
-    curriculum_cfg = train_config.get("curriculum", {}) if isinstance(train_config.get("curriculum", {}), dict) else {}
+    curriculum_cfg = train_config.get("curriculum", {})
     algo_name = str(train_config.get("algo", "PPO"))
     algo_cls = deps.PPO
     if algo_name in ("AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
         algo_cls = deps.AdaptiveKLPPO
 
     # Apply curriculum stage 0 *before* SB3 does its initial env.reset() inside learn().
-    if isinstance(curriculum_cfg, dict) and curriculum_cfg.get("stages"):
+    try:
+        apply_initial_curriculum_stage(
+            vec_env, curriculum_cfg, agent_layer=agent_layer, evidence_dir=exp_dir
+        )
+    except Exception:
         try:
-            st0 = list(curriculum_cfg["stages"])[0]
-            overrides0 = st0.get("randomization_overrides", st0.get("randomization", {}))
-            vec_env.env_method("set_randomization_overrides", overrides0)
-            leader_overrides0 = st0.get("leader_env_overrides", {})
-            if isinstance(leader_overrides0, dict) and leader_overrides0:
-                vec_env.env_method("set_leader_overrides", leader_overrides0)
-        except Exception as e:
-            print(f"[WARN] failed to apply initial curriculum stage overrides: {e}")
+            vec_env.close()
+        finally:
+            bootstrap.exp_lock.close()
+        raise
     
     # Test Mode
     if args.test_only:
