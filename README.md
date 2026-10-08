@@ -178,11 +178,11 @@ source tools/maintenance/cmo_env.sh
 cmo_env_validate
 cmo_env_validate_rl  # Only needed before RL-capable runtime tests.
 cmo_python -m pytest -q \
-  tests/architecture/runtime_facade/test_layering.py \
-  tests/architecture/build/test_cmake_target_readiness.py \
-  tests/runtime/facade/test_runtime_facade.py \
-  tests/world_batch/test_world_batch_runtime.py \
-  tests/test_gpu_runtime_bindings.py
+  tests/architecture/governance/test_cpp_include_direction.py \
+  tests/architecture/build_system/test_cmake_target_readiness.py \
+  tests/runtime/facade/test_runtime_facade_core.py \
+  tests/world_batch/test_world_batch_runtime_surface.py \
+  tests/gpu/test_gpu_runtime_bindings.py
 ```
 
 If you use a different build directory, export `CMO_BUILD_DIR=/path/to/build`
@@ -193,13 +193,20 @@ calling `tools\maintenance\cmo_env.ps1` on Windows.
 
 - [src/](src/README.md): C++ kernel, mission runtime, runtime facade, Python bindings, GPU helpers.
 - [python/](python/README.md): RL runtime, training helpers, scenario compiler/runtime, diagnostics support.
-- [gym_envs/](gym_envs/README.md): `UniversalEnv`, cooperative/leader environment support, scenario loader.
+- [gym_envs/](gym_envs/README.md): shared environment helpers, cooperative/leader support, scenario loader.
 - [scenarios/](scenarios/README.md): maintained scenario definitions grouped by task domain.
 - [examples/](examples/README.md): config inputs, lightweight fixtures, visualization assets, and example-only surfaces.
 - [tests/](tests/README.md): pytest suites, contract specs, runners, and fixtures.
 - [tools/](tools/README.md): evaluation, diagnostics, runners, maintenance scripts.
 - [scripts/](scripts/README.md): retained operator-facing wrappers and compatibility workflow shells.
 - [docs/README.md](docs/README.md): manuals, plans, standards, forward notes, and artifact indexes.
+
+Execution training uses `build_execution_world_batch_vec_env` and the canonical
+`python.rl.runtime.world_batch.vec_env.WorldBatchVecEnv`; cooperative execution
+uses `build_cooperative_world_batch_vec_env` and
+`python.rl.runtime.cooperative_world_batch_vec_env.CooperativeWorldBatchVecEnv`.
+`UniversalEnv` remains an importable compatibility name whose constructor fails
+fast; it is unavailable as a training or evaluation backend.
 
 ## Architecture Boundary
 

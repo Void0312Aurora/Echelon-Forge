@@ -7,8 +7,8 @@ The main dependency flow is roughly:
 ```text
 ef_py + python/scenario/compiler + python/scenario/runtime
   -> gym_envs/scenario_loader
-    -> gym_envs/universal_env_parts
-    -> gym_envs/universal_env.py
+    -> gym_envs/universal_env_parts (shared helpers)
+    -> python/rl/runtime/world_batch/vec_env.py
     -> gym_envs/leader_env.py
       -> python/rl/runtime + tools/eval + tests
 ```
@@ -23,8 +23,8 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 ## Domain Posture
 
 - The maintained environment path is still strongest for air/execution and cooperative/common training.
-- Maintained production training reaches the runtime through `python.rl.runtime.world_batch_vec_env.WorldBatchVecEnv` for execution and `python.rl.runtime.cooperative_world_batch_vec_env.CooperativeWorldBatchVecEnv` for cooperative execution.
-- `UniversalEnv` remains a quarantined single-env compatibility import path. Active evaluation and diagnostics should use maintained world-batch/facade adapters instead of constructing the raw `ef_py.SimulationKernel` route.
+- Maintained production training reaches the runtime through `python.rl.runtime.world_batch.vec_env.WorldBatchVecEnv` for execution and `python.rl.runtime.cooperative_world_batch_vec_env.CooperativeWorldBatchVecEnv` for cooperative execution.
+- `UniversalEnv` remains an importable compatibility name; its constructor fails fast and cannot create an environment. Active evaluation and diagnostics should use maintained world-batch/facade adapters instead of constructing the raw `ef_py.SimulationKernel` route.
 - Naval hooks exist where explicitly listed, including station actions, screen behavior, scoped reward surfaces, and N4 contact-evidence plumbing through the runtime path.
 - Ground-domain movement, sensing, terrain, fires, damage, and full runtime behavior are not implemented here. References to takeoff ground roll or runway geometry are air/execution runway-phase logic, not ground-domain support.
 
@@ -38,9 +38,9 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 ## Subdirectory Conventions
 
 - [universal_env.py](universal_env.py)
-  - Quarantined single-env compatibility import path. It is not an active production training/eval/diagnostics backend.
+  - Retired constructor with an importable compatibility name; construction raises an error.
 - [universal_env_parts/](universal_env_parts)
-  - Main implementation subdomain for `UniversalEnv`, maintaining action, observation, space, and step-info assembly logic.
+  - Shared action, observation, space, and step-info helpers consumed by the maintained batch environment.
 - [leader_env.py](leader_env.py)
   - Environment for the leader decision layer, driving the underlying execution backend.
 - `scenario_loader/`
@@ -60,7 +60,7 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 
 - Root
   - [universal_env.py](universal_env.py)
-    - Stable single-env compatibility/debug entry point. The main action/observation/space/info helpers have moved into `universal_env_parts/`; maintained execution training should normally use the world-batch runtime adapter.
+    - Compatibility import with a retired, fail-fast constructor. Shared action/observation/space/info helpers remain in `universal_env_parts/` and are used by the maintained batch runtime.
   - [leader_env.py](leader_env.py)
     - Leader training environment, execution backend integration, and decision-interval control.
 - `universal_env_parts/`

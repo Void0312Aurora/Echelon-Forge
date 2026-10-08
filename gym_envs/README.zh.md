@@ -7,8 +7,8 @@
 ```text
 ef_py + python/scenario/compiler + python/scenario/runtime
   -> gym_envs/scenario_loader
-    -> gym_envs/universal_env_parts
-    -> gym_envs/universal_env.py
+    -> gym_envs/universal_env_parts (shared helpers)
+    -> python/rl/runtime/world_batch/vec_env.py
     -> gym_envs/leader_env.py
       -> python/rl/runtime + tools/eval + tests
 ```
@@ -23,8 +23,8 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 ## 域状态口径
 
 - maintained env 路径目前仍以 air/execution 与 cooperative/common training 最成熟。
-- maintained production training 会通过 `python.rl.runtime.world_batch_vec_env.WorldBatchVecEnv` 进入 execution runtime，并通过 `python.rl.runtime.cooperative_world_batch_vec_env.CooperativeWorldBatchVecEnv` 进入 cooperative execution。
-- `UniversalEnv` 仍是隔离的 single-env compatibility import path。active evaluation 与 diagnostics 应使用维护中的 world-batch/facade adapter，而不是构造 raw `ef_py.SimulationKernel` 路径。
+- maintained production training 会通过 `python.rl.runtime.world_batch.vec_env.WorldBatchVecEnv` 进入 execution runtime，并通过 `python.rl.runtime.cooperative_world_batch_vec_env.CooperativeWorldBatchVecEnv` 进入 cooperative execution。
+- `UniversalEnv` 保留兼容导入名称，但构造函数会立即报错，无法创建环境。active evaluation 与 diagnostics 应使用维护中的 world-batch/facade adapter，而不是构造 raw `ef_py.SimulationKernel` 路径。
 - naval hook 只在明确列出的路径中存在，包括 station action、screen behavior、受限 reward surface，以及通过 runtime 路径承载的 N4 contact-evidence plumbing。
 - ground-domain 的 movement、sensing、terrain、fires、damage 与完整 runtime behavior 尚未在这里实现。README 中的 takeoff ground roll 或 runway geometry 指空域执行的跑道阶段逻辑，不代表 ground-domain 支持。
 
@@ -38,9 +38,9 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 ## 子目录约定
 
 - [universal_env.py](universal_env.py)
-  - 隔离的 single-env compatibility import path。它不是 active production training/eval/diagnostics backend。
+  - 保留兼容导入名称的已退役构造函数；创建实例会报错。
 - [universal_env_parts/](universal_env_parts)
-  - `UniversalEnv` 的主实现子域，维护 action、observation、space、step-info 组装逻辑。
+  - 维护批量环境复用的 action、observation、space、step-info 共享辅助逻辑。
 - [leader_env.py](leader_env.py)
   - 长机决策层环境，通过 execution backend 驱动底层执行路径。
 - `scenario_loader/`
@@ -60,7 +60,7 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 
 - 根目录
   - [universal_env.py](universal_env.py)
-    - 稳定的 single-env compatibility/debug 入口。主 action/observation/space/info helper 已迁到 `universal_env_parts/`；maintained execution training 通常应使用 world-batch runtime adapter。
+    - 兼容导入名称，其构造函数已退役并立即报错。`universal_env_parts/` 中的共享辅助仍被维护中的批量运行时使用。
   - [leader_env.py](leader_env.py)
     - 长机训练环境、execution backend 接入、decision interval 控制。
 - `universal_env_parts/`

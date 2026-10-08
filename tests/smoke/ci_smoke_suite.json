@@ -143,6 +143,7 @@
     "tests/scenario/test_batch_maritime_setup.py",
     "tests/scenario/test_scenario_timestep_setup.py",
     "tests/scenario/test_batch_seed_contract.py",
+    "tests/architecture/governance/test_runtime_infrastructure_documentation.py::test_root_readme_focused_test_commands_have_live_paths_and_match",
     "tests/runtime/test_agent_contracts.py",
     "tests/world_batch/test_typed_observation_view_pilot.py",
     "tests/world_batch/test_world_batch_core_slice1.py",
