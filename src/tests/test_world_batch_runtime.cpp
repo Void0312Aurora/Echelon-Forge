@@ -23,14 +23,17 @@ TEST_SUITE("world_batch_runtime") {
             REQUIRE(state != nullptr);
             return state->episode_seed;
         };
-        const std::vector<std::vector<std::uint32_t>> modes{{}, {11}, {11, 22, 33, 44}, {UINT32_MAX}};
-        const std::vector<std::vector<std::uint32_t>> expected{{42, 43, 44, 45}, {11, 12, 13, 14},
-                                                               {11, 22, 33, 44}, {UINT32_MAX, 0, 1, 2}};
+        const std::vector<std::vector<std::uint32_t>> modes{
+            {}, {11}, {11, 22, 33, 44}, {UINT32_MAX}};
+        const std::vector<std::vector<std::uint32_t>> expected{
+            {42, 43, 44, 45}, {11, 12, 13, 14}, {11, 22, 33, 44}, {UINT32_MAX, 0, 1, 2}};
         for (std::size_t mode = 0; mode < modes.size(); ++mode) {
             runtime.reset_batch(modes[mode]);
-            for (std::size_t i = 0; i < 4; ++i) CHECK(effective_seed(i) == expected[mode][i]);
+            for (std::size_t i = 0; i < 4; ++i)
+                CHECK(effective_seed(i) == expected[mode][i]);
             runtime.apply_world_setup_batch(modes[mode], {}, {}, {}, {});
-            for (std::size_t i = 0; i < 4; ++i) CHECK(effective_seed(i) == expected[mode][i]);
+            for (std::size_t i = 0; i < 4; ++i)
+                CHECK(effective_seed(i) == expected[mode][i]);
         }
     }
 
@@ -42,10 +45,11 @@ TEST_SUITE("world_batch_runtime") {
         for (std::size_t i = 0; i < 4; ++i) {
             auto &world = runtime.world_raw_quarantine(i);
             world.set_time_step(0.2);
-            entities.push_back(world.spawn_unit(Side::Blue, "Aircraft", 0, 0, 1000, 0, 0, 0, 0, 0, 0));
+            entities.push_back(
+                world.spawn_unit(Side::Blue, "Aircraft", 0, 0, 1000, 0, 0, 0, 0, 0, 0));
         }
-        for (const auto &invalid : std::vector<std::vector<std::uint32_t>>{{11, 22}, {11, 22, 33},
-                                                                          {11, 22, 33, 44, 55}}) {
+        for (const auto &invalid : std::vector<std::vector<std::uint32_t>>{
+                 {11, 22}, {11, 22, 33}, {11, 22, 33, 44, 55}}) {
             CHECK_THROWS_AS(runtime.reset_batch(invalid), std::invalid_argument);
             CHECK_THROWS_AS(runtime.apply_world_setup_batch(invalid, {}, {}, {}, {}, {0.1}),
                             std::invalid_argument);
