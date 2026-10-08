@@ -25,3 +25,9 @@ Pilot flaps and speedbrake inputs only apply while `PilotAction.active` is true.
 The existing input normalization, stall blend, ground effect, damage effects,
 and induced drag polar remain in place. Content loading, state-transfer
 reflection, and live coefficient tests cover the new fields.
+
+The candidate ECS migration digest includes serialized component reflection and
+is repinned for this owned field extension. A native state-transfer regression
+checks current custom values, constructor defaults for older payloads omitting
+the five fields, and rejection of unknown fields without mutating the target
+(one case, 46 assertions). This preserves the existing candidate boundary.
