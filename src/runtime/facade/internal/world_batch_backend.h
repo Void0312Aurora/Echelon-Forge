@@ -82,6 +82,7 @@ struct SetupRequest {
     VectorBatchView<double> time_steps;
     VectorBatchView<WorldSunAssignment> sun_assignments;
     VectorBatchView<WorldGeodeticAnchorAssignment> geodetic_anchor_assignments;
+    VectorBatchView<WorldMaritimeAssignment> maritime_assignments;
 
     std::size_t world_index = 0;
     std::uint32_t seed = 0;

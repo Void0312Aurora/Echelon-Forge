@@ -46,7 +46,8 @@ void bind_runtime_engine(nb::module_ &m) {
              nb::arg("seeds"), nb::arg("terrain_assignments"), nb::arg("wind_assignments"),
              nb::arg("zones"), nb::arg("requests"), nb::arg("time_steps") = std::vector<double>{},
              nb::arg("sun_assignments") = std::vector<WorldSunAssignment>{},
-             nb::arg("geodetic_anchor_assignments") = std::vector<WorldGeodeticAnchorAssignment>{})
+             nb::arg("geodetic_anchor_assignments") = std::vector<WorldGeodeticAnchorAssignment>{},
+             nb::arg("maritime_assignments") = std::vector<WorldMaritimeAssignment>{})
         .def("apply_world_layout", &WorldBatchRuntime::apply_world_layout, nb::arg("world_index"),
              nb::arg("seed"), nb::arg("terrain_type"), nb::arg("wind_speed_mps"),
              nb::arg("wind_dir_from_deg"), nb::arg("wind_shear_mps_per_km"),

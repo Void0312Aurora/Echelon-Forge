@@ -133,7 +133,7 @@ EXPECTED_REGISTRATIONS = {
   ),
   "tools/maintenance/dto_schema/schemas/batch/batch_world_setup_request_fields.py": (
     "src/runtime/facade/detail/batch/batch_world_setup_request.inc",
-    9,
+    10,
   ),
   "tools/maintenance/dto_schema/schemas/batch/batch_world_setup_result_fields.py": (
     "src/runtime/facade/detail/batch/batch_world_setup_result.inc",

@@ -33,6 +33,7 @@ SCHEMA = DtoSchema(
         Field(name='spawn_requests', cpp_type='std::vector<WorldSpawnRequest>', default='{}', group='EF_BATCH_WORLD_SETUP_REQUEST_FIELD'),
         Field(name='typed_platform_spawn_requests', cpp_type='std::vector<TypedPlatformSpawnRequest>', default='{}', group='EF_BATCH_WORLD_SETUP_REQUEST_FIELD'),
         Field(name='time_steps', cpp_type='std::vector<double>', default='{}', group='EF_BATCH_WORLD_SETUP_REQUEST_FIELD'),
+        Field(name='maritime_assignments', cpp_type='std::vector<WorldMaritimeAssignment>', default='{}', group='EF_BATCH_WORLD_SETUP_REQUEST_FIELD'),
     ),
     file_footer=FILE_FOOTER,
 )

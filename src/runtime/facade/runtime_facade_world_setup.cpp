@@ -330,7 +330,8 @@ std::vector<uint64_t> RuntimeFacade::apply_world_setup_batch(
     const std::vector<WorldWindAssignment> &wind_assignments,
     const std::vector<WorldZoneDefinition> &zones, const std::vector<WorldSpawnRequest> &requests,
     const std::vector<double> &time_steps, const std::vector<WorldSunAssignment> &sun_assignments,
-    const std::vector<WorldGeodeticAnchorAssignment> &geodetic_anchor_assignments) {
+    const std::vector<WorldGeodeticAnchorAssignment> &geodetic_anchor_assignments,
+    const std::vector<WorldMaritimeAssignment> &maritime_assignments) {
     return runtime_
         ->setup(runtime::backend::SetupRequest{
             .kind = runtime::backend::SetupKind::Batch,
@@ -342,6 +343,7 @@ std::vector<uint64_t> RuntimeFacade::apply_world_setup_batch(
             .time_steps = time_steps,
             .sun_assignments = sun_assignments,
             .geodetic_anchor_assignments = geodetic_anchor_assignments,
+            .maritime_assignments = maritime_assignments,
         })
         .entity_ids;
 }
@@ -359,6 +361,7 @@ BatchWorldSetupResult RuntimeFacade::apply_world_setup(const BatchWorldSetupRequ
                                 .time_steps = request.time_steps,
                                 .sun_assignments = request.sun_assignments,
                                 .geodetic_anchor_assignments = request.geodetic_anchor_assignments,
+                                .maritime_assignments = request.maritime_assignments,
                             })
                             .entity_ids;
     result.typed_platform_spawn_results.reserve(request.typed_platform_spawn_requests.size());

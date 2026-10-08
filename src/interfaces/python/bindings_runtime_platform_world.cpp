@@ -33,6 +33,14 @@ void bind_runtime_platform_world(nb::module_ &m) {
         .def_rw("longitude_deg", &WorldGeodeticAnchorAssignment::longitude_deg)
         .def_rw("height_m", &WorldGeodeticAnchorAssignment::height_m);
 
+    nb::class_<WorldMaritimeAssignment>(m, "WorldMaritimeAssignment")
+        .def(nb::init<>())
+        .def_rw("world_index", &WorldMaritimeAssignment::world_index)
+        .def_rw("configured", &WorldMaritimeAssignment::configured)
+        .def_rw("sea_state", &WorldMaritimeAssignment::sea_state)
+        .def_rw("wave_heading_deg", &WorldMaritimeAssignment::wave_heading_deg)
+        .def_rw("wave_period_s", &WorldMaritimeAssignment::wave_period_s);
+
     nb::class_<WorldZoneDefinition> world_zone_definition_class(m, "WorldZoneDefinition");
     world_zone_definition_class.def(nb::init<>());
 #define EF_WORLD_ZONE_DEFINITION_FIELD(type, name, default_value)                                  \

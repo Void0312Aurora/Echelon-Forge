@@ -76,7 +76,8 @@ class WorldBatchRuntime {
         const std::vector<WorldZoneDefinition> &zones,
         const std::vector<WorldSpawnRequest> &requests, const std::vector<double> &time_steps = {},
         const std::vector<WorldSunAssignment> &sun_assignments = {},
-        const std::vector<WorldGeodeticAnchorAssignment> &geodetic_anchor_assignments = {});
+        const std::vector<WorldGeodeticAnchorAssignment> &geodetic_anchor_assignments = {},
+        const std::vector<WorldMaritimeAssignment> &maritime_assignments = {});
     std::vector<uint64_t> apply_world_layout(
         std::size_t world_index, std::uint32_t seed, const std::string &terrain_type,
         double wind_speed_mps, double wind_dir_from_deg, double wind_shear_mps_per_km,

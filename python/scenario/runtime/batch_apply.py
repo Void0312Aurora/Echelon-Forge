@@ -27,6 +27,19 @@ from .roster import _attach_active_roster_to_applied_world
 from .world_setup import apply_world_setup_payload_maintained
 
 
+def _maritime_assignments(layouts: list[Any]) -> list[Any]:
+    items = []
+    for world_index, layout in enumerate(layouts):
+        item = ef_py.WorldMaritimeAssignment()
+        item.world_index = world_index
+        item.configured = bool(layout.maritime_configured)
+        item.sea_state = float(layout.sea_state)
+        item.wave_heading_deg = float(layout.wave_heading_deg)
+        item.wave_period_s = float(layout.wave_period_s)
+        items.append(item)
+    return items
+
+
 def _geodetic_anchor_assignments(
     anchors: list[tuple[float, float, float]],
 ) -> list[Any]:
@@ -294,6 +307,7 @@ def _load_compiled_scenario_batch_direct(
         zones=zone_items[:zone_cursor],
         spawn_requests=spawn_items[:spawn_cursor],
         time_steps=time_step_items,
+        maritime_assignments=_maritime_assignments([compiled_template] * world_count),
         geodetic_anchor_assignments=_geodetic_anchor_assignments(
             [tuple(compiled_template.geodetic_anchor)] * world_count
         ),
@@ -421,6 +435,7 @@ def _apply_world_layouts_to_setup_target(
         zones=zone_defs,
         spawn_requests=spawn_requests,
         time_steps=time_step_items,
+        maritime_assignments=_maritime_assignments(layouts),
         geodetic_anchor_assignments=_geodetic_anchor_assignments(
             [tuple(layout.geodetic_anchor) for layout in layouts]
         ),
@@ -474,6 +489,7 @@ def _apply_world_setup_request(
     time_steps: list[float],
     sun_assignments: list[Any] | None = None,
     geodetic_anchor_assignments: list[Any] | None = None,
+    maritime_assignments: list[Any] | None = None,
     geodetic_anchor_explicit: bool = False,
     setup_payload_apply: Callable[..., list[int]] | None = None,
 ) -> list[int]:
@@ -488,6 +504,7 @@ def _apply_world_setup_request(
             time_steps=time_steps,
             sun_assignments=sun_assignments,
             geodetic_anchor_assignments=geodetic_anchor_assignments,
+            maritime_assignments=maritime_assignments,
         )
     # Injected appliers predate the sun and anchor contracts; they receive the
     # original keyword surface and the facade defaults apply. A declared anchor
@@ -496,6 +513,8 @@ def _apply_world_setup_request(
         raise ValueError(
             "an injected setup_payload_apply cannot carry environment.geodetic_anchor"
         )
+    if any(item.configured for item in (maritime_assignments or [])):
+        raise ValueError("an injected setup_payload_apply cannot carry environment.maritime")
     return setup_payload_apply(
         facade_setup_target,
         seeds=seeds,

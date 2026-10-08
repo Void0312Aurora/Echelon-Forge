@@ -95,7 +95,8 @@ FlecsCpuBackend::setup(const runtime::backend::SetupRequest &request) {
         result.entity_ids = runtime_.apply_world_setup_batch(
             request.seeds.get(), request.terrain_assignments.get(), request.wind_assignments.get(),
             request.zones.get(), request.spawn_requests.get(), request.time_steps.get(),
-            request.sun_assignments.get(), request.geodetic_anchor_assignments.get());
+            request.sun_assignments.get(), request.geodetic_anchor_assignments.get(),
+            request.maritime_assignments.get());
         return result;
     case runtime::backend::SetupKind::Layout:
         result.entity_ids = runtime_.apply_world_layout(

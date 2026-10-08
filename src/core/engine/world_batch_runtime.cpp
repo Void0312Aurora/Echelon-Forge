@@ -475,7 +475,8 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
     const std::vector<WorldWindAssignment> &wind_assignments,
     const std::vector<WorldZoneDefinition> &zones, const std::vector<WorldSpawnRequest> &requests,
     const std::vector<double> &time_steps, const std::vector<WorldSunAssignment> &sun_assignments,
-    const std::vector<WorldGeodeticAnchorAssignment> &geodetic_anchor_assignments) {
+    const std::vector<WorldGeodeticAnchorAssignment> &geodetic_anchor_assignments,
+    const std::vector<WorldMaritimeAssignment> &maritime_assignments) {
     if (!time_steps.empty() && time_steps.size() != 1 && time_steps.size() != worlds_.size()) {
         throw std::invalid_argument("time_steps must have size 0, 1, or world_count");
     }
@@ -486,6 +487,19 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
     const auto sun_grouped = group_item_indices_by_world(worlds_.size(), sun_assignments);
     const auto anchor_grouped =
         group_item_indices_by_world(worlds_.size(), geodetic_anchor_assignments);
+    const auto maritime_grouped = group_item_indices_by_world(worlds_.size(), maritime_assignments);
+    for (const auto &indices : maritime_grouped) {
+        if (indices.size() > 1) {
+            throw std::invalid_argument("maritime_assignments must contain at most one item per world");
+        }
+    }
+    for (const auto &item : maritime_assignments) {
+        if (item.configured && (!std::isfinite(item.sea_state) ||
+                                !std::isfinite(item.wave_heading_deg) ||
+                                !std::isfinite(item.wave_period_s))) {
+            throw std::invalid_argument("maritime_assignments configured values must be finite");
+        }
+    }
     const auto zone_grouped = group_item_indices_by_world(worlds_.size(), zones);
     const auto spawn_grouped = group_item_indices_by_world(worlds_.size(), requests);
 
@@ -496,7 +510,8 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
             terrain_grouped[world_index], wind_assignments, wind_grouped[world_index],
             sun_assignments, sun_grouped[world_index], geodetic_anchor_assignments,
             anchor_grouped[world_index], zones, zone_grouped[world_index], requests,
-            spawn_grouped[world_index], time_steps, &out, spawn_from_request);
+            spawn_grouped[world_index], time_steps, maritime_assignments,
+            maritime_grouped[world_index], &out, spawn_from_request);
     });
     return out;
 }

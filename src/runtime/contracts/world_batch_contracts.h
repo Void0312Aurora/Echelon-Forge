@@ -39,6 +39,15 @@ struct WorldSunAssignment {
     double elevation_deg = 45.0;
 };
 
+// Full scenario setup clears a world's previous override when unconfigured.
+struct WorldMaritimeAssignment {
+    std::uint64_t world_index = 0;
+    bool configured = false;
+    double sea_state = 0.0;
+    double wave_heading_deg = 0.0;
+    double wave_period_s = 8.0;
+};
+
 // Geodetic anchor of one world's local frame (Geodetic Frame P3-B). Defaults
 // are the documented default anchor, geodesy::kDefaultGeodeticAnchor.
 struct WorldGeodeticAnchorAssignment {
