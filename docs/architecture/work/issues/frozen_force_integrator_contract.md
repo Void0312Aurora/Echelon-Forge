@@ -1,7 +1,7 @@
 # Frozen-force integrator contract
 
-Issue: #123  
-Owner: `systems/physics`  
+Issue: #123
+Owner: `systems/physics`
 Status: implemented
 
 `LeapfrogIntegrate` receives one `ForceAccumulator` sample per frame. It uses
