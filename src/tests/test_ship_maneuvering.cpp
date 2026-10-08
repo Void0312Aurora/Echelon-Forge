@@ -22,6 +22,7 @@
 #include "components/domains/naval/platform/ship_platform.h"
 #include "components/physics/forces.h"
 #include "systems/domains/naval/ship_motion_system.h"
+#include "systems/domains/naval/submarine_motion_system.h"
 #include "systems/combat/damage_system_naval.h"
 
 #include <doctest/doctest.h>
@@ -307,5 +308,53 @@ TEST_SUITE("ship_maneuvering") {
             0.0, 0.0, 0.0, 0.0, 90.0, 1000.0, 990.0, 0.0, 90.0, 2.0);
         CHECK(arrived.speed_mps == 0.0);
         CHECK(arrived.heading_deg == 90.0);
+    }
+}
+
+TEST_SUITE("submarine_motion") {
+    TEST_CASE("vertical motion uses shared nose-up pitch and clamps at fifteen degrees") {
+        for (const double depth_rate : {3.0, 10.0}) {
+            for (const double target_depth : {20.0, 50.0, 80.0}) {
+                flecs::world world;
+                register_submarine_motion_system(world);
+                SubmarinePlatform platform{};
+                platform.max_speed_submerged_mps = 20.0;
+                platform.max_depth_rate_mps = depth_rate;
+                Transform initial{};
+                initial.z = -50.0;
+                auto unit = world.entity()
+                                .set<Transform>(initial)
+                                .set<Velocity>({0.0, 8.0, 0.0})
+                                .set<SubmarinePlatform>(platform);
+                NavalCommandIntent command{};
+                command.active = true;
+                command.cmd_speed_mps = 8.0;
+                command.cmd_depth_m = target_depth;
+                unit.set<NavalCommandIntent>(command);
+                world.progress(0.1);
+                const auto &position = *unit.get<Transform>();
+                const auto &velocity = *unit.get<Velocity>();
+                const double sign = target_depth < 50.0 ? 1.0 : target_depth > 50.0 ? -1.0 : 0.0;
+                CHECK(velocity.vz == doctest::Approx(sign * depth_rate));
+                CHECK(position.pitch == doctest::Approx(sign * (depth_rate == 3.0 ? 12.0 : 15.0)));
+                CHECK(position.roll == 0.0);
+                CHECK(velocity.vx == doctest::Approx(0.0));
+                CHECK(velocity.vy == doctest::Approx(8.0));
+                const auto forward = Math::body_to_world({1.0, 0.0, 0.0}, position);
+                CHECK(forward.z * velocity.vz >= 0.0);
+                if (sign == 0.0) CHECK(forward.z == doctest::Approx(0.0));
+            }
+        }
+    }
+    TEST_CASE("hull-forward geometry changes with attitude at fixed position and velocity") {
+        Transform hull{100.0, 200.0, -50.0, 0.0, 10.0, 0.0};
+        const auto up = Math::body_to_world({1.0, 0.0, 0.0}, hull);
+        hull.pitch = -10.0;
+        const auto down = Math::body_to_world({1.0, 0.0, 0.0}, hull);
+        CHECK(up.z == doctest::Approx(std::sin(Math::to_radians(10.0))));
+        CHECK(down.z == doctest::Approx(-up.z));
+        CHECK(down.x == doctest::Approx(up.x));
+        CHECK(down.y == doctest::Approx(up.y));
+        CHECK(hull.z == -50.0);
     }
 }
