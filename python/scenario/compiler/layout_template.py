@@ -11,7 +11,7 @@ from .common import (
     resolve_environment_geodetic_anchor,
     resolve_environment_terrain_config,
     _coerce_nonnegative_int,
-    _SURFACE_TYPE_MAP,
+    resolve_scenario_surface_type,
 )
 
 
@@ -256,7 +256,7 @@ def _compile_world_layout_template(merged_scenario_data: dict[str, Any]) -> Comp
                     width=float(zone.get("width", 1000.0)),
                     length=float(zone.get("length", 1000.0)),
                     heading=float(zone.get("heading", 0.0)),
-                    surface_type=int(_SURFACE_TYPE_MAP.get(zone.get("surface", "SoftDirt"), 3)),
+                    surface_type=resolve_scenario_surface_type(zone.get("surface", "SoftDirt")),
                 )
             )
 

@@ -14,6 +14,13 @@ from python.coercion import coerce_nonnegative_int
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 _SCALAR_TYPES = (str, int, float, bool, type(None))
+VALID_SCENARIO_SIDES = ("Blue", "Red", "Neutral")
+
+
+def require_scenario_side_name(value: Any, *, field: str = "side") -> str:
+    if not isinstance(value, str) or value not in VALID_SCENARIO_SIDES:
+        raise ValueError(f"{field} must be one of {VALID_SCENARIO_SIDES}, got {value!r}")
+    return value
 
 
 def require_scenario_time_step(value: Any) -> float:
@@ -122,6 +129,12 @@ _SURFACE_TYPE_MAP = {
     "Water": 4,
     "Obstacle": 5,
 }
+
+
+def resolve_scenario_surface_type(value: Any, *, field: str = "surface") -> int:
+    if not isinstance(value, str) or value not in _SURFACE_TYPE_MAP:
+        raise ValueError(f"{field} must be one of {tuple(_SURFACE_TYPE_MAP)}, got {value!r}")
+    return _SURFACE_TYPE_MAP[value]
 
 DEFAULT_TERRAIN_TYPE = "flat"
 VALID_TERRAIN_TYPES = frozenset({"flat", "legacy", "hill", "gaussian_hill", "mountain"})

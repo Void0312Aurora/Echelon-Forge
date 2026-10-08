@@ -8,27 +8,14 @@ import ef_py
 from python.scenario.compiler.common import (
     DEFAULT_GEODETIC_ANCHOR,
     GEODETIC_ANCHOR_SOURCE_DEFAULT,
+    require_scenario_side_name,
+    _SURFACE_TYPE_MAP,
+    resolve_scenario_surface_type,
 )
 
 
-_SURFACE_TYPE_MAP = {
-    "Concrete": 0,
-    "Asphalt": 1,
-    "HardPacked": 2,
-    "SoftDirt": 3,
-    "Water": 4,
-    "Obstacle": 5,
-}
-
-_SIDE_MAP = {
-    "Blue": "Blue",
-    "Red": "Red",
-    "Neutral": "Neutral",
-}
-
-
 def resolve_scenario_side(side_name: Any):
-    member_name = _SIDE_MAP.get(str(side_name), "Neutral")
+    member_name = require_scenario_side_name(side_name)
     return getattr(ef_py.Side, member_name)
 
 

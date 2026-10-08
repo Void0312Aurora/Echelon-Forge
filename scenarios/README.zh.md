@@ -120,3 +120,13 @@
     - 最小零速度空中夹具，明确设定零风速，用于重力主导的合理性检查。
 - `templates/`
   - `template.json`
+
+## 实体阵营和区域地表
+
+`entities[*].side` 区分大小写，只接受 `Blue`、`Red` 或 `Neutral`。
+省略字段时默认使用 `Neutral`；显式未知值、null 或非字符串会在编译时拒绝，
+包括导入的实体和编队展开生成的实体。
+
+区域 `surface` 区分大小写，只接受 `Concrete`、`Asphalt`、`HardPacked`、
+`SoftDirt`、`Water` 或 `Obstacle`。省略字段时默认使用 `SoftDirt`；显式非法值
+在编译以及模板和旧版物化路径中均会拒绝。

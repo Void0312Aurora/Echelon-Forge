@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from numbers import Real
 from typing import Any
 
 import numpy as np
@@ -123,3 +124,40 @@ def _sample_entity_spawn(
         roll,
         ent_cfg.get("randomization", None),
     )
+
+
+def validate_randomization_overrides(overrides: dict | None) -> dict:
+    """Reject settings the world layout cannot apply before recording admission."""
+    if overrides is None:
+        return {}
+    if not isinstance(overrides, dict):
+        raise TypeError("randomization overrides must be a dict or None")
+    ranges = {
+        "world_yaw_range", "wind_headwind_range", "wind_crosswind_range",
+        "wind_speed_range", "wind_dir_from_range", "wind_shear_range",
+    }
+    scalars = {"wind_tailwind_max_mps", "wind_tailwind_max", "wind_ref_alt_m"}
+    supported = ranges | scalars | {"world_yaw_origin", "rotate_mission_heading_with_world"}
+    unknown = overrides.keys() - supported
+    if unknown:
+        raise ValueError(f"unknown randomization overrides: {sorted(unknown, key=str)}")
+
+    def finite_number(key, value):
+        if isinstance(value, bool) or not isinstance(value, Real) or not math.isfinite(value):
+            raise ValueError(f"randomization override {key} requires finite numbers")
+
+    for key, value in overrides.items():
+        if key in ranges or key == "world_yaw_origin":
+            if not isinstance(value, (list, tuple)) or len(value) != 2:
+                raise ValueError(f"randomization override {key} requires two numbers")
+            for number in value:
+                finite_number(key, number)
+            if key in ranges and value[0] > value[1]:
+                raise ValueError(f"randomization override {key} requires an ordered range")
+            if key == "wind_speed_range" and value[0] < 0:
+                raise ValueError("randomization override wind_speed_range must be nonnegative")
+        elif key in scalars:
+            finite_number(key, value)
+        elif not isinstance(value, bool):
+            raise ValueError(f"randomization override {key} requires a boolean")
+    return {key: list(value) if isinstance(value, (list, tuple)) else value for key, value in overrides.items()}

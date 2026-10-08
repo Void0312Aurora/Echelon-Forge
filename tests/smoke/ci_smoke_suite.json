@@ -139,6 +139,7 @@
     "tests/runners/test_run_pytest_suite_cli.py",
     "tests/runners/test_run_scenario_contract.py",
     "tests/training/test_training_bootstrap_contracts.py",
+    "tests/training/test_initial_curriculum_stage.py",
     "tests/training/test_naval_training_entry_contracts.py",
     "tests/scenario/test_batch_maritime_setup.py",
     "tests/scenario/test_scenario_timestep_setup.py",
@@ -146,6 +147,8 @@
     "tests/world_batch/test_typed_observation_view_pilot.py",
     "tests/world_batch/test_world_batch_core_slice1.py",
     "tests/world_batch/test_world_batch_runtime_surface.py",
-    "tests/world_batch/test_batch_scenario_runtime.py"
+    "tests/world_batch/test_batch_scenario_runtime.py",
+    "tests/scenario/test_scenario_side_validation.py",
+    "tests/scenario/test_scenario_surface_validation.py"
   ]
 }

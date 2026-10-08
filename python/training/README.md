@@ -33,6 +33,14 @@ Its positioning is not to replace the algorithm, policy, or vec-env logic in `py
 
 ## Boundary
 
+Stage-0 curriculum overrides are admitted before the initial environment reset.
+Missing override fields are optional; authored dictionaries (including an empty
+randomization dictionary that clears overrides) must apply successfully. Invalid
+values, unsupported methods and partial application abort startup and close the
+environment and experiment lock. Successful admission is recorded in the run's
+`curriculum_stage0.json`; it records settings accepted by the environment setters,
+not a claim that a subsequent episode has already executed those settings.
+
 - This is the place for training entry argument parsing, experiment directory management, runtime bootstrap, and entry-side orchestration (dependency loading, action-bias initialization, vec-env construction wiring).
 - Algorithm, policy, and vec-env *implementations* stay in `python/rl/`; this package only selects, constructs, and summarizes them for the entry. Do not duplicate those implementations here.
 - The maintained-execution `runtime.world_batch_vec_env=true` guard message stays in `train.py` (architecture tests scan the entry source for it).

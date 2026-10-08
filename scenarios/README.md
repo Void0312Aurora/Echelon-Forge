@@ -126,3 +126,13 @@ raise any label to final `playable` acceptance.
     - Minimal zero-velocity airborne fixture with explicit zero wind for gravity-dominant plausibility checks.
 - `templates/`
   - `template.json`
+
+## Entity sides and zone surfaces
+
+Authored `entities[*].side` values are case-sensitive: `Blue`, `Red`, or `Neutral`.
+An omitted side defaults to `Neutral`; an explicit unknown value, null, or a
+non-string fails compilation, including imported and group-expanded entities.
+
+Zone `surface` values are case-sensitive: `Concrete`, `Asphalt`, `HardPacked`,
+`SoftDirt`, `Water`, or `Obstacle`. Omission defaults to `SoftDirt`; explicitly
+invalid values fail compilation and both template and legacy materialization.
