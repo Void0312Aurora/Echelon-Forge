@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .common import resolve_environment_geodetic_anchor
+from .common import require_scenario_side_name, resolve_environment_geodetic_anchor
 
 
 def _format_source(source_path: str) -> str:
@@ -114,6 +114,12 @@ def validate_scenario_compiler_shape(
             context=context,
             source_path=source_path,
         )
+        for index, entity in enumerate(entities):
+            if "side" in entity:
+                require_scenario_side_name(
+                    entity["side"],
+                    field=f"{context} entities[{index}].side ({_format_source(source_path)})",
+                )
 
     imports = scenario_data.get("imports", [])
     if isinstance(imports, list):
