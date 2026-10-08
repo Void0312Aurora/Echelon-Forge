@@ -24,7 +24,7 @@ from .models import (
 )
 from .randomization import _apply_spawn_randomization
 from .roster import _attach_active_roster_to_applied_world
-from .world_setup import apply_world_setup_payload_maintained
+from .world_setup import apply_world_setup_payload_maintained, normalize_world_setup_seeds
 
 
 def _maritime_assignments(layouts: list[Any]) -> list[Any]:
@@ -348,15 +348,9 @@ def _load_compiled_scenario_for_setup_target(
         raise TypeError("compiled_scenario must be a CompiledScenario")
 
     world_count = int(facade_setup_target.world_count())
+    normalized_seeds = normalize_world_setup_seeds(seeds, world_count)
     if world_count <= 0:
         return []
-
-    normalized_seeds = [int(seed) & 0xFFFFFFFF for seed in list(seeds)]
-    if len(normalized_seeds) == 1 and world_count > 1:
-        base_seed = int(normalized_seeds[0])
-        normalized_seeds = [base_seed + idx for idx in range(world_count)]
-    if len(normalized_seeds) != world_count:
-        raise ValueError(f"expected {world_count} seeds, got {len(normalized_seeds)}")
 
     runtime_metadata = getattr(compiled_scenario, "runtime_metadata", None)
     if runtime_metadata is not None:
