@@ -41,6 +41,9 @@
 #include "runtime/contracts/runtime_composition_projection_contract.h"
 
 #include <nlohmann/json.hpp>
+#include <algorithm>
+#include <functional>
+#include <unordered_set>
 
 void SimulationKernel::register_components_and_systems() {
 
@@ -51,21 +54,11 @@ void SimulationKernel::register_components_and_systems() {
     // Service references are components too; they are installed by the same
     // contribution registry so the component graph has one admission path.
 
-    // Define Pipeline Phases (explicit ordering)
-    // Phase 1: Control - writes platform Velocity based on commands
-    // Phase 2: Guidance - writes weapon Velocity (missiles)
-    // Phase 3: Movement - integrates Velocity → Transform
-    // Phase 4: Sensor - scans for contacts
-    // Phase 5: Damage - proximity fuse, hit effects
-
-    // Note: With flecs, systems registered on OnUpdate run in registration order.
-    // For guaranteed ordering, we use .kind() with custom phases or depends_on.
-    // For MVP, registration order is sufficient as long as it's explicit.
-
-    // The native stage owner executes the admitted contribution order.  A
-    // Cordis package can request contributions, but cannot turn package order
-    // into Flecs execution order or install a private pipeline.
-    runtime::systems::register_default_system_contributions(ecs);
+    // Contribution ordinals govern factory admission. Flecs phase dependencies
+    // govern normal progress; a factory can install multiple executable nodes.
+    // The manually selected exact-stage trace has its own direct ecs_run order.
+    // Record actual installed nodes without altering either execution path.
+    runtime::systems::register_default_system_contributions(ecs, &installed_system_nodes_);
 }
 
 std::string SimulationKernel::executable_composition_graph_sha256() const {
@@ -108,4 +101,78 @@ std::string SimulationKernel::executable_composition_graph_sha256() const {
          runtime::composition_evidence_contracts::generated::kStageContractVersion},
     };
     return runtime::projection_contracts::canonical_sha256_hex(payload.dump());
+}
+
+std::string SimulationKernel::realized_cpu_scheduler_topology_json() const {
+    const auto lock = acquire_composition_operation();
+    using Json = nlohmann::json;
+    // Anonymous Flecs phase-chain nodes are normalized by their dependencies,
+    // never by allocation IDs. Named nodes retain their full namespace path.
+    std::unordered_set<ecs_entity_t> visiting;
+    std::function<Json(ecs_entity_t)> dependency = [&](ecs_entity_t id) -> Json {
+        if (!visiting.insert(id).second) {
+            return {{"cycle", true}};
+        }
+        Json targets = Json::array();
+        for (int i = 0; auto target = ecs_get_target(ecs.c_ptr(), id, EcsDependsOn, i); ++i) {
+            targets.push_back(dependency(target));
+        }
+        std::sort(targets.begin(), targets.end(),
+                  [](const Json &a, const Json &b) { return a.dump() < b.dump(); });
+        visiting.erase(id);
+        Json result = {{"depends_on", std::move(targets)},
+                       {"disabled", ecs_has_id(ecs.c_ptr(), id, EcsDisabled)}};
+        if (ecs_get_name(ecs.c_ptr(), id) != nullptr) {
+            result["path"] = ecs.entity(id).path().c_str();
+        }
+        return result;
+    };
+
+    Json nodes = Json::array();
+    auto it = ecs_each_id(ecs.c_ptr(), EcsSystem);
+    while (ecs_each_next(&it)) {
+        for (int i = 0; i < it.count; ++i) {
+            const auto id = it.entities[i];
+            const std::string path = ecs.entity(id).path().c_str();
+            const auto owner =
+                std::find_if(installed_system_nodes_.begin(), installed_system_nodes_.end(),
+                             [&](const auto &entry) { return entry.first == path; });
+            const auto *system = ecs_system_get(ecs.c_ptr(), id);
+            char *query = ecs_query_str(system->query);
+            nodes.push_back(
+                {{"path", path},
+                 {"owner", owner == installed_system_nodes_.end() ? "unowned" : owner->second},
+                 {"dependencies", dependency(id)},
+                 {"query", query == nullptr ? "" : query},
+                 {"multi_threaded", system->multi_threaded},
+                 {"immediate", system->immediate}});
+            ecs_os_free(query);
+        }
+    }
+    std::sort(nodes.begin(), nodes.end(), [](const Json &a, const Json &b) {
+        return a.at("path").get<std::string>() < b.at("path").get<std::string>();
+    });
+    Json candidates = Json::array();
+    Json active = Json::array();
+    const auto pipeline = ecs_get_pipeline(ecs.c_ptr());
+    auto pipeline_query = ecs.query(ecs.entity(pipeline));
+    pipeline_query.each([&](flecs::entity node) {
+        const std::string path = node.path().c_str();
+        candidates.push_back(path);
+        if (!node.has(flecs::Empty)) {
+            active.push_back(path);
+        }
+    });
+    Json admission = Json::array();
+    for (const auto &[node, owner] : installed_system_nodes_) {
+        admission.push_back({{"node", node}, {"owner", owner}});
+    }
+    const Json topology = {{"contract", "echelon_forge.cpu_scheduler_topology.v1"},
+                           {"installed_factory_nodes", std::move(admission)},
+                           {"nodes", std::move(nodes)},
+                           {"pipeline_candidate_order", std::move(candidates)}};
+    return Json({{"topology", topology},
+                 {"sha256", runtime::projection_contracts::canonical_sha256_hex(topology.dump())},
+                 {"active_pipeline_order", std::move(active)}})
+        .dump();
 }

@@ -196,7 +196,7 @@ def test_default_fixture_tracks_current_component_and_system_registration() -> N
   engine_source = SYSTEM_REGISTRATION.read_text(encoding="utf-8")
   registry_source = SYSTEM_REGISTRY.read_text(encoding="utf-8")
   assert "register_default_component_contributions(ecs)" in engine_source
-  assert "register_default_system_contributions(ecs)" in engine_source
+  assert "register_default_system_contributions(ecs, &installed_system_nodes_)" in engine_source
   assert not re.search(r"ecs\.component<[^>]+>\(\);", engine_source)
   assert not re.search(r"ecs\.system<[^>]+>", engine_source)
   assert not re.search(r"register_(?!default_)[a-z0-9_]+\s*\(ecs\)", engine_source)

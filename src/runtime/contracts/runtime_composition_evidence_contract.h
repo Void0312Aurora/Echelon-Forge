@@ -70,6 +70,8 @@ struct RuntimeCompositionEvidenceResult {
     RuntimeCompositionEvidence evidence;
     std::string error_code;
     std::string error_detail;
+    // Diagnostic supplement, excluded from the declarative v1 evidence identity.
+    std::vector<std::string> cpu_scheduler_topology_json;
 };
 
 struct EvidenceValidationIssue {

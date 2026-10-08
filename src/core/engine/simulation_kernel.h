@@ -186,6 +186,7 @@ class SimulationKernel {
     [[nodiscard]] std::uint64_t world_composition_generation() const noexcept;
     [[nodiscard]] std::array<std::uint64_t, 5> composition_scope_generations() const noexcept;
     [[nodiscard]] std::string executable_composition_graph_sha256() const;
+    [[nodiscard]] std::string realized_cpu_scheduler_topology_json() const;
     // Configuration
     bool load_database(const std::string &path);
     void clear_zones();
@@ -374,6 +375,7 @@ class SimulationKernel {
     [[nodiscard]] IWeaponReleaseService *weapon_release_service() const noexcept;
 
     flecs::world ecs;
+    std::vector<std::pair<std::string, std::string>> installed_system_nodes_;
     double time_step = kDefaultTimeStepS;
 
     // Deterministic reset-seeded mt19937 stream plus its state-transfer draw position.

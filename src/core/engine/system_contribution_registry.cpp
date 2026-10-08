@@ -444,13 +444,37 @@ void register_default_component_contributions(flecs::world &ecs) {
     }
 }
 
-void register_default_system_contributions(flecs::world &ecs) {
+void register_default_system_contributions(
+    flecs::world &ecs, std::vector<std::pair<std::string, std::string>> *installed_nodes) {
     require_valid_registry();
+    std::unordered_set<ecs_entity_t> known;
+    if (installed_nodes != nullptr) {
+        installed_nodes->clear();
+    }
+    auto capture = [&](std::string_view owner) {
+        if (installed_nodes == nullptr) {
+            return;
+        }
+        std::vector<ecs_entity_t> ids;
+        auto it = ecs_each_id(ecs.c_ptr(), EcsSystem);
+        while (ecs_each_next(&it)) {
+            ids.insert(ids.end(), it.entities, it.entities + it.count);
+        }
+        std::sort(ids.begin(), ids.end());
+        for (auto id : ids) {
+            if (known.insert(id).second && !owner.empty()) {
+                installed_nodes->emplace_back(ecs.entity(id).path().c_str(), owner);
+            }
+        }
+    };
+    capture({});
     for (const auto &contribution : kKernelSystems) {
         contribution.register_system(ecs);
+        capture(contribution.contribution_id);
     }
     for (const auto &contribution : kDefaultSystems) {
         contribution.register_system(ecs);
+        capture(contribution.contribution_id);
     }
 }
 

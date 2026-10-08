@@ -4,6 +4,8 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 namespace flecs {
 struct world;
@@ -47,7 +49,8 @@ struct KernelSystemContribution {
 // default compatibility artifact.  They are intentionally the only runtime
 // entry points used by SimulationKernel for built-in registration.
 void register_default_component_contributions(flecs::world &ecs);
-void register_default_system_contributions(flecs::world &ecs);
+void register_default_system_contributions(
+    flecs::world &ecs, std::vector<std::pair<std::string, std::string>> *installed_nodes = nullptr);
 
 [[nodiscard]] bool validate_default_contribution_graph(std::string *error = nullptr) noexcept;
 

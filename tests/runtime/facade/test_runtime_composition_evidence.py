@@ -68,3 +68,22 @@ def test_python_zero_world_facade_fails_closed_with_named_reason() -> None:
     assert result.available is False
     assert result.error_code == "composition_evidence.no_realized_worlds"
     assert result.evidence.evidence_sha256 == ""
+
+
+def test_realized_scheduler_diagnostics_have_independent_normalized_identity():
+    import hashlib
+    import json
+
+    result = ef_py.RuntimeFacade(2).export_composition_evidence()
+    snapshots = [json.loads(value) for value in result.cpu_scheduler_topology_json]
+    assert len(snapshots) == 2
+    assert snapshots[0]["sha256"] == snapshots[1]["sha256"]
+    snapshot = snapshots[0]
+    canonical = json.dumps(snapshot["topology"], sort_keys=True, separators=(",", ":"))
+    assert snapshot["sha256"] == hashlib.sha256(canonical.encode()).hexdigest()
+    installed = snapshot["topology"]["installed_factory_nodes"]
+    assert len({node["owner"] for node in installed}) == 38
+    assert len(installed) > 38
+    order = snapshot["topology"]["pipeline_candidate_order"]
+    assert order.index("::ClearForces") < order.index("::FlightControl")
+    assert result.evidence.executable_graph_sha256 != snapshot["sha256"]
