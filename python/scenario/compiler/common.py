@@ -14,6 +14,13 @@ from python.coercion import coerce_nonnegative_int
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 _SCALAR_TYPES = (str, int, float, bool, type(None))
+VALID_SCENARIO_SIDES = ("Blue", "Red", "Neutral")
+
+
+def require_scenario_side_name(value: Any, *, field: str = "side") -> str:
+    if not isinstance(value, str) or value not in VALID_SCENARIO_SIDES:
+        raise ValueError(f"{field} must be one of {VALID_SCENARIO_SIDES}, got {value!r}")
+    return value
 
 class _LazyEfEnumMap(Mapping[str, object]):
     def __init__(self, enum_owner_name: str, entries: dict[str, object]):
