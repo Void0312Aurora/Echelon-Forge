@@ -9,13 +9,11 @@ from python.runtime_bootstrap import configure_repo_imports
 configure_repo_imports()
 
 import numpy as np
-from stable_baselines3.common.vec_env import DummyVecEnv
 
 from python.env_config import resolve_env_settings
 from python.rl.policy_checkpoint import load_sb3_policy
 from python.training.cli import ACTION_MODE_CHOICES, MISSION_OBS_MODE_CHOICES
 from python.rl.control.wrappers import get_action_wrapper_spec
-from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
 from tools.diagnostics.common import add_model_load_args, add_probe_run_args
 
 
@@ -27,6 +25,8 @@ def _build_evaluation_env(
     wrapper_kwargs: dict | None = None,
     worker_threads: int | None = None,
 ):
+    from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
+
     runtime = build_single_world_batch_execution_runtime(
         scenario_path=os.path.abspath(scenario_path),
         env_settings=dict(env_settings),
@@ -36,7 +36,7 @@ def _build_evaluation_env(
     )
     return runtime.policy_env
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser(description="Universal Evaluation for CMO")
     add_probe_run_args(
         parser,
@@ -121,7 +121,7 @@ def main():
     scenario_path = os.path.abspath(args.scenario)
     if not os.path.exists(scenario_path):
         print(f"Error: Scenario file not found: {scenario_path}")
-        return
+        return 1
         
     print(f"Evaluating Scenario: {scenario_path}")
     print(f"Loading Model: {args.model}")
@@ -131,7 +131,7 @@ def main():
         cfg_path = os.path.abspath(args.train_config)
         if not os.path.exists(cfg_path):
             print(f"Error: Training config not found: {cfg_path}")
-            return
+            return 1
         with open(cfg_path, "r", encoding="utf-8") as f:
             train_config = json.load(f)
 
@@ -162,6 +162,8 @@ def main():
             worker_threads=runtime_cfg.get("world_batch_threads"),
         )
     
+    from stable_baselines3.common.vec_env import DummyVecEnv
+
     vec_env = DummyVecEnv([make_env])
     
     # Load Model. `load_sb3_policy` is the maintained single owner for SB3
@@ -170,7 +172,8 @@ def main():
         model = load_sb3_policy(args.model, algo=args.algo, device="auto", env=vec_env)
     except Exception as e:
         print(f"Error loading model: {e}")
-        return
+        vec_env.close()
+        return 1
 
     # Metrics
     episode_rewards = []
@@ -264,5 +267,9 @@ def main():
             print(f"  {k}: {term_reason_counts[k]}")
     print("="*30)
 
+    vec_env.close()
+
+    return 0
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
