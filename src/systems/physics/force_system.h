@@ -9,6 +9,7 @@
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/performance.h"
+#include "components/physics/physics_input_policy.h"
 
 namespace {
 constexpr double kGravity = 9.80665;
@@ -71,7 +72,7 @@ inline void register_force_system(flecs::world &ecs) {
                     if (!control_input.has_primary_flight_control_input) continue;
 
                     double m = mass[i].get_total_kg();
-                    if (m < 1.0) m = 15000.0; // Fallback
+                    if (!physics_runtime::valid_mass(m)) continue;
 
                     // Current speed
                     double vx = velocity[i].vx;

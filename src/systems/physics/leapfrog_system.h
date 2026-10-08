@@ -6,6 +6,7 @@
 #include "components/basic/common.h"
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
+#include "components/physics/physics_input_policy.h"
 
 /**
  * LeapfrogIntegrationSystem
@@ -50,12 +51,11 @@ inline void register_leapfrog_integration_system(flecs::world &ecs) {
                 auto forces = it.field<const ForceAccumulator>(2);
                 auto mass = it.field<const Mass>(3);
 
-                double dt = it.delta_time();
-                if (dt <= 0.0) dt = 0.05; // Fallback
+                const double dt = physics_runtime::resolve_integrator_dt(it.delta_time());
 
                 for (auto i : it) {
                     double m = mass[i].get_total_kg();
-                    if (m < 1.0) m = 15000.0; // Fallback
+                    if (!physics_runtime::valid_mass(m)) continue;
 
                     // Compute acceleration from accumulated forces
                     double ax = forces[i].fx / m;

@@ -8,6 +8,7 @@
 #include "components/combat/structural_failure.h"
 #include "components/domains/air/command/control_input_resolution.h"
 #include "components/physics/forces.h"
+#include "components/physics/physics_input_policy.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"   // For GroundState
 #include "components/physics/performance.h" // For LandingGear
@@ -82,8 +83,6 @@ constexpr double kGearDampingDeadbandRadS = 0.01;
 
 // Must match the fallbacks in RotationalIntegrate and LeapfrogIntegrate, whose updates the implicit
 // solve reproduces.
-constexpr double kIntegratorFallbackDtS = 0.05;
-constexpr double kIntegratorFallbackMassKg = 15000.0;
 
 inline double canonicalize_environment_scalar(double value) {
     if (!std::isfinite(value) || kEnvironmentScalarCanonicalQuantum <= 0.0) {
@@ -167,12 +166,11 @@ inline void register_ground_contact_system(flecs::world &ecs) {
                 const ecs_world_info_t *world_info = ecs_get_world_info(it.world().c_ptr());
                 const double current_time =
                     world_info ? static_cast<double>(world_info->world_time_total) : 0.0;
-                double dt = static_cast<double>(it.delta_time());
-                if (dt <= 0.0) dt = kIntegratorFallbackDtS;
+                const double dt = physics_runtime::resolve_integrator_dt(it.delta_time());
 
                 for (auto i : it) {
                     double m = mass[i].get_total_kg();
-                    if (m < 1.0) m = kIntegratorFallbackMassKg;
+                    if (!physics_runtime::valid_mass(m)) continue;
                     flecs::entity entity = it.entity(i);
 
                     // 1. Detection: Query Environment

@@ -1,13 +1,29 @@
 #include <doctest/doctest.h>
 
 #include "components/physics/dynamics.h"
+#include "components/physics/physics_input_policy.h"
 #include "components/systems/logistics.h"
 #include "components/systems/sensor.h"
 #include "core/engine/simulation_kernel.h"
 #include "models/physics/aerodynamics_common.h"
 #include "models/weapons/missile_guidance_math.h"
 
+#include <limits>
+
 TEST_SUITE("aero_physics_common") {
+
+    TEST_CASE("physics input policy preserves valid small values and rejects invalid ones") {
+        CHECK(physics_runtime::valid_mass(0.25));
+        CHECK(physics_runtime::valid_reference_area(0.25));
+        CHECK_FALSE(physics_runtime::valid_mass(0.0));
+        CHECK_FALSE(physics_runtime::valid_mass(-1.0));
+        CHECK_FALSE(physics_runtime::valid_mass(std::numeric_limits<double>::quiet_NaN()));
+        CHECK_FALSE(physics_runtime::valid_reference_area(0.0));
+        CHECK(physics_runtime::resolve_integrator_dt(0.001) == doctest::Approx(0.001));
+        CHECK(physics_runtime::resolve_integrator_dt(0.0) == doctest::Approx(0.05));
+        CHECK(physics_runtime::resolve_integrator_dt(std::numeric_limits<double>::infinity()) ==
+              doctest::Approx(0.05));
+    }
 
     TEST_CASE("lookup_1d_or keeps aircraft-style fallback semantics") {
         CHECK(aero_physics::lookup_1d_or({}, {}, 0.5, 42.0) == doctest::Approx(42.0));
