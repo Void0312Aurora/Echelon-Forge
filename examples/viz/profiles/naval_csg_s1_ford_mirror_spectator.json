@@ -1,0 +1,29 @@
+{
+  "name": "Naval CSG S1 Ford Mirror Spectator",
+  "description": "Agent-free S1-A/B surface transit: three legs, two turns and terminal station settling. Endurance and layered environment integration remain open.",
+  "scenario": "scenarios/naval/csg/csg_s1_ford_mirror_v1.json",
+  "asset_registry": "examples/viz/assets/registry/default.json",
+  "session": {
+    "mode": "spectator",
+    "seed": 20261008,
+    "pause_on_done": true
+  },
+  "startup": {
+    "speed": 4,
+    "auto_start": false
+  },
+  "ui": {
+    "presentation_mode": "MAP",
+    "camera_mode": "FREE",
+    "focus_unit": "BLUE_CSG12__cvn78",
+    "tactical_zoom": 0.85,
+    "tactical_workspace": "cop",
+    "tactical_layers": {
+      "environment": true,
+      "tracks": true,
+      "datalinks": false,
+      "sensor_rings": false,
+      "weapons": false
+    }
+  }
+}

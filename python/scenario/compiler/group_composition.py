@@ -53,7 +53,7 @@ MEMBER_ROLES = (
     "air_wing",
 )
 COUNT_BASES = ("sourced", "engineering_estimate", "doctrinal_fill")
-_GROUP_KEYS = {"group_id", "side", "oob_ref", "guide", "default_heading_deg", "branches", "members"}
+_GROUP_KEYS = {"group_id", "side", "oob_ref", "guide", "default_heading_deg", "branches", "members", "transit"}
 _MEMBER_KEYS = {
     "member_id",
     "oob_row",
@@ -254,6 +254,29 @@ def validate_group_composition(scenario: dict[str, Any], *, project_root: str | 
             host = member.get("embarked_on")
             if host is not None and host not in hosts:
                 _fail(f"{ctx}.members[{member['member_id']}].embarked_on", f"'{host}' is not a ship row")
+        if "transit" in group:
+            transit = group["transit"]
+            tctx = f"{ctx}.transit"
+            if not isinstance(transit, dict):
+                _fail(tctx, "must be an object")
+            _unknown_keys(transit, {"guide_member_id", "speed_mps", "arrival_radius_m", "waypoint_offsets_m"}, tctx)
+            leader = next((m for m in members if m["member_id"] == transit.get("guide_member_id")), None)
+            if (leader is None or leader.get("embarked_on") is not None or
+                    leader.get("role") != "carrier" or _active_count(leader, branches) != 1 or
+                    float(leader["station"].get("range_m", 0.0)) != 0.0):
+                _fail(f"{tctx}.guide_member_id", "must name one active carrier at the guide origin")
+            if _number(transit.get("speed_mps"), f"{tctx}.speed_mps", minimum=0.0) <= 0.0:
+                _fail(f"{tctx}.speed_mps", "must be positive")
+            if _number(transit.get("arrival_radius_m"), f"{tctx}.arrival_radius_m", minimum=0.0) <= 0.0:
+                _fail(f"{tctx}.arrival_radius_m", "must be positive")
+            offsets = transit.get("waypoint_offsets_m")
+            if not isinstance(offsets, list) or not offsets:
+                _fail(f"{tctx}.waypoint_offsets_m", "must be a non-empty list of local east/north offsets")
+            for wi, offset in enumerate(offsets):
+                if not isinstance(offset, list) or len(offset) != 2:
+                    _fail(f"{tctx}.waypoint_offsets_m[{wi}]", "must be [east_m, north_m]")
+                for k, value in enumerate(offset):
+                    _number(value, f"{tctx}.waypoint_offsets_m[{wi}][{k}]")
 
 
 def _active_count(member: dict[str, Any], branches: dict[str, bool]) -> int:
@@ -347,6 +370,12 @@ def expand_group_composition(
                 "embarked_inventory": inventory,
             }
         )
+        if "transit" in group:
+            groups_meta[-1]["transit"] = {
+                **group["transit"],
+                "waypoints_m": [[gx + float(dx), gy + float(dy)]
+                                for dx, dy in group["transit"]["waypoint_offsets_m"]],
+            }
     geo_ids = sorted(gid for gid, f in frames.items() if f.geo is not None)
     separations = []
     for i, a in enumerate(geo_ids):

@@ -4,12 +4,15 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/work/active/carrier_strike_group_engagement/carrier_strike_group_engagement_current_status_20260928.md`
 Owner: `domains/naval`
-Last verified: `2026-09-30`
+Last verified: `2026-10-08`
 
-Status: `2026-09-30` runtime checkpoint for
+Status: `2026-10-08` runtime checkpoint for
 [Carrier Strike Group Engagement](README.md). `S0-A`..`S0-X` are accepted;
 S0-X closes with native replay and agent-free visualization evidence. See the
 [stage gate](carrier_strike_group_engagement_acceptance_20260928.md#csg-s0-runtime-checkpoint-2026-09-30).
+S1-A/B implementations are validated pending integration review; see the
+[A/B checkpoint](carrier_strike_group_engagement_acceptance_20260928.md#csg-s1-ab-runtime-checkpoint-2026-10-08).
+S1-C/D/X remain dependency-blocked.
 
 ## Initial Baseline (`2026-09-28`)
 
@@ -34,15 +37,15 @@ Measured on branch `work/naval-mechanisms` at `5fa7fc9e` (rebased on
 | Naval weapons | records complete; mechanisms partial | 33 weapon records; SAM, gun, and CIWS mounts function | anti-ship, land-attack, ASW-rocket, torpedo mechanisms absent (`CSG-S4`, `CSG-U3`) |
 | World frame | geodetic core, sensing horizon, scenario anchor | `src/components/physics/geodesy.h`; every non-sonar sensor and the data link are gated on the smooth-earth horizon (`P3-A`); scenarios declare `environment.geodetic_anchor` and EGI reads it (`P3-B`, `2026-09-29`) | terrain LOS has no earth bulge; `P4-A` regression pending |
 | CSG placement / static scenario | S0-B and S0-X verified `2026-09-30` | `087c1928`; named and mirror scenarios run 240 steps / 120 s; hulls stay fixed; replay artifacts and profiles pass | inventory aircraft are not live entities; deck cycle remains S2 |
-| Ship motion | kinematic | `src/systems/domains/naval/ship_motion_system.h` | no turning circle, route following, or damage coupling |
-| Group command | single screen station | `NavalCommandIntent` | no formation or group command hierarchy |
+| Ship motion | S1-B bounded maneuvering, validated | `ship_motion_system.h`, `ship_maneuvering.h`, native tests | quadratic surge, bounded Nomoto yaw and damage response; full hydrodynamics and source calibration for proxy hulls remain out of scope |
+| Group command | S1-A surface formation / guide route, validated | `NavalCommandIntent`, `station_keeping.h`, `csg_transit.py`; full-duration named/mirror tests | true-bearing stations; scenario-owned waypoints; Joint group hierarchy remains S1-D |
 | Carrier aviation | absent | none | whole surface missing |
 | Aircraft fuel | present in air dynamics | air domain components | no carrier recovery fuel logic; aerial refuelling is only a supply-radius stub in `src/components/systems/logistics.h` |
 | Surface sensing | bounded | sea clutter, ducting, horizon proxy | truth-read removal not verified for group scenarios |
 | Undersea sensing | passive, truth-reading | `src/models/systems/default_acoustic_model.cpp` iterates true Ship/Submarine positions | no active sonar, propagation profile, towed array, sonobuoy |
 | Data links | present, unqualified for CSG scale | command-link and data-link components | latency and capacity not exercised at group scale |
 | Electronic warfare | component skeleton | `Jammer`, `Countermeasures`, `RWR` in `src/components/systems/ew.h` | no naval soft-kill or stand-off jamming path |
-| Naval damage | synthetic | `DM-N1` profile | seeds only on hitbox hits; motion ignores it |
+| Naval damage | synthetic, live mobility consumed | `DM-N1`, registered damage and motion systems; flooding response test | real-world compartment calibration remains open; motion consumes mobility capability directly |
 | Learned naval policy | absent | smoke entries only | out of scope for this package |
 
 ## Parameter Sources
@@ -68,21 +71,38 @@ System Dependency Register.
 
 ## Compute
 
-Local validation uses Windows MSVC Release, `build-independent-win`, with
+The S0 checkpoint used Windows MSVC Release, `build-independent-win`, with
 `CMO_BUILD_DIR` pinned to that directory. The S0 runtime has 24 live entities in
 the named variant and 22 in the mirror, including stowed helicopters; each runs
 120 simulated seconds in about 0.11 s of native stepping. This excludes the
 inventory air wing, loading, and visualization.
 
-The `2026-09-28` offload inventory listed HEI (`ssh HEI-WIRED`), 88 cores,
-121 GB, RTX 3090, Ubuntu 24.04, gcc 13.3, with a rebuild needed and the root
-filesystem 91 % full. That host inventory has not been refreshed here.
+The `2026-10-08` S1-A/B checkpoint uses a clean local MSVC Release build in
+`build-s1-win-verified-20261008` and an isolated HEI source snapshot at
+`/home/void0312/work/naval-s1-20261008`, accessed through `ssh HEI` and built
+with `-j32`. `CMO_BUILD_DIR` explicitly selects each current extension.
+Both hosts pass all 284 native tests. After the ship-state generation repair,
+the candidate state-transfer target passes 72 tests / 2109 assertions on both
+hosts, including legacy hull import followed by native movement. The contract
+now exports generation 3 and admits exactly 2/3. The audited pre-#117 producer
+emits 2; the regression freezes that source generation for the whole census
+and all twelve owners, verifies promotion to 3 and rejects generation 1.
+The first migration repair used a synthetic generation-1 fixture and was
+insufficient to establish compatibility with that real producer. The initial
+focused Python set passes 135 tests and 16 subtests; the generation-repair S1
+transit and state-transfer/host/kernel contract checks pass 27 tests on each
+host. The rebuilt HEI runtime kernel candidate also passes 7 tests / 2691
+assertions.
+S1 live entity counts remain 24 / 22; each variant runs one simulated hour.
+Timing scope and replay/profile evidence are in the A/B checkpoint.
 
 ## Residual Register
 
 | Residual | Owner | Entry condition |
 | --- | --- | --- |
 | S0 replay artifact and spectator visualization | visualization / runtime evidence, via this package | S0-X accepted; S1/U1 may dispatch |
+| ship fuel burn/endurance and shared logistics contract absent | `systems/physics` | deliver and accept the shared owner contract before S1-C; current NavalStores transfer is insufficient |
+| layered maritime/bathymetry query absent; Environment Runtime P3-A undelivered | `systems/environment` | accept P3-A before S1-D; then add naval seakeeping and Joint hierarchy execution |
 | uniform high-fidelity stepping may not carry the full order of battle | this package | throughput records at `CSG-S1`/`CSG-S2` |
 | no flight-deck contact surface: embarked aircraft stay inventory (the gear-contact step-size limit was closed `2026-09-30` by [Semi-Implicit Ground Contact](../../../../../systems/physics/reviews/semi_implicit_ground_contact_20260930/README.md)) | `systems/physics` with this package | `CSG-S2` deck cycle |
 | Air-domain seams for carrier aviation | Air owner, via this package | `S2-B` dispatch |
@@ -104,9 +124,17 @@ filesystem 91 % full. That host inventory has not been refreshed here.
 4. `S0-X` has full-duration native runs, side/count/stability regression checks,
    a measured throughput record, maintained composition and replay contracts,
    two checked-in native replay artifacts, two replay profiles, and two native
-   spectator profiles. The stage is accepted; S1/U1 may now dispatch.
+   spectator profiles. The stage is accepted; S1/U1's S0 prerequisite is closed.
+5. S1-A/B implementations are validated on `origin/main` baseline `cedfa01c3`:
+   bounded maneuvering, damage-to-mobility, and one-hour named/mirror surface
+   transit with terminal settling. Integration review remains open.
+6. Deliver the shared ship logistics contract and Environment Runtime `P3-A`
+   through their system owners, then integrate S1-C and S1-D. Dispatch Rules
+   prohibit local stand-ins for these undelivered prerequisites.
+7. Run the complete S1-X stage gate only after S1-C/D closure.
 
 ## Overclaim Refusals
 
 Nothing in this package's current state establishes carrier aviation, anti-ship
-engagement, undersea warfare, group command, or any learned-policy result.
+engagement, undersea warfare, Joint group command hierarchy, endurance or UNREP
+scheduling, layered maritime environment response, or any learned-policy result.

@@ -8,7 +8,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/README.md`
 Owner: `domains/naval`
-Last verified: `2026-09-23`
+Last verified: `2026-10-08`
 
 状态：naval 执行语义的维护中 owner 入口。
 
@@ -58,8 +58,9 @@ Naval 可以约束这些形状在海上执行中的使用方式，但不重新�
 - screen、support、patrol 与 recover family 的 task/profile 映射
 - contact、assignment、reporting、ROE 与 station/screen 执行输入
 - 初始舰艇与 naval weapon-system 配置基线
+- S1-A/B 有界舰艇机动、实时毁伤到机动耦合，以及场景领舰航路驱动的真方位护航站位控制
 
-这些 surface 不构成完整舰队 doctrine、完整机动与驻站控制器、海上补给行动，
+这些 surface 不构成完整舰队 doctrine、全舰队机动标定、海上补给行动，
 也不构成权威的海军武器与伤害标定。
 
 ## 标准化规则
@@ -76,7 +77,8 @@ Naval 可以约束这些形状在海上执行中的使用方式，但不重新�
 ## 活跃工作与相关文档
 
 - [航母打击群对抗](work/active/carrier_strike_group_engagement/README.zh.md)：
-  海军作战能力的前向计划，处于 planning。从静态兵力编成到福特级对福建级编队完整对抗的场景阶梯，
+  海军作战能力的前向计划：S0 已接受，S1-A/B 已验证且待集成审阅，S1-C/D/X 受依赖阻塞。
+  从静态兵力编成到福特级对福建级编队完整对抗的场景阶梯，
   并有并行的水下轨道；取代历史 `N0`-`N8` 阶梯作为前向计划。
 - [Naval 领域表面拆分](work/active/naval_domain_surface_split/README.zh.md)：
   当前有界工作包。`P2-B` 已落地海军 command projection，拆分分支的原生回归测试

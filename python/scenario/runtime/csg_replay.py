@@ -6,11 +6,14 @@ import hashlib
 import json
 import math
 import os
+import platform
+import time
 from pathlib import Path
 from typing import Any
 
 from python.runtime_bootstrap import resolve_repo_path
 from python.simulation import create_scenario_runtime_adapter
+from .csg_transit import CsgTransitController
 
 
 CSG_REPLAY_SCHEMA = "csg.s0.replay.v1"
@@ -161,8 +164,16 @@ def capture_csg_replay(scenario_path: str, *, seed: int, max_steps: int | None =
         raise ValueError("CSG replay max_steps must be non-negative")
     time_step_s = float(environment.get("time_step", 0.5))
     frames = [{"tick": 0, "sim_time_s": 0.0, "units": _csg_replay_unit_frame(sim, loader)}]
+    transit = CsgTransitController(loader)
+    native_wall_s = 0.0
+    command_wall_s = 0.0
     for step in range(1, steps + 1):
+        started = time.perf_counter()
+        transit.step()
+        command_wall_s += time.perf_counter() - started
+        started = time.perf_counter()
         sim.step()
+        native_wall_s += time.perf_counter() - started
         frames.append(
             {
                 "tick": step,
@@ -193,6 +204,14 @@ def capture_csg_replay(scenario_path: str, *, seed: int, max_steps: int | None =
             "mode": "native_deterministic_step",
             "agent_free": True,
             "frame_count": len(frames),
+            "transit": transit.report(),
+        },
+        "throughput": {
+            "host": platform.node(),
+            "platform": platform.platform(),
+            "native_step_wall_s": native_wall_s,
+            "scripted_command_wall_s": command_wall_s,
+            "scope": "native fixed steps and command publication timed separately; loading, state export and serialization excluded",
         },
     }
 
@@ -223,8 +242,10 @@ def iter_csg_spectator_frames(
     if loader.load_scenario(scenario_abs, seed=int(seed)) is not None:
         raise RuntimeError(f"CSG spectator scenario must remain agent-free: {scenario_abs}")
 
+    transit = CsgTransitController(loader)
     yield {"tick": 0, "sim_time_s": 0.0, "units": _csg_replay_unit_frame(sim, loader)}
     for step in range(1, steps + 1):
+        transit.step()
         sim.step()
         yield {
             "tick": step,
