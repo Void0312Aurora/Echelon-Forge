@@ -20,9 +20,7 @@ The current C++ surface is multi-domain but not evenly mature. Air/execution is
 the deepest maintained path. Naval has platform components, command/tasking
 owner slices, ship/submarine/embarked-air token runtime, weapon-release hooks,
 and engagement evidence exports, but not a complete naval mission runtime.
-Ground is bootstrap/evidence-only: `UnitType::Ground` and typed platform
-capability evidence exist, while land movement, sensing, terrain ownership,
-fires, damage, and full ground runtime remain held.
+Ground has bounded native single-infantry movement, explicit Arnis terrain sampling and tracked-hostile rifle-fire/shared-damage probes alongside static tasking. General routes, sensing, suppression and production Ground WorldBatch execution remain unadmitted.
 
 The maintained dependency direction should be understood as:
 
@@ -292,6 +290,8 @@ Current mainline subdomains:
 
 - `scenario/`
   - Main implementation for scenario compilation and runtime.
+- `simulation/`
+  - Backend protocols, explicit provider selection, `facade_batch`, no-RL Air scenario orchestration and replay.
 - `rl/`
   - Mainline Python RL stack, including runtime, tasking, policy algorithms, planning, profile, and support.
 - `training/`
