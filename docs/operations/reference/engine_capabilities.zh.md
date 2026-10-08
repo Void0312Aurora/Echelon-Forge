@@ -4,9 +4,7 @@
 
 Echelon Forge 当前拥有一个基于 **ECS（flecs）** 的仿真内核。air/execution
 路径仍是最成熟的 runtime 与训练表面；naval 已有 pre-fire tasking/contact
-证据以及受限的 weapon-release 和 engagement-event hook。ground 在项目层面已有
-早期 tasking/schema 证据，但维护中的 C++ `src` surface 只到
-setup/type/capability evidence 与 aircraft/terrain ground-contact primitive。
+证据以及受限的 weapon-release 和 engagement-event hook。ground 已有静态 command/tasking owner，以及受限的原生单兵移动、显式 Arnis 地形采样、要求敌方跟踪目标的步枪直射和共享毁伤探针。
 下面描述以当前仓库实现为准，但不等于声明完整 naval 或 ground combat runtime 已经成熟。
 
 ## 1) 核心能力（现在能做什么）
@@ -45,9 +43,7 @@ setup/type/capability evidence 与 aircraft/terrain ground-contact primitive。
 - naval 当前以 pre-fire/tasking/contact 为主，并带有受限的 weapon-release 与
   engagement-event evidence hook；不要由此推断已有完整 naval weapon-outcome
   authority。
-- ground 当前在 C++ `src` 中以 schema/setup/bootstrap 为主；尚无维护中的 C++
-  ground command/tasking owner，movement、sensing、terrain、fires、damage 与
-  full ground runtime 行为仍保持 held。
+- Ground 已有 C++ command/tasking 组件、受限 `GroundInfantryMovement`、局部地形代价采样、步枪直射和共享毁伤探针；尚无生产级 Ground `WorldBatch`、通用感知、路径规划、压制、后勤或完整陆战能力。
 
 ## 2) 关键局限（对“训练学歪”最敏感的部分）
 
