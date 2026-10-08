@@ -30,6 +30,7 @@
 
 #include <array>
 #include <cmath>
+#include <limits>
 #include <string>
 
 namespace {
@@ -131,6 +132,38 @@ PilotAction pilot_input(double throttle, double brake, double rudder = 0.0) {
 } // namespace
 
 TEST_SUITE("ground_contact_solver") {
+
+    TEST_CASE("frozen-force kick-drift-kick is exact for constant acceleration") {
+        flecs::world world;
+        runtime::systems::register_default_component_contributions(world);
+        register_leapfrog_integration_system(world);
+
+        const auto body = world.entity()
+                              .set<Transform>({1.0, -2.0, 3.0, 0.0, 0.0, 0.0})
+                              .set<Velocity>({3.0, -4.0, 0.5})
+                              .set<ForceAccumulator>({4.0, -6.0, 2.0, 0.0, 0.0, 0.0})
+                              .set<Mass>({2.0, 0.0, 0.0});
+
+        world.progress(0.25f);
+
+        const auto &position = *body.get<Transform>();
+        const auto &velocity = *body.get<Velocity>();
+        CHECK(position.x == doctest::Approx(1.8125));
+        CHECK(position.y == doctest::Approx(-3.09375));
+        CHECK(position.z == doctest::Approx(3.15625));
+        CHECK(velocity.vx == doctest::Approx(3.5));
+        CHECK(velocity.vy == doctest::Approx(-4.75));
+        CHECK(velocity.vz == doctest::Approx(0.75));
+    }
+
+    TEST_CASE("angle wrapping leaves non-finite inputs unchanged") {
+        const double infinity = std::numeric_limits<double>::infinity();
+        const double nan = std::numeric_limits<double>::quiet_NaN();
+        CHECK(std::isinf(integration_wrap_angle_360(infinity)));
+        CHECK(std::isinf(integration_wrap_angle_360(-infinity)));
+        CHECK(std::isnan(integration_wrap_angle_360(nan)));
+        CHECK(integration_wrap_angle_360(-30.0) == doctest::Approx(330.0));
+    }
 
     TEST_CASE("ground contact and downstream integrators share one dt policy") {
         CHECK(physics_runtime::resolve_integrator_dt(0.0) == doctest::Approx(0.05));

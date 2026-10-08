@@ -5,7 +5,8 @@
  * 
  * Accumulates all forces acting on a rigid body in world frame.
  * Used by ForceSystem to compute net force, then by IntegrationSystem
- * to update velocity and position using Leapfrog (symplectic) integration.
+ * to update velocity and position using the frozen-force kick-drift-kick
+ * integration contract.
  */
 struct ForceAccumulator {
     // Linear forces in world frame (Newtons)

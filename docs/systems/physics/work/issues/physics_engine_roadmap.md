@@ -17,7 +17,7 @@ Content status: not reverified during the 2026-08-07 ownership migration.
 
 ## Executive Summary
 
-This document outlines the roadmap for upgrading the Echelon Forge physics engine from its current ad-hoc procedural model to a rigorous force-based system with symplectic integration, enabling future extensions like weapon separation and ejection dynamics.
+This document outlines the roadmap for upgrading the Echelon Forge physics engine from its current ad-hoc procedural model to a force-based system. The current integrator uses one frozen force evaluation per frame; future structure-preserving methods remain a separate upgrade, enabling extensions like weapon separation and ejection dynamics.
 
 ---
 
@@ -40,9 +40,10 @@ This document outlines the roadmap for upgrading the Echelon Forge physics engin
 ┌─────────────────────────────────────────────────────────┐
 │                    Physics Engine v2.0                  │
 ├─────────────────────────────────────────────────────────┤
-│  Layer 1: Symplectic Integrator                         │
-│  ├─ Leapfrog/Störmer-Verlet for (q, p)                 │
-│  └─ Guarantees bounded energy error                     │
+│  Layer 1: Frozen-force semi-implicit integrator         │
+│  ├─ Kick-drift-kick using the frame's force sample     │
+│  └─ Exact for constant acceleration; no general        │
+│      symplectic or energy-bound guarantee              │
 ├─────────────────────────────────────────────────────────┤
 │  Layer 2: Force Models (Newtonian)                      │
 │  ├─ Gravity, Thrust, Drag, Lift                         │
@@ -58,26 +59,26 @@ This document outlines the roadmap for upgrading the Echelon Forge physics engin
 └─────────────────────────────────────────────────────────┘
 ```
 
-### Why Choose a Symplectic Integrator
+### Current Integrator Contract
 
 | Integration Method | Energy Error | Long-Term Stability |
 |--------------------|--------------|---------------------|
 | Euler | O(dt) accumulating | ❌ diverges |
 | RK4 | O(dt^4) accumulating | ⚠️ slow divergence |
-| **Leapfrog** | O(dt^2) **bounded oscillation** | ✅ stable |
+| **Frozen-force kick-drift-kick** | Exact for constant acceleration; force-model accuracy depends on dt | Contracted and tested |
 
 ```cpp
-// Leapfrog algorithm (symplectic, second-order accurate)
+// Frozen-force kick-drift-kick (one force sample per frame)
 p_half = p + F(q) * dt/2;          // half-step momentum
 q_new  = q + (p_half/m) * dt;      // full-step position
-p_new  = p_half + F(q_new) * dt/2; // half-step momentum
+p_new  = p_half + F(q) * dt/2;      // reuse the frozen force sample
 ```
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Force-Based Refactor with Symplectic Integration
+### Phase 1: Force-Based Refactor with Frozen-Force Integration
 **Estimated Time**: 2-3 hours
 
 1. Create `ForceAccumulator` component
@@ -85,7 +86,7 @@ p_new  = p_half + F(q_new) * dt/2; // half-step momentum
 3. Implement gravity: `F_z = -m * g`
 4. Implement drag: `F_drag = -0.5 * ρ * v² * Cd * S * v̂`
 5. Implement thrust: `F_thrust = throttle * T_max * n̂`
-6. Replace Euler position update with kick-drift-kick integration (`LeapfrogIntegrationSystem`)
+6. Replace Euler position update with the frozen-force kick-drift-kick integration (`LeapfrogIntegrationSystem`)
 7. **Verify**: Aircraft falls under gravity when stationary
 
 #### Files to Modify
