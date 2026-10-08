@@ -62,23 +62,27 @@ class ShipNavalStationCommandTests(unittest.TestCase):
     cmd.station_bearing_deg = 0.0
     kernel.set_mission_command(int(ddg_id), cmd)
 
-    initial_heading = float(kernel.get_unit_heading(int(ddg_id)))
-    initial_distance = math.dist(
-      tuple(float(v) for v in kernel.get_unit_position(int(ddg_id))[:2]),
-      tuple(float(v) for v in kernel.get_unit_position(int(reference_id))[:2]),
-    )
+    # The DDG starts 2 km ahead of its station (14 km due north of a guide that
+    # steams north). Station keeping commands the guide's velocity plus a
+    # bounded closing velocity, so the ship falls back by slowing down and
+    # coming round to the guide's course; it does not reverse onto the guide.
+    def station_error_m() -> float:
+      own = kernel.get_unit_position(int(ddg_id))
+      ref = kernel.get_unit_position(int(reference_id))
+      return math.dist(tuple(float(v) for v in own[:2]), (float(ref[0]), float(ref[1]) + 14000.0))
 
-    for _ in range(20):
+    initial_error = station_error_m()
+    for _ in range(240):
       kernel.step()
+      heading = float(kernel.get_unit_heading(int(ddg_id)))
+      off_course = abs(((heading - 0.0 + 180.0) % 360.0) - 180.0)
+      self.assertLessEqual(off_course, 90.0 + 1.0e-6)
 
     final_heading = float(kernel.get_unit_heading(int(ddg_id)))
-    final_distance = math.dist(
-      tuple(float(v) for v in kernel.get_unit_position(int(ddg_id))[:2]),
-      tuple(float(v) for v in kernel.get_unit_position(int(reference_id))[:2]),
-    )
-
-    self.assertGreater(final_heading, initial_heading + 1.0)
-    self.assertLess(final_distance, initial_distance - 50.0)
+    final_speed = math.hypot(*tuple(float(v) for v in kernel.get_unit_velocity(int(ddg_id))[:2]))
+    self.assertLess(station_error_m(), initial_error - 500.0)
+    self.assertLess(final_speed, 10.29)
+    self.assertLess(abs(((final_heading + 180.0) % 360.0) - 180.0), 30.0)
 
   def test_ship_station_command_inner_screen_accelerates_toward_forward_station(self) -> None:
     kernel = _spawn_kernel()
