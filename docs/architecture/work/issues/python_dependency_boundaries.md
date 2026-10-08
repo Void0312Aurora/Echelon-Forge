@@ -1,6 +1,6 @@
 # Python Dependency Boundaries
 
-Status: active implementation of GitHub issue #60.
+Status: implemented inventory and CI boundary gates for GitHub issue #60.
 
 Owner: cross-domain architecture, with `gym_envs` and `python.rl` owners for
 the retained runtime transitions.
@@ -94,13 +94,15 @@ The policy-only gate can be inspected or used as a CI command:
 python -m tools.architecture.dependency_policy --format summary
 ```
 
-The current 2026-10-05 baseline from that command is 1,107 Python modules, 2,551
-resolved Python import sites, 561 C/C++ source files, 1,723 quoted include
-sites, and 72 CMake link sites representing 66 unique target edges. No Python,
-C++ file, or CMake target multi-node cycle is present. The Python policy
-classifies 2,564 edges as allowed and 37 as compatibility, with no transitional
-edges remaining;
-there are no unregistered forbidden edges. These counts use the maintained
+The refreshed 2026-10-08 source baseline (`9c4790743`, the preceding README
+repair) has 1,139 Python modules, 2,661 resolved import sites, 2,374 unique
+module edges, 571 C/C++ files, 1,777 quoted include sites (1,775 file edges),
+and 72 CMake link sites representing 66 unique target edges. No Python, C++
+file, or CMake target multi-node cycle is present. The policy classifies all
+2,661 Python sites exactly once: 2,624 allowed + 37 compatibility, with zero
+transitional, forbidden or unclassified sites. The previous prose mixed two
+snapshots; these totals now come from the same maintained scanner scope.
+These counts use the maintained
 scanner scope above and are not expected to equal the issue's initial census
 because that census did not specify identical roots, file suffixes, or edge
 deduplication rules.
@@ -109,3 +111,27 @@ This is a source census. It does not claim to resolve non-literal dynamic
 imports, preprocessor expansion, CMake conditions or generator expressions, or
 third-party dependencies. Those remain separate evidence limitations and are
 reported as such rather than inferred from this one.
+
+## Enforced closure and retained exceptions
+
+`tests/architecture/governance/test_python_dependency_boundaries.py` is an
+explicit member of the required `ci_smoke_suite.json`, alongside the existing
+C++ include-direction guard. Its tests reject forbidden Python edges,
+transition growth, unresolved internal imports, actual Python/C++/CMake
+multi-node cycles, and unclassified Python sites. Injected reverse edges and
+C++/CMake cycles exercise the same policy/detector used by the real graph gate.
+Package-level bidirectional coupling remains distinct from a module SCC.
+
+The existing matrix owners remain `tools/architecture/dependency_policy.py`
+(Python roles) and `tools/architecture/cpp_include_graph.py` (C++ layers).
+The retained Python compatibility role and the exact four native reverse-edge
+exceptions are not new exemptions introduced by this repair. Native owner,
+reason and retirement conditions remain in
+`tests/architecture/fixtures/cpp_include_direction_allowlist_20260720.json`:
+one contracts-to-composition parser adapter and three engine-to-GPU
+compatibility packet/implementation dependencies. The guard checks their exact
+fingerprints and rejects new edges rather than widening their layer permission.
+
+No runtime code was changed by this closure. Removing those native adapters
+requires the separately owned parser/GPU boundary work recorded in the
+allowlist; it is not needed to admit the initial inventory and boundary gate.

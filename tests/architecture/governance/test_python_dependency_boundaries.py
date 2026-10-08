@@ -29,6 +29,32 @@ def inventory() -> Inventory:
   return build_inventory()
 
 
+def _assert_native_dependency_graphs_acyclic(inventory: Inventory) -> None:
+  assert strongly_connected_components(inventory.cpp_edges) == [], "C++ include cycle"
+  assert strongly_connected_components_cmake(inventory.cmake_edges) == [], "CMake target cycle"
+
+
+def test_real_native_dependency_graphs_have_no_cycles(inventory: Inventory) -> None:
+  assert inventory.cpp_files and inventory.cpp_edges and inventory.cmake_edges
+  _assert_native_dependency_graphs_acyclic(inventory)
+
+
+def test_python_policy_classifies_every_inventory_site_once(inventory: Inventory) -> None:
+  states = classify_python_edges(inventory, load_transitions())
+  assert sum(states.values()) == len(inventory.python_edges)
+  assert states["unclassified"] == 0
+
+
+def test_cpp_cycle_gate_rejects_injected_back_edge(inventory: Inventory) -> None:
+  forward = DependencyEdge("cpp_include", "src/components/a.h", "src/components/b.h", "src/components/a.h", 1)
+  reverse = DependencyEdge("cpp_include", "src/components/b.h", "src/components/a.h", "src/components/b.h", 1)
+  changed = Inventory(inventory.python_modules, inventory.python_edges, inventory.cpp_files,
+                      (*inventory.cpp_edges, forward, reverse), inventory.cmake_edges,
+                      inventory.unresolved_python_imports)
+  with pytest.raises(AssertionError, match=r"C\+\+ include cycle"):
+    _assert_native_dependency_graphs_acyclic(changed)
+
+
 def test_python_dependency_policy_has_no_unregistered_or_growing_edges(inventory: Inventory) -> None:
   transitions = load_transitions()
 
@@ -154,6 +180,8 @@ def test_cmake_target_graph_rejects_a_synthetic_back_edge(tmp_path: Path) -> Non
     ("ef_core", "ef_content"),
   ]
   assert strongly_connected_components_cmake(edges) == [["ef_content", "ef_core"]]
+  with pytest.raises(AssertionError, match="CMake target cycle"):
+    _assert_native_dependency_graphs_acyclic(Inventory({}, (), (), (), tuple(edges), ()))
 
 
 def test_cmake_target_graph_preserves_real_command_line_numbers() -> None:
