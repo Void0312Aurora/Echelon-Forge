@@ -121,6 +121,12 @@ _SURFACE_TYPE_MAP = {
     "Obstacle": 5,
 }
 
+
+def resolve_scenario_surface_type(value: Any, *, field: str = "surface") -> int:
+    if not isinstance(value, str) or value not in _SURFACE_TYPE_MAP:
+        raise ValueError(f"{field} must be one of {tuple(_SURFACE_TYPE_MAP)}, got {value!r}")
+    return _SURFACE_TYPE_MAP[value]
+
 DEFAULT_TERRAIN_TYPE = "flat"
 VALID_TERRAIN_TYPES = frozenset({"flat", "legacy", "hill", "gaussian_hill", "mountain"})
 COMPATIBILITY_TERRAIN_TYPES = frozenset({"legacy", "hill", "gaussian_hill", "mountain"})

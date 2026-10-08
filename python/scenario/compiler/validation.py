@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from .common import require_scenario_side_name, resolve_environment_geodetic_anchor
+from .common import (
+    require_scenario_side_name,
+    resolve_environment_geodetic_anchor,
+    resolve_scenario_surface_type,
+)
 
 
 def _format_source(source_path: str) -> str:
@@ -138,6 +142,7 @@ def validate_scenario_compiler_shape(
             context=context,
             source_path=source_path,
         )
+        _validate_zone_surfaces(zones, "zones", context=context, source_path=source_path)
 
     env_cfg = scenario_data.get("environment", {})
     if isinstance(env_cfg, dict):
@@ -158,6 +163,16 @@ def validate_scenario_compiler_shape(
                 "environment.zones",
                 context=context,
                 source_path=source_path,
+            )
+            _validate_zone_surfaces(env_zones, "environment.zones", context=context, source_path=source_path)
+
+
+def _validate_zone_surfaces(zones, field_name, *, context, source_path):
+    for index, zone in enumerate(zones):
+        if "surface" in zone:
+            resolve_scenario_surface_type(
+                zone["surface"],
+                field=f"{context} {field_name}[{index}].surface ({_format_source(source_path)})",
             )
 
 

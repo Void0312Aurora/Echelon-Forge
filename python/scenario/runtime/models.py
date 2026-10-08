@@ -9,17 +9,10 @@ from python.scenario.compiler.common import (
     DEFAULT_GEODETIC_ANCHOR,
     GEODETIC_ANCHOR_SOURCE_DEFAULT,
     require_scenario_side_name,
+    _SURFACE_TYPE_MAP,
+    resolve_scenario_surface_type,
 )
 
-
-_SURFACE_TYPE_MAP = {
-    "Concrete": 0,
-    "Asphalt": 1,
-    "HardPacked": 2,
-    "SoftDirt": 3,
-    "Water": 4,
-    "Obstacle": 5,
-}
 
 def resolve_scenario_side(side_name: Any):
     member_name = require_scenario_side_name(side_name)

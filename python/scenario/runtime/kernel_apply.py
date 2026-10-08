@@ -23,7 +23,7 @@ from .models import (
     ScenarioWorldLayout,
     ScenarioZoneLayout,
     resolve_scenario_side,
-    _SURFACE_TYPE_MAP,
+    resolve_scenario_surface_type,
 )
 from .randomization import (
     _apply_spawn_randomization,
@@ -289,7 +289,7 @@ def prepare_scenario_world_layout(
                         width=float(zone.get("width", 1000.0)),
                         length=float(zone.get("length", 1000.0)),
                         heading=float(zone.get("heading", 0.0)),
-                        surface_type=int(_SURFACE_TYPE_MAP.get(zone.get("surface", "SoftDirt"), 3)),
+                        surface_type=resolve_scenario_surface_type(zone.get("surface", "SoftDirt")),
                     )
                 )
 
