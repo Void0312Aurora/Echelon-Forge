@@ -150,6 +150,16 @@ updated together; old external records require migration and remain subject to
 strict unknown-field rejection. The ECS migration evidence digest is repinned
 for the changed serialized field set and the explicit N-1 ship normalizers.
 
+The audited pre-#117 producer at `cedfa01c35cb9b9c0b03f2ee9b3f211c893cd8a5`
+emits contract generation 2. The changed ship schema advances the current
+contract to 3, so the real old producer enters N-1 migration. The complete
+twelve-owner census and artifacts in the regression retain the frozen source
+generation 2; they are not relabeled to the target's N-1 constant. All twelve
+observations must promote 2 to 3. The reader admits only 2/3 and rejects 1.
+The first repair used a synthetic generation-1 fixture and did not exercise
+this actual producer path; the generation-2 regression reproduced the bypass
+before the contract bump.
+
 The runtime's N-1 ECS admission translates the previous 22-field hull record
 before strict current decoding. Its reference speed is `max(1, economic speed)`
 when economic speed is positive, otherwise `max(1, maximum speed)`. The old
@@ -180,12 +190,13 @@ The existing HEI checkout is preserved.
 | --- | --- |
 | Windows full `ef_test` | 284 passed; 169,269 assertions |
 | HEI full `ef_test` | 284 passed; 169,269 assertions |
-| Windows / HEI runtime host/state-transfer candidate after review repair | each: 72 passed; 1,993 assertions |
-| Windows / HEI N-1 ship migration and refusal cases | each: 2 cases, 145 assertions passed; reproduced failure before the fix |
+| Windows / HEI runtime host/state-transfer candidate after generation repair | each: 72 passed; 2,109 assertions |
+| Windows / HEI generation-2 ship migration and refusal cases | each: 2 cases, 261 assertions passed; reproduced real generation-2 failure before the fix |
 | Windows naval runtime + S1/S0 scenarios + CSG content | 101 passed; 16 subtests |
 | Windows S0/S1 visualization wire profiles + state-transfer evidence | 14 passed |
 | HEI final focused Python set | 135 passed; 16 subtests |
-| Windows / HEI focused post-review S1 transit + migration evidence | each: 15 passed |
+| Windows / HEI post-review S1 transit + state-transfer/host/kernel contracts | each: 27 passed |
+| HEI rebuilt runtime kernel candidate | 7 passed; 2,691 assertions |
 | Full-duration replay regeneration | named and mirror: 7201 frames each; `naval_csg_replay` contract passed |
 | Static gates | repository Ruff, changed C++ clang-format and internal code governance passed; 263 maintained documents / 2015 local links, zero issues |
 
