@@ -18,15 +18,17 @@ inline void validate_time_steps(std::size_t world_count, const std::vector<doubl
     for (double dt : time_steps) {
         // Zero is the legacy native DTO encoding of an absent scenario value.
         if (!std::isfinite(dt) || dt < 0.0) {
-            throw std::invalid_argument("time_steps must be finite and nonnegative (zero selects the default)");
+            throw std::invalid_argument(
+                "time_steps must be finite and nonnegative (zero selects the default)");
         }
     }
 }
 
 inline void apply_setup_time_step(SimulationKernel &world, std::size_t world_index,
-                                 const std::vector<double> &time_steps) {
-    const double dt = time_steps.empty() ? 0.0 :
-        (time_steps.size() == 1 ? time_steps[0] : time_steps[world_index]);
+                                  const std::vector<double> &time_steps) {
+    const double dt = time_steps.empty()
+                          ? 0.0
+                          : (time_steps.size() == 1 ? time_steps[0] : time_steps[world_index]);
     world.set_time_step(dt == 0.0 ? SimulationKernel::kDefaultTimeStepS : dt);
 }
 

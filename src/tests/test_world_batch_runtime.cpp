@@ -18,7 +18,8 @@ TEST_SUITE("world_batch_runtime") {
         WorldBatchRuntime runtime(2);
         const double default_dt = SimulationKernel::kDefaultTimeStepS;
         CHECK(runtime.world_time_step(0) == default_dt);
-        for (const auto &values : std::vector<std::vector<double>>{{0.2, 0.3}, {}, {0.0}, {0.2, 0.3}}) {
+        for (const auto &values :
+             std::vector<std::vector<double>>{{0.2, 0.3}, {}, {0.0}, {0.2, 0.3}}) {
             runtime.apply_world_setup_batch({11, 17}, {}, {}, {}, {}, values);
             for (std::size_t i = 0; i < 2; ++i) {
                 CHECK(runtime.world_time_step(i) == (values.size() == 2 ? values[i] : default_dt));
@@ -37,10 +38,12 @@ TEST_SUITE("world_batch_runtime") {
         REQUIRE(entity.is_alive());
         for (double invalid : {-0.1, std::numeric_limits<double>::quiet_NaN(),
                                std::numeric_limits<double>::infinity()}) {
-            CHECK_THROWS_AS(runtime.apply_world_setup_batch({11, 17}, {}, {}, {}, {}, {0.1, invalid}),
+            CHECK_THROWS_AS(
+                runtime.apply_world_setup_batch({11, 17}, {}, {}, {}, {}, {0.1, invalid}),
+                std::invalid_argument);
+            CHECK_THROWS_AS(runtime.apply_world_layout(0, 17, "flat", 0, 0, 0, false, 0, 0, 8, {},
+                                                       {}, {invalid}),
                             std::invalid_argument);
-            CHECK_THROWS_AS(runtime.apply_world_layout(0, 17, "flat", 0, 0, 0, false, 0, 0, 8,
-                                                       {}, {}, {invalid}), std::invalid_argument);
             CHECK(runtime.world_time_step(0) == 0.2);
             CHECK(runtime.world_time_step(1) == 0.3);
             CHECK(entity.is_alive());
