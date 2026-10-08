@@ -1,0 +1,2395 @@
+{
+  "schema_version": "echelon_forge.hmoe_cuda_qualification.v1",
+  "environment": {
+    "policy_source_revision": "d07bd8b9ac58ec62fb7ec57771055ba1a54ae190",
+    "source_archive_sha256": "e8797385cb9f7f37cf889e81937e6c3c5c928b65e023190b12525fd0bcc35d3e",
+    "source_hashes": {
+      "python/rl/policy_algo/policies.py": "7c55ca409c1d0a225ab11234c07cbac8ff6b68cbdbbe04e9ef8fb407a481c886",
+      "python/rl/policy_algo/hmoe_routing.py": "8cf3ad89c2d9ea958442956f568227965cd379daa2799c309d61764e179ba40a",
+      "tests/policy/test_hmoe_head_bank.py": "77dd98867a6fec813584f6c5ea685e1a8d8128de661ba391a1d29d0c847c7d3f",
+      "tools/diagnostics/hmoe_head_bank_benchmark.py": "5f303f2df6970ad89b292cab764c5ddacc0b39526bfd041e9e1c46ad407c6e96"
+    },
+    "utc_started": "2026-10-08T12:53:10.134494+00:00",
+    "hostname": "void0312",
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+    "python": "3.13.5 | packaged by Anaconda, Inc. | (main, Jun 12 2025, 16:09:02) [GCC 11.2.0]",
+    "python_executable": "/home/void0312/Workshop/CMO/.venv/bin/python",
+    "torch": "2.5.1+cu121",
+    "cuda_runtime": "12.1",
+    "cudnn": 90100,
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "compute_capability": [
+      8,
+      6
+    ],
+    "benchmark_rounds": 3,
+    "samples_per_case_per_round": 100,
+    "device_context": "Shared RTX 3090; existing ASR and Sunshine processes remain active"
+  },
+  "gpu_before_csv": "name, driver_version, utilization.gpu [%], memory.used [MiB], temperature.gpu, pstate, power.draw [W]\nNVIDIA GeForce RTX 3090, 580.178.04, 4 %, 5487 MiB, 47, P2, 119.43 W\n",
+  "gpu_after_csv": "name, driver_version, utilization.gpu [%], memory.used [MiB], temperature.gpu, pstate, power.draw [W]\nNVIDIA GeForce RTX 3090, 580.178.04, 12 %, 5487 MiB, 48, P2, 119.66 W\n",
+  "parity_test_output": ".........                                                                [100%]\n9 passed in 7.19s\n",
+  "summary": [
+    {
+      "batch": 1,
+      "routing": "single_family",
+      "before_event_median_ms": 1.310096025466919,
+      "after_event_median_ms": 1.296400010585785,
+      "event_latency_reduction_percent": 1.0454206878654393,
+      "round_latency_reduction_percent": [
+        1.0454206878654393,
+        0.9704350776429171,
+        -0.4849083580571234
+      ],
+      "before_host_wall_median_ms": 1.332256000750931,
+      "after_host_wall_median_ms": 1.3199570021242835,
+      "aten_item_calls": {
+        "before": 8,
+        "after": 0
+      },
+      "aten_sum_calls": {
+        "before": 8,
+        "after": 0
+      },
+      "aten_nonzero_calls": {
+        "before": 5,
+        "after": 11
+      },
+      "cuda_synchronization_events": {
+        "before": {
+          "cudaStreamSynchronize": 13,
+          "cudaDeviceSynchronize": 2
+        },
+        "after": {
+          "cudaStreamSynchronize": 11,
+          "cudaDeviceSynchronize": 2
+        }
+      },
+      "cuda_dtoh_events": {
+        "before": {
+          "Memcpy DtoH (Device -> Pinned)": 13
+        },
+        "after": {
+          "Memcpy DtoH (Device -> Pinned)": 11
+        }
+      }
+    },
+    {
+      "batch": 1,
+      "routing": "mixed_families",
+      "before_event_median_ms": 1.2890880107879639,
+      "after_event_median_ms": 1.2639519572257996,
+      "event_latency_reduction_percent": 1.9499098084699185,
+      "round_latency_reduction_percent": [
+        0.34016701977879205,
+        1.9499098084699185,
+        1.9506954472703453
+      ],
+      "before_host_wall_median_ms": 1.3140665032551624,
+      "after_host_wall_median_ms": 1.2879864989372436,
+      "aten_item_calls": {
+        "before": 8,
+        "after": 0
+      },
+      "aten_sum_calls": {
+        "before": 8,
+        "after": 0
+      },
+      "aten_nonzero_calls": {
+        "before": 5,
+        "after": 11
+      },
+      "cuda_synchronization_events": {
+        "before": {
+          "cudaStreamSynchronize": 13,
+          "cudaDeviceSynchronize": 2
+        },
+        "after": {
+          "cudaStreamSynchronize": 11,
+          "cudaDeviceSynchronize": 2
+        }
+      },
+      "cuda_dtoh_events": {
+        "before": {
+          "Memcpy DtoH (Device -> Pinned)": 13
+        },
+        "after": {
+          "Memcpy DtoH (Device -> Pinned)": 11
+        }
+      }
+    },
+    {
+      "batch": 1,
+      "routing": "empty_subexperts",
+      "before_event_median_ms": 1.3339999914169312,
+      "after_event_median_ms": 1.3053280115127563,
+      "event_latency_reduction_percent": 2.1493238447265917,
+      "round_latency_reduction_percent": [
+        2.1493238447265917,
+        3.0254906265623993,
+        0.34287332735406517
+      ],
+      "before_host_wall_median_ms": 1.3588549991254695,
+      "after_host_wall_median_ms": 1.330140501522692,
+      "aten_item_calls": {
+        "before": 8,
+        "after": 0
+      },
+      "aten_sum_calls": {
+        "before": 8,
+        "after": 0
+      },
+      "aten_nonzero_calls": {
+        "before": 5,
+        "after": 11
+      },
+      "cuda_synchronization_events": {
+        "before": {
+          "cudaStreamSynchronize": 13,
+          "cudaDeviceSynchronize": 2
+        },
+        "after": {
+          "cudaStreamSynchronize": 11,
+          "cudaDeviceSynchronize": 2
+        }
+      },
+      "cuda_dtoh_events": {
+        "before": {
+          "Memcpy DtoH (Device -> Pinned)": 13
+        },
+        "after": {
+          "Memcpy DtoH (Device -> Pinned)": 11
+        }
+      }
+    },
+    {
+      "batch": 16,
+      "routing": "single_family",
+      "before_event_median_ms": 1.7586080431938171,
+      "after_event_median_ms": 1.5897759795188904,
+      "event_latency_reduction_percent": 9.600323638251417,
+      "round_latency_reduction_percent": [
+        9.422910305994526,
+        8.818022487872469,
+        12.003377207686604
+      ],
+      "before_host_wall_median_ms": 1.7807044969231356,
+      "after_host_wall_median_ms": 1.6118255007313564,
+      "aten_item_calls": {
+        "before": 8,
+        "after": 0
+      },
+      "aten_sum_calls": {
+        "before": 8,
+        "after": 0
+      },
+      "aten_nonzero_calls": {
+        "before": 9,
+        "after": 13
+      },
+      "cuda_synchronization_events": {
+        "before": {
+          "cudaStreamSynchronize": 17,
+          "cudaDeviceSynchronize": 2
+        },
+        "after": {
+          "cudaStreamSynchronize": 13,
+          "cudaDeviceSynchronize": 2
+        }
+      },
+      "cuda_dtoh_events": {
+        "before": {
+          "Memcpy DtoH (Device -> Pinned)": 17
+        },
+        "after": {
+          "Memcpy DtoH (Device -> Pinned)": 13
+        }
+      }
+    },
+    {
+      "batch": 16,
+      "routing": "mixed_families",
+      "before_event_median_ms": 6.136160135269165,
+      "after_event_median_ms": 5.101696014404297,
+      "event_latency_reduction_percent": 16.858492902084134,
+      "round_latency_reduction_percent": [
+        18.866155833617036,
+        20.289956207271253,
+        15.581823581546427
+      ],
+      "before_host_wall_median_ms": 6.233339499885915,
+      "after_host_wall_median_ms": 5.124522500409512,
+      "aten_item_calls": {
+        "before": 17,
+        "after": 0
+      },
+      "aten_sum_calls": {
+        "before": 17,
+        "after": 0
+      },
+      "aten_nonzero_calls": {
+        "before": 39,
+        "after": 39
+      },
+      "cuda_synchronization_events": {
+        "before": {
+          "cudaStreamSynchronize": 56,
+          "cudaDeviceSynchronize": 2
+        },
+        "after": {
+          "cudaStreamSynchronize": 39,
+          "cudaDeviceSynchronize": 2
+        }
+      },
+      "cuda_dtoh_events": {
+        "before": {
+          "Memcpy DtoH (Device -> Pinned)": 56
+        },
+        "after": {
+          "Memcpy DtoH (Device -> Pinned)": 39
+        }
+      }
+    },
+    {
+      "batch": 16,
+      "routing": "empty_subexperts",
+      "before_event_median_ms": 4.422048091888428,
+      "after_event_median_ms": 4.009471893310547,
+      "event_latency_reduction_percent": 9.329979909867758,
+      "round_latency_reduction_percent": [
+        10.803702054228093,
+        10.847415917522973,
+        9.329979909867758
+      ],
+      "before_host_wall_median_ms": 4.4623530011449475,
+      "after_host_wall_median_ms": 4.030859501654049,
+      "aten_item_calls": {
+        "before": 17,
+        "after": 0
+      },
+      "aten_sum_calls": {
+        "before": 17,
+        "after": 0
+      },
+      "aten_nonzero_calls": {
+        "before": 25,
+        "after": 32
+      },
+      "cuda_synchronization_events": {
+        "before": {
+          "cudaStreamSynchronize": 42,
+          "cudaDeviceSynchronize": 2
+        },
+        "after": {
+          "cudaStreamSynchronize": 32,
+          "cudaDeviceSynchronize": 2
+        }
+      },
+      "cuda_dtoh_events": {
+        "before": {
+          "Memcpy DtoH (Device -> Pinned)": 42
+        },
+        "after": {
+          "Memcpy DtoH (Device -> Pinned)": 32
+        }
+      }
+    },
+    {
+      "batch": 256,
+      "routing": "single_family",
+      "before_event_median_ms": 1.7384000420570374,
+      "after_event_median_ms": 1.5283040404319763,
+      "event_latency_reduction_percent": 12.085595751393097,
+      "round_latency_reduction_percent": [
+        9.4965482006094,
+        9.532691359605005,
+        12.741521297986125
+      ],
+      "before_host_wall_median_ms": 1.760643001034623,
+      "after_host_wall_median_ms": 1.559798500238685,
+      "aten_item_calls": {
+        "before": 8,
+        "after": 0
+      },
+      "aten_sum_calls": {
+        "before": 8,
+        "after": 0
+      },
+      "aten_nonzero_calls": {
+        "before": 9,
+        "after": 13
+      },
+      "cuda_synchronization_events": {
+        "before": {
+          "cudaStreamSynchronize": 17,
+          "cudaDeviceSynchronize": 2
+        },
+        "after": {
+          "cudaStreamSynchronize": 13,
+          "cudaDeviceSynchronize": 2
+        }
+      },
+      "cuda_dtoh_events": {
+        "before": {
+          "Memcpy DtoH (Device -> Pinned)": 17
+        },
+        "after": {
+          "Memcpy DtoH (Device -> Pinned)": 13
+        }
+      }
+    },
+    {
+      "batch": 256,
+      "routing": "mixed_families",
+      "before_event_median_ms": 6.248847961425781,
+      "after_event_median_ms": 5.06662392616272,
+      "event_latency_reduction_percent": 18.919071844297473,
+      "round_latency_reduction_percent": [
+        21.070114431041386,
+        21.088302561873583,
+        16.498606591761643
+      ],
+      "before_host_wall_median_ms": 6.306182502157753,
+      "after_host_wall_median_ms": 5.149702497874387,
+      "aten_item_calls": {
+        "before": 17,
+        "after": 0
+      },
+      "aten_sum_calls": {
+        "before": 17,
+        "after": 0
+      },
+      "aten_nonzero_calls": {
+        "before": 39,
+        "after": 39
+      },
+      "cuda_synchronization_events": {
+        "before": {
+          "cudaStreamSynchronize": 56,
+          "cudaDeviceSynchronize": 2
+        },
+        "after": {
+          "cudaStreamSynchronize": 39,
+          "cudaDeviceSynchronize": 2
+        }
+      },
+      "cuda_dtoh_events": {
+        "before": {
+          "Memcpy DtoH (Device -> Pinned)": 56
+        },
+        "after": {
+          "Memcpy DtoH (Device -> Pinned)": 39
+        }
+      }
+    },
+    {
+      "batch": 256,
+      "routing": "empty_subexperts",
+      "before_event_median_ms": 4.487679958343506,
+      "after_event_median_ms": 3.883520007133484,
+      "event_latency_reduction_percent": 13.462634519798279,
+      "round_latency_reduction_percent": [
+        11.843297387994545,
+        14.578037670005395,
+        13.462634519798279
+      ],
+      "before_host_wall_median_ms": 4.524752002907917,
+      "after_host_wall_median_ms": 3.966422504163347,
+      "aten_item_calls": {
+        "before": 17,
+        "after": 0
+      },
+      "aten_sum_calls": {
+        "before": 17,
+        "after": 0
+      },
+      "aten_nonzero_calls": {
+        "before": 25,
+        "after": 32
+      },
+      "cuda_synchronization_events": {
+        "before": {
+          "cudaStreamSynchronize": 42,
+          "cudaDeviceSynchronize": 2
+        },
+        "after": {
+          "cudaStreamSynchronize": 32,
+          "cudaDeviceSynchronize": 2
+        }
+      },
+      "cuda_dtoh_events": {
+        "before": {
+          "Memcpy DtoH (Device -> Pinned)": 42
+        },
+        "after": {
+          "Memcpy DtoH (Device -> Pinned)": 32
+        }
+      }
+    },
+    {
+      "batch": 2048,
+      "routing": "single_family",
+      "before_event_median_ms": 1.76118403673172,
+      "after_event_median_ms": 1.5875200033187866,
+      "event_latency_reduction_percent": 9.86064089788179,
+      "round_latency_reduction_percent": [
+        8.899502570024731,
+        10.087671763057859,
+        9.86064089788179
+      ],
+      "before_host_wall_median_ms": 1.7862819986476097,
+      "after_host_wall_median_ms": 1.6129360010381788,
+      "aten_item_calls": {
+        "before": 8,
+        "after": 0
+      },
+      "aten_sum_calls": {
+        "before": 8,
+        "after": 0
+      },
+      "aten_nonzero_calls": {
+        "before": 9,
+        "after": 13
+      },
+      "cuda_synchronization_events": {
+        "before": {
+          "cudaStreamSynchronize": 17,
+          "cudaDeviceSynchronize": 2
+        },
+        "after": {
+          "cudaStreamSynchronize": 13,
+          "cudaDeviceSynchronize": 2
+        }
+      },
+      "cuda_dtoh_events": {
+        "before": {
+          "Memcpy DtoH (Device -> Pinned)": 17
+        },
+        "after": {
+          "Memcpy DtoH (Device -> Pinned)": 13
+        }
+      }
+    },
+    {
+      "batch": 2048,
+      "routing": "mixed_families",
+      "before_event_median_ms": 6.356928110122681,
+      "after_event_median_ms": 5.328895807266235,
+      "event_latency_reduction_percent": 16.17184094341765,
+      "round_latency_reduction_percent": [
+        16.68369953454154,
+        16.898562170734934,
+        16.17184094341765
+      ],
+      "before_host_wall_median_ms": 6.451977496908512,
+      "after_host_wall_median_ms": 5.352195996238152,
+      "aten_item_calls": {
+        "before": 17,
+        "after": 0
+      },
+      "aten_sum_calls": {
+        "before": 17,
+        "after": 0
+      },
+      "aten_nonzero_calls": {
+        "before": 39,
+        "after": 39
+      },
+      "cuda_synchronization_events": {
+        "before": {
+          "cudaStreamSynchronize": 56,
+          "cudaDeviceSynchronize": 2
+        },
+        "after": {
+          "cudaStreamSynchronize": 39,
+          "cudaDeviceSynchronize": 2
+        }
+      },
+      "cuda_dtoh_events": {
+        "before": {
+          "Memcpy DtoH (Device -> Pinned)": 56
+        },
+        "after": {
+          "Memcpy DtoH (Device -> Pinned)": 39
+        }
+      }
+    },
+    {
+      "batch": 2048,
+      "routing": "empty_subexperts",
+      "before_event_median_ms": 4.591104030609131,
+      "after_event_median_ms": 3.999936103820801,
+      "event_latency_reduction_percent": 12.87637837973138,
+      "round_latency_reduction_percent": [
+        12.79777624718481,
+        9.80772493100286,
+        12.87637837973138
+      ],
+      "before_host_wall_median_ms": 4.614267498254776,
+      "after_host_wall_median_ms": 4.063118496560492,
+      "aten_item_calls": {
+        "before": 17,
+        "after": 0
+      },
+      "aten_sum_calls": {
+        "before": 17,
+        "after": 0
+      },
+      "aten_nonzero_calls": {
+        "before": 25,
+        "after": 32
+      },
+      "cuda_synchronization_events": {
+        "before": {
+          "cudaStreamSynchronize": 42,
+          "cudaDeviceSynchronize": 2
+        },
+        "after": {
+          "cudaStreamSynchronize": 32,
+          "cudaDeviceSynchronize": 2
+        }
+      },
+      "cuda_dtoh_events": {
+        "before": {
+          "Memcpy DtoH (Device -> Pinned)": 42
+        },
+        "after": {
+          "Memcpy DtoH (Device -> Pinned)": 32
+        }
+      }
+    }
+  ],
+  "raw_runs": [
+    {
+      "torch": "2.5.1+cu121",
+      "cuda_runtime": "12.1",
+      "device": "cuda",
+      "device_name": "NVIDIA GeForce RTX 3090",
+      "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "cpu_threads": 1,
+      "seed": 42,
+      "warmup": 10,
+      "repeats": 100,
+      "latent_dim": 64,
+      "action_dim": 12,
+      "family_subexpert_counts": [
+        3,
+        2,
+        3,
+        1,
+        3
+      ],
+      "rows": [
+        {
+          "batch": 1,
+          "routing": "single_family",
+          "before": {
+            "median_ms": 1.310096025466919,
+            "min_ms": 1.1407040357589722,
+            "bracketed_host_wall_median_ms": 1.332256000750931,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 5,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          },
+          "after": {
+            "median_ms": 1.296400010585785,
+            "min_ms": 1.1298880577087402,
+            "bracketed_host_wall_median_ms": 1.3199570021242835,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 11,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 11,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 11
+            }
+          }
+        },
+        {
+          "batch": 1,
+          "routing": "mixed_families",
+          "before": {
+            "median_ms": 1.3028960227966309,
+            "min_ms": 1.1459840536117554,
+            "bracketed_host_wall_median_ms": 1.329766004346311,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 5,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          },
+          "after": {
+            "median_ms": 1.2984640002250671,
+            "min_ms": 1.1356159448623657,
+            "bracketed_host_wall_median_ms": 1.3198839988035616,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 11,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 11,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 11
+            }
+          }
+        },
+        {
+          "batch": 1,
+          "routing": "empty_subexperts",
+          "before": {
+            "median_ms": 1.3339999914169312,
+            "min_ms": 1.1436480283737183,
+            "bracketed_host_wall_median_ms": 1.3588549991254695,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 5,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          },
+          "after": {
+            "median_ms": 1.3053280115127563,
+            "min_ms": 1.1376320123672485,
+            "bracketed_host_wall_median_ms": 1.330140501522692,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 11,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 11,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 11
+            }
+          }
+        },
+        {
+          "batch": 16,
+          "routing": "single_family",
+          "before": {
+            "median_ms": 1.7586080431938171,
+            "min_ms": 1.5203200578689575,
+            "bracketed_host_wall_median_ms": 1.7807044969231356,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 9,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 17,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 17
+            }
+          },
+          "after": {
+            "median_ms": 1.5928959846496582,
+            "min_ms": 1.3927680253982544,
+            "bracketed_host_wall_median_ms": 1.6213484996114857,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 13,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          }
+        },
+        {
+          "batch": 16,
+          "routing": "mixed_families",
+          "before": {
+            "median_ms": 6.287999868392944,
+            "min_ms": 5.299200057983398,
+            "bracketed_host_wall_median_ms": 6.311281500529731,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 56,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 56
+            }
+          },
+          "after": {
+            "median_ms": 5.101696014404297,
+            "min_ms": 4.3724799156188965,
+            "bracketed_host_wall_median_ms": 5.124522500409512,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 39,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 39
+            }
+          }
+        },
+        {
+          "batch": 16,
+          "routing": "empty_subexperts",
+          "before": {
+            "median_ms": 4.568063974380493,
+            "min_ms": 3.9259519577026367,
+            "bracketed_host_wall_median_ms": 4.5934615009173285,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 25,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 42,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 42
+            }
+          },
+          "after": {
+            "median_ms": 4.0745439529418945,
+            "min_ms": 3.4754559993743896,
+            "bracketed_host_wall_median_ms": 4.0991095011122525,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 32,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 32,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 32
+            }
+          }
+        },
+        {
+          "batch": 256,
+          "routing": "single_family",
+          "before": {
+            "median_ms": 1.7384000420570374,
+            "min_ms": 1.531872034072876,
+            "bracketed_host_wall_median_ms": 1.760643001034623,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 9,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 17,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 17
+            }
+          },
+          "after": {
+            "median_ms": 1.5733120441436768,
+            "min_ms": 1.3926399946212769,
+            "bracketed_host_wall_median_ms": 1.5959505035425536,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 13,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          }
+        },
+        {
+          "batch": 256,
+          "routing": "mixed_families",
+          "before": {
+            "median_ms": 6.448639869689941,
+            "min_ms": 5.392384052276611,
+            "bracketed_host_wall_median_ms": 6.4779944987094495,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 56,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 56
+            }
+          },
+          "after": {
+            "median_ms": 5.089904069900513,
+            "min_ms": 4.466911792755127,
+            "bracketed_host_wall_median_ms": 5.149702497874387,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 39,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 39
+            }
+          }
+        },
+        {
+          "batch": 256,
+          "routing": "empty_subexperts",
+          "before": {
+            "median_ms": 4.521984100341797,
+            "min_ms": 3.941375970840454,
+            "bracketed_host_wall_median_ms": 4.544673498457996,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 25,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 42,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 42
+            }
+          },
+          "after": {
+            "median_ms": 3.9864320755004883,
+            "min_ms": 3.501919984817505,
+            "bracketed_host_wall_median_ms": 4.0107294989866205,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 32,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 32,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 32
+            }
+          }
+        },
+        {
+          "batch": 2048,
+          "routing": "single_family",
+          "before": {
+            "median_ms": 1.8124160170555115,
+            "min_ms": 1.5576319694519043,
+            "bracketed_host_wall_median_ms": 1.8459109996911138,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 9,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 17,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 17
+            }
+          },
+          "after": {
+            "median_ms": 1.6511200070381165,
+            "min_ms": 1.414080023765564,
+            "bracketed_host_wall_median_ms": 1.674390001426218,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 13,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          }
+        },
+        {
+          "batch": 2048,
+          "routing": "mixed_families",
+          "before": {
+            "median_ms": 6.5606560707092285,
+            "min_ms": 5.337088108062744,
+            "bracketed_host_wall_median_ms": 6.583528498595115,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 56,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 56
+            }
+          },
+          "after": {
+            "median_ms": 5.466095924377441,
+            "min_ms": 4.455423831939697,
+            "bracketed_host_wall_median_ms": 5.489503499120474,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 39,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 39
+            }
+          }
+        },
+        {
+          "batch": 2048,
+          "routing": "empty_subexperts",
+          "before": {
+            "median_ms": 4.792831897735596,
+            "min_ms": 3.941312074661255,
+            "bracketed_host_wall_median_ms": 4.845903498789994,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 25,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 42,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 42
+            }
+          },
+          "after": {
+            "median_ms": 4.179455995559692,
+            "min_ms": 3.5295040607452393,
+            "bracketed_host_wall_median_ms": 4.239276000589598,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 32,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 32,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 32
+            }
+          }
+        }
+      ],
+      "timing_scope": "CUDA events and host wall time bracket one forward call; wall time includes event recording and end synchronization",
+      "measurement_order": "Alternating before/after samples; all case timings finish before any profiler activation"
+    },
+    {
+      "torch": "2.5.1+cu121",
+      "cuda_runtime": "12.1",
+      "device": "cuda",
+      "device_name": "NVIDIA GeForce RTX 3090",
+      "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "cpu_threads": 1,
+      "seed": 42,
+      "warmup": 10,
+      "repeats": 100,
+      "latent_dim": 64,
+      "action_dim": 12,
+      "family_subexpert_counts": [
+        3,
+        2,
+        3,
+        1,
+        3
+      ],
+      "rows": [
+        {
+          "batch": 1,
+          "routing": "single_family",
+          "before": {
+            "median_ms": 1.2711840271949768,
+            "min_ms": 1.1034239530563354,
+            "bracketed_host_wall_median_ms": 1.301504500588635,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 5,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          },
+          "after": {
+            "median_ms": 1.2588480114936829,
+            "min_ms": 1.0730559825897217,
+            "bracketed_host_wall_median_ms": 1.2888165001641028,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 11,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 11,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 11
+            }
+          }
+        },
+        {
+          "batch": 1,
+          "routing": "mixed_families",
+          "before": {
+            "median_ms": 1.2890880107879639,
+            "min_ms": 1.096735954284668,
+            "bracketed_host_wall_median_ms": 1.3140665032551624,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 5,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          },
+          "after": {
+            "median_ms": 1.2639519572257996,
+            "min_ms": 1.0670080184936523,
+            "bracketed_host_wall_median_ms": 1.2879864989372436,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 11,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 11,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 11
+            }
+          }
+        },
+        {
+          "batch": 1,
+          "routing": "empty_subexperts",
+          "before": {
+            "median_ms": 1.259168028831482,
+            "min_ms": 1.1003520488739014,
+            "bracketed_host_wall_median_ms": 1.2832035026804078,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 5,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          },
+          "after": {
+            "median_ms": 1.221072018146515,
+            "min_ms": 1.0620479583740234,
+            "bracketed_host_wall_median_ms": 1.2488460015447345,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 11,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 11,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 11
+            }
+          }
+        },
+        {
+          "batch": 16,
+          "routing": "single_family",
+          "before": {
+            "median_ms": 1.7435199618339539,
+            "min_ms": 1.4804480075836182,
+            "bracketed_host_wall_median_ms": 1.7667755018919706,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 9,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 17,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 17
+            }
+          },
+          "after": {
+            "median_ms": 1.5897759795188904,
+            "min_ms": 1.3260799646377563,
+            "bracketed_host_wall_median_ms": 1.6118255007313564,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 13,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          }
+        },
+        {
+          "batch": 16,
+          "routing": "mixed_families",
+          "before": {
+            "median_ms": 6.136160135269165,
+            "min_ms": 5.129216194152832,
+            "bracketed_host_wall_median_ms": 6.233339499885915,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 56,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 56
+            }
+          },
+          "after": {
+            "median_ms": 4.891135931015015,
+            "min_ms": 4.23199987411499,
+            "bracketed_host_wall_median_ms": 4.9142690004373435,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 39,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 39
+            }
+          }
+        },
+        {
+          "batch": 16,
+          "routing": "empty_subexperts",
+          "before": {
+            "median_ms": 4.271615982055664,
+            "min_ms": 3.7795839309692383,
+            "bracketed_host_wall_median_ms": 4.295271497539943,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 25,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 42,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 42
+            }
+          },
+          "after": {
+            "median_ms": 3.8082560300827026,
+            "min_ms": 3.3116159439086914,
+            "bracketed_host_wall_median_ms": 3.8392050009861123,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 32,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 32,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 32
+            }
+          }
+        },
+        {
+          "batch": 256,
+          "routing": "single_family",
+          "before": {
+            "median_ms": 1.6893439888954163,
+            "min_ms": 1.4854079484939575,
+            "bracketed_host_wall_median_ms": 1.7111069973907433,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 9,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 17,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 17
+            }
+          },
+          "after": {
+            "median_ms": 1.5283040404319763,
+            "min_ms": 1.3128000497817993,
+            "bracketed_host_wall_median_ms": 1.559798500238685,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 13,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          }
+        },
+        {
+          "batch": 256,
+          "routing": "mixed_families",
+          "before": {
+            "median_ms": 6.248847961425781,
+            "min_ms": 5.213183879852295,
+            "bracketed_host_wall_median_ms": 6.306182502157753,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 56,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 56
+            }
+          },
+          "after": {
+            "median_ms": 4.931071996688843,
+            "min_ms": 4.316160202026367,
+            "bracketed_host_wall_median_ms": 4.982878002920188,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 39,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 39
+            }
+          }
+        },
+        {
+          "batch": 256,
+          "routing": "empty_subexperts",
+          "before": {
+            "median_ms": 4.428800106048584,
+            "min_ms": 3.8297600746154785,
+            "bracketed_host_wall_median_ms": 4.464738503884291,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 25,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 42,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 42
+            }
+          },
+          "after": {
+            "median_ms": 3.7831679582595825,
+            "min_ms": 3.3514881134033203,
+            "bracketed_host_wall_median_ms": 3.815414002019679,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 32,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 32,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 32
+            }
+          }
+        },
+        {
+          "batch": 2048,
+          "routing": "single_family",
+          "before": {
+            "median_ms": 1.702672004699707,
+            "min_ms": 1.4896639585494995,
+            "bracketed_host_wall_median_ms": 1.725356498354813,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 9,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 17,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 17
+            }
+          },
+          "after": {
+            "median_ms": 1.5309120416641235,
+            "min_ms": 1.3271039724349976,
+            "bracketed_host_wall_median_ms": 1.555162998556625,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 13,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          }
+        },
+        {
+          "batch": 2048,
+          "routing": "mixed_families",
+          "before": {
+            "median_ms": 5.81057596206665,
+            "min_ms": 5.153791904449463,
+            "bracketed_host_wall_median_ms": 5.833687497215578,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 56,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 56
+            }
+          },
+          "after": {
+            "median_ms": 4.828672170639038,
+            "min_ms": 4.238336086273193,
+            "bracketed_host_wall_median_ms": 4.85174650020781,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 39,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 39
+            }
+          }
+        },
+        {
+          "batch": 2048,
+          "routing": "empty_subexperts",
+          "before": {
+            "median_ms": 4.337152004241943,
+            "min_ms": 3.8051838874816895,
+            "bracketed_host_wall_median_ms": 4.362806997960433,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 25,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 42,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 42
+            }
+          },
+          "after": {
+            "median_ms": 3.911776065826416,
+            "min_ms": 3.344320058822632,
+            "bracketed_host_wall_median_ms": 3.9564004982821643,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 32,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 32,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 32
+            }
+          }
+        }
+      ],
+      "timing_scope": "CUDA events and host wall time bracket one forward call; wall time includes event recording and end synchronization",
+      "measurement_order": "Alternating before/after samples; all case timings finish before any profiler activation"
+    },
+    {
+      "torch": "2.5.1+cu121",
+      "cuda_runtime": "12.1",
+      "device": "cuda",
+      "device_name": "NVIDIA GeForce RTX 3090",
+      "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "cpu_threads": 1,
+      "seed": 42,
+      "warmup": 10,
+      "repeats": 100,
+      "latent_dim": 64,
+      "action_dim": 12,
+      "family_subexpert_counts": [
+        3,
+        2,
+        3,
+        1,
+        3
+      ],
+      "rows": [
+        {
+          "batch": 1,
+          "routing": "single_family",
+          "before": {
+            "median_ms": 1.333024024963379,
+            "min_ms": 1.1299200057983398,
+            "bracketed_host_wall_median_ms": 1.3675529953616206,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 5,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          },
+          "after": {
+            "median_ms": 1.3394879698753357,
+            "min_ms": 1.0936319828033447,
+            "bracketed_host_wall_median_ms": 1.3615820025734138,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 11,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 11,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 11
+            }
+          }
+        },
+        {
+          "batch": 1,
+          "routing": "mixed_families",
+          "before": {
+            "median_ms": 1.2869279980659485,
+            "min_ms": 1.1254080533981323,
+            "bracketed_host_wall_median_ms": 1.3080524986435194,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 5,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          },
+          "after": {
+            "median_ms": 1.2618239521980286,
+            "min_ms": 1.0864640474319458,
+            "bracketed_host_wall_median_ms": 1.2854995002271608,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 11,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 11,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 11
+            }
+          }
+        },
+        {
+          "batch": 1,
+          "routing": "empty_subexperts",
+          "before": {
+            "median_ms": 1.3952639698982239,
+            "min_ms": 1.1370240449905396,
+            "bracketed_host_wall_median_ms": 1.4236139977583662,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 5,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          },
+          "after": {
+            "median_ms": 1.3904799818992615,
+            "min_ms": 1.102239966392517,
+            "bracketed_host_wall_median_ms": 1.419389998773113,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 11,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 11,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 11
+            }
+          }
+        },
+        {
+          "batch": 16,
+          "routing": "single_family",
+          "before": {
+            "median_ms": 1.7981599569320679,
+            "min_ms": 1.4938240051269531,
+            "bracketed_host_wall_median_ms": 1.8198740035586525,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 9,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 17,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 17
+            }
+          },
+          "after": {
+            "median_ms": 1.5823200345039368,
+            "min_ms": 1.3404159545898438,
+            "bracketed_host_wall_median_ms": 1.6038770008890424,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 13,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          }
+        },
+        {
+          "batch": 16,
+          "routing": "mixed_families",
+          "before": {
+            "median_ms": 6.131760120391846,
+            "min_ms": 5.185535907745361,
+            "bracketed_host_wall_median_ms": 6.212207499629585,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 56,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 56
+            }
+          },
+          "after": {
+            "median_ms": 5.1763200759887695,
+            "min_ms": 4.268032073974609,
+            "bracketed_host_wall_median_ms": 5.2075815001444425,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 39,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 39
+            }
+          }
+        },
+        {
+          "batch": 16,
+          "routing": "empty_subexperts",
+          "before": {
+            "median_ms": 4.422048091888428,
+            "min_ms": 3.8400321006774902,
+            "bracketed_host_wall_median_ms": 4.4623530011449475,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 25,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 42,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 42
+            }
+          },
+          "after": {
+            "median_ms": 4.009471893310547,
+            "min_ms": 3.3698880672454834,
+            "bracketed_host_wall_median_ms": 4.030859501654049,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 32,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 32,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 32
+            }
+          }
+        },
+        {
+          "batch": 256,
+          "routing": "single_family",
+          "before": {
+            "median_ms": 1.7398239970207214,
+            "min_ms": 1.5185920000076294,
+            "bracketed_host_wall_median_ms": 1.770859002135694,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 9,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 17,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 17
+            }
+          },
+          "after": {
+            "median_ms": 1.5181439518928528,
+            "min_ms": 1.3537280559539795,
+            "bracketed_host_wall_median_ms": 1.5458800007763784,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 13,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          }
+        },
+        {
+          "batch": 256,
+          "routing": "mixed_families",
+          "before": {
+            "median_ms": 6.06771183013916,
+            "min_ms": 5.257311820983887,
+            "bracketed_host_wall_median_ms": 6.192397995619103,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 56,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 56
+            }
+          },
+          "after": {
+            "median_ms": 5.06662392616272,
+            "min_ms": 4.3427839279174805,
+            "bracketed_host_wall_median_ms": 5.1719684997806326,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 39,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 39
+            }
+          }
+        },
+        {
+          "batch": 256,
+          "routing": "empty_subexperts",
+          "before": {
+            "median_ms": 4.487679958343506,
+            "min_ms": 3.880959987640381,
+            "bracketed_host_wall_median_ms": 4.524752002907917,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 25,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 42,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 42
+            }
+          },
+          "after": {
+            "median_ms": 3.883520007133484,
+            "min_ms": 3.4017279148101807,
+            "bracketed_host_wall_median_ms": 3.966422504163347,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 32,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 32,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 32
+            }
+          }
+        },
+        {
+          "batch": 2048,
+          "routing": "single_family",
+          "before": {
+            "median_ms": 1.76118403673172,
+            "min_ms": 1.521567940711975,
+            "bracketed_host_wall_median_ms": 1.7862819986476097,
+            "aten_item_calls": 8,
+            "aten_nonzero_calls": 9,
+            "aten_sum_calls": 8,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 17,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 17
+            }
+          },
+          "after": {
+            "median_ms": 1.5875200033187866,
+            "min_ms": 1.3601280450820923,
+            "bracketed_host_wall_median_ms": 1.6129360010381788,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 13,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 13,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 13
+            }
+          }
+        },
+        {
+          "batch": 2048,
+          "routing": "mixed_families",
+          "before": {
+            "median_ms": 6.356928110122681,
+            "min_ms": 5.2500481605529785,
+            "bracketed_host_wall_median_ms": 6.451977496908512,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 56,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 56
+            }
+          },
+          "after": {
+            "median_ms": 5.328895807266235,
+            "min_ms": 4.278143882751465,
+            "bracketed_host_wall_median_ms": 5.352195996238152,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 39,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 39,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 39
+            }
+          }
+        },
+        {
+          "batch": 2048,
+          "routing": "empty_subexperts",
+          "before": {
+            "median_ms": 4.591104030609131,
+            "min_ms": 3.9032959938049316,
+            "bracketed_host_wall_median_ms": 4.614267498254776,
+            "aten_item_calls": 17,
+            "aten_nonzero_calls": 25,
+            "aten_sum_calls": 17,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 42,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 42
+            }
+          },
+          "after": {
+            "median_ms": 3.999936103820801,
+            "min_ms": 3.4306559562683105,
+            "bracketed_host_wall_median_ms": 4.063118496560492,
+            "aten_item_calls": 0,
+            "aten_nonzero_calls": 32,
+            "aten_sum_calls": 0,
+            "cuda_synchronization_events": {
+              "cudaStreamSynchronize": 32,
+              "cudaDeviceSynchronize": 2
+            },
+            "cuda_dtoh_events": {
+              "Memcpy DtoH (Device -> Pinned)": 32
+            }
+          }
+        }
+      ],
+      "timing_scope": "CUDA events and host wall time bracket one forward call; wall time includes event recording and end synchronization",
+      "measurement_order": "Alternating before/after samples; all case timings finish before any profiler activation"
+    }
+  ],
+  "excluded_exploratory_measurement": {
+    "reason": "Timing was interleaved with profiler activation; identical batch-1 inputs produced incompatible baselines. Excluded from latency qualification.",
+    "benchmark_sha256": "9dd30b1ae5dd5e3021b8a8df6e48a2461a8f6ae6c92a0471838050b8ae4b2324",
+    "summary": [
+      {
+        "batch": 1,
+        "routing": "single_family",
+        "before_event_median_ms": 1.2388479709625244,
+        "after_event_median_ms": 1.5856160521507263,
+        "event_latency_reduction_percent": -27.99117319607667,
+        "round_latency_reduction_percent": [
+          -27.135361460850916,
+          -23.660697465448944,
+          -27.99117319607667
+        ],
+        "before_host_wall_median_ms": 1.261925499420613,
+        "after_host_wall_median_ms": 1.6128884963109158,
+        "aten_item_calls": {
+          "before": 8,
+          "after": 0
+        },
+        "aten_sum_calls": {
+          "before": 8,
+          "after": 0
+        },
+        "aten_nonzero_calls": {
+          "before": 5,
+          "after": 11
+        },
+        "cuda_synchronization_events": {
+          "before": {
+            "cudaStreamSynchronize": 13,
+            "cudaDeviceSynchronize": 2
+          },
+          "after": {
+            "cudaStreamSynchronize": 11,
+            "cudaDeviceSynchronize": 2
+          }
+        },
+        "cuda_dtoh_events": {
+          "before": {
+            "Memcpy DtoH (Device -> Pinned)": 13
+          },
+          "after": {
+            "Memcpy DtoH (Device -> Pinned)": 11
+          }
+        }
+      },
+      {
+        "batch": 1,
+        "routing": "mixed_families",
+        "before_event_median_ms": 1.67467200756073,
+        "after_event_median_ms": 1.5903840065002441,
+        "event_latency_reduction_percent": 5.0331050307132585,
+        "round_latency_reduction_percent": [
+          5.0331050307132585,
+          4.021070599226862,
+          1.5174795729056223
+        ],
+        "before_host_wall_median_ms": 1.71031400168431,
+        "after_host_wall_median_ms": 1.6265979975287337,
+        "aten_item_calls": {
+          "before": 8,
+          "after": 0
+        },
+        "aten_sum_calls": {
+          "before": 8,
+          "after": 0
+        },
+        "aten_nonzero_calls": {
+          "before": 5,
+          "after": 11
+        },
+        "cuda_synchronization_events": {
+          "before": {
+            "cudaStreamSynchronize": 13,
+            "cudaDeviceSynchronize": 2
+          },
+          "after": {
+            "cudaStreamSynchronize": 11,
+            "cudaDeviceSynchronize": 2
+          }
+        },
+        "cuda_dtoh_events": {
+          "before": {
+            "Memcpy DtoH (Device -> Pinned)": 13
+          },
+          "after": {
+            "Memcpy DtoH (Device -> Pinned)": 11
+          }
+        }
+      },
+      {
+        "batch": 1,
+        "routing": "empty_subexperts",
+        "before_event_median_ms": 1.6136320233345032,
+        "after_event_median_ms": 1.533087968826294,
+        "event_latency_reduction_percent": 4.991475958798109,
+        "round_latency_reduction_percent": [
+          4.991475958798109,
+          0.3323502268758993,
+          4.192241834537002
+        ],
+        "before_host_wall_median_ms": 1.6421870022895746,
+        "after_host_wall_median_ms": 1.5636004973202944,
+        "aten_item_calls": {
+          "before": 8,
+          "after": 0
+        },
+        "aten_sum_calls": {
+          "before": 8,
+          "after": 0
+        },
+        "aten_nonzero_calls": {
+          "before": 5,
+          "after": 11
+        },
+        "cuda_synchronization_events": {
+          "before": {
+            "cudaStreamSynchronize": 13,
+            "cudaDeviceSynchronize": 2
+          },
+          "after": {
+            "cudaStreamSynchronize": 11,
+            "cudaDeviceSynchronize": 2
+          }
+        },
+        "cuda_dtoh_events": {
+          "before": {
+            "Memcpy DtoH (Device -> Pinned)": 13
+          },
+          "after": {
+            "Memcpy DtoH (Device -> Pinned)": 11
+          }
+        }
+      },
+      {
+        "batch": 16,
+        "routing": "single_family",
+        "before_event_median_ms": 2.1109119653701782,
+        "after_event_median_ms": 1.9375199675559998,
+        "event_latency_reduction_percent": 8.214080011800572,
+        "round_latency_reduction_percent": [
+          9.956644071676967,
+          4.482111407647881,
+          7.94754938480462
+        ],
+        "before_host_wall_median_ms": 2.144372498150915,
+        "after_host_wall_median_ms": 1.9659794998005964,
+        "aten_item_calls": {
+          "before": 8,
+          "after": 0
+        },
+        "aten_sum_calls": {
+          "before": 8,
+          "after": 0
+        },
+        "aten_nonzero_calls": {
+          "before": 9,
+          "after": 13
+        },
+        "cuda_synchronization_events": {
+          "before": {
+            "cudaStreamSynchronize": 17,
+            "cudaDeviceSynchronize": 2
+          },
+          "after": {
+            "cudaStreamSynchronize": 13,
+            "cudaDeviceSynchronize": 2
+          }
+        },
+        "cuda_dtoh_events": {
+          "before": {
+            "Memcpy DtoH (Device -> Pinned)": 17
+          },
+          "after": {
+            "Memcpy DtoH (Device -> Pinned)": 13
+          }
+        }
+      },
+      {
+        "batch": 16,
+        "routing": "mixed_families",
+        "before_event_median_ms": 7.6279520988464355,
+        "after_event_median_ms": 6.396111965179443,
+        "event_latency_reduction_percent": 16.149028175639458,
+        "round_latency_reduction_percent": [
+          15.245568471239434,
+          21.43181440235462,
+          18.084015884253112
+        ],
+        "before_host_wall_median_ms": 7.778428502206225,
+        "after_host_wall_median_ms": 6.442831498134183,
+        "aten_item_calls": {
+          "before": 17,
+          "after": 0
+        },
+        "aten_sum_calls": {
+          "before": 17,
+          "after": 0
+        },
+        "aten_nonzero_calls": {
+          "before": 39,
+          "after": 39
+        },
+        "cuda_synchronization_events": {
+          "before": {
+            "cudaStreamSynchronize": 56,
+            "cudaDeviceSynchronize": 2
+          },
+          "after": {
+            "cudaStreamSynchronize": 39,
+            "cudaDeviceSynchronize": 2
+          }
+        },
+        "cuda_dtoh_events": {
+          "before": {
+            "Memcpy DtoH (Device -> Pinned)": 56
+          },
+          "after": {
+            "Memcpy DtoH (Device -> Pinned)": 39
+          }
+        }
+      },
+      {
+        "batch": 16,
+        "routing": "empty_subexperts",
+        "before_event_median_ms": 5.691152095794678,
+        "after_event_median_ms": 5.086480140686035,
+        "event_latency_reduction_percent": 10.624772364728196,
+        "round_latency_reduction_percent": [
+          9.720701880296456,
+          10.5106382009716,
+          15.707191938207043
+        ],
+        "before_host_wall_median_ms": 5.726330498873722,
+        "after_host_wall_median_ms": 5.130575500515988,
+        "aten_item_calls": {
+          "before": 17,
+          "after": 0
+        },
+        "aten_sum_calls": {
+          "before": 17,
+          "after": 0
+        },
+        "aten_nonzero_calls": {
+          "before": 25,
+          "after": 32
+        },
+        "cuda_synchronization_events": {
+          "before": {
+            "cudaStreamSynchronize": 42,
+            "cudaDeviceSynchronize": 2
+          },
+          "after": {
+            "cudaStreamSynchronize": 32,
+            "cudaDeviceSynchronize": 2
+          }
+        },
+        "cuda_dtoh_events": {
+          "before": {
+            "Memcpy DtoH (Device -> Pinned)": 42
+          },
+          "after": {
+            "Memcpy DtoH (Device -> Pinned)": 32
+          }
+        }
+      },
+      {
+        "batch": 256,
+        "routing": "single_family",
+        "before_event_median_ms": 2.2242239713668823,
+        "after_event_median_ms": 1.9855039715766907,
+        "event_latency_reduction_percent": 10.732732083787756,
+        "round_latency_reduction_percent": [
+          10.732732083787756,
+          8.163900639220689,
+          12.67872817556891
+        ],
+        "before_host_wall_median_ms": 2.253458496852545,
+        "after_host_wall_median_ms": 2.0210279981256463,
+        "aten_item_calls": {
+          "before": 8,
+          "after": 0
+        },
+        "aten_sum_calls": {
+          "before": 8,
+          "after": 0
+        },
+        "aten_nonzero_calls": {
+          "before": 9,
+          "after": 13
+        },
+        "cuda_synchronization_events": {
+          "before": {
+            "cudaStreamSynchronize": 17,
+            "cudaDeviceSynchronize": 2
+          },
+          "after": {
+            "cudaStreamSynchronize": 13,
+            "cudaDeviceSynchronize": 2
+          }
+        },
+        "cuda_dtoh_events": {
+          "before": {
+            "Memcpy DtoH (Device -> Pinned)": 17
+          },
+          "after": {
+            "Memcpy DtoH (Device -> Pinned)": 13
+          }
+        }
+      },
+      {
+        "batch": 256,
+        "routing": "mixed_families",
+        "before_event_median_ms": 8.324047565460205,
+        "after_event_median_ms": 6.5698559284210205,
+        "event_latency_reduction_percent": 21.073781994207064,
+        "round_latency_reduction_percent": [
+          21.073781994207064,
+          20.180480676547795,
+          18.0864689353605
+        ],
+        "before_host_wall_median_ms": 8.354590001545148,
+        "after_host_wall_median_ms": 6.61234199651517,
+        "aten_item_calls": {
+          "before": 17,
+          "after": 0
+        },
+        "aten_sum_calls": {
+          "before": 17,
+          "after": 0
+        },
+        "aten_nonzero_calls": {
+          "before": 39,
+          "after": 39
+        },
+        "cuda_synchronization_events": {
+          "before": {
+            "cudaStreamSynchronize": 56,
+            "cudaDeviceSynchronize": 2
+          },
+          "after": {
+            "cudaStreamSynchronize": 39,
+            "cudaDeviceSynchronize": 2
+          }
+        },
+        "cuda_dtoh_events": {
+          "before": {
+            "Memcpy DtoH (Device -> Pinned)": 56
+          },
+          "after": {
+            "Memcpy DtoH (Device -> Pinned)": 39
+          }
+        }
+      },
+      {
+        "batch": 256,
+        "routing": "empty_subexperts",
+        "before_event_median_ms": 6.8496479988098145,
+        "after_event_median_ms": 5.993631839752197,
+        "event_latency_reduction_percent": 12.497228459131883,
+        "round_latency_reduction_percent": [
+          12.497228459131883,
+          8.45312778618953,
+          15.90959710359009
+        ],
+        "before_host_wall_median_ms": 6.894779497088166,
+        "after_host_wall_median_ms": 6.034658003045479,
+        "aten_item_calls": {
+          "before": 17,
+          "after": 0
+        },
+        "aten_sum_calls": {
+          "before": 17,
+          "after": 0
+        },
+        "aten_nonzero_calls": {
+          "before": 25,
+          "after": 32
+        },
+        "cuda_synchronization_events": {
+          "before": {
+            "cudaStreamSynchronize": 42,
+            "cudaDeviceSynchronize": 2
+          },
+          "after": {
+            "cudaStreamSynchronize": 32,
+            "cudaDeviceSynchronize": 2
+          }
+        },
+        "cuda_dtoh_events": {
+          "before": {
+            "Memcpy DtoH (Device -> Pinned)": 42
+          },
+          "after": {
+            "Memcpy DtoH (Device -> Pinned)": 32
+          }
+        }
+      },
+      {
+        "batch": 2048,
+        "routing": "single_family",
+        "before_event_median_ms": 2.5225600004196167,
+        "after_event_median_ms": 2.212015986442566,
+        "event_latency_reduction_percent": 12.310669079244619,
+        "round_latency_reduction_percent": [
+          12.310669079244619,
+          10.106930718283492,
+          10.406996095355293
+        ],
+        "before_host_wall_median_ms": 2.562421501352219,
+        "after_host_wall_median_ms": 2.244459497887874,
+        "aten_item_calls": {
+          "before": 8,
+          "after": 0
+        },
+        "aten_sum_calls": {
+          "before": 8,
+          "after": 0
+        },
+        "aten_nonzero_calls": {
+          "before": 9,
+          "after": 13
+        },
+        "cuda_synchronization_events": {
+          "before": {
+            "cudaStreamSynchronize": 17,
+            "cudaDeviceSynchronize": 2
+          },
+          "after": {
+            "cudaStreamSynchronize": 13,
+            "cudaDeviceSynchronize": 2
+          }
+        },
+        "cuda_dtoh_events": {
+          "before": {
+            "Memcpy DtoH (Device -> Pinned)": 17
+          },
+          "after": {
+            "Memcpy DtoH (Device -> Pinned)": 13
+          }
+        }
+      },
+      {
+        "batch": 2048,
+        "routing": "mixed_families",
+        "before_event_median_ms": 7.5215678215026855,
+        "after_event_median_ms": 6.12393593788147,
+        "event_latency_reduction_percent": 18.58165633534089,
+        "round_latency_reduction_percent": [
+          16.56635148870783,
+          35.52589534409074,
+          19.407867605865427
+        ],
+        "before_host_wall_median_ms": 7.547693996457383,
+        "after_host_wall_median_ms": 6.154012997285463,
+        "aten_item_calls": {
+          "before": 17,
+          "after": 0
+        },
+        "aten_sum_calls": {
+          "before": 17,
+          "after": 0
+        },
+        "aten_nonzero_calls": {
+          "before": 39,
+          "after": 39
+        },
+        "cuda_synchronization_events": {
+          "before": {
+            "cudaStreamSynchronize": 56,
+            "cudaDeviceSynchronize": 2
+          },
+          "after": {
+            "cudaStreamSynchronize": 39,
+            "cudaDeviceSynchronize": 2
+          }
+        },
+        "cuda_dtoh_events": {
+          "before": {
+            "Memcpy DtoH (Device -> Pinned)": 56
+          },
+          "after": {
+            "Memcpy DtoH (Device -> Pinned)": 39
+          }
+        }
+      },
+      {
+        "batch": 2048,
+        "routing": "empty_subexperts",
+        "before_event_median_ms": 5.491711854934692,
+        "after_event_median_ms": 4.926176071166992,
+        "event_latency_reduction_percent": 10.297987197917646,
+        "round_latency_reduction_percent": [
+          10.545926008477323,
+          6.988196050430395,
+          14.357400720824565
+        ],
+        "before_host_wall_median_ms": 5.520794002222829,
+        "after_host_wall_median_ms": 4.953997497068485,
+        "aten_item_calls": {
+          "before": 17,
+          "after": 0
+        },
+        "aten_sum_calls": {
+          "before": 17,
+          "after": 0
+        },
+        "aten_nonzero_calls": {
+          "before": 25,
+          "after": 32
+        },
+        "cuda_synchronization_events": {
+          "before": {
+            "cudaStreamSynchronize": 42,
+            "cudaDeviceSynchronize": 2
+          },
+          "after": {
+            "cudaStreamSynchronize": 32,
+            "cudaDeviceSynchronize": 2
+          }
+        },
+        "cuda_dtoh_events": {
+          "before": {
+            "Memcpy DtoH (Device -> Pinned)": 42
+          },
+          "after": {
+            "Memcpy DtoH (Device -> Pinned)": 32
+          }
+        }
+      }
+    ]
+  },
+  "evidence_scope": "Head-only forward measurements on a shared RTX 3090; no end-to-end training speedup or fully asynchronous routing claim. Profiler runtime counts include common profiling/final-synchronize overhead."
+}
