@@ -1,9 +1,6 @@
 # Stable Entity Identity For Stochastic Draws
 
-Status: `2026-09-30` accepted at bounded scope. P0–P5 are done. The single independent review
-returned HOLD on one blocker, and every finding is fixed (see Review Record). The package lands on
-`main` as infrastructure, as the five-PR stack #74–#78 on `22455c12`. Pending: the merge, and then
-army's integration of main, which converts its site 4 (Ground direct fire).
+Status: `2026-10-08` bounded implementation integrated on `main`: the #74-#78 stable-identity stack merged 2026-09-30 and the #82-#85 Ground stack followed 2026-10-01, including Ground direct-fire draw-site integration. P0-P5 and the original review HOLD/repairs remain historical evidence. Raw-Flecs-id semantic-reference portability is still a separate residual.
 
 Language:
 - English canonical: `README.md`
