@@ -2,6 +2,13 @@
 
 #include <flecs.h>
 
+// Stable producer codes in the existing state-transfer wire format. The values
+// are compatibility identifiers, never contribution ordinals or Flecs phases.
+enum class CountermeasureSnapshotProducer : int {
+    InstrumentProjection = 24,
+    CountermeasureReleaseProjection = 31,
+};
+
 struct InstrumentState {
     // 1. Flight Dynamics
     double alt_baro_m;  // Barometric Altitude (MSL)
@@ -58,11 +65,28 @@ struct InstrumentState {
     double countermeasure_release_interval_s = -1.0;
     double countermeasure_last_release_time_s = -1.0;
     bool countermeasure_auto_mode = false;
-    // Snapshot provenance for EW consumers. The regular instrument pass is
-    // stage 24; EW-owned projection is stage 31 when a post-EW view exists.
-    int countermeasure_snapshot_stage = 24;
+    // Legacy wire/API name retained; use the semantic producer accessor.
+    int countermeasure_snapshot_stage =
+        static_cast<int>(CountermeasureSnapshotProducer::InstrumentProjection);
     double countermeasure_snapshot_time_s = -1.0;
     bool countermeasure_snapshot_post_ew = false;
+    void set_countermeasure_snapshot_producer(CountermeasureSnapshotProducer producer,
+                                              double time_s) {
+        countermeasure_snapshot_stage = static_cast<int>(producer);
+        countermeasure_snapshot_time_s = time_s;
+        countermeasure_snapshot_post_ew =
+            producer == CountermeasureSnapshotProducer::CountermeasureReleaseProjection;
+    }
+    const char *countermeasure_snapshot_producer() const noexcept {
+        switch (countermeasure_snapshot_stage) {
+        case static_cast<int>(CountermeasureSnapshotProducer::InstrumentProjection):
+            return "instrument_projection";
+        case static_cast<int>(CountermeasureSnapshotProducer::CountermeasureReleaseProjection):
+            return "countermeasure_release_projection";
+        default:
+            return "unknown";
+        }
+    }
     bool jammer_transmitting = false;
     int jammer_mode = -1;
     double jammer_transmit_start_time_s = -1.0;

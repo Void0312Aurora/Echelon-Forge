@@ -239,9 +239,9 @@ inline void register_instrument_system(flecs::world &ecs) {
                     const ecs_world_info_t *world_info = ecs_get_world_info(it.world().c_ptr());
                     const double countermeasure_snapshot_time_s =
                         world_info ? static_cast<double>(world_info->world_time_total) : -1.0;
-                    inst[i].countermeasure_snapshot_stage = 24;
-                    inst[i].countermeasure_snapshot_time_s = countermeasure_snapshot_time_s;
-                    inst[i].countermeasure_snapshot_post_ew = false;
+                    inst[i].set_countermeasure_snapshot_producer(
+                        CountermeasureSnapshotProducer::InstrumentProjection,
+                        countermeasure_snapshot_time_s);
 
                     const Countermeasures *countermeasures = it.entity(i).get<Countermeasures>();
                     if (countermeasures) {

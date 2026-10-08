@@ -44,6 +44,8 @@ void bind_core_instruments(nb::module_ &m) {
                 &InstrumentState::countermeasure_last_release_time_s)
         .def_rw("countermeasure_auto_mode", &InstrumentState::countermeasure_auto_mode)
         .def_rw("countermeasure_snapshot_stage", &InstrumentState::countermeasure_snapshot_stage)
+        .def_prop_ro("countermeasure_snapshot_producer",
+                     &InstrumentState::countermeasure_snapshot_producer)
         .def_rw("countermeasure_snapshot_time_s", &InstrumentState::countermeasure_snapshot_time_s)
         .def_rw("countermeasure_snapshot_post_ew",
                 &InstrumentState::countermeasure_snapshot_post_ew)

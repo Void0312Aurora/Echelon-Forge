@@ -16,9 +16,8 @@ inline void project_countermeasure_instrument(InstrumentState &instrument,
     instrument.countermeasure_release_interval_s = cm.release_interval;
     instrument.countermeasure_last_release_time_s = cm.last_release_time;
     instrument.countermeasure_auto_mode = cm.auto_mode;
-    instrument.countermeasure_snapshot_stage = 31;
-    instrument.countermeasure_snapshot_time_s = current_time;
-    instrument.countermeasure_snapshot_post_ew = true;
+    instrument.set_countermeasure_snapshot_producer(
+        CountermeasureSnapshotProducer::CountermeasureReleaseProjection, current_time);
 }
 
 inline void project_jammer_instrument(InstrumentState &instrument, const Jammer *jammer,

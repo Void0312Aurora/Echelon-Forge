@@ -217,7 +217,7 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
         int(getattr(env.envs[0].last_inst, "countermeasure_chaff_remaining", -1)),
         initial_chaff,
       )
-      self.assertEqual(int(getattr(env.envs[0].last_inst, "countermeasure_snapshot_stage", -1)), 31)
+      self.assertEqual(env.envs[0].last_inst.countermeasure_snapshot_producer, "countermeasure_release_projection")
       self.assertTrue(bool(getattr(env.envs[0].last_inst, "countermeasure_snapshot_post_ew", False)))
       self.assertGreaterEqual(float(getattr(env.envs[0].last_inst, "countermeasure_snapshot_time_s", -1.0)), 0.0)
     finally:
@@ -552,3 +552,13 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
         self.assertGreater(float(reward_terms.get("combat_win_bonus", 0.0)), 0.0)
     finally:
       env.close()
+
+
+def test_countermeasure_semantic_producer_preserves_legacy_integer_api():
+  instrument = ef_py.InstrumentState()
+  assert instrument.countermeasure_snapshot_producer == "instrument_projection"
+  assert instrument.countermeasure_snapshot_stage == 24
+  instrument.countermeasure_snapshot_stage = 31
+  assert instrument.countermeasure_snapshot_producer == "countermeasure_release_projection"
+  instrument.countermeasure_snapshot_stage = 99
+  assert instrument.countermeasure_snapshot_producer == "unknown"

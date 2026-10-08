@@ -345,3 +345,59 @@ TEST_SUITE("air_ew_native") {
         CHECK(entity.get<InstrumentState>()->jammer_mode == -1);
     }
 }
+
+TEST_CASE("countermeasure provenance is semantic and survives existing wire reflection") {
+    for (int releases : {0, 1, 2, 3, 4}) {
+        SimulationKernel kernel;
+        kernel.reset(17);
+        auto owner = spawn_aircraft(kernel, Side::Blue, 0, 0, 0);
+        {
+            auto lease = kernel.acquire_world_lease();
+            if (releases == 4)
+                lease.world().entity(owner.id()).remove<Countermeasures>();
+            else {
+                Countermeasures cm{};
+                cm.chaff_count = cm.flare_count = 2;
+                lease.world().entity(owner.id()).set<Countermeasures>(cm);
+            }
+        }
+        REQUIRE(kernel.run_exact_stage_direct("UpdateInstruments"));
+        {
+            auto lease = kernel.acquire_world_lease();
+            const auto *inst = lease.world().entity(owner.id()).get<InstrumentState>();
+            REQUIRE(inst != nullptr);
+            CHECK(std::string(inst->countermeasure_snapshot_producer()) == "instrument_projection");
+            CHECK_FALSE(inst->countermeasure_snapshot_post_ew);
+            CHECK(inst->countermeasure_snapshot_time_s == doctest::Approx(0));
+            CHECK(inst->countermeasure_chaff_remaining == (releases == 4 ? -1 : 2));
+        }
+        PilotAction action{};
+        action.active = true;
+        action.program_chaff = releases < 4 && (releases & 1);
+        action.program_flare = releases < 4 && (releases & 2);
+        kernel.set_pilot_action(owner.id(), action);
+        REQUIRE(kernel.run_exact_stage_direct("EW_Release_Chaff"));
+        REQUIRE(kernel.run_exact_stage_direct("EW_Release_Flare"));
+        auto lease = kernel.acquire_world_lease();
+        const auto *inst = lease.world().entity(owner.id()).get<InstrumentState>();
+        const bool post_release = releases > 0 && releases < 4;
+        CHECK(std::string(inst->countermeasure_snapshot_producer()) ==
+              (post_release ? "countermeasure_release_projection" : "instrument_projection"));
+        CHECK(inst->countermeasure_snapshot_post_ew == post_release);
+        CHECK(inst->countermeasure_chaff_remaining ==
+              (releases == 4 ? -1 : 2 - bool(releases & 1)));
+        CHECK(inst->countermeasure_flare_remaining ==
+              (releases == 4 ? -1 : 2 - bool(releases & 2)));
+        register_state_transfer_component_reflection(lease.world());
+        const auto json = lease.world().to_json(inst);
+        InstrumentState restored{};
+        REQUIRE(lease.world().from_json(&restored, json.c_str()) != nullptr);
+        CHECK(std::string(restored.countermeasure_snapshot_producer()) ==
+              inst->countermeasure_snapshot_producer());
+        CHECK(restored.countermeasure_snapshot_stage == inst->countermeasure_snapshot_stage);
+        CHECK(restored.countermeasure_snapshot_time_s == inst->countermeasure_snapshot_time_s);
+        CHECK(restored.countermeasure_snapshot_post_ew == inst->countermeasure_snapshot_post_ew);
+        CHECK(restored.countermeasure_chaff_remaining == inst->countermeasure_chaff_remaining);
+        CHECK(restored.countermeasure_flare_remaining == inst->countermeasure_flare_remaining);
+    }
+}
