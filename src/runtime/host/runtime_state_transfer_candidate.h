@@ -21,11 +21,11 @@ using echelon_forge::runtime_contracts::v1::RuntimeIncarnationRef;
 using echelon_forge::runtime_contracts::v1::RuntimeWorldRef;
 
 inline constexpr std::uint32_t kRuntimeEpisodeHandshakeGeneration = 1;
-// The ship ECS shape changed after the generation-2 producer; N=3 admits those
-// actual previous bytes through migration. Readers accept only N and N-1 so a
+// AeroTuning gained five reflected fields after the generation-3 producer;
+// N=4 materializes their defaults before durable import. Readers accept only N and N-1 so a
 // rolling replacement can bridge one producer generation without silently
 // accepting an arbitrarily old state bundle.
-inline constexpr std::uint32_t kRuntimeStateTransferContractGeneration = 3;
+inline constexpr std::uint32_t kRuntimeStateTransferContractGeneration = 4;
 inline constexpr std::uint32_t kRuntimeStateTransferPreviousGeneration =
     kRuntimeStateTransferContractGeneration - 1;
 inline constexpr std::size_t kRuntimeStateCategoryCount = 12;

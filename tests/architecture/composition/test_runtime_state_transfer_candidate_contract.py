@@ -32,6 +32,7 @@ ECS_MIGRATION_FUNCTIONS = (
     "normalize_legacy_ecs_sensors",
     "normalize_legacy_ship_reflection",
     "normalize_legacy_ecs_ships",
+    "normalize_legacy_ecs_aero_tuning",
 )
 CMAKE = REPO_ROOT / "CMakeLists.txt"
 MIRROR = REPO_ROOT / "tests" / "runtime" / "shadow_runtime_episode_mirror.py"
