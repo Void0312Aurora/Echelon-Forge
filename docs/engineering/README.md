@@ -20,6 +20,8 @@ automation, dependency, and release guidance. Current owner routes are:
   infrastructure residuals, and retained governance reviews;
 - [workspace](workspace/README.md): linked-worktree placement and ownership,
   and the repository-relative path-length budget;
+- [native environment registry](reference/native_environment_registry.md):
+  fixed builtin physics defaults, refused truth overrides, and diagnostic settings;
 - [reviews](reviews/engineering_discipline_review_20260603.zh.md): retained
   engineering assessments, which remain evidence rather than standards.
 

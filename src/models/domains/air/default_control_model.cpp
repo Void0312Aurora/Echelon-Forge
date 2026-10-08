@@ -16,7 +16,6 @@
 #include <spdlog/spdlog.h>
 #include <algorithm>
 #include <cmath>
-#include <cstdlib>
 #include <iostream>
 #include <numbers>
 #include <string>
@@ -89,16 +88,9 @@ enum class FbwProtectionMode {
     Off,
 };
 
-FbwProtectionMode get_fbw_protection_mode() {
-    static FbwProtectionMode cached = []() {
-        const char *v = std::getenv("CMO_FBW_PROTECTION_MODE");
-        if (!v) return FbwProtectionMode::Strict;
-        const std::string s(v);
-        if (s == "off" || s == "OFF" || s == "0") return FbwProtectionMode::Off;
-        if (s == "relaxed" || s == "RELAXED" || s == "1") return FbwProtectionMode::Relaxed;
-        return FbwProtectionMode::Strict;
-    }();
-    return cached;
+constexpr FbwProtectionMode get_fbw_protection_mode() noexcept {
+    // The maintained builtin profile admits strict protection only.
+    return FbwProtectionMode::Strict;
 }
 
 class DefaultControlModel : public IControlModel {
