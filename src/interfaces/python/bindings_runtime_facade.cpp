@@ -45,7 +45,8 @@ void bind_runtime_facade(nb::module_ &m) {
              nb::arg("terrain_assignments"), nb::arg("wind_assignments"), nb::arg("zones"),
              nb::arg("requests"), nb::arg("time_steps") = std::vector<double>{},
              nb::arg("sun_assignments") = std::vector<WorldSunAssignment>{},
-             nb::arg("geodetic_anchor_assignments") = std::vector<WorldGeodeticAnchorAssignment>{})
+             nb::arg("geodetic_anchor_assignments") = std::vector<WorldGeodeticAnchorAssignment>{},
+             nb::arg("maritime_assignments") = std::vector<WorldMaritimeAssignment>{})
         .def("apply_world_setup", &RuntimeFacade::apply_world_setup, nb::arg("request"))
         .def("apply_world_layout", &RuntimeFacade::apply_world_layout, nb::arg("request"))
         .def("world_time_step", &RuntimeFacade::world_time_step, nb::arg("world_index"))

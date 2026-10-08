@@ -1,16 +1,98 @@
 #include "core/engine/world_batch_runtime.h"
 #include "core/engine/world_batch_visual_binding_compatibility_helper.h"
+#include "runtime/facade/runtime_facade.h"
 
 #include <doctest/doctest.h>
 
 #include <cmath>
 #include <stdexcept>
+#include <limits>
 #include <type_traits>
 
 static_assert(!std::is_polymorphic_v<WorldBatchRuntime>,
               "WorldBatchRuntime compatibility ABI must remain non-polymorphic");
 
 TEST_SUITE("world_batch_runtime") {
+
+    TEST_CASE("batch setup applies maritime overrides and clears absent worlds") {
+        WorldBatchRuntime runtime(2);
+        const std::vector<WorldMaritimeAssignment> assignments{{0, true, 3.0, 45.0, 7.0},
+                                                               {1, true, 6.0, 90.0, 9.0}};
+        runtime.apply_world_setup_batch({11, 17}, {}, {}, {}, {}, {}, {}, {}, assignments);
+        WorldBatchRuntime single(1);
+        single.apply_world_layout(0, 17, "flat", 0.0, 0.0, 0.0, true, 6.0, 90.0, 9.0, {}, {});
+        const auto single_state = single.world_raw_quarantine(0).get_maritime_state();
+        const auto batch_state = runtime.world_raw_quarantine(1).get_maritime_state();
+        CHECK(batch_state.configured == single_state.configured);
+        CHECK(batch_state.sea_state == single_state.sea_state);
+        CHECK(batch_state.wave_heading_deg == single_state.wave_heading_deg);
+        CHECK(batch_state.wave_period_s == single_state.wave_period_s);
+        for (std::size_t i = 0; i < 2; ++i) {
+            const auto state = runtime.world_raw_quarantine(i).get_maritime_state();
+            CHECK(state.configured);
+            CHECK(state.sea_state == doctest::Approx(assignments[i].sea_state));
+            CHECK(state.wave_heading_deg == doctest::Approx(assignments[i].wave_heading_deg));
+            CHECK(state.wave_period_s == doctest::Approx(assignments[i].wave_period_s));
+        }
+        runtime.apply_world_setup_batch({11, 17}, {}, {}, {}, {}, {}, {}, {}, {{0, false}});
+        CHECK_FALSE(runtime.world_raw_quarantine(0).get_maritime_state().configured);
+        CHECK_FALSE(runtime.world_raw_quarantine(1).get_maritime_state().configured);
+        runtime.apply_world_setup_batch({11, 17}, {}, {}, {}, {}, {}, {}, {}, assignments);
+        CHECK(runtime.world_raw_quarantine(1).get_maritime_state().sea_state == 6.0);
+        runtime.apply_world_setup_batch({11, 17}, {}, {}, {}, {});
+        CHECK_FALSE(runtime.world_raw_quarantine(1).get_maritime_state().configured);
+    }
+
+    TEST_CASE("invalid maritime assignment rejects before resetting any world") {
+        WorldBatchRuntime runtime(2);
+        runtime.world_raw_quarantine(0).set_maritime_state(3.0);
+        CHECK_THROWS_AS(runtime.apply_world_setup_batch({1, 2}, {}, {}, {}, {}, {}, {}, {},
+                                                        {{0, true}, {0, true}}),
+                        std::invalid_argument);
+        CHECK_THROWS_AS(
+            runtime.apply_world_setup_batch({1, 2}, {}, {}, {}, {}, {}, {}, {}, {{2, true}}),
+            std::out_of_range);
+        CHECK_THROWS_AS(
+            runtime.apply_world_setup_batch({1, 2}, {}, {}, {}, {}, {}, {}, {},
+                                            {{1, true, std::numeric_limits<double>::quiet_NaN()}}),
+            std::invalid_argument);
+        CHECK(runtime.world_raw_quarantine(0).get_maritime_state().sea_state == 3.0);
+    }
+
+    TEST_CASE("typed facade setup preserves maritime truth in CPU environment snapshots") {
+        RuntimeFacade facade(2);
+        BatchWorldSetupRequest request{};
+        request.seeds = {11, 17};
+        request.maritime_assignments = {{0, true, 3.0, 45.0, 7.0}, {1, true, 6.0, 90.0, 9.0}};
+        for (std::uint64_t i = 0; i < 2; ++i) {
+            WorldSpawnRequest spawn{};
+            spawn.world_index = i;
+            spawn.type_name = "Aircraft";
+            spawn.z = 1000.0;
+            request.spawn_requests.push_back(spawn);
+        }
+        auto result = facade.apply_world_setup(request);
+        REQUIRE(result.entity_ids.size() == 2);
+        auto scenes = facade.collect_visual_binding_compatibility_scenes_batch(
+            {{0, result.entity_ids[0]}, {1, result.entity_ids[1]}}, 4, false);
+        REQUIRE(scenes.size() == 2);
+        for (std::size_t i = 0; i < 2; ++i) {
+            CHECK(scenes[i].environment_snapshot.maritime_state_configured);
+            CHECK(scenes[i].environment_snapshot.sea_state ==
+                  request.maritime_assignments[i].sea_state);
+            CHECK(scenes[i].environment_snapshot.wave_heading_deg ==
+                  request.maritime_assignments[i].wave_heading_deg);
+            CHECK(scenes[i].environment_snapshot.wave_period_s ==
+                  request.maritime_assignments[i].wave_period_s);
+        }
+        request.maritime_assignments.clear();
+        result = facade.apply_world_setup(request);
+        scenes = facade.collect_visual_binding_compatibility_scenes_batch(
+            {{0, result.entity_ids[0]}, {1, result.entity_ids[1]}}, 4, false);
+        REQUIRE(scenes.size() == 2);
+        CHECK_FALSE(scenes[0].environment_snapshot.maritime_state_configured);
+        CHECK_FALSE(scenes[1].environment_snapshot.maritime_state_configured);
+    }
 
     TEST_CASE("worker thread controls clamp to available batch work") {
         WorldBatchRuntime runtime(3);

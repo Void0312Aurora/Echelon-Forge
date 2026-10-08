@@ -63,7 +63,8 @@ class EF_RUNTIME_FACADE_API RuntimeFacade {
         const std::vector<WorldZoneDefinition> &zones,
         const std::vector<WorldSpawnRequest> &requests, const std::vector<double> &time_steps = {},
         const std::vector<WorldSunAssignment> &sun_assignments = {},
-        const std::vector<WorldGeodeticAnchorAssignment> &geodetic_anchor_assignments = {});
+        const std::vector<WorldGeodeticAnchorAssignment> &geodetic_anchor_assignments = {},
+        const std::vector<WorldMaritimeAssignment> &maritime_assignments = {});
     BatchWorldSetupResult apply_world_setup(const BatchWorldSetupRequest &request);
     RuntimeWorldLayoutResult apply_world_layout(const RuntimeWorldLayoutRequest &request);
     double world_time_step(std::size_t world_index) const;

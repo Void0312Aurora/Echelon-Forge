@@ -63,6 +63,7 @@ def build_batch_world_setup_request(
     time_steps: list[float],
     sun_assignments: list[Any] | None = None,
     geodetic_anchor_assignments: list[Any] | None = None,
+    maritime_assignments: list[Any] | None = None,
 ):
     if not hasattr(ef_py, "BatchWorldSetupRequest"):
         raise RuntimeError(
@@ -83,6 +84,8 @@ def build_batch_world_setup_request(
     request.zones = list(zones)
     request.spawn_requests = list(spawn_requests)
     request.time_steps = [float(value) for value in time_steps]
+    if maritime_assignments is not None:
+        request.maritime_assignments = list(maritime_assignments)
     return request
 
 
@@ -193,6 +196,7 @@ def apply_world_setup_payload_maintained(
     time_steps: list[float],
     sun_assignments: list[Any] | None = None,
     geodetic_anchor_assignments: list[Any] | None = None,
+    maritime_assignments: list[Any] | None = None,
 ) -> list[int]:
     normalized_terrain_assignments, _ = normalize_world_setup_terrain_assignments(
         terrain_assignments,
@@ -207,6 +211,7 @@ def apply_world_setup_payload_maintained(
         time_steps=time_steps,
         sun_assignments=sun_assignments,
         geodetic_anchor_assignments=geodetic_anchor_assignments,
+        maritime_assignments=maritime_assignments,
     )
     return apply_world_setup_request_maintained(setup_target, request)
 

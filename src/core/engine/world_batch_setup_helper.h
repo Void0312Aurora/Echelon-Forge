@@ -110,6 +110,18 @@ inline void replace_zones(SimulationKernel &world, const std::vector<WorldZoneDe
     append_zones(world, zones, grouped_indices);
 }
 
+inline void
+apply_setup_maritime_assignments(SimulationKernel &world,
+                                 const std::vector<WorldMaritimeAssignment> &assignments,
+                                 const std::vector<std::size_t> &grouped_indices) {
+    if (grouped_indices.empty() || !assignments[grouped_indices.front()].configured) {
+        world.clear_maritime_state();
+        return;
+    }
+    const auto &item = assignments[grouped_indices.front()];
+    world.set_maritime_state(item.sea_state, item.wave_heading_deg, item.wave_period_s);
+}
+
 inline std::uint32_t resolve_reset_seed(std::size_t world_index, std::size_t world_count,
                                         const std::vector<std::uint32_t> &seeds) {
     std::uint32_t seed = static_cast<std::uint32_t>(42 + world_index);
@@ -137,12 +149,15 @@ inline void apply_world_setup(SimulationKernel &world, std::size_t world_index,
                               const std::vector<WorldSpawnRequest> &requests,
                               const std::vector<std::size_t> &spawn_grouped_indices,
                               const std::vector<double> &time_steps,
+                              const std::vector<WorldMaritimeAssignment> &maritime_assignments,
+                              const std::vector<std::size_t> &maritime_grouped_indices,
                               std::vector<std::uint64_t> *out_entity_ids, SpawnFn &&spawn_fn) {
     maybe_apply_time_step(world, world_index, time_steps);
     apply_setup_terrain_assignments(world, terrain_assignments, terrain_grouped_indices);
     apply_setup_wind_assignments(world, wind_assignments, wind_grouped_indices);
     apply_setup_sun_assignments(world, sun_assignments, sun_grouped_indices);
     apply_setup_geodetic_anchor_assignments(world, anchor_assignments, anchor_grouped_indices);
+    apply_setup_maritime_assignments(world, maritime_assignments, maritime_grouped_indices);
     replace_zones(world, zones, zone_grouped_indices);
     world.reset(resolve_reset_seed(world_index, world_count, seeds));
 

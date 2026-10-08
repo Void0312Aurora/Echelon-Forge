@@ -13,5 +13,6 @@ EF_BATCH_WORLD_SETUP_REQUEST_FIELD(std::vector<WorldZoneDefinition>, zones, {})
 EF_BATCH_WORLD_SETUP_REQUEST_FIELD(std::vector<WorldSpawnRequest>, spawn_requests, {})
 EF_BATCH_WORLD_SETUP_REQUEST_FIELD(std::vector<TypedPlatformSpawnRequest>, typed_platform_spawn_requests, {})
 EF_BATCH_WORLD_SETUP_REQUEST_FIELD(std::vector<double>, time_steps, {})
+EF_BATCH_WORLD_SETUP_REQUEST_FIELD(std::vector<WorldMaritimeAssignment>, maritime_assignments, {})
 
 #undef EF_BATCH_WORLD_SETUP_REQUEST_FIELD
