@@ -148,7 +148,23 @@ by `steady_turning_diameter_m`, `nomoto_time_constant`, and
 `steady_turn_speed_ratio`. Repository records and state-transfer reflection are
 updated together; old external records require migration and remain subject to
 strict unknown-field rejection. The ECS migration evidence digest is repinned
-for the changed serialized field set.
+for the changed serialized field set and the explicit N-1 ship normalizers.
+
+The runtime's N-1 ECS admission translates the previous 22-field hull record
+before strict current decoding. Its reference speed is `max(1, economic speed)`
+when economic speed is positive, otherwise `max(1, maximum speed)`. The old
+positive rate limit maps to diameter `2 * reference speed / rate_rad_s`; a zero
+rate maps to zero steering authority. Nomoto `T'=1` and turn-speed ratio `1`
+are deterministic compatibility defaults, not new trial calibration. The
+retired low-speed turn-rate floor has no equivalent in the new maneuvering law.
+Only legacy hulls get missing `AngularVelocity` seeded to zero; existing angular
+state and current hull fields are retained. Mixed old/new fields, malformed
+legacy values and migration requests outside N-1 fail closed. Unknown fields
+remain subject to strict decoding, and a direct N reader still rejects old hull
+fields. The owner-registry test constructs the exact pre-#117 reflected shape,
+imports it through the durable twelve-owner transaction and executes a native
+step with the restored ship; it also checks economic-speed fallback, zero turn
+authority, existing yaw preservation and rejection without live-world mutation.
 
 ### Validation and throughput
 
@@ -164,10 +180,12 @@ The existing HEI checkout is preserved.
 | --- | --- |
 | Windows full `ef_test` | 284 passed; 169,269 assertions |
 | HEI full `ef_test` | 284 passed; 169,269 assertions |
-| HEI runtime host/state-transfer candidate | 70 passed; 1,848 assertions |
+| Windows / HEI runtime host/state-transfer candidate after review repair | each: 72 passed; 1,993 assertions |
+| Windows / HEI N-1 ship migration and refusal cases | each: 2 cases, 145 assertions passed; reproduced failure before the fix |
 | Windows naval runtime + S1/S0 scenarios + CSG content | 101 passed; 16 subtests |
 | Windows S0/S1 visualization wire profiles + state-transfer evidence | 14 passed |
 | HEI final focused Python set | 135 passed; 16 subtests |
+| Windows / HEI focused post-review S1 transit + migration evidence | each: 15 passed |
 | Full-duration replay regeneration | named and mirror: 7201 frames each; `naval_csg_replay` contract passed |
 | Static gates | repository Ruff, changed C++ clang-format and internal code governance passed; 263 maintained documents / 2015 local links, zero issues |
 

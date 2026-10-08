@@ -81,8 +81,11 @@ The `2026-10-08` S1-A/B checkpoint uses a clean local MSVC Release build in
 `build-s1-win-verified-20261008` and an isolated HEI source snapshot at
 `/home/void0312/work/naval-s1-20261008`, accessed through `ssh HEI` and built
 with `-j32`. `CMO_BUILD_DIR` explicitly selects each current extension.
-Both hosts pass all 284 native tests. The HEI candidate state-transfer target
-passes 70 tests; the final focused Python set passes 135 tests and 16 subtests.
+Both hosts pass all 284 native tests. After the N-1 ship-state review repair,
+the candidate state-transfer target passes 72 tests / 1993 assertions on both
+hosts, including legacy hull import followed by native movement. The initial
+focused Python set passes 135 tests and 16 subtests; post-review S1 transit and
+migration-evidence validation passes 15 tests on each host.
 S1 live entity counts remain 24 / 22; each variant runs one simulated hour.
 Timing scope and replay/profile evidence are in the A/B checkpoint.
 
