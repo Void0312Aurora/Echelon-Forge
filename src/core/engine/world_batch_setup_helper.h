@@ -110,9 +110,10 @@ inline void replace_zones(SimulationKernel &world, const std::vector<WorldZoneDe
     append_zones(world, zones, grouped_indices);
 }
 
-inline void apply_setup_maritime_assignments(
-    SimulationKernel &world, const std::vector<WorldMaritimeAssignment> &assignments,
-    const std::vector<std::size_t> &grouped_indices) {
+inline void
+apply_setup_maritime_assignments(SimulationKernel &world,
+                                 const std::vector<WorldMaritimeAssignment> &assignments,
+                                 const std::vector<std::size_t> &grouped_indices) {
     if (grouped_indices.empty() || !assignments[grouped_indices.front()].configured) {
         world.clear_maritime_state();
         return;

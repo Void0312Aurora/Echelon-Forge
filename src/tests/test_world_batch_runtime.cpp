@@ -16,12 +16,11 @@ TEST_SUITE("world_batch_runtime") {
 
     TEST_CASE("batch setup applies maritime overrides and clears absent worlds") {
         WorldBatchRuntime runtime(2);
-        const std::vector<WorldMaritimeAssignment> assignments{
-            {0, true, 3.0, 45.0, 7.0}, {1, true, 6.0, 90.0, 9.0}};
+        const std::vector<WorldMaritimeAssignment> assignments{{0, true, 3.0, 45.0, 7.0},
+                                                               {1, true, 6.0, 90.0, 9.0}};
         runtime.apply_world_setup_batch({11, 17}, {}, {}, {}, {}, {}, {}, {}, assignments);
         WorldBatchRuntime single(1);
-        single.apply_world_layout(0, 17, "flat", 0.0, 0.0, 0.0, true, 6.0, 90.0,
-                                  9.0, {}, {});
+        single.apply_world_layout(0, 17, "flat", 0.0, 0.0, 0.0, true, 6.0, 90.0, 9.0, {}, {});
         const auto single_state = single.world_raw_quarantine(0).get_maritime_state();
         const auto batch_state = runtime.world_raw_quarantine(1).get_maritime_state();
         CHECK(batch_state.configured == single_state.configured);
@@ -48,11 +47,15 @@ TEST_SUITE("world_batch_runtime") {
         WorldBatchRuntime runtime(2);
         runtime.world_raw_quarantine(0).set_maritime_state(3.0);
         CHECK_THROWS_AS(runtime.apply_world_setup_batch({1, 2}, {}, {}, {}, {}, {}, {}, {},
-                                                        {{0, true}, {0, true}}), std::invalid_argument);
-        CHECK_THROWS_AS(runtime.apply_world_setup_batch({1, 2}, {}, {}, {}, {}, {}, {}, {},
-                                                        {{2, true}}), std::out_of_range);
-        CHECK_THROWS_AS(runtime.apply_world_setup_batch({1, 2}, {}, {}, {}, {}, {}, {}, {},
-                          {{1, true, std::numeric_limits<double>::quiet_NaN()}}), std::invalid_argument);
+                                                        {{0, true}, {0, true}}),
+                        std::invalid_argument);
+        CHECK_THROWS_AS(
+            runtime.apply_world_setup_batch({1, 2}, {}, {}, {}, {}, {}, {}, {}, {{2, true}}),
+            std::out_of_range);
+        CHECK_THROWS_AS(
+            runtime.apply_world_setup_batch({1, 2}, {}, {}, {}, {}, {}, {}, {},
+                                            {{1, true, std::numeric_limits<double>::quiet_NaN()}}),
+            std::invalid_argument);
         CHECK(runtime.world_raw_quarantine(0).get_maritime_state().sea_state == 3.0);
     }
 
@@ -75,9 +78,12 @@ TEST_SUITE("world_batch_runtime") {
         REQUIRE(scenes.size() == 2);
         for (std::size_t i = 0; i < 2; ++i) {
             CHECK(scenes[i].environment_snapshot.maritime_state_configured);
-            CHECK(scenes[i].environment_snapshot.sea_state == request.maritime_assignments[i].sea_state);
-            CHECK(scenes[i].environment_snapshot.wave_heading_deg == request.maritime_assignments[i].wave_heading_deg);
-            CHECK(scenes[i].environment_snapshot.wave_period_s == request.maritime_assignments[i].wave_period_s);
+            CHECK(scenes[i].environment_snapshot.sea_state ==
+                  request.maritime_assignments[i].sea_state);
+            CHECK(scenes[i].environment_snapshot.wave_heading_deg ==
+                  request.maritime_assignments[i].wave_heading_deg);
+            CHECK(scenes[i].environment_snapshot.wave_period_s ==
+                  request.maritime_assignments[i].wave_period_s);
         }
         request.maritime_assignments.clear();
         result = facade.apply_world_setup(request);

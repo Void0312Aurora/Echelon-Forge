@@ -490,13 +490,14 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
     const auto maritime_grouped = group_item_indices_by_world(worlds_.size(), maritime_assignments);
     for (const auto &indices : maritime_grouped) {
         if (indices.size() > 1) {
-            throw std::invalid_argument("maritime_assignments must contain at most one item per world");
+            throw std::invalid_argument(
+                "maritime_assignments must contain at most one item per world");
         }
     }
     for (const auto &item : maritime_assignments) {
-        if (item.configured && (!std::isfinite(item.sea_state) ||
-                                !std::isfinite(item.wave_heading_deg) ||
-                                !std::isfinite(item.wave_period_s))) {
+        if (item.configured &&
+            (!std::isfinite(item.sea_state) || !std::isfinite(item.wave_heading_deg) ||
+             !std::isfinite(item.wave_period_s))) {
             throw std::invalid_argument("maritime_assignments configured values must be finite");
         }
     }
