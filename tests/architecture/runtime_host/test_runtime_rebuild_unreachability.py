@@ -20,7 +20,7 @@ def test_rebuild_inventory_is_fresh_and_production_authority_is_retired() -> Non
     assert record["test_only_references"] == {
         "src/core/engine/testing/simulation_kernel_composition_test_access.cpp": [14, 16],
         "src/core/engine/testing/simulation_kernel_composition_test_access.h": [17],
-        "src/tests/test_simulation_kernel_smoke.cpp": [79, 87, 99, 106, 144, 196, 207, 250],
+        "src/tests/test_simulation_kernel_smoke.cpp": [80, 88, 100, 107, 145, 197, 209, 252],
     }
     assert record["reachability_state"] == "retired_production_authority_test_seam_retained"
     assert record["retired"] is True
