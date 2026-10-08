@@ -1,5 +1,7 @@
 import numpy as np
 
+from python.scenario.runtime.randomization import validate_randomization_overrides
+
 from python.scenario.compiler import (
     ApproachRewardConfig,
     CompiledScenario,
@@ -88,12 +90,7 @@ def align_task_only_mission_shell_with_task_order(loader) -> None:
 
 
 def set_randomization_overrides(loader, overrides: dict | None) -> None:
-    if overrides is None:
-        loader.randomization_overrides = {}
-        return
-    if not isinstance(overrides, dict):
-        raise TypeError(f"randomization overrides must be a dict or None, got {type(overrides)}")
-    loader.randomization_overrides = dict(overrides)
+    loader.randomization_overrides = validate_randomization_overrides(overrides)
 
 
 def prepare_load_seed(loader, seed=42) -> int:

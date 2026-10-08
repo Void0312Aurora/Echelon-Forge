@@ -34,6 +34,12 @@
 
 ## 边界
 
+初始课程 stage 0 在环境首次 reset 前应用。未声明的覆盖字段是可选的；
+已声明的字典必须成功应用（空的 randomization 字典表示清除覆盖）。非法值、
+不支持的方法或部分应用失败会终止启动，并关闭环境和实验锁。成功应用的设置
+写入实验目录下的 `curriculum_stage0.json`；这份记录表示环境 setter 已接受配置，
+不表示后续 episode 已经执行过该配置。
+
 - 这里可以放训练入口的参数解析、实验目录管理、运行时 bootstrap，以及入口侧编排（依赖加载、动作偏置初始化、vec-env 构造接线）。
 - 算法、policy、vec-env 的*实现*仍留在 `python/rl/`；本包只负责选择、构造与摘要打印，不要把实现复制进来。
 - maintained-execution 的 `runtime.world_batch_vec_env=true` 守卫消息保留在 `train.py`（架构测试会扫描入口源码）。
