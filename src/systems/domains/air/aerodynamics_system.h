@@ -10,7 +10,8 @@
 #include "components/physics/aero_tables.h"
 #include "components/physics/control_surface.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
-#include "components/physics/performance.h"  // For LandingGear
+#include "components/physics/performance.h" // For LandingGear
+#include "components/physics/physics_input_policy.h"
 #include "components/command/pilot_action.h" // For PilotAction (flaps/speedbrake)
 #include "components/systems/logistics.h"    // For MassProperties definition
 #include "core/interfaces/environment_model.h"
@@ -46,10 +47,7 @@ inline void register_aerodynamics_system(flecs::world &ecs) {
         // by registration order in SimulationKernel.
         .run([](flecs::iter &it) {
             const EnvironmentModelRef *env_ref = it.world().get<EnvironmentModelRef>();
-            double dt = it.delta_time();
-            if (dt <= 0.0) {
-                dt = 0.05;
-            }
+            const double dt = physics_runtime::resolve_integrator_dt(it.delta_time());
             while (it.next()) {
                 auto forces = it.field<ForceAccumulator>(0);
                 auto aero = it.field<AeroState>(1);
@@ -64,7 +62,7 @@ inline void register_aerodynamics_system(flecs::world &ecs) {
                     double alpha = aero[i].angle_of_attack;
                     const double mach = std::max(0.0, aero[i].mach_number);
                     double S = props[i].reference_area_m2;
-                    if (S < 1.0) S = 30.0; // Fallback
+                    if (!physics_runtime::valid_reference_area(S)) continue;
 
                     const AeroTuning *attached_tuning = it.entity(i).get<AeroTuning>();
                     const AeroTuning &tuning = (attached_tuning && attached_tuning->enabled)

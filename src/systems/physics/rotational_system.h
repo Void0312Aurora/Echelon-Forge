@@ -6,6 +6,7 @@
 #include <numbers>
 #include "components/basic/common.h"
 #include "components/physics/forces.h"
+#include "components/physics/physics_input_policy.h"
 #include "components/physics/dynamics.h"
 
 namespace {
@@ -60,8 +61,7 @@ inline void register_rotational_integration_system(flecs::world &ecs) {
                 auto inertia = it.field<const Inertia>(2);
                 auto forces = it.field<const ForceAccumulator>(3);
 
-                double dt = it.delta_time();
-                if (dt <= 0.0) dt = 0.05;
+                const double dt = physics_runtime::resolve_integrator_dt(it.delta_time());
 
                 const RotationalParams &prm = rotational_params();
 

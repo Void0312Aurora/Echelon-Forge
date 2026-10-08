@@ -15,6 +15,7 @@
 #include "components/basic/common.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/forces.h"
+#include "components/physics/physics_input_policy.h"
 #include "components/physics/performance.h"
 #include "components/systems/logistics.h"
 #include "core/interfaces/environment_model.h"
@@ -130,6 +131,14 @@ PilotAction pilot_input(double throttle, double brake, double rudder = 0.0) {
 } // namespace
 
 TEST_SUITE("ground_contact_solver") {
+
+    TEST_CASE("ground contact and downstream integrators share one dt policy") {
+        CHECK(physics_runtime::resolve_integrator_dt(0.0) == doctest::Approx(0.05));
+        CHECK(physics_runtime::resolve_integrator_dt(-1.0) == doctest::Approx(0.05));
+        CHECK(physics_runtime::resolve_integrator_dt(0.01) == doctest::Approx(0.01));
+        CHECK(physics_runtime::valid_mass(0.5));
+        CHECK(physics_runtime::valid_reference_area(0.5));
+    }
     TEST_CASE("normal contact settles to the static spring equilibrium in one step") {
         // Body resting at the undeflected gear height under gravity.
         for (double h : {0.05, 0.2, 0.5}) {
