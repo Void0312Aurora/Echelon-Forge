@@ -11,25 +11,22 @@
 /**
  * LeapfrogIntegrationSystem
  *
- * Implements Störmer-Verlet (Leapfrog) symplectic integration:
+ * Implements a frozen-force semi-implicit kick-drift-kick update:
  *
  *   v(t + dt/2) = v(t) + a(t) * dt/2       [kick]
  *   x(t + dt)   = x(t) + v(t + dt/2) * dt  [drift]
- *   v(t + dt)   = v(t + dt/2) + a(t+dt) * dt/2 [kick]
+ *   v(t + dt)   = v(t + dt/2) + a(t) * dt/2   [kick]
  *
- * Note:
- * - True Velocity-Verlet uses a(t+dt) for the second kick.
- * - In the current ECS pipeline we evaluate forces once per frame, so we
- *   use a(t) for both half-kicks. This is still time-symmetric for constant
- *   acceleration and significantly reduces Euler drift in common cases.
- *
- * Benefits:
- * - Symplectic: Preserves phase space volume
- * - Energy error is bounded and oscillates (no secular drift)
- * - 2nd order accurate
+ * The ECS pipeline evaluates forces once per frame, so the same acceleration is
+ * used for both half-kicks. This is exact for constant acceleration, with the
+ * usual constant-acceleration position and velocity orders. It is not a general
+ * Störmer-Verlet or Velocity-Verlet integrator: state-dependent forces,
+ * damping, and contact constraints have no general symplecticity, energy-bound,
+ * or second-order guarantee under this contract.
  */
 
 inline double integration_wrap_angle_360(double angle) {
+    if (!std::isfinite(angle)) return angle;
     while (angle < 0.0)
         angle += 360.0;
     while (angle >= 360.0)
