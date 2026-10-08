@@ -2,16 +2,18 @@
 
 `python/` 不是杂项脚本目录，而是 C++ runtime 之上的 Python 支撑层。它承担场景编译与落地、训练回调、RL runtime 适配、world model 支持，以及测试运行时辅助。
 
-主线依赖关系大致为：
+维护中的运行时/消费者关系示意如下（并非完整 import 图）：
 
 ```text
-src/interfaces/python -> ef_py
-  -> python/scenario/compiler + python/scenario/runtime
-     + python/env_config + python/mission_obs_taxonomy
-    -> gym_envs/
-      -> python/rl/
-        -> tools/ + tests/
+ef_py + python/scenario/{compiler,runtime}
+  -> python/simulation（Provider 协议与选择）
+       -> facade_batch 与 Air 脚本场景/重放（不依赖 RL）
+       -> 显式延迟加载的 world_batch Provider（RL 训练/评估）
+  -> gym_envs（Gym 包装与兼容层）
+       -> python/rl（训练与策略消费者）
 ```
+
+原生运行时仍持有权威状态。训练/评估显式选择 `backend_id="world_batch"`；无 RL 场景默认 `facade_batch`。
 
 ## 允许
 
@@ -27,7 +29,7 @@ src/interfaces/python -> ef_py
 - cooperative/common 是 shared runtime、tasking 与 policy orchestration 的集成主线。
 - active execution training/eval parity 以 runtime-facade / world-batch adapter 为中心；raw `UniversalEnv` 只有在调用方显式启用时才属于 compatibility/diagnostic path。
 - naval 已有受限的 tasking/profile/runtime 路径，包括 N4 stationing 与 contact-evidence plumbing；不要据此解读为完整海上仿真层。
-- ground 在本层目前是早期 tasking/profile/schema bootstrap。movement、sensing、terrain、fires、damage 与完整 ground runtime 仍处于 held 状态，不属于当前 maintained Python path。
+- ground 的 `python/rl/ground/` 已提供受限单兵移动、地形效果和武器/毁伤验证所用的原生探针与 Gym adapter；这并非生产级 Ground `WorldBatch` 训练运行时，也不代表通用感知或完整陆战能力。
 
 ## 禁止
 
@@ -38,6 +40,8 @@ src/interfaces/python -> ef_py
 
 ## 子目录约定
 
+- `simulation/`
+  - Provider 协议/选择、`facade_batch`、Air 脚本场景与重放，以及显式加载的 RL `world_batch` Provider。
 - `scenario/`
   - 打包后的场景编译与运行时主实现，按 `compiler/` 与 `runtime/` 子域维护。
 - `rl/`
