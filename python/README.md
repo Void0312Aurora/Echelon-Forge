@@ -2,16 +2,18 @@
 
 `python/` is not a miscellaneous scripts directory. It is the Python support layer above the C++ runtime. It owns scenario compilation and realization, training callbacks, RL runtime adaptation, world model support, and testing runtime helpers.
 
-The main dependency flow is roughly:
+The maintained runtime/consumer relationships are schematic, not a complete import graph:
 
 ```text
-src/interfaces/python -> ef_py
-  -> python/scenario/compiler + python/scenario/runtime
-     + python/env_config + python/mission_obs_taxonomy
-    -> gym_envs/
-      -> python/rl/
-        -> tools/ + tests/
+ef_py + python/scenario/{compiler,runtime}
+  -> python/simulation (backend protocol and provider selection)
+       -> facade_batch and Air scripted scenario/replay (no RL required)
+       -> explicit lazy world_batch provider (RL training/evaluation)
+  -> gym_envs (Gym wrappers and compatibility)
+       -> python/rl (training and policy consumers)
 ```
+
+The native runtime remains authoritative. Training/evaluation chooses `backend_id="world_batch"` explicitly; the no-RL scenario provider defaults to `facade_batch`.
 
 ## Allowed
 
@@ -27,7 +29,7 @@ src/interfaces/python -> ef_py
 - Cooperative/common is the main integration line for shared runtime, tasking, and policy orchestration.
 - Active execution training/eval parity is centered on runtime-facade/world-batch adapters; raw `UniversalEnv` use is compatibility/diagnostic-only unless explicitly enabled by the caller.
 - Naval support is present in scoped tasking/profile/runtime paths, including N4 stationing and contact-evidence plumbing, but should not be read as a complete maritime simulation layer.
-- Ground support in this layer is early tasking/profile/schema bootstrap. Movement, sensing, terrain, fires, damage, and a full ground runtime remain held outside the maintained Python path.
+- Ground includes `python/rl/ground/` native probes and Gym adapters for bounded infantry movement, terrain effects, and weapon/damage evidence. This does not admit a production Ground `WorldBatch` training runtime, general sensing, or a full land-combat capability.
 
 ## Forbidden
 
@@ -38,6 +40,8 @@ src/interfaces/python -> ef_py
 
 ## Subdirectory Conventions
 
+- `simulation/`
+  - Provider selection/protocols, `facade_batch`, Air scripted scenario lifecycle and replay, and an explicitly loaded RL `world_batch` provider.
 - `scenario/`
   - Main implementation for packaged scenario compilation and runtime, maintained in the `compiler/` and `runtime/` subdomains. The scenario runtime owns the diagnostic scripted-opponent fixture at `runtime/red_scripted_agent.py`; it is not a playable-policy admission.
 - `rl/`
