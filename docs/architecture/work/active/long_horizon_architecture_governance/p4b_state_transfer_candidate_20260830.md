@@ -10,7 +10,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/long_horizon_architecture_governance/p4b_state_transfer_candidate_20260830.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-09-13`
+Last verified: `2026-10-08`
 
 ## Purpose
 
@@ -39,7 +39,7 @@ recovery. A green fixture or mirror test is not sufficient for acceptance.
 - Import transactions have an abort guard on every validation failure and are
   committed outside transfer and host mutexes. Host/native/state-transfer
   in-flight counters prevent reclaim, shutdown, timeout, fault, or abort races.
-- The current contract accepts schema generation N=2 and N-1=1 only, normalizes
+- The current contract accepts schema generation N=3 and N-1=2 only, normalizes
   the candidate entry hash to N, and explicitly rejects multi-world replacement
   until a per-world transfer protocol is admitted.
 - The candidate now exposes one twelve-row decoder/replay matrix with explicit
@@ -53,7 +53,25 @@ recovery. A green fixture or mirror test is not sufficient for acceptance.
   categories are tracked in
   [p4b_owner_adapter_inventory_20260830.md](p4b_owner_adapter_inventory_20260830.md).
 
-## Latest bounded repair slice (2026-08-31)
+## Ship schema generation repair (2026-10-08)
+
+The pre-Naval-S1 producer at `cedfa01c35cb9b9c0b03f2ee9b3f211c893cd8a5`
+emits generation 2, including the retired ship turn-rate fields and no required
+ship yaw state. The changed ship reflection therefore advances the contract to
+3; it cannot retain generation 2 and rely on a generation-1 migration hook.
+Generation-2 ECS bytes pass through the explicit legacy hull/yaw migration,
+while unchanged owner byte grammars use reader promotion. Current exports use
+3. The fixed twelve-owner decoder matrix admits exactly 2/3 and rejects 1.
+
+The native regression freezes the audited old producer generation at 2,
+constructs the exact old reflected hull shape, tags the complete source census
+and all twelve artifacts with that generation, imports durably and executes
+one restored native ship step. It also checks all twelve observations promote
+2 to 3 and that an expired generation-1 bundle cannot mutate the target. This
+is candidate compatibility evidence; production rollout remains gated by the
+maintained reader-first rollout authority.
+
+## Earlier bounded repair slice (2026-08-31)
 
 - The owner-import seam now exposes statusful `Prepared`/`Committing`/
   `Committed`/`Aborting`/`Aborted`/`Ambiguous` phases, bounded commit and abort

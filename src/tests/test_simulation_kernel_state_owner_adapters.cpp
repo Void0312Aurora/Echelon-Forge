@@ -1154,6 +1154,11 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
     TEST_CASE("N-1 legacy ship payload imports durably and resumes native motion") {
         using Bridge = integration::SimulationKernelStateOwnerBridge;
         using json = nlohmann::json;
+        // Audited pre-#117 producer: main@cedfa01c35cb9b9c0b03f2ee9b3f211c893cd8a5,
+        // runtime_state_transfer_candidate.h: kRuntimeStateTransferContractGeneration = 2.
+        // Freeze the producer's wire generation independently of the target reader.
+        constexpr std::uint32_t kPreNavalS1ProducerGeneration = 2;
+        CHECK(host::kRuntimeStateTransferPreviousGeneration == kPreNavalS1ProducerGeneration);
         double economic_speed = 10.29;
         double turn_rate = 2.4;
         bool retained_yaw = false;
@@ -1235,28 +1240,49 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         if (!retained_yaw) REQUIRE(components.erase("AngularVelocity") == 1);
         const auto previous_text = previous.dump();
         artifact->payload = {previous_text.begin(), previous_text.end()};
-        artifact->schema_generation = host::kRuntimeStateTransferPreviousGeneration;
         artifact->payload_sha256 = host::runtime_state_payload_sha256(artifact->payload);
         auto entry = std::find_if(
             exported.census.entries.begin(), exported.census.entries.end(), [](const auto &row) {
                 return row.category == host::RuntimeStateCategory::EcsComponentTruth;
             });
         REQUIRE(entry != exported.census.entries.end());
-        entry->schema_generation = host::kRuntimeStateTransferPreviousGeneration;
         entry->state_content_sha256 = artifact->payload_sha256;
-        entry->canonical_payload = host::runtime_state_canonical_payload(*entry);
-        entry->canonical_payload_sha256 =
-            host::runtime_state_payload_sha256(entry->canonical_payload);
+        // A real old producer stamps the whole census and all twelve owners with 2,
+        // not just the changed ECS row. Unchanged owners still need reader promotion.
+        exported.census.contract_generation = kPreNavalS1ProducerGeneration;
+        for (auto &row : exported.artifacts) {
+            row.schema_generation = kPreNavalS1ProducerGeneration;
+        }
+        for (auto &row : exported.census.entries) {
+            row.schema_generation = kPreNavalS1ProducerGeneration;
+            if (!row.canonical_payload.empty()) {
+                row.canonical_payload = host::runtime_state_canonical_payload(row);
+                row.canonical_payload_sha256 =
+                    host::runtime_state_payload_sha256(row.canonical_payload);
+            }
+        }
 
         const auto before = Bridge::serialize_world(target);
         // The N reader remains strict. Only explicit N-1 admission may translate it.
         CHECK_FALSE(Bridge::restore_world(target, artifact->payload));
+        CHECK(Bridge::serialize_world(target) == before);
+        auto expired = exported;
+        expired.census.contract_generation = kPreNavalS1ProducerGeneration - 1;
+        const auto refused =
+            target_registry->import_and_observe(profile, expired, {.high = 478, .low = 479});
+        CHECK_FALSE(refused.status);
+        CHECK(refused.transaction == nullptr);
         CHECK(Bridge::serialize_world(target) == before);
         auto imported =
             target_registry->import_and_observe(profile, exported, {.high = 480, .low = 481});
         INFO(imported.status.detail);
         REQUIRE(imported.status);
         REQUIRE(imported.transaction != nullptr);
+        CHECK(imported.observations.size() == host::kRuntimeStateCategoryCount);
+        for (const auto &observation : imported.observations) {
+            CHECK(observation.source_schema_generation == kPreNavalS1ProducerGeneration);
+            CHECK(observation.schema_generation == host::kRuntimeStateTransferContractGeneration);
+        }
         const auto committed = imported.transaction->commit_with_deadline(20, 100);
         REQUIRE(committed.phase == host::RuntimeStateOwnerImportTransactionPhase::Committed);
         CHECK(committed.durable);

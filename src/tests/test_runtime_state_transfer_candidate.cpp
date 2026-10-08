@@ -269,7 +269,7 @@ class FixtureOwnerRegistry final : public host::RuntimeStateTransferOwnerRegistr
                     .disposition = policy.disposition,
                     .owner_id = policy.owner_id,
                     .schema_id = policy.schema_id,
-                    .schema_generation = 1,
+                    .schema_generation = host::kRuntimeStateTransferPreviousGeneration,
                     .sequence_high_watermark = 17,
                     .rng_draw_position = 18,
                     .simulation_tick = 19,
@@ -503,19 +503,20 @@ ValidationFixture make_validation_fixture(std::uint64_t host_low, bool tamper = 
                            category == host::RuntimeStateCategory::DelayedEventsQueues ||
                            category == host::RuntimeStateCategory::CommandsLinksPendingIntent ||
                            category == host::RuntimeStateCategory::EpisodeRewardTermination;
-        profile.rows.push_back({.category = category,
-                                .disposition = disposition,
-                                .owner_id = owner,
-                                .schema_id = schema,
-                                .minimum_schema_generation = 1,
-                                .maximum_schema_generation = 1,
-                                .truth_affecting = truth});
+        profile.rows.push_back(
+            {.category = category,
+             .disposition = disposition,
+             .owner_id = owner,
+             .schema_id = schema,
+             .minimum_schema_generation = host::kRuntimeStateTransferPreviousGeneration,
+             .maximum_schema_generation = host::kRuntimeStateTransferPreviousGeneration,
+             .truth_affecting = truth});
         host::RuntimeStateCensusEntry entry{
             .category = category,
             .disposition = disposition,
             .owner_id = owner,
             .schema_id = schema,
-            .schema_generation = 1,
+            .schema_generation = host::kRuntimeStateTransferPreviousGeneration,
             .item_count = 0,
             .settled_item_count = 0,
             .sequence_high_watermark = 17,
