@@ -25,7 +25,7 @@ Document kind: task
 Lifecycle: maintained
 Canonical: docs/learning/work/active/launch_decision_reorg/README.md
 Owner: learning/policy-architecture
-Last verified: 2026-09-24
+Last verified: 2026-10-08
 Content status: owner-finalized and implemented through C0-C5 after the blocked
 review findings were resolved in the plan. No further independent review gate is
 required for this stream.
