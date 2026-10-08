@@ -28,8 +28,8 @@ Last verified: `2026-09-30`
 - [空域 owner README](../../../../air/README.zh.md)
 - [梯度逼真度原则](../../../../../systems/standards/gradient_realism_principles.zh.md)
 - [子项目创建标准](../../../../../engineering/automation/rules/subproject_creation_standard.zh.md)
-- 未合并的装备调研目录 `origin/codex/database-scaffold`
-  （`database/research/equipment/catalog/**`），仅作参数来源
+- 已位于 `main` 的装备调研目录 `database/research/equipment/catalog/**`，
+  仅作为参数及来源参考，不代表对应装备已获仿真能力准入
 
 ## 目的
 
