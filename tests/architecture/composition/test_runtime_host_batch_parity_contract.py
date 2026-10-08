@@ -89,6 +89,30 @@ def test_p7_budget_and_reference_evidence_are_schema_valid_and_fresh() -> None:
   assert len(evidence["budget_evaluation"]["checks"]) == 27
 
 
+def test_frozen_semantics_accept_consistent_reallocation_and_reject_wrong_entity() -> None:
+  reference = _read(parity.SEMANTIC_REFERENCE_PATH)["semantic"]
+  changed = deepcopy(reference)
+  for group in ("initial_observations", "action_inputs", "final_observations"):
+    for world, row in enumerate(changed[group]):
+      row["entity_id"] = 2**53 + world + 1
+  assert parity.reference_semantic_mismatches(reference, changed, "$", 1e-12) == []
+  # Live host comparison retains exact integer identity, including >2^53.
+  assert parity._semantic_mismatches(reference, changed, "$", 1e-12)
+  for group in ("action_inputs", "final_observations"):
+    corrupted = deepcopy(changed)
+    corrupted[group][0]["entity_id"] += 1
+    with pytest.raises(parity.ParityError, match="entity role reference"):
+      parity.reference_semantic_mismatches(reference, corrupted, "$", 1e-12)
+  wrong_world = deepcopy(changed)
+  wrong_world["action_inputs"][0]["world_index"] = 1
+  with pytest.raises(parity.ParityError, match="entity role reference"):
+    parity.reference_semantic_mismatches(reference, wrong_world, "$", 1e-12)
+  changed["final_observations"][0]["x"] += 1
+  assert parity.reference_semantic_mismatches(reference, changed, "$", 1e-12) == [
+    "$.final_observations[0].x"
+  ]
+
+
 def test_p7_evidence_fails_closed_for_identity_node_and_budget_tampering() -> None:
   evidence = _read(parity.EVIDENCE_PATH)
   candidates = []
