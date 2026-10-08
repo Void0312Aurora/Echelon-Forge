@@ -10,7 +10,7 @@ common DTO/contract 用于承载 air、naval 和早期 ground-aware setup flow �
 
 - Air：command、tasking、mission/episode、physics、observation 和 RL-facing execution 路径最成熟。
 - Naval：已有维护中的平台组件、command/tasking owner slice、舰艇/潜艇/舰载航空 token runtime，以及 tasking/engagement evidence surface；这不等价于完整 naval mission runtime 已存在。
-- Ground：仍是早期 bootstrap。`UnitType::Ground` 与 typed-platform capability evidence 已存在，shared terrain assignment 与 aircraft/terrain ground-contact primitive 也可用。但这些不是陆域 terrain 或 movement runtime；ground movement、sensing、terrain ownership、fires、damage 和 full ground runtime 仍 held。
+- Ground：除静态 tasking 与平台能力外，已有受限原生 `GroundInfantryMovement`、显式 Arnis 地形采样、要求敌方跟踪目标的步枪直射和共享毁伤探针。这不代表完整寻路、感知、压制、编队、后勤或生产级陆战 runtime。详见 `docs/domains/ground/standards/specialization_baseline.md`。
 
 ## 依赖方向
 
