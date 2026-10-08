@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import math
 import time
+from numbers import Real
 from typing import Any
 
 import ef_py
@@ -8,6 +10,7 @@ import numpy as np
 
 from python.tasking_contracts.common.timing_utils import coerce_timing_dict
 from python.simulation import create_leader_window_runtime
+from python.scenario.runtime.randomization import validate_randomization_overrides
 
 from .bridges import LeaderCommandBridge
 from .common import load_json_dict, make_args_stub
@@ -72,10 +75,8 @@ class LeaderRuntimeFacadeMixin:
         return self._ensure_leader_window_runtime()
 
     def set_randomization_overrides(self, overrides: dict | None) -> None:
-        try:
-            self._exec_runtime.set_randomization_overrides(overrides)
-        except Exception:
-            pass
+        admitted = validate_randomization_overrides(overrides)
+        self._exec_runtime.set_randomization_overrides(admitted)
 
     def set_execution_runtime(self, execution_runtime: Any) -> None:
         old_runtime = getattr(self, "_exec_runtime", None)
@@ -117,8 +118,10 @@ class LeaderRuntimeFacadeMixin:
         self._kernel_command_sync_dirty = False
 
     def set_leader_overrides(self, overrides: dict | None) -> None:
-        if not isinstance(overrides, dict):
+        if overrides is None:
             return
+        if not isinstance(overrides, dict):
+            raise TypeError("leader overrides must be a dict or None")
         float_fields = {
             "teacher_keep_deadband": (0.0, 0.95),
             "invalid_phase_penalty": (0.0, None),
@@ -132,19 +135,19 @@ class LeaderRuntimeFacadeMixin:
             "altitude_bias_limit_m": (0.0, None),
             "speed_bias_limit_mps": (0.0, None),
         }
-        for key, bounds in float_fields.items():
-            if key not in overrides:
-                continue
-            try:
-                value = float(overrides[key])
-            except Exception:
-                continue
-            lo, hi = bounds
-            if lo is not None:
-                value = max(float(lo), value)
-            if hi is not None:
-                value = min(float(hi), value)
-            setattr(self, key, float(value))
+        unknown = overrides.keys() - float_fields.keys()
+        if unknown:
+            raise ValueError(f"unknown leader overrides: {sorted(unknown, key=str)}")
+        admitted = {}
+        for key, value in overrides.items():
+            if isinstance(value, bool) or not isinstance(value, Real) or not math.isfinite(value):
+                raise ValueError(f"leader override {key} requires a finite number")
+            lo, hi = float_fields[key]
+            if value < lo or (hi is not None and value > hi):
+                raise ValueError(f"leader override {key} is outside [{lo}, {hi}]")
+            admitted[key] = float(value)
+        for key, value in admitted.items():
+            setattr(self, key, value)
 
     def reset(self, *, seed: int | None = None, options: dict | None = None):
         _ = options

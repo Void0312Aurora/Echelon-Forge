@@ -157,8 +157,7 @@ class WrappedExecutionRuntimeAdapter(ExecutionRuntimeAdapter):
         return int(steps), timing
 
     def set_randomization_overrides(self, overrides: dict | None) -> None:
-        if hasattr(self._handle, "set_randomization_overrides"):
-            self._handle.set_randomization_overrides(overrides)
+        self._handle.set_randomization_overrides(overrides)
 
     def get_last_state(self):
         if hasattr(self._handle, "get_last_state"):
@@ -193,10 +192,7 @@ class SingleExecutionRuntime(ExecutionRuntimeAdapter):
         if hasattr(self.env, "set_randomization_overrides"):
             self.env.set_randomization_overrides(overrides)
             return
-        try:
-            self.env.env_method("set_randomization_overrides", overrides)
-        except Exception:
-            pass
+        self.env.env_method("set_randomization_overrides", overrides)
 
     @property
     def policy_env(self) -> Any:
