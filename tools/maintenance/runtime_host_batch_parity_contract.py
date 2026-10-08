@@ -1023,6 +1023,39 @@ def evaluate_budget(
   return {"status": "pass", "checks": checks}
 
 
+def semantic_entity_roles(semantic: dict[str, Any]) -> dict[str, Any]:
+  """Normalize only consistent IDs in the frozen one-entity-per-world workload.
+
+  Raw handles depend on Flecs' component/system census. Preserve exact live
+  native/Python equality elsewhere; for historical comparison, verify every
+  action/final observation still refers to its initial world entity before
+  replacing all three handles with that world role. Never drop ID fields.
+  """
+  result = deepcopy(semantic)
+  count = WORKLOAD["semantic_world_count"]
+  groups = ("initial_observations", "action_inputs", "final_observations")
+  if any(not isinstance(result.get(group), list) or len(result[group]) != count for group in groups):
+    raise ParityError("P7-A entity role workload shape mismatch")
+  for world in range(count):
+    initial, action, final = (result[group][world] for group in groups)
+    entity_id = initial.get("entity_id")
+    if type(entity_id) is not int or not 0 < entity_id < 2**64:
+      raise ParityError("P7-A entity role requires a positive uint64 handle")
+    if (type(action.get("entity_id")) is not int or type(final.get("entity_id")) is not int
+        or action["entity_id"] != entity_id or final["entity_id"] != entity_id
+        or type(action.get("world_index")) is not int or action["world_index"] != world):
+      raise ParityError(f"P7-A entity role reference is inconsistent in world {world}")
+    for row in (initial, action, final):
+      row["entity_id"] = world + 1
+  return result
+
+
+def reference_semantic_mismatches(expected: dict[str, Any], actual: dict[str, Any],
+                                  path: str, tolerance: float) -> list[str]:
+  return _semantic_mismatches(semantic_entity_roles(expected), semantic_entity_roles(actual),
+                              path, tolerance)
+
+
 def build_evidence(binary: Path, node: str, *, refresh_semantic_reference: bool = False) -> dict[str, Any]:
   budget = _read(BUDGET_PATH)
   if budget != BUDGET:
@@ -1052,7 +1085,7 @@ def build_evidence(binary: Path, node: str, *, refresh_semantic_reference: bool 
     semantic_reference = _read(SEMANTIC_REFERENCE_PATH)
   validate_semantic_reference(semantic_reference)
   for host in (native, python_host):
-    reference_mismatches = _semantic_mismatches(
+    reference_mismatches = reference_semantic_mismatches(
       semantic_reference["semantic"],
       host["semantic"],
       f"$.hosts.{host['host_id']}.semantic",
@@ -1153,7 +1186,7 @@ def validate_evidence(value: dict[str, Any]) -> None:
   if mismatches or value.get("semantic_comparison", {}).get("mismatches"):
     raise ParityError(f"P7-A evidence contains semantic mismatches: {mismatches}")
   for host in hosts:
-    reference_mismatches = _semantic_mismatches(
+    reference_mismatches = reference_semantic_mismatches(
       semantic_reference["semantic"],
       host["semantic"],
       f"$.hosts.{host['host_id']}.semantic",

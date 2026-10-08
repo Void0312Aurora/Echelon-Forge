@@ -1,3 +1,8 @@
+"""Lexical/source-shape regression guards, not runtime or compiler proofs.
+
+See docs/architecture/work/issues/architecture_proof_levels.md for the stronger
+native backend and Python facade evidence and the unsupported rename/macro cases.
+"""
 from __future__ import annotations
 
 import re
