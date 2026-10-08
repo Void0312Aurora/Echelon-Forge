@@ -8,7 +8,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/README.md`
 Owner: `domains/naval`
-Last verified: `2026-09-23`
+Last verified: `2026-10-08`
 
 Status: maintained owner entrypoint for naval execution semantics.
 
@@ -63,9 +63,11 @@ than a complete fleet simulation:
 - task/profile mappings for screen, support, patrol, and recover families
 - contact, assignment, reporting, ROE, and station/screen execution inputs
 - initial ship and naval weapon-system configuration baselines
+- S1-A/B bounded ship maneuvering, live damage-to-mobility coupling, and
+  true-bearing screen station control with scenario-owned guide routes
 
-These surfaces do not establish full fleet doctrine, complete maneuver and
-station-keeping controllers, replenishment operations, or authoritative naval
+These surfaces do not establish full fleet doctrine, fleet-wide maneuver
+calibration, replenishment operations, or authoritative naval
 weapon and damage calibration.
 
 ## Standardization Rules
@@ -82,7 +84,8 @@ weapon and damage calibration.
 ## Active Work and Related Documents
 
 - [Carrier strike group engagement](work/active/carrier_strike_group_engagement/README.md):
-  forward naval combat program, in planning. A scenario ladder from static
+  forward naval combat program: S0 accepted, S1-A/B validated pending integration
+  review, and S1-C/D/X dependency-blocked. A scenario ladder from static
   order of battle to a full Ford-class versus Fujian-class group engagement,
   with a parallel undersea track. It replaces the historical `N0`-`N8` ladder
   as the forward plan.

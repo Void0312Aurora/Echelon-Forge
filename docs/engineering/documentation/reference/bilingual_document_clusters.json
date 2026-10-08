@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-06",
+  "generated_at": "2026-10-08",
   "root": "docs",
   "pairs": [
     {
@@ -214,9 +214,9 @@
       "english": "docs/domains/naval/README.md",
       "chinese": "docs/domains/naval/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "7834a5c4409c19dedf8ba8c5e355aa5e37a5f8387eff58068f3cbab94fced5a8",
-      "chinese_hash": "72a6169446e461f6d629068ed2560f2eca71cde9d839d6345dece81580b9d120"
+      "last_verified": "2026-10-08",
+      "english_hash": "0b8b1a86f4bb93ce10501ad1ad6d56593f912abaa67eef3aa87cecbafd355830",
+      "chinese_hash": "76b77606301251732dc9bd622ee2bd76cc8f09dc454d15d681763526ea75efbb"
     },
     {
       "pair_id": "domains/naval/reference/ship_unit_references",

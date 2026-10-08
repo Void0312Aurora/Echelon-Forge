@@ -13,7 +13,7 @@ if REPO_ROOT not in sys.path:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Capture or verify an agent-free CSG-S0 replay artifact")
+    parser = argparse.ArgumentParser(description="Capture or verify an agent-free native CSG replay artifact")
     parser.add_argument("--scenario", required=True, help="CSG scenario JSON path")
     parser.add_argument("--output", required=True, help="Replay artifact JSON path")
     parser.add_argument("--seed", type=int, default=20260930)

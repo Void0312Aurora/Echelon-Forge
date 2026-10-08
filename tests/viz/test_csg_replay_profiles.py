@@ -1,4 +1,4 @@
-"""S0 CSG replay profiles exercise the normal visualization wire contract."""
+"""CSG profiles exercise the normal visualization wire contract."""
 
 from __future__ import annotations
 
@@ -10,9 +10,10 @@ from examples.viz.runtime.viz_session import VizSession
 
 
 class _ReplaySocket:
-    def __init__(self) -> None:
+    def __init__(self, spectator_duration_s: float = 120.0) -> None:
         self.events: list[tuple[str, object]] = []
         self.session: VizSession | None = None
+        self.spectator_duration_s = spectator_duration_s
 
     def emit(self, event: str, payload=None, **_kwargs) -> None:
         self.events.append((event, payload))
@@ -20,7 +21,7 @@ class _ReplaySocket:
             replay = payload.get("replay", {})
             spectator = payload.get("spectator", {})
             if ("replay" in payload and int(replay.get("frame", -1)) == int(replay.get("frame_count", 0)) - 1) or (
-                bool(spectator.get("native")) and float(payload.get("tick", 0.0)) >= 120.0
+                bool(spectator.get("native")) and float(payload.get("tick", 0.0)) >= self.spectator_duration_s
             ):
                 assert self.session is not None
                 self.session.stop()
@@ -63,6 +64,30 @@ def test_csg_s0_replay_profiles_stream_all_frames() -> None:
         else:
             assert states[-1]["spectator"]["native"] is True
             assert states[-1]["tick"] == 120.0
+        assert session.last_error == ""
+
+
+def test_csg_s1_spectator_profiles_stream_full_transit() -> None:
+    for variant in ("ford_vs_fujian", "ford_mirror"):
+        profile = load_viz_profile(f"examples/viz/profiles/naval_csg_s1_{variant}_spectator.json")
+        socket = _ReplaySocket(spectator_duration_s=3600.0)
+        args = Namespace(
+            scenario=profile["scenario"], mode=profile["session_overrides"]["mode"],
+            replay=None, seed=profile["session_overrides"]["seed"],
+            model=None, train_config=None, fixed_action=None,
+        )
+        session = VizSession(args, socket)
+        socket.session = session
+        session.start()
+        session.run_loop()
+        setups = [payload for event, payload in socket.events if event == "map_setup"]
+        states = [payload for event, payload in socket.events if event == "state_update"]
+        assert len(setups) == 1
+        assert len(states) == 7201
+        assert len(states[0]["units"]) == (24 if variant == "ford_vs_fujian" else 22)
+        assert states[-1]["spectator"]["native"] is True
+        assert states[-1]["tick"] == 3600.0
+        assert states[-1]["units"] != states[0]["units"]
         assert session.last_error == ""
 
 

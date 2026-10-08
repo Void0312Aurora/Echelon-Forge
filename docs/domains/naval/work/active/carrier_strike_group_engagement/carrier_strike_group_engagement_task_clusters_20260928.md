@@ -4,11 +4,12 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/work/active/carrier_strike_group_engagement/carrier_strike_group_engagement_task_clusters_20260928.md`
 Owner: `domains/naval`
-Last verified: `2026-09-30`
+Last verified: `2026-10-08`
 
-Status: `2026-09-30` finite task-cluster plan for
+Status: `2026-10-08` finite task-cluster plan for
 [Carrier Strike Group Engagement](README.md). `P0-A` and `S0-A`..`S0-X`
-accepted; replay and agent-free visualization close S0-X.
+accepted; replay and agent-free visualization close S0-X. S1-A/B implementations
+are validated pending integration review. S1-C/D and S1-X remain dependency-blocked.
 
 ## Boundary Decision
 
@@ -53,11 +54,11 @@ at dispatch; `n/a` means not yet dispatched.
 | `S0-C` | future worker | moderate / sonnet / medium for schema mapping and the four authoring packets (US naval, US air, PLAN naval, PLAN air); main thread integrates and fixes; no independent review (database content, not code) | Named unit content for both groups from `S0-A`, at full fidelity in one pass (owner decision `2026-09-29`): aircraft carry component damage models at the F-16C standard. A parameter without an `S0-A` or web source is a labelled `proxy` value with its reasoning, never a silent default. | `examples/config/database/**` (ships, submarines, aircraft, weapons, sensors) | new mechanisms | content-compile tests; unit spawn tests | every OOB row spawns with provenance | after `S0-A` | 2 + 1 repair | accepted `2026-09-30` (see S0-C Record) |
 | `S0-D` | main thread | moderate / main thread / medium (a design worker was stopped by owner decision; no subagents from `2026-09-30`) | Group-composition scenario schema plus `CSG-S0` named and mirror scenarios. | scenario compiler (`group_composition.py`), `scenarios/naval/csg/`, `tests/scenario/test_csg_group_composition.py`, `tests/content/test_csg_unit_content.py` | motion | scenario and content tests | both variants load and spawn the full OOB | after `S0-C` | 2 | accepted `2026-09-30` (`48aa6eb4`) |
 | `S0-X` | main thread | high (stage acceptance) / main thread / high; serial, no subagents under the `2026-09-30` owner decision | Accept `CSG-S0`; first throughput record; verify replay and spectator playback. | stage acceptance record; full-duration scenario tests; replay artifacts, contracts, and profiles | new simulation mechanisms | stage validation plan | `G0` and all Stage Gates met | after `S0-B`, `S0-D` | 1 | accepted `2026-09-30`; [runtime checkpoint](carrier_strike_group_engagement_acceptance_20260928.md#csg-s0-runtime-checkpoint-2026-09-30) |
-| `S1-A` | future worker | n/a | Group formation and screen geometry; route following. | naval command/formation components and systems | fleet doctrine beyond formation | formation-keeping tests | formation holds under turns | after `S0-X` | 2 + 1 repair | planned |
-| `S1-B` | future worker | n/a | Ship turning-circle and speed response; damage-to-mobility coupling. | `ship_motion_system.h`, platform fields | full hydrodynamics | motion tests against sourced turning data | damaged ship loses speed through the maintained path | after `S0-X`; parallel with `S1-A` if write sets split | 2 + 1 repair | planned |
-| `S1-C` | future worker | n/a | Ship endurance and group replenishment scheduling on the shared logistics components. | naval logistics system; naval stores content | shared fuel/logistics components (owned by `systems/physics`) | logistics tests | endurance and replenishment observable in the scenario | after `S0-X` and the shared-logistics owner package | 2 | planned |
-| `S1-D` | future worker | n/a | Integrate [Environment Runtime](../../../../../systems/environment/work/active/environment_runtime/README.md); ship seakeeping response to sea state; group command hierarchy on Joint relationships with naval formation roles. | ship motion response; naval command hierarchy content | environment state (owned by `systems/environment`); new Joint common-core fields | environment-consumer and hierarchy tests | sea state, day/night, and bathymetry reach ship motion through the environment query | after `S0-X` and Environment Runtime `P3-A` | 2 | planned |
-| `S1-X` | main thread | n/a | Accept `CSG-S1`; throughput record; fidelity decision input. | stage acceptance record | — | stage validation plan | `G1`-`G2` gate met | after `S1-A..D` | 1 | planned |
+| `S1-A` | main thread | main thread / session model / high | Group formation and screen geometry; route following. | naval command/formation components and systems | fleet doctrine beyond formation | formation-keeping tests | formation holds under turns | after `S0-X` | 2 + 1 repair | validated `2026-10-08`; pending integration review; see S1-A/B Record |
+| `S1-B` | main thread | main thread / session model / high | Ship turning-circle and speed response; damage-to-mobility coupling. | `ship_motion_system.h`, platform fields | full hydrodynamics | motion tests against sourced turning data | damaged ship loses speed through the maintained path | after `S0-X`; parallel with `S1-A` if write sets split | 2 + 1 repair | validated `2026-10-08`; pending integration review; see S1-A/B Record |
+| `S1-C` | future worker | n/a | Ship endurance and group replenishment scheduling on the shared logistics components. | naval logistics system; naval stores content | shared fuel/logistics components (owned by `systems/physics`) | logistics tests | endurance and replenishment observable in the scenario | after `S0-X` and the shared-logistics owner package | 2 | blocked: shared ship endurance/fuel contract not delivered |
+| `S1-D` | future worker | n/a | Integrate [Environment Runtime](../../../../../systems/environment/work/active/environment_runtime/README.md); ship seakeeping response to sea state; group command hierarchy on Joint relationships with naval formation roles. | ship motion response; naval command hierarchy content | environment state (owned by `systems/environment`); new Joint common-core fields | environment-consumer and hierarchy tests | sea state, day/night, and bathymetry reach ship motion through the environment query | after `S0-X` and Environment Runtime `P3-A` | 2 | blocked: Environment Runtime P3-A not delivered; hierarchy integration remains open |
+| `S1-X` | main thread | n/a | Accept `CSG-S1`; throughput record; fidelity decision input. | stage acceptance record | — | stage validation plan | `G1`-`G2` gate met | after `S1-A..D` | 1 | blocked by S1-C/D; A/B checkpoint only |
 | `S2-A` | future worker | n/a | Catapult and arresting-gear cycle; deck, elevator, hangar capacity. | carrier-aviation components/systems | aircraft flight model changes | deck-cycle tests | launch/recovery rates bounded by deck resources | after `S1-X` | 2 + 1 repair | planned |
 | `S2-B` | future worker | n/a | Sortie generation, launch waves, recovery pattern, carrier landing. | carrier-aviation systems; Air-owner seam if needed | new Air flight dynamics | wave/CAP tests; landing tests | CAP stations sustained across cycles | after `S2-A` | 2 + 1 repair | planned |
 | `S2-C` | future worker | n/a | Embarked helicopter operations; aircraft recovery fuel limits consumed from the shared fuel components. | embarked air ops | shared fuel and aerial-refuelling components (owned by `systems/physics`) | helicopter and recovery-fuel tests | fuel limits sortie radius through the shared path | after `S1-X`; parallel with `S2-A` | 2 | planned |
@@ -205,6 +206,22 @@ the runtime-spawned stowed helicopters. The named variant has 24 runtime
 entities; the mirror has 22. Both remain static after the first tick pins the
 helicopters to their hosts. See the S0-X checkpoint for measured throughput and
 the remaining stage gates.
+
+## S1-A/B Record (`2026-10-08`)
+
+Integrated on `origin/main` baseline `cedfa01c3`, without importing the legacy
+S1 branch's unrelated ancestry. The native maneuvering law uses quadratic surge
+resistance, bounded Nomoto yaw, turn speed loss, and live damage capability.
+Native relative station keeping and scenario-owned waypoint orders use the
+maintained command projection. Named and mirror variants each run three legs,
+two turns, and terminal settling for 7200 steps at 0.5 s.
+
+The [A/B checkpoint](carrier_strike_group_engagement_acceptance_20260928.md#csg-s1-ab-runtime-checkpoint-2026-10-08)
+records tests, throughput, provenance and the exact claim boundary. Route and
+formation geometry are true-bearing referenced; no Joint group hierarchy,
+fuel endurance, replenishment scheduler or layered-environment integration is
+claimed. Implementation validation is pending integration review; it does not
+accept S1-X.
 
 ## Dispatch Rules
 

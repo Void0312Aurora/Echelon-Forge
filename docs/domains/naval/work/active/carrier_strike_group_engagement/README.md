@@ -4,13 +4,13 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/work/active/carrier_strike_group_engagement/README.md`
 Owner: `domains/naval`
-Last verified: `2026-09-30`
+Last verified: `2026-10-08`
 
-Status: `2026-09-30` active. `P0 Boundary`, `S0-A`..`S0-D`, and `S0-X` are
+Status: `2026-10-08` active. `P0 Boundary`, `S0-A`..`S0-D`, and `S0-X` are
 accepted; `S0-B` geodetic placement is verified at `087c1928`. S0-X closes
 with native deterministic replay artifacts and agent-free spectator profiles
-for both variants. The package itself remains open because later stages are
-not yet implemented.
+for both variants. S1-A/B implementations are validated pending integration
+review; S1-C/D/X remain dependency-blocked. The package remains open.
 
 Language:
 
@@ -65,19 +65,20 @@ remains dated provenance and is not extended.
 ## Current State
 
 The initial inventory was measured on `work/naval-mechanisms` at `5fa7fc9e` on
-`2026-09-28`. The current checkpoint is `087c1928` on `2026-09-30`; the
+`2026-09-28`. S0-X closed at `087c1928` on `2026-09-30`; the current S1-A/B
+checkpoint is `2026-10-08`, integrated on `origin/main` `cedfa01c3`. The
 [current status](carrier_strike_group_engagement_current_status_20260928.md)
-records the full inventory and the S0-X runtime evidence.
+records the inventory and links the S0-X and S1-A/B runtime evidence.
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
 | Naval platforms | S0 named content | `examples/config/database/**/csg/{us,cn}/` and the S0-C content tests | S0 loadouts are content and spawn evidence; anti-ship and torpedo mechanisms remain deferred |
-| Ship / submarine motion | kinematic | `src/systems/domains/naval/ship_motion_system.h`, `submarine_motion_system.h` | rate-limited speed/heading/depth; no hydrodynamics, turning circle, route following, or damage coupling |
-| Command projection | accepted | `NavalCommandIntent` (`src/components/domains/naval/command/mission_command_naval.h`) | one screen station per ship; no multi-ship formation or group command hierarchy |
+| Ship / submarine motion | S1-B bounded ship maneuvering; submarine kinematic | `ship_motion_system.h`, `ship_maneuvering.h`, native motion tests | quadratic surge, Nomoto yaw, turning and live damage response; no full hydrodynamics; U1 submarine work remains open |
+| Command projection | bounded S1-A formation and route following | `NavalCommandIntent`, `station_keeping.h`, `python/scenario/runtime/csg_transit.py` | true-bearing stations and scenario-owned guide routes; no Joint group command hierarchy |
 | Surface sensing | bounded | radar with sea clutter, ducting, and a horizon proxy (`src/models/domains/naval/naval_sensor_maritime_adapter.h`) | sensor horizon remains flat-world; S0 placement now uses the shared geodetic frame |
 | Undersea sensing | passive only | `src/systems/systems/sonar_system.h`, `src/models/systems/default_acoustic_model.cpp` | reads true positions of every Ship/Submarine; no active sonar, propagation profile, towed array, or sonobuoy |
 | Naval weapons | bounded | `src/components/domains/naval/combat/weapon_naval.h`; `naval_mission_weapon_release_system.h` | gun and CIWS resolve as one hit roll; VLS only via the pilot-action path; no anti-ship missile, ship SAM family, or torpedo |
-| Naval damage | synthetic | `DM-N1` profile in `src/components/domains/naval/combat/damage_naval.h`; `src/systems/combat/damage_system_naval.h` | compartment effects seed only on hitbox hits; ship motion ignores the damage state |
+| Naval damage | synthetic, with live mobility coupling | `DM-N1`; `damage_system_naval.h`; native flooding/motion test | compartment effects remain synthetic; ship motion now consumes mobility capability without mutating hull maximum speed |
 | Carrier aviation | S0 inventory only | `meta.csg.groups[*].embarked_inventory`; named aircraft records | no flight-deck contact surface or deck cycle; inventory aircraft are not live entities until S2 |
 | Air combat substrate | maintained on `main`; scripted stack unmerged | air combat scenarios; `origin/codex/scripted-stack-*` | reused, not re-owned; no carrier-based aircraft unit exists |
 | Learned naval policy | absent | three smoke entries under `examples/config/training/active/naval/` | no checkpoint or training result |
@@ -128,7 +129,7 @@ in parallel because its write sets are largely disjoint; it must join before
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | none | package scope, stage ladder, claim ceilings, parameter-provenance policy | docs only | accepted |
 | `CSG-S0` | both groups spawn statically with full order of battle | named units, group schema, and shared geodetic placement | `G0` | accepted `2026-09-30`; S0-X replay/viz closure recorded |
-| `CSG-S1` | both groups transit in formation | group formation and screen geometry; route following; ship turning and speed response; damage-to-mobility coupling; group replenishment scheduling | `G1`-`G2` | planned |
+| `CSG-S1` | both groups transit in formation | group formation and screen geometry; route following; ship turning and speed response; damage-to-mobility coupling; group replenishment scheduling | `G1`-`G2` | partial: A/B validated; C/D/X dependency-blocked |
 | `CSG-S2` | deck cycle: launch waves, CAP, recovery | catapult and arresting-gear cycle; deck, elevator, and hangar capacity; sortie generation; recovery pattern; embarked helicopter operations | `G3` | planned |
 | `CSG-S3` | mutual search and tactical picture | naval sensor platform adapters and group track reporting; naval emission-control doctrine | `G4` | planned |
 | `CSG-S4` | one-way strike against a defending group | ship fire-control channels, VLS, and layered air-defense doctrine; ship decoy launchers; ship compartments and flight-deck capacity loss | `G5` | planned |
@@ -216,7 +217,13 @@ The package can be marked accepted only when:
   `examples/viz/profiles/naval_csg_s0_*_replay.json` profiles stream those
   frames through the existing map/state visualization contract without an
   agent; the companion `*_spectator.json` profiles step the native kernel
-  directly. `CSG-S1` and `CSG-U1` may now be dispatched.
+  directly. The S0 dependency for `CSG-S1` and `CSG-U1` is discharged.
+- The [S1-A/B checkpoint](carrier_strike_group_engagement_acceptance_20260928.md#csg-s1-ab-runtime-checkpoint-2026-10-08)
+  validates one-hour named/mirror transits, terminal station settling, sourced
+  acceleration/stopping checks and synthetic damage-to-mobility coupling.
+  S1-C waits for the shared ship fuel/endurance contract; S1-D waits for
+  Environment Runtime `P3-A`, then completes environment and Joint hierarchy
+  integration. S1-X requires both clusters; no local stand-ins are dispatched.
 - The [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md)
   package's anchor and conversions are now consumed by both S0 variants.
 - The throughput record at `CSG-S1`/`CSG-S2` decides whether uniform

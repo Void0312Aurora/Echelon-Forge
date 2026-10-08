@@ -4,11 +4,12 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/domains/naval/work/active/carrier_strike_group_engagement/carrier_strike_group_engagement_dispatch_queue_20260928.md`
 Owner: `domains/naval`
-Last verified: `2026-09-30`
+Last verified: `2026-10-08`
 
-Status: `2026-09-30`; `P0-A` and `S0-A`..`S0-X` accepted. S0-X closes with
+Status: `2026-10-08`; `P0-A` and `S0-A`..`S0-X` accepted. S0-X closes with
 full-duration runtime, native replay artifacts, and agent-free visualization
-profiles. S1/U1 are unblocked by the S0-X dependency gate.
+profiles. S1-A/B implementations are validated pending integration review;
+S1-C/D cannot dispatch until their shared-owner prerequisites are delivered.
 
 Parent project: [Carrier Strike Group Engagement](README.md)
 
@@ -30,6 +31,16 @@ Parent project: [Carrier Strike Group Engagement](README.md)
 | `CSG-S0-A-oob-red` | `S0-A` | accepted `2026-09-28` ([Fujian OOB](../../../reviews/csg_order_of_battle_20260928/csg_order_of_battle_fujian_20260928.md)) | research scratch; main thread integrates into `docs/domains/naval/reviews/csg_order_of_battle_20260928/` | provenance completeness |
 | `CSG-S0-B-geodesy-integration` | `S0-B` | accepted `2026-09-30`, `087c1928`; current full-duration scenario checks pass | `scenarios/naval/csg/`; naval scenario tests; stateless geodesy bindings | scenario anchor tests |
 | `CSG-S0-X-stage-checkpoint` | `S0-X` | accepted `2026-09-30`; [runtime checkpoint](carrier_strike_group_engagement_acceptance_20260928.md#csg-s0-runtime-checkpoint-2026-09-30); main thread, serial | stage acceptance record; full-duration scenario tests; replay contracts and profiles | new simulation mechanisms |
+
+## S1 Checkpoint And Waiting Packets
+
+| Packet | Cluster | State | Required next evidence |
+| --- | --- | --- | --- |
+| surface transit and screen | `S1-A` | validated; pending integration review | named/mirror full-duration test and spectator profile results in the A/B checkpoint |
+| hull maneuvering and damage response | `S1-B` | validated; pending integration review | native motion tests, sourced DDG trial checks, declared proxy provenance |
+| endurance / UNREP scheduling | `S1-C` | dependency-blocked | accepted shared ship fuel/endurance contract from `systems/physics`; `NavalStores` transfer alone does not supply it |
+| environment / group hierarchy | `S1-D` | dependency-blocked | Environment Runtime `P3-A` position/layer queries including bathymetry, plus hierarchy execution tests |
+| full S1 stage acceptance | `S1-X` | blocked | `S1-C` and `S1-D` closure, then all stage gates |
 
 ## No-Dispatch Conditions
 
