@@ -331,7 +331,10 @@ class NavalScreenScenarioTests(unittest.TestCase):
     self.assertLess(disturbed_separation_m, steady_separation_m - 500.0)
 
     direct_modes = []
-    for step in range(2400):
+    # 1,800 s: reversing back onto the screen course takes the hull's turning
+    # time, and native station keeping then closes the residual offset with its
+    # 300 s position-loop time constant.
+    for step in range(3600):
       loader.update_behaviors(step * sim.get_time_step(), sync_to_kernel=True)
       direct_modes.append(bool(getattr(loader, "_naval_screen_use_direct_command", False)))
       sim.step()
@@ -372,7 +375,10 @@ class NavalScreenScenarioTests(unittest.TestCase):
 
     separations = []
     direct_modes = []
-    for step in range(2400):
+    # 1,800 s: reversing back onto the screen course takes the hull's turning
+    # time, and native station keeping then closes the residual offset with its
+    # 300 s position-loop time constant.
+    for step in range(3600):
       loader.update_behaviors(step * sim.get_time_step(), sync_to_kernel=True)
       direct_modes.append(bool(getattr(loader, "_naval_screen_use_direct_command", False)))
       sim.step()

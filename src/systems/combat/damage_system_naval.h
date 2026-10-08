@@ -11,7 +11,6 @@
 #include "components/domains/naval/combat/damage_naval.h"
 #include "components/domains/naval/combat/weapon_naval.h"
 #include "components/domains/naval/platform/ship_platform.h"
-#include "components/physics/dynamics.h"
 
 // Naval damage-response tick (DM-N1).
 //
@@ -60,34 +59,6 @@ inline double resolve_naval_mount_ready_fraction(flecs::entity e) {
         return 1.0;
     }
     return naval_damage_mount_ready_fraction(weapon_system->mounts);
-}
-
-// Project the damage response onto propulsion. The projection shape remains the
-// pre-DM-N1 ship behavior; the declared profile supplies the coefficients and
-// the tick above supplies the elapsed-time evolution.
-inline void apply_naval_damage_response_to_engine(flecs::entity e,
-                                                  const NavalDamageResponseSelection &selection,
-                                                  const NavalDamageResponseProfile &profile,
-                                                  const PlatformDamageState &damage) {
-    Propulsion *propulsion = e.get_mut<Propulsion>();
-    if (propulsion == nullptr) {
-        return;
-    }
-
-    const double mobility_scale =
-        std::clamp(damage.mobility_capability, profile.mobility_propulsion_floor,
-                   profile.mobility_propulsion_ceiling);
-    // Only a declared hull speed limit can bound thrust; a platform without a
-    // ship record leaves the propulsion envelope untouched.
-    if (selection.ship_platform == nullptr) {
-        return;
-    }
-    const double max_speed_mps = selection.ship_platform->max_speed_mps;
-
-    propulsion->mil_thrust_n = std::min(
-        propulsion->mil_thrust_n, max_speed_mps * profile.mil_thrust_n_per_mps * mobility_scale);
-    propulsion->ab_thrust_n = std::min(
-        propulsion->ab_thrust_n, max_speed_mps * profile.ab_thrust_n_per_mps * mobility_scale);
 }
 
 } // namespace naval_damage_detail
@@ -165,8 +136,8 @@ inline void register_naval_damage_system(flecs::world &ecs) {
                     // Loss semantics stay owned by the shared helper.
                     sync_platform_damage_loss_state(health_state, damage);
 
-                    naval_damage_detail::apply_naval_damage_response_to_engine(e, selection,
-                                                                               profile, damage);
+                    // Mobility reaches motion through mobility_capability, read by
+                    // ShipMotion (systems/domains/naval/ship_motion_system.h).
 
                     if (damage.loss_state == PlatformLossState::Lost) {
                         health_state.current_hp = 0.0;

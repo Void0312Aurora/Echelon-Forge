@@ -12,10 +12,11 @@
         "economical_speed_mps": 10.29,
         "range_nm": 14000.0,
         "range_speed_mps": 10.29,
-        "max_accel_mps2": 0.08,
-        "max_decel_mps2": 0.12,
-        "max_turn_rate_deg_s": 1.2,
-        "low_speed_turn_factor": 0.25,
+        "max_accel_mps2": 0.0368,
+        "max_decel_mps2": 0.0145,
+        "steady_turning_diameter_m": 882.0,
+        "nomoto_time_constant": 1.0,
+        "steady_turn_speed_ratio": 0.525,
         "steerageway_speed_mps": 0.8,
         "sea_state": 0.0,
         "wave_heading_deg": 0.0,
@@ -133,8 +134,18 @@
             "draft 30 ft -> 9.14 m"
         ],
         "sources": [
-            "docs/domains/naval/reference/ship_unit_references.md"
+            "docs/domains/naval/reference/ship_unit_references.md",
+            "csg-us-ddg-usni-proc-200206",
+            "ref-abs-vessel-maneuverability-2017",
+            "ref-imo-msc137-76"
         ],
+        "parameters": {
+            "ship_platform.max_accel_mps2": {"value_basis": "engineering_estimate", "source_ids": ["community: Wikipedia, Lewis and Clark-class dry cargo ship", "csg-us-ddg-usni-proc-200206"], "tier": "C-est", "note": "a0 = eta P / (m U_max), eta = 0.631 (DDG-51 Flight I fit at 100,000 shp); P: two tandem propulsion motors, 33,000 shp (Tier C only)"},
+            "ship_platform.max_decel_mps2": {"value_basis": "engineering_estimate", "source_ids": ["csg-us-ddg-usni-proc-200206"], "note": "astern = 0.394 x full-ahead acceleration (DDG-51 Flight I backing ratio)"},
+            "ship_platform.steady_turning_diameter_m": {"value_basis": "proxy", "source_ids": ["ref-abs-vessel-maneuverability-2017", "ref-imo-msc137-76"], "note": "no public trial turning circle; STD = 2 U_econ / r from the previous engineering-estimate turn rate 1.2 deg/s at 10.29 m/s (4.20 L); Lyster-Knights tactical diameter at the IMO test speed (0.853 U_max) 5.00 L, within the IMO MSC.137(76) 5 L limit; the turn-rate proxy exceeded that limit and is capped at it"},
+            "ship_platform.nomoto_time_constant": {"value_basis": "engineering_estimate", "note": "midpoint of the 0.5-1.5 open-literature band for course-stable warship hulls"},
+            "ship_platform.steady_turn_speed_ratio": {"value_basis": "sourced_derived", "source_ids": ["ref-abs-vessel-maneuverability-2017"], "tier": "B", "note": "Lyster-Knights V_T/V_S = 0.074 TD/L + 0.149 (ABS 2017 App. 4, A4.5) with TD/L from A4.2 at the economical speed and the proxy STD; single-screw hull with block coefficient 0.64, inside the regression's validity range"}
+        },
         "modeling_notes": [
             "Health is scaled as one HP per metric tonne of full-load displacement until naval damage effects are calibrated.",
             "Light displacement is left as 0.0 because the selected public sources give loaded/design displacement only.",

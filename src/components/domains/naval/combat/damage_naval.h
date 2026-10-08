@@ -99,14 +99,6 @@ struct NavalDamageResponseProfile {
     double mount_response_weight = 0.0;
     double mount_ready_fraction_floor = 0.0;
 
-    // --- Derived capability floors ------------------------------------------
-    // Lower clamps applied to the capability values that feed derived platform
-    // state (propulsion scale, loss projection).
-    double mobility_propulsion_floor = 0.2;
-    double mobility_propulsion_ceiling = 1.0;
-    double mil_thrust_n_per_mps = 100000.0;
-    double ab_thrust_n_per_mps = 120000.0;
-
     // --- Declared provenance pasted onto naval_damage_response_profiles() -----
     std::string provenance =
         "synthetic_engineering: parity extraction of the pre-DM-N1 inline literals";
@@ -141,10 +133,6 @@ naval_damage_response_profile_default() noexcept {
     profile.survivability_loss_per_s_at_fire = 0.0010;
     profile.mount_response_weight = 0.0;
     profile.mount_ready_fraction_floor = 0.0;
-    profile.mobility_propulsion_floor = 0.2;
-    profile.mobility_propulsion_ceiling = 1.0;
-    profile.mil_thrust_n_per_mps = 100000.0;
-    profile.ab_thrust_n_per_mps = 120000.0;
     profile.provenance = std::string(default_provenance);
     profile.synthetic = true;
     profile.calibrated = false;

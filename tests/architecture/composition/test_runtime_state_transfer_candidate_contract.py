@@ -30,6 +30,8 @@ ECS_MIGRATION_FUNCTIONS = (
     "decode_missile",
     "normalize_legacy_sensor_reflection",
     "normalize_legacy_ecs_sensors",
+    "normalize_legacy_ship_reflection",
+    "normalize_legacy_ecs_ships",
 )
 CMAKE = REPO_ROOT / "CMakeLists.txt"
 MIRROR = REPO_ROOT / "tests" / "runtime" / "shadow_runtime_episode_mirror.py"

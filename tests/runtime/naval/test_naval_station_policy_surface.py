@@ -248,6 +248,9 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
     mode = "naval_screen_station_v1"
     env = self._make_env()
     try:
+      # Contact acquisition is seeded stochastic sensing. This transport test
+      # needs one reproducible acquired contact, rather than an OS-random draw.
+      env.seed(11)
       obs = env.reset()
       mission = np.asarray(obs["mission"][0], dtype=np.float32)
       self._assert_observation_adapter(env._handles[0].loader)

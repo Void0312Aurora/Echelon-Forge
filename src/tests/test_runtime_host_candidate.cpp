@@ -259,7 +259,7 @@ class TransferOwnerRegistry final : public host::RuntimeStateTransferOwnerRegist
                     .disposition = policy.disposition,
                     .owner_id = policy.owner_id,
                     .schema_id = policy.schema_id,
-                    .schema_generation = 1,
+                    .schema_generation = host::kRuntimeStateTransferPreviousGeneration,
                     .step_sequence = barrier_snapshot.step_sequence,
                     .barrier_sequence = barrier_snapshot.barrier_sequence,
                 };
@@ -432,19 +432,20 @@ host::RuntimeTransferCommitProof transfer_proof(host::RuntimeHostCandidate &runt
                            category == host::RuntimeStateCategory::DelayedEventsQueues ||
                            category == host::RuntimeStateCategory::CommandsLinksPendingIntent ||
                            category == host::RuntimeStateCategory::EpisodeRewardTermination;
-        profile.rows.push_back({.category = category,
-                                .disposition = disposition,
-                                .owner_id = owner,
-                                .schema_id = schema,
-                                .minimum_schema_generation = 1,
-                                .maximum_schema_generation = 1,
-                                .truth_affecting = truth});
+        profile.rows.push_back(
+            {.category = category,
+             .disposition = disposition,
+             .owner_id = owner,
+             .schema_id = schema,
+             .minimum_schema_generation = host::kRuntimeStateTransferPreviousGeneration,
+             .maximum_schema_generation = host::kRuntimeStateTransferPreviousGeneration,
+             .truth_affecting = truth});
         host::RuntimeStateCensusEntry entry{
             .category = category,
             .disposition = disposition,
             .owner_id = owner,
             .schema_id = schema,
-            .schema_generation = 1,
+            .schema_generation = host::kRuntimeStateTransferPreviousGeneration,
             .step_sequence = barrier_snapshot.step_sequence,
             .barrier_sequence = barrier_snapshot.barrier_sequence,
         };

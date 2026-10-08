@@ -21,6 +21,7 @@
 #include <cctype>
 #include <cmath>
 #include <limits>
+#include <numbers>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -1764,6 +1765,68 @@ bool normalize_legacy_ecs_sensors(nlohmann::json &document) {
     return true;
 }
 
+// ECS truth migration implementation: normalize_legacy_ship_reflection
+// N-1 used a rate limit at max(1 m/s, economic speed or declared maximum).
+// Preserve that reference circle; the old low-speed rate floor has no physical
+// equivalent in the new law. T'=1 is a migration default, not trial calibration;
+// sigma=1 preserves the old law's absence of a steady-turn speed penalty.
+bool normalize_legacy_ship_reflection(nlohmann::json &ship) {
+    if (!ship.is_object()) return false;
+    if (!ship.contains("max_turn_rate_deg_s") && !ship.contains("low_speed_turn_factor")) {
+        return true;
+    }
+    for (const char *key : {"max_turn_rate_deg_s", "low_speed_turn_factor", "economical_speed_mps",
+                            "max_speed_mps"}) {
+        if (!ship.contains(key) || !ship[key].is_number() ||
+            !std::isfinite(ship[key].get<double>()))
+            return false;
+    }
+    for (const char *key :
+         {"steady_turning_diameter_m", "nomoto_time_constant", "steady_turn_speed_ratio"}) {
+        if (ship.contains(key)) return false;
+    }
+    const double economic_speed = ship["economical_speed_mps"].get<double>();
+    const double maximum_speed = ship["max_speed_mps"].get<double>();
+    const double turn_rate = ship["max_turn_rate_deg_s"].get<double>();
+    if (economic_speed < 0 || maximum_speed < 0 || turn_rate < 0) return false;
+    const double reference = std::max(1.0, economic_speed > 0 ? economic_speed : maximum_speed);
+    const double diameter =
+        turn_rate > 0 ? 2.0 * reference / (turn_rate * (std::numbers::pi_v<double> / 180.0)) : 0.0;
+    if (!std::isfinite(diameter) || (turn_rate > 0 && diameter <= 0)) return false;
+    ship.erase("max_turn_rate_deg_s");
+    ship.erase("low_speed_turn_factor");
+    ship["steady_turning_diameter_m"] = diameter;
+    ship["nomoto_time_constant"] = 1.0;
+    ship["steady_turn_speed_ratio"] = 1.0;
+    return true;
+}
+
+// ECS truth migration implementation: normalize_legacy_ecs_ships
+bool normalize_legacy_ecs_ships(nlohmann::json &document) {
+    if (!only_object_keys(document, {"results", "child_of"}) || !document.contains("results") ||
+        !document["results"].is_array() || !document.contains("child_of") ||
+        !document["child_of"].is_array())
+        return false;
+    for (auto &result : document["results"]) {
+        if (!result.is_object() || !result.contains("components") ||
+            !result["components"].is_object())
+            return false;
+        auto &components = result["components"];
+        if (!components.contains("ShipPlatform")) continue;
+        auto &ship = components["ShipPlatform"];
+        const bool legacy =
+            ship.contains("max_turn_rate_deg_s") || ship.contains("low_speed_turn_factor");
+        if (!normalize_legacy_ship_reflection(ship)) return false;
+        // Restore bypasses DefaultUnitFactory, so only an admitted legacy hull
+        // gets its missing yaw state seeded. Current states and existing yaw
+        // components remain untouched and are still strictly decoded.
+        if (legacy && !components.contains("AngularVelocity")) {
+            components["AngularVelocity"] = {{"p", 0.0}, {"q", 0.0}, {"r", 0.0}};
+        }
+    }
+    return true;
+}
+
 bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
                                                      const std::vector<std::uint8_t> &payload) {
     // Validate and stage the complete document before mutating the live ECS.
@@ -2573,15 +2636,28 @@ SimulationKernelStateOwnerBridge::create_registry(SimulationKernelStateOwnerRegi
             return RuntimeStateOwnerAdapterExport{.census_entry = std::move(entry),
                                                   .artifact = std::move(artifact)};
         };
-        registration.migrate_previous = [](const RuntimeStateOwnerArtifact &source) {
-            RuntimeStateOwnerArtifact migrated = source;
-            migrated.schema_generation = kRuntimeStateTransferContractGeneration;
-            // Generation 1 and 2 share the same category byte grammar. The
-            // migration is an explicit reader promotion, not a byte rewrite;
-            // schema-generation admission still prevents older generations.
-            migrated.payload_sha256 = runtime_state_payload_sha256(migrated.payload);
-            return migrated;
-        };
+        registration.migrate_previous =
+            [category = rule.category](const RuntimeStateOwnerArtifact &source) {
+                RuntimeStateOwnerArtifact migrated = source;
+                migrated.schema_generation = kRuntimeStateTransferContractGeneration;
+                if (category == RuntimeStateCategory::EcsComponentTruth) {
+                    if (source.category != category ||
+                        source.schema_generation != kRuntimeStateTransferPreviousGeneration) {
+                        throw std::runtime_error(
+                            "ECS byte migration requires an admitted N-1 artifact");
+                    }
+                    auto document = nlohmann::json::parse(text(source.payload));
+                    if (!normalize_legacy_ecs_ships(document)) {
+                        throw std::runtime_error(
+                            "N-1 ECS ship state is malformed or mixes hull schemas");
+                    }
+                    migrated.payload = bytes(document.dump());
+                }
+                // Other categories retain their explicit reader promotion. The
+                // generation admission still prevents anything older than N-1.
+                migrated.payload_sha256 = runtime_state_payload_sha256(migrated.payload);
+                return migrated;
+            };
         registration.import_state = [kernel = config.kernel, journal = config.journal,
                                      transaction_namespace = config.transaction_namespace,
                                      rederive_python_caches = config.rederive_python_caches,

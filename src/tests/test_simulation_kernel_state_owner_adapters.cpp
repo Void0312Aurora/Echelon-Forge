@@ -4,6 +4,9 @@
 #include "components/command/common/comm_message.h"
 #include "components/combat/health.h"
 #include "components/combat/scoring.h"
+#include "components/domains/naval/command/mission_command_naval.h"
+#include "components/domains/naval/platform/ship_platform.h"
+#include "components/physics/forces.h"
 #include "components/physics/instruments.h"
 #include "components/systems/track_management.h"
 #include "components/systems/ew.h"
@@ -1146,6 +1149,247 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         target_registry.reset();
         std::filesystem::remove(source_path, remove_error);
         std::filesystem::remove(target_path, remove_error);
+    }
+
+    TEST_CASE("N-1 legacy ship payload imports durably and resumes native motion") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        // Audited pre-#117 producer: main@cedfa01c35cb9b9c0b03f2ee9b3f211c893cd8a5,
+        // runtime_state_transfer_candidate.h: kRuntimeStateTransferContractGeneration = 2.
+        // Freeze the producer's wire generation independently of the target reader.
+        constexpr std::uint32_t kPreNavalS1ProducerGeneration = 2;
+        CHECK(host::kRuntimeStateTransferPreviousGeneration == kPreNavalS1ProducerGeneration);
+        double economic_speed = 10.29;
+        double turn_rate = 2.4;
+        bool retained_yaw = false;
+        SUBCASE("economic speed defines the old turn-rate reference") {}
+        SUBCASE("absent economic speed falls back to maximum speed") {
+            economic_speed = 0.0;
+        }
+        SUBCASE("zero turn rate preserves no steering authority") {
+            turn_rate = 0.0;
+        }
+        SUBCASE("an existing angular state is retained") {
+            retained_yaw = true;
+        }
+
+        SimulationKernel source;
+        SimulationKernel target;
+        source.reset(123);
+        target.reset(456);
+        const auto ship = source.spawn_unit(Side::Blue, "Ship", 100, 200, 0, 0, 0, 0, 0, 8, 0);
+        REQUIRE(ship.is_valid());
+        {
+            auto lease = source.acquire_world_lease();
+            ShipPlatform platform{};
+            platform.length_m = 153.8;
+            platform.max_speed_mps = 15.43;
+            platform.economical_speed_mps = economic_speed;
+            platform.max_accel_mps2 = 0.3646;
+            platform.max_decel_mps2 = 0.1436;
+            NavalCommandIntent order{};
+            order.active = true;
+            order.cmd_heading_deg = 90.0;
+            order.cmd_speed_mps = 8.0;
+            lease.world()
+                .entity(ship.id())
+                .set_name("LegacyShip")
+                .set<ShipPlatform>(platform)
+                .set<AngularVelocity>({0.01, 0.02, 0.03})
+                .set<NavalCommandIntent>(order);
+        }
+        const auto source_path = std::filesystem::temp_directory_path() / "ef_s1_ship_source.wal";
+        const auto target_path = std::filesystem::temp_directory_path() / "ef_s1_ship_target.wal";
+        std::error_code remove_error;
+        std::filesystem::remove(source_path, remove_error);
+        std::filesystem::remove(target_path, remove_error);
+        auto source_registry = Bridge::create_registry({
+            .kernel = &source,
+            .journal =
+                std::make_shared<host::RuntimeStateTransferFileJournal>(source_path.string()),
+            .transaction_namespace = "s1-ship-source",
+        });
+        auto target_registry = Bridge::create_registry({
+            .kernel = &target,
+            .journal =
+                std::make_shared<host::RuntimeStateTransferFileJournal>(target_path.string()),
+            .transaction_namespace = "s1-ship-target",
+        });
+        const auto plan = source.resolved_composition_sha256();
+        const auto profile = host::runtime_state_transfer_profile_from_decoder_matrix(
+            "s1-ship-n-minus-one.v2", 1, plan, plan);
+        auto exported = source_registry->export_source(
+            profile, integration_slot(), integration_export_context(integration_barrier()));
+        REQUIRE(exported.status);
+        auto artifact =
+            std::find_if(exported.artifacts.begin(), exported.artifacts.end(), [](const auto &row) {
+                return row.category == host::RuntimeStateCategory::EcsComponentTruth;
+            });
+        REQUIRE(artifact != exported.artifacts.end());
+        auto previous = json::parse(artifact->payload);
+        REQUIRE(previous["results"].size() == 1);
+        auto &components = previous["results"][0]["components"];
+        auto &platform = components["ShipPlatform"];
+        // Exact pre-#117 reflected shape: 22 hull fields and no ship yaw state.
+        REQUIRE(platform.erase("steady_turning_diameter_m") == 1);
+        REQUIRE(platform.erase("nomoto_time_constant") == 1);
+        REQUIRE(platform.erase("steady_turn_speed_ratio") == 1);
+        platform["max_turn_rate_deg_s"] = turn_rate;
+        platform["low_speed_turn_factor"] = 0.25;
+        REQUIRE(platform.size() == 22);
+        if (!retained_yaw) REQUIRE(components.erase("AngularVelocity") == 1);
+        const auto previous_text = previous.dump();
+        artifact->payload = {previous_text.begin(), previous_text.end()};
+        artifact->payload_sha256 = host::runtime_state_payload_sha256(artifact->payload);
+        auto entry = std::find_if(
+            exported.census.entries.begin(), exported.census.entries.end(), [](const auto &row) {
+                return row.category == host::RuntimeStateCategory::EcsComponentTruth;
+            });
+        REQUIRE(entry != exported.census.entries.end());
+        entry->state_content_sha256 = artifact->payload_sha256;
+        // A real old producer stamps the whole census and all twelve owners with 2,
+        // not just the changed ECS row. Unchanged owners still need reader promotion.
+        exported.census.contract_generation = kPreNavalS1ProducerGeneration;
+        for (auto &row : exported.artifacts) {
+            row.schema_generation = kPreNavalS1ProducerGeneration;
+        }
+        for (auto &row : exported.census.entries) {
+            row.schema_generation = kPreNavalS1ProducerGeneration;
+            if (!row.canonical_payload.empty()) {
+                row.canonical_payload = host::runtime_state_canonical_payload(row);
+                row.canonical_payload_sha256 =
+                    host::runtime_state_payload_sha256(row.canonical_payload);
+            }
+        }
+
+        const auto before = Bridge::serialize_world(target);
+        // The N reader remains strict. Only explicit N-1 admission may translate it.
+        CHECK_FALSE(Bridge::restore_world(target, artifact->payload));
+        CHECK(Bridge::serialize_world(target) == before);
+        auto expired = exported;
+        expired.census.contract_generation = kPreNavalS1ProducerGeneration - 1;
+        const auto refused =
+            target_registry->import_and_observe(profile, expired, {.high = 478, .low = 479});
+        CHECK_FALSE(refused.status);
+        CHECK(refused.transaction == nullptr);
+        CHECK(Bridge::serialize_world(target) == before);
+        auto imported =
+            target_registry->import_and_observe(profile, exported, {.high = 480, .low = 481});
+        INFO(imported.status.detail);
+        REQUIRE(imported.status);
+        REQUIRE(imported.transaction != nullptr);
+        CHECK(imported.observations.size() == host::kRuntimeStateCategoryCount);
+        for (const auto &observation : imported.observations) {
+            CHECK(observation.source_schema_generation == kPreNavalS1ProducerGeneration);
+            CHECK(observation.schema_generation == host::kRuntimeStateTransferContractGeneration);
+        }
+        const auto committed = imported.transaction->commit_with_deadline(20, 100);
+        REQUIRE(committed.phase == host::RuntimeStateOwnerImportTransactionPhase::Committed);
+        CHECK(committed.durable);
+        {
+            auto lease = target.acquire_world_lease();
+            const auto restored = lease.world().lookup("LegacyShip");
+            REQUIRE(restored.is_valid());
+            const auto *hull = restored.get<ShipPlatform>();
+            const auto *yaw = restored.get<AngularVelocity>();
+            REQUIRE(hull != nullptr);
+            REQUIRE(yaw != nullptr);
+            const double reference = economic_speed > 0 ? economic_speed : 15.43;
+            const double expected_diameter =
+                turn_rate > 0 ? 2 * reference / (turn_rate * 3.14159265358979323846 / 180) : 0;
+            CHECK(hull->steady_turning_diameter_m == doctest::Approx(expected_diameter));
+            CHECK(hull->nomoto_time_constant == 1.0);
+            CHECK(hull->steady_turn_speed_ratio == 1.0);
+            CHECK(yaw->p == (retained_yaw ? 0.01 : 0.0));
+            CHECK(yaw->q == (retained_yaw ? 0.02 : 0.0));
+            CHECK(yaw->r == (retained_yaw ? 0.03 : 0.0));
+        }
+        target.step();
+        {
+            auto lease = target.acquire_world_lease();
+            const auto restored = lease.world().lookup("LegacyShip");
+            REQUIRE(restored.is_alive());
+            CHECK(restored.get<Transform>()->y > 200.0);
+            if (turn_rate > 0) CHECK(restored.get<Transform>()->heading > 0.0);
+        }
+        imported.transaction.reset();
+        source_registry.reset();
+        target_registry.reset();
+        std::filesystem::remove(source_path, remove_error);
+        std::filesystem::remove(target_path, remove_error);
+    }
+
+    TEST_CASE("N-1 ship migration rejects mixed or malformed legacy fields before mutation") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        SimulationKernel kernel;
+        kernel.reset(123);
+        REQUIRE(kernel.spawn_unit(Side::Blue, "Ship", 100, 200, 0, 0, 0, 0, 0, 8, 0).is_valid());
+        const auto before = Bridge::serialize_world(kernel);
+        auto previous = json::parse(before);
+        auto &platform = previous["results"][0]["components"]["ShipPlatform"];
+        // A malformed N-1 wire fixture must not be repaired into accepted truth.
+        platform = {{"max_turn_rate_deg_s", 2.4},
+                    {"low_speed_turn_factor", 0.25},
+                    {"economical_speed_mps", 10.29},
+                    {"max_speed_mps", 15.43}};
+        bool unknown_field = false;
+        bool wrong_generation = false;
+        SUBCASE("mixed legacy and current hull") {
+            platform["steady_turning_diameter_m"] = 491.0;
+        }
+        SUBCASE("incomplete legacy hull") {
+            platform.erase("low_speed_turn_factor");
+        }
+        SUBCASE("non-numeric retired field") {
+            platform["low_speed_turn_factor"] = "0.25";
+        }
+        SUBCASE("negative rate") {
+            platform["max_turn_rate_deg_s"] = -2.4;
+        }
+        SUBCASE("overflowing circle") {
+            platform["max_turn_rate_deg_s"] = 1e-310;
+        }
+        SUBCASE("unknown fields still reach the strict decoder") {
+            unknown_field = true;
+            platform["unknown_truth"] = 1.0;
+        }
+        SUBCASE("N payload cannot request the N-1 migration") {
+            wrong_generation = true;
+        }
+        const auto journal_path = std::filesystem::temp_directory_path() / "ef_s1_ship_invalid.wal";
+        std::error_code remove_error;
+        std::filesystem::remove(journal_path, remove_error);
+        auto registry_base = Bridge::create_registry({
+            .kernel = &kernel,
+            .journal =
+                std::make_shared<host::RuntimeStateTransferFileJournal>(journal_path.string()),
+            .transaction_namespace = "s1-ship-invalid",
+        });
+        auto registry =
+            std::dynamic_pointer_cast<host::RuntimeStateOwnerAdapterRegistry>(registry_base);
+        REQUIRE(registry != nullptr);
+        const auto *owner = registry->registration(host::RuntimeStateCategory::EcsComponentTruth);
+        REQUIRE(owner != nullptr);
+        const auto previous_text = previous.dump();
+        host::RuntimeStateOwnerArtifact artifact{
+            .category = host::RuntimeStateCategory::EcsComponentTruth,
+            .schema_id = owner->schema_id,
+            .schema_generation = wrong_generation ? host::kRuntimeStateTransferContractGeneration
+                                                  : host::kRuntimeStateTransferPreviousGeneration,
+            .payload = {previous_text.begin(), previous_text.end()},
+        };
+        artifact.payload_sha256 = host::runtime_state_payload_sha256(artifact.payload);
+        if (unknown_field) {
+            const auto migrated = owner->migrate_previous(artifact);
+            CHECK_FALSE(Bridge::restore_world(kernel, migrated.payload));
+        } else {
+            CHECK_THROWS_AS((void)owner->migrate_previous(artifact), std::runtime_error);
+        }
+        CHECK(Bridge::serialize_world(kernel) == before);
+        registry.reset();
+        registry_base.reset();
+        std::filesystem::remove(journal_path, remove_error);
     }
 
     TEST_CASE("ECS owner covers every generic platform family") {

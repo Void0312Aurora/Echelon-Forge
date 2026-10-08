@@ -12,10 +12,11 @@
         "economical_speed_mps": 10.29,
         "range_nm": 4400.0,
         "range_speed_mps": 10.29,
-        "max_accel_mps2": 0.14,
-        "max_decel_mps2": 0.2,
-        "max_turn_rate_deg_s": 2.4,
-        "low_speed_turn_factor": 0.3,
+        "max_accel_mps2": 0.3646,
+        "max_decel_mps2": 0.1436,
+        "steady_turning_diameter_m": 491.0,
+        "nomoto_time_constant": 1.0,
+        "steady_turn_speed_ratio": 0.67,
         "steerageway_speed_mps": 1.0,
         "sea_state": 0.0,
         "wave_heading_deg": 0.0,
@@ -79,6 +80,19 @@
     "has_data_link": true,
     "data_link_network_id": 1,
     "_provenance": {
+        "sources": [
+            "csg-us-ddg-usni-proc-200206",
+            "ref-abs-vessel-maneuverability-2017",
+            "ref-seamanship-turning-speed-loss",
+            "ref-imo-msc137-76"
+        ],
+        "parameters": {
+            "ship_platform.max_accel_mps2": {"value_basis": "sourced_derived", "source_ids": ["csg-us-ddg-usni-proc-200206"], "tier": "B", "note": "quadratic-resistance surge law fitted to the trial figures quoted in USNI Proceedings June 2002 (DDG-51 Flight I: 74 s / 820 yd from rest to flank, 66 s / 470 yd flank to stop); full-ahead acceleration from rest"},
+            "ship_platform.max_decel_mps2": {"value_basis": "sourced_derived", "source_ids": ["csg-us-ddg-usni-proc-200206"], "tier": "B", "note": "full-astern authority from the same fit (DDG-51 Flight I: 74 s / 820 yd from rest to flank, 66 s / 470 yd flank to stop)"},
+            "ship_platform.steady_turning_diameter_m": {"value_basis": "proxy", "source_ids": ["ref-abs-vessel-maneuverability-2017", "ref-imo-msc137-76"], "note": "no public trial turning circle; STD = 2 U_econ / r from the previous engineering-estimate turn rate 2.4 deg/s at 10.29 m/s (3.19 L); Lyster-Knights tactical diameter at the IMO test speed (0.853 U_max) 4.45 L, within the IMO MSC.137(76) 5 L limit"},
+            "ship_platform.nomoto_time_constant": {"value_basis": "engineering_estimate", "note": "midpoint of the 0.5-1.5 open-literature band for course-stable warship hulls"},
+            "ship_platform.steady_turn_speed_ratio": {"value_basis": "proxy", "source_ids": ["ref-seamanship-turning-speed-loss"], "tier": "C", "note": "seamanship rule of thumb for ships under full wheel: about one quarter of the approach speed lost after 90 deg and about one third after 180 deg, then steady (ref-seamanship-turning-speed-loss, Tier C); the Lyster-Knights regression (ABS 2017 App. 4, A4.5) is not used because this hull lies outside its validity range (single-screw, block coefficient 0.56-0.88); block coefficient 0.28"}
+        },
         "modeling_note": "engineering calibration; combines public role/equipment facts with community-derived approximation values for sonar and embarked helo MVP behavior."
     }
 }
