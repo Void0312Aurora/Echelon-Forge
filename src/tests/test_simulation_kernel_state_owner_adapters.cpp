@@ -4,6 +4,7 @@
 #include "components/command/common/comm_message.h"
 #include "components/combat/health.h"
 #include "components/combat/scoring.h"
+#include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "components/domains/naval/command/mission_command_naval.h"
 #include "components/domains/naval/platform/ship_platform.h"
 #include "components/physics/forces.h"
@@ -1390,6 +1391,74 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         registry.reset();
         registry_base.reset();
         std::filesystem::remove(journal_path, remove_error);
+    }
+
+    TEST_CASE("ECS owner preserves additive AeroTuning fields and legacy defaults") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        SimulationKernel source;
+        SimulationKernel target;
+        source.reset(51);
+        target.reset(52);
+        const auto aircraft =
+            source.spawn_unit(Side::Blue, "Aircraft", 0, 0, 3000, 0, 0, 0, 150, 0, 0);
+        REQUIRE(aircraft.is_valid());
+        AeroTuning tuning;
+        tuning.enabled = true;
+        tuning.flap_lift_coefficient_per_full_deflection = 0.45;
+        tuning.stores_drag_coefficient_per_drag_index = 0.003;
+        tuning.landing_gear_drag_coefficient_per_extension = 0.07;
+        tuning.speedbrake_drag_coefficient_per_full_extension = 0.11;
+        tuning.flaps_drag_coefficient_per_full_deflection = 0.09;
+        {
+            auto lease = source.acquire_world_lease();
+            lease.world().entity(aircraft.id()).set_name("TuningAircraft").set<AeroTuning>(tuning);
+        }
+        auto document = json::parse(Bridge::serialize_world(source));
+        REQUIRE(document["results"].size() == 1);
+        auto &encoded = document["results"][0]["components"]["AeroTuning"];
+        const std::array<std::pair<const char *, double AeroTuning::*>, 5> fields{{
+            {"flap_lift_coefficient_per_full_deflection",
+             &AeroTuning::flap_lift_coefficient_per_full_deflection},
+            {"stores_drag_coefficient_per_drag_index",
+             &AeroTuning::stores_drag_coefficient_per_drag_index},
+            {"landing_gear_drag_coefficient_per_extension",
+             &AeroTuning::landing_gear_drag_coefficient_per_extension},
+            {"speedbrake_drag_coefficient_per_full_extension",
+             &AeroTuning::speedbrake_drag_coefficient_per_full_extension},
+            {"flaps_drag_coefficient_per_full_deflection",
+             &AeroTuning::flaps_drag_coefficient_per_full_deflection},
+        }};
+        bool legacy = false;
+        SUBCASE("current wire overrides round trip") {}
+        SUBCASE("wire omitting new fields retains constructor defaults") {
+            legacy = true;
+        }
+        for (const auto &[name, member] : fields) {
+            REQUIRE(encoded.contains(name));
+            CHECK(encoded[name].get<double>() == tuning.*member);
+            if (legacy) encoded.erase(name);
+        }
+        const auto wire = document.dump();
+        REQUIRE(Bridge::restore_world(target, {wire.begin(), wire.end()}));
+        {
+            auto lease = target.acquire_world_lease();
+            const auto entity = lease.world().lookup("TuningAircraft");
+            REQUIRE(entity.is_valid());
+            const auto *restored = entity.get<AeroTuning>();
+            REQUIRE(restored != nullptr);
+            CHECK(restored->enabled);
+            const AeroTuning defaults;
+            for (const auto &[name, member] : fields) {
+                INFO(name);
+                CHECK(restored->*member == (legacy ? defaults.*member : tuning.*member));
+            }
+        }
+        const auto before = Bridge::serialize_world(target);
+        encoded["unknown_truth"] = 1.0;
+        const auto invalid_wire = document.dump();
+        CHECK_FALSE(Bridge::restore_world(target, {invalid_wire.begin(), invalid_wire.end()}));
+        CHECK(Bridge::serialize_world(target) == before);
     }
 
     TEST_CASE("ECS owner covers every generic platform family") {
