@@ -394,9 +394,9 @@
       "english": "docs/engineering/README.md",
       "chinese": "docs/engineering/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "d8f4a3ba75ee0ac419ef7100ee77c45651f755d0d6bf624566c071730cac32f1",
-      "chinese_hash": "c2e7d74c034c70dbb37e66c299aa3e8c737d01e71dc19a85633d885084420597"
+      "last_verified": "2026-10-08",
+      "english_hash": "ac57b2d7a91ac6f95083e2512164324f8b9c2fcbc70022d8677f279115be9423",
+      "chinese_hash": "21b9970c6a70678c6d0db8f1df55e7035150e5f328d7e3bb751d598cfc6dd5ea"
     },
     {
       "pair_id": "engineering/release/README",

@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -30,6 +31,22 @@
 namespace {
 constexpr const char *kTransferReflectionSpawnReservation =
     "__echelon_forge_transfer_reflection_spawn_reservation";
+
+void require_fixed_builtin_physics_environment() {
+    constexpr const char *overrides[] = {
+        "CMO_ROT_MAX_RATE_CROSS_RAD_S",      "CMO_ROT_MAX_TORQUE_NM",
+        "CMO_ROT_MAX_ANG_ACCEL_RAD_S2",      "CMO_ROT_MAX_RATE_RAD_S",
+        "CMO_ROT_SINGULARITY_MIN_PITCH_DEG", "CMO_ROT_PITCH_LIMIT_DEG",
+        "CMO_FBW_PROTECTION_MODE",
+    };
+    for (const char *name : overrides) {
+        if (std::getenv(name) != nullptr) {
+            throw std::invalid_argument(
+                std::string("builtin.default_physics.v1 refuses process override ") + name +
+                "; unset it before constructing a runtime");
+        }
+    }
+}
 } // namespace
 
 SimulationKernel::SimulationKernel()
@@ -37,6 +54,7 @@ SimulationKernel::SimulationKernel()
           std::string(runtime::contracts::generated::kDefaultResolvedExecutionPlanJson)) {}
 
 SimulationKernel::SimulationKernel(std::string resolved_manifest_json) {
+    require_fixed_builtin_physics_environment();
     if (runtime::authority_contracts::validate_resolved_execution_plan_json(resolved_manifest_json)
             .valid) {
         const auto manifest =

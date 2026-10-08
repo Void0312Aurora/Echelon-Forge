@@ -3,7 +3,6 @@
 #include <flecs.h>
 #include <algorithm>
 #include <cmath>
-#include <cstdlib>
 #include <numbers>
 #include "components/basic/common.h"
 #include "components/physics/forces.h"
@@ -28,15 +27,6 @@ inline double wrap_360(double deg) {
     return deg;
 }
 
-inline double env_double(const char *key, double fallback) {
-    const char *v = std::getenv(key);
-    if (!v || !*v) return fallback;
-    char *end = nullptr;
-    const double out = std::strtod(v, &end);
-    if (end == v || !std::isfinite(out)) return fallback;
-    return out;
-}
-
 struct RotationalParams {
     double max_rate_cross_rad_s;
     double max_torque_nm;
@@ -47,20 +37,8 @@ struct RotationalParams {
 };
 
 inline const RotationalParams &rotational_params() {
-    static RotationalParams p = []() {
-        RotationalParams v{};
-        v.max_rate_cross_rad_s = std::max(1.0, env_double("CMO_ROT_MAX_RATE_CROSS_RAD_S", 50.0));
-        v.max_torque_nm = std::max(1.0e4, env_double("CMO_ROT_MAX_TORQUE_NM", 5.0e6));
-        v.max_ang_accel_rad_s2 = std::max(10.0, env_double("CMO_ROT_MAX_ANG_ACCEL_RAD_S2", 1.0e4));
-        v.max_rate_rad_s = std::max(0.1, env_double("CMO_ROT_MAX_RATE_RAD_S", 6.0));
-
-        const double min_pitch_deg =
-            std::clamp(env_double("CMO_ROT_SINGULARITY_MIN_PITCH_DEG", 85.0), 70.0, 89.9);
-        v.min_abs_cos_theta = std::cos(deg_to_rad(min_pitch_deg));
-
-        v.pitch_limit_deg = std::clamp(env_double("CMO_ROT_PITCH_LIMIT_DEG", 89.0), 70.0, 89.9);
-        return v;
-    }();
+    // builtin.default_physics.v1: immutable defaults, never process-first-use settings.
+    static const RotationalParams p{50.0, 5.0e6, 1.0e4, 6.0, std::cos(deg_to_rad(85.0)), 89.0};
     return p;
 }
 } // namespace
