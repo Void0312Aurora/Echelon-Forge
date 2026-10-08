@@ -108,7 +108,9 @@ fault qualification cost materially more and remain in their existing lanes.
    retaining diagnostic/test entry points. The existing production rebuild
    retirement is already authoritative and should not be reopened here.
 4. Profile the real training path before any infrastructure optimization. #136's
-   head-only CPU report and pending CUDA gate do not measure facade or host cost.
+   head-only CPU/CUDA reports do not measure facade or host cost. Its bounded
+   CUDA parity and latency/profile gate passed on HEI's RTX 3090; that result
+   does not qualify end-to-end training throughput or wider host activation.
 
 No candidate is promoted and no runtime implementation is deleted in this audit.
 Source scans and historical owner packets describe retention conditions; current
@@ -124,5 +126,6 @@ this audit refreshes the exact line inventory and digest. Its zero-production-
 caller, zero-binding and facade-only package checks remain unchanged. Historical
 owner acceptance packets retain their original snapshot and digest.
 The facade core, candidate contract, rebuild reachability and retirement tests
-passed together: 33 tests. This does not replace CUDA, production wheel or
-wider host topology qualification.
+passed together: 33 tests. This does not replace production wheel or wider host
+topology qualification; the separate bounded CUDA evidence is recorded in
+`hmoe_occupancy_sync.md` for #136.
