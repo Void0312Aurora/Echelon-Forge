@@ -14,6 +14,42 @@ static_assert(!std::is_polymorphic_v<WorldBatchRuntime>,
 
 TEST_SUITE("world_batch_runtime") {
 
+    TEST_CASE("full setup restores canonical timestep for absent native values") {
+        WorldBatchRuntime runtime(2);
+        const double default_dt = SimulationKernel::kDefaultTimeStepS;
+        CHECK(runtime.world_time_step(0) == default_dt);
+        for (const auto &values : std::vector<std::vector<double>>{{0.2, 0.3}, {}, {0.0}, {0.2, 0.3}}) {
+            runtime.apply_world_setup_batch({11, 17}, {}, {}, {}, {}, values);
+            for (std::size_t i = 0; i < 2; ++i) {
+                CHECK(runtime.world_time_step(i) == (values.size() == 2 ? values[i] : default_dt));
+            }
+        }
+        runtime.apply_world_layout(0, 17, "flat", 0, 0, 0, false, 0, 0, 8, {}, {});
+        CHECK(runtime.world_time_step(0) == default_dt);
+        CHECK(runtime.world_time_step(1) == 0.3);
+    }
+
+    TEST_CASE("invalid setup timesteps reject before changing or resetting any world") {
+        WorldBatchRuntime runtime(2);
+        runtime.apply_world_setup_batch({11, 17}, {}, {}, {}, {}, {0.2, 0.3});
+        auto &world = runtime.world_raw_quarantine(0);
+        const auto entity = world.spawn_unit(Side::Blue, "Aircraft", 0, 0, 1000, 0, 0, 0, 0, 0, 0);
+        REQUIRE(entity.is_alive());
+        for (double invalid : {-0.1, std::numeric_limits<double>::quiet_NaN(),
+                               std::numeric_limits<double>::infinity()}) {
+            CHECK_THROWS_AS(runtime.apply_world_setup_batch({11, 17}, {}, {}, {}, {}, {0.1, invalid}),
+                            std::invalid_argument);
+            CHECK_THROWS_AS(runtime.apply_world_layout(0, 17, "flat", 0, 0, 0, false, 0, 0, 8,
+                                                       {}, {}, {invalid}), std::invalid_argument);
+            CHECK(runtime.world_time_step(0) == 0.2);
+            CHECK(runtime.world_time_step(1) == 0.3);
+            CHECK(entity.is_alive());
+        }
+        CHECK_THROWS_AS(runtime.apply_world_setup_batch({}, {}, {}, {}, {}, {0.1, 0.2, 0.3}),
+                        std::invalid_argument);
+        CHECK(entity.is_alive());
+    }
+
     TEST_CASE("batch setup applies maritime overrides and clears absent worlds") {
         WorldBatchRuntime runtime(2);
         const std::vector<WorldMaritimeAssignment> assignments{{0, true, 3.0, 45.0, 7.0},

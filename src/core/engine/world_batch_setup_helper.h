@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <stdexcept>
 #include <vector>
 
 #include "core/engine/simulation_kernel.h"
@@ -10,16 +11,23 @@
 
 namespace world_batch_setup {
 
-inline void maybe_apply_time_step(SimulationKernel &world, std::size_t world_index,
-                                  const std::vector<double> &time_steps) {
-    if (time_steps.empty()) {
-        return;
+inline void validate_time_steps(std::size_t world_count, const std::vector<double> &time_steps) {
+    if (!time_steps.empty() && time_steps.size() != 1 && time_steps.size() != world_count) {
+        throw std::invalid_argument("time_steps must have size 0, 1, or world_count");
     }
+    for (double dt : time_steps) {
+        // Zero is the legacy native DTO encoding of an absent scenario value.
+        if (!std::isfinite(dt) || dt < 0.0) {
+            throw std::invalid_argument("time_steps must be finite and nonnegative (zero selects the default)");
+        }
+    }
+}
 
-    const double dt = time_steps.size() == 1 ? time_steps[0] : time_steps[world_index];
-    if (std::isfinite(dt) && dt > 0.0) {
-        world.set_time_step(dt);
-    }
+inline void apply_setup_time_step(SimulationKernel &world, std::size_t world_index,
+                                 const std::vector<double> &time_steps) {
+    const double dt = time_steps.empty() ? 0.0 :
+        (time_steps.size() == 1 ? time_steps[0] : time_steps[world_index]);
+    world.set_time_step(dt == 0.0 ? SimulationKernel::kDefaultTimeStepS : dt);
 }
 
 inline void apply_terrain_assignments(SimulationKernel &world,
@@ -152,7 +160,7 @@ inline void apply_world_setup(SimulationKernel &world, std::size_t world_index,
                               const std::vector<WorldMaritimeAssignment> &maritime_assignments,
                               const std::vector<std::size_t> &maritime_grouped_indices,
                               std::vector<std::uint64_t> *out_entity_ids, SpawnFn &&spawn_fn) {
-    maybe_apply_time_step(world, world_index, time_steps);
+    apply_setup_time_step(world, world_index, time_steps);
     apply_setup_terrain_assignments(world, terrain_assignments, terrain_grouped_indices);
     apply_setup_wind_assignments(world, wind_assignments, wind_grouped_indices);
     apply_setup_sun_assignments(world, sun_assignments, sun_grouped_indices);

@@ -15,6 +15,15 @@ from python.coercion import coerce_nonnegative_int
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 _SCALAR_TYPES = (str, int, float, bool, type(None))
 
+
+def require_scenario_time_step(value: Any) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError("environment.time_step must be a finite positive number")
+    result = float(value)
+    if not math.isfinite(result) or result <= 0.0:
+        raise ValueError("environment.time_step must be a finite positive number")
+    return result
+
 class _LazyEfEnumMap(Mapping[str, object]):
     def __init__(self, enum_owner_name: str, entries: dict[str, object]):
         self._enum_owner_name = str(enum_owner_name)

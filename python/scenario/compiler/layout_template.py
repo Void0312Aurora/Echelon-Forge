@@ -7,6 +7,7 @@ from typing import Any
 from .clone import _clone_scenario_value
 from .common import (
     DEFAULT_TERRAIN_TYPE,
+    require_scenario_time_step,
     resolve_environment_geodetic_anchor,
     resolve_environment_terrain_config,
     _coerce_nonnegative_int,
@@ -330,7 +331,7 @@ def _compile_world_layout_template(merged_scenario_data: dict[str, Any]) -> Comp
             )
 
     return CompiledWorldLayoutTemplate(
-        time_step_s=float(env_cfg["time_step"]) if "time_step" in env_cfg else None,
+        time_step_s=require_scenario_time_step(env_cfg["time_step"]) if "time_step" in env_cfg else None,
         terrain_type=terrain_type,
         terrain_type_source=terrain_type_source,
         wind_speed_mps=float(wind_cfg.get("speed_mps", 10.0)),

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .common import resolve_environment_geodetic_anchor
+from .common import require_scenario_time_step, resolve_environment_geodetic_anchor
 
 
 def _format_source(source_path: str) -> str:
@@ -135,6 +135,11 @@ def validate_scenario_compiler_shape(
 
     env_cfg = scenario_data.get("environment", {})
     if isinstance(env_cfg, dict):
+        if "time_step" in env_cfg:
+            try:
+                require_scenario_time_step(env_cfg["time_step"])
+            except ValueError as exc:
+                raise ValueError(f"{context} {exc}: {_format_source(source_path)}") from exc
         if "geodetic_anchor" in env_cfg:
             try:
                 resolve_environment_geodetic_anchor(env_cfg)
