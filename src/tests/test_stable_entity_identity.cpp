@@ -28,7 +28,10 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <csignal>
 #include <cstdint>
+#include <cstdlib>
+#include <limits>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -112,6 +115,58 @@ std::uint64_t next_serial(flecs::world &world) {
 } // namespace
 
 TEST_SUITE("stable_entity_identity") {
+
+    TEST_CASE("public clock boundaries refuse invalid requests before callbacks") {
+        SimulationKernel kernel;
+        const double original_dt = kernel.get_time_step();
+        for (double dt : {0.0, -1.0, std::numeric_limits<double>::quiet_NaN(),
+                          std::numeric_limits<double>::infinity(), 1.0e100, 1.0e-100}) {
+            CHECK_THROWS_AS(kernel.set_time_step(dt), std::invalid_argument);
+        }
+        CHECK(kernel.get_time_step() == doctest::Approx(original_dt));
+        kernel.step(); // the same worker remains usable after every refusal
+        {
+            auto lease = kernel.acquire_world_lease();
+            lease.world().remove<StableIdentityState>();
+        }
+        CHECK_THROWS_AS(kernel.step(), std::logic_error);
+        kernel.reset(17);
+        CHECK_NOTHROW(kernel.step());
+    }
+
+    TEST_CASE("draw clock predicate rejects conversion overflow without aborting") {
+        CHECK(stochastic_draw::valid_time(0.0));
+        CHECK(stochastic_draw::valid_time(1.25));
+        CHECK_FALSE(stochastic_draw::valid_time(-1.0));
+        CHECK_FALSE(stochastic_draw::valid_time(std::numeric_limits<double>::quiet_NaN()));
+        CHECK_FALSE(stochastic_draw::valid_time(std::numeric_limits<double>::infinity()));
+        CHECK_FALSE(stochastic_draw::valid_time(std::ldexp(1.0, 64) / 1000.0));
+        CHECK(stochastic_draw::quantize_time_ms(stochastic_draw::DrawSite::radar_detection, 1.25) ==
+              1250);
+    }
+
+    TEST_CASE("process invariant fault probe" * doctest::skip()) {
+        const char *fault = std::getenv("EF_TEST_INVARIANT_FAULT");
+        REQUIRE(fault != nullptr);
+        // The subprocess must observe a real abort, not doctest's signal-to-failure conversion.
+        std::signal(SIGABRT, SIG_DFL);
+#ifdef _MSC_VER
+        _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+#endif
+        flecs::world world;
+        install_stable_identity_state(world, 17);
+        auto entity = world.entity();
+        if (std::string(fault) == "stamp") {
+            stamp_stable_serial(entity);
+            stamp_stable_serial(entity); // deliberately restamp an internal entity
+        } else if (std::string(fault) == "draw") {
+            (void)stochastic_draw::draw_seed(world, stochastic_draw::DrawSite::radar_detection, 0.0,
+                                             {entity}); // deliberately unstamped
+        } else {
+            FAIL("unknown invariant probe fault");
+        }
+        FAIL("internal invariant must terminate the child process");
+    }
 
     TEST_CASE("raw world: serials are 1..N in creation order and re-stamp is refused") {
         flecs::world world;
