@@ -1,6 +1,7 @@
 #include "interfaces/python/bindings_core_detail.h"
 
 void bind_core_simulation_kernel(nb::module_ &m) {
+    m.attr("DEFAULT_TIME_STEP_S") = SimulationKernel::kDefaultTimeStepS;
     nb::class_<SimulationKernel> simulation_kernel(m, "SimulationKernel");
     simulation_kernel.def(nb::init<>());
 

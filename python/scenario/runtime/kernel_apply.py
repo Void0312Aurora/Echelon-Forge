@@ -6,6 +6,8 @@ from typing import Any
 import ef_py
 import numpy as np
 
+from python.scenario.compiler.common import require_scenario_time_step
+
 from python.scenario.compiler import (
     CompiledScenario,
     CompiledWorldLayoutTemplate,
@@ -86,7 +88,7 @@ def prepare_scenario_world_layout(
     else:
         env_rand = env_cfg.get("randomization", {}) if isinstance(env_cfg.get("randomization", {}), dict) else {}
         if "time_step" in env_cfg:
-            time_step_s = float(env_cfg["time_step"])
+            time_step_s = require_scenario_time_step(env_cfg["time_step"])
         terrain_type, terrain_type_source = resolve_environment_terrain_config(
             env_cfg,
             default=DEFAULT_TERRAIN_TYPE,
@@ -360,8 +362,7 @@ def prepare_scenario_world_layout(
 
 
 def apply_world_layout_to_kernel(sim, layout: ScenarioWorldLayout) -> AppliedScenarioWorld:
-    if layout.time_step_s is not None:
-        sim.set_time_step(layout.time_step_s)
+    sim.set_time_step(ef_py.DEFAULT_TIME_STEP_S if layout.time_step_s is None else layout.time_step_s)
     if hasattr(sim, "set_terrain_type"):
         try:
             sim.set_terrain_type(layout.terrain_type)

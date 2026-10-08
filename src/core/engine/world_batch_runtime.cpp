@@ -477,9 +477,7 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
     const std::vector<double> &time_steps, const std::vector<WorldSunAssignment> &sun_assignments,
     const std::vector<WorldGeodeticAnchorAssignment> &geodetic_anchor_assignments,
     const std::vector<WorldMaritimeAssignment> &maritime_assignments) {
-    if (!time_steps.empty() && time_steps.size() != 1 && time_steps.size() != worlds_.size()) {
-        throw std::invalid_argument("time_steps must have size 0, 1, or world_count");
-    }
+    world_batch_setup::validate_time_steps(worlds_.size(), time_steps);
 
     std::vector<uint64_t> out(requests.size(), 0);
     const auto terrain_grouped = group_item_indices_by_world(worlds_.size(), terrain_assignments);
@@ -524,11 +522,9 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_layout(
     const std::vector<WorldZoneDefinition> &zones, const std::vector<WorldSpawnRequest> &requests,
     const std::vector<double> &time_steps, double sun_azimuth_deg, double sun_elevation_deg,
     const WorldGeodeticAnchorAssignment &geodetic_anchor) {
-    if (!time_steps.empty() && time_steps.size() != 1 && time_steps.size() != worlds_.size()) {
-        throw std::invalid_argument("time_steps must have size 0, 1, or world_count");
-    }
+    world_batch_setup::validate_time_steps(worlds_.size(), time_steps);
     auto &world = checked_world(world_index);
-    world_batch_setup::maybe_apply_time_step(world, world_index, time_steps);
+    world_batch_setup::apply_setup_time_step(world, world_index, time_steps);
     world.set_terrain_type(terrain_type.empty() ? WorldTerrainAssignment{}.terrain_type
                                                 : terrain_type);
     world.set_wind(wind_speed_mps, wind_dir_from_deg, wind_shear_mps_per_km);

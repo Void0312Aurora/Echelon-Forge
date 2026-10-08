@@ -22,6 +22,15 @@ def require_scenario_side_name(value: Any, *, field: str = "side") -> str:
         raise ValueError(f"{field} must be one of {VALID_SCENARIO_SIDES}, got {value!r}")
     return value
 
+
+def require_scenario_time_step(value: Any) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError("environment.time_step must be a finite positive number")
+    result = float(value)
+    if not math.isfinite(result) or result <= 0.0:
+        raise ValueError("environment.time_step must be a finite positive number")
+    return result
+
 class _LazyEfEnumMap(Mapping[str, object]):
     def __init__(self, enum_owner_name: str, entries: dict[str, object]):
         self._enum_owner_name = str(enum_owner_name)

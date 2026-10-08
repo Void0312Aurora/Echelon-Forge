@@ -80,6 +80,8 @@ struct ExactStepStageContractDescriptor {
 
 class SimulationKernel {
   public:
+    static constexpr double kDefaultTimeStepS = 1.0 / 60.0;
+
     class WorldLease {
       public:
         WorldLease(WorldLease &&other) noexcept
@@ -372,7 +374,7 @@ class SimulationKernel {
     [[nodiscard]] IWeaponReleaseService *weapon_release_service() const noexcept;
 
     flecs::world ecs;
-    double time_step = 1.0 / 60.0; // 60 Hz by default
+    double time_step = kDefaultTimeStepS;
 
     // Deterministic reset-seeded mt19937 stream plus its state-transfer draw position.
     SimulationKernelRngStream rng;
