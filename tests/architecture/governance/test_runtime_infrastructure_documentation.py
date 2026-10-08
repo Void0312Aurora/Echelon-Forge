@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 import pytest
 
@@ -21,6 +22,31 @@ def _text(*parts: str) -> str:
   path = REPO_ROOT.joinpath(*parts)
   assert path.is_file(), f"missing documentation path: {path.relative_to(REPO_ROOT)}"
   return path.read_text(encoding="utf-8")
+
+
+def _focused_readme_test_paths(text: str) -> tuple[str, ...]:
+  command = re.search(r"cmo_python -m pytest -q \\\n(.*?)```", text, re.DOTALL)
+  assert command is not None, "root README must retain an executable focused pytest example"
+  return tuple(re.findall(r"tests/[\w./-]+\.py", command.group(1)))
+
+
+def _validate_focused_readme_command(text: str, root: Path) -> tuple[str, ...]:
+  paths = _focused_readme_test_paths(text)
+  assert paths
+  missing = [path for path in paths if not (root / path).is_file()]
+  assert missing == [], f"stale root README pytest paths: {missing}"
+  return paths
+
+
+def test_root_readme_focused_test_commands_have_live_paths_and_match() -> None:
+  english = _validate_focused_readme_command(_text("README.md"), REPO_ROOT)
+  chinese = _validate_focused_readme_command(_text("README.zh.md"), REPO_ROOT)
+  assert english == chinese
+
+
+def test_readme_command_check_rejects_a_deleted_test(tmp_path: Path) -> None:
+  with pytest.raises(AssertionError, match="stale root README pytest paths"):
+    _validate_focused_readme_command("cmo_python -m pytest -q \\\ntests/missing.py\n```", tmp_path)
 
 
 def test_clock_merge_policy_name_is_distinct_from_cross_layer_merge_policy() -> None:

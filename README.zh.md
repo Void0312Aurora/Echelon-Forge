@@ -155,11 +155,11 @@ source tools/maintenance/cmo_env.sh
 cmo_env_validate
 cmo_env_validate_rl  # 仅在运行会导入 RL 栈的回归测试前需要。
 cmo_python -m pytest -q \
-  tests/architecture/runtime_facade/test_layering.py \
-  tests/architecture/build/test_cmake_target_readiness.py \
-  tests/runtime/facade/test_runtime_facade.py \
-  tests/world_batch/test_world_batch_runtime.py \
-  tests/test_gpu_runtime_bindings.py
+  tests/architecture/governance/test_cpp_include_direction.py \
+  tests/architecture/build_system/test_cmake_target_readiness.py \
+  tests/runtime/facade/test_runtime_facade_core.py \
+  tests/world_batch/test_world_batch_runtime_surface.py \
+  tests/gpu/test_gpu_runtime_bindings.py
 ```
 
 如果使用不同的构建目录，请在 sourcing `tools/maintenance/cmo_env.sh` 之前导出 `CMO_BUILD_DIR=/path/to/build`，或在 Windows 上调用 `tools\maintenance\cmo_env.ps1` 之前设置 `$env:CMO_BUILD_DIR`。
@@ -168,13 +168,19 @@ cmo_python -m pytest -q \
 
 - [src/](src/README.md)：C++ 内核、任务运行时、运行时外观、Python 绑定、GPU 辅助。
 - [python/](python/README.md)：RL 运行时、训练辅助、场景编译器/运行时、诊断支持。
-- [gym_envs/](gym_envs/README.md)：`UniversalEnv`、协作/领导环境支持、场景加载器。
+- [gym_envs/](gym_envs/README.md)：共享环境辅助、协作/长机支持、场景加载器。
 - [scenarios/](scenarios/README.md)：按任务域分组维护的场景定义。
 - [examples/](examples/README.md)：配置输入、轻量级固定装置、可视化资产和仅限示例的界面。
 - [tests/](tests/README.md)：pytest 套件、契约规范、运行器和固定装置。
 - [tools/](tools/README.md)：评估、诊断、运行器、维护脚本。
 - [scripts/](scripts/README.md)：保留的操作人员面向的包装器和兼容性工作流外壳。
 - [docs/README.md](docs/README.md)：手册、计划、标准、前瞻说明和产物索引。
+
+执行训练使用 `build_execution_world_batch_vec_env`，由规范实现
+`python.rl.runtime.world_batch.vec_env.WorldBatchVecEnv` 承载；协作执行使用
+`build_cooperative_world_batch_vec_env` 和
+`python.rl.runtime.cooperative_world_batch_vec_env.CooperativeWorldBatchVecEnv`。
+`UniversalEnv` 保留兼容导入名称，其构造函数会立即报错，不能作为训练或评估后端。
 
 ## 架构边界
 
