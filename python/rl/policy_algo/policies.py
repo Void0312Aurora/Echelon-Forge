@@ -118,9 +118,12 @@ class _HMoEHeadBank(nn.Module):
         out = latent_pi.new_zeros((batch_size, action_dim))
         for family_id, family_head in enumerate(self.family_heads):
             family_mask = family_index == int(family_id)
-            if int(family_mask.sum().item()) <= 0:
-                continue
             family_latent = latent_pi[family_mask]
+            # Boolean selection already materializes its dynamic shape. Inspect
+            # that metadata instead of reducing the mask and extracting a CUDA
+            # scalar. Keep empty heads uncalled so their gradients remain None.
+            if family_latent.shape[0] == 0:
+                continue
             family_out = family_head(family_latent)
             family_subheads = self.subexpert_heads[family_id]
             family_subidx = subexpert_index[family_mask]
@@ -130,9 +133,10 @@ class _HMoEHeadBank(nn.Module):
                 residual = th.zeros_like(family_out)
                 for sub_id, sub_head in enumerate(family_subheads):
                     sub_mask = family_subidx == int(sub_id)
-                    if int(sub_mask.sum().item()) <= 0:
+                    sub_latent = family_latent[sub_mask]
+                    if sub_latent.shape[0] == 0:
                         continue
-                    residual[sub_mask] = sub_head(family_latent[sub_mask])
+                    residual[sub_mask] = sub_head(sub_latent)
                 family_out = family_out + residual
             out[family_mask] = family_out
         return out
