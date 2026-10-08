@@ -489,14 +489,14 @@ TEST_SUITE("content_compile_passes") {
         fs::remove_all(directory);
     }
 
-    TEST_CASE("aero tuning parse: all 44 table-driven keys map to their members") {
+    TEST_CASE("aero tuning parse: all 49 table-driven keys map to their members") {
         // Synthetic-face parity for the table-driven aero parse
         // (content/detail/aero_tuning_fields.inc, T11 slice 4 bundle 3). An
         // Aircraft entry whose top-level aero_tuning object carries every one of
-        // the 44 migrated keys with a distinct sentinel must land each value on
+        // the 49 migrated keys with a distinct sentinel must land each value on
         // the matching AeroTuning member (a mis-wired key/member would collide
         // or miss). The two-pass X-macro include is what emits these reads, so a
-        // dropped pass drops either the 37 scalars or the 7 vectors.
+        // dropped pass drops either the 42 scalars or the 7 vectors.
         namespace fs = std::filesystem;
         const fs::path directory = fs::temp_directory_path() / "ef_aero_tuning_all_keys_test";
         fs::remove_all(directory);
@@ -510,39 +510,44 @@ TEST_SUITE("content_compile_passes") {
     "cl0": 2.5,
     "cd0_clean": 3.5,
     "induced_drag_k": 4.5,
-    "cm_alpha_per_rad": 5.5,
-    "cm_q": 6.5,
-    "alpha_stall_clean_deg": 7.5,
-    "alpha_stall_flaps_full_deg": 8.5,
-    "alpha_peak_offset_deg": 9.5,
-    "alpha_deep_offset_deg": 10.5,
-    "cl_peak_clean": 11.5,
-    "cl_peak_flaps_full": 12.5,
-    "cl_deep_clean": 13.5,
-    "cl_deep_flaps_full": 14.5,
-    "pitch_break_onset_deg": 15.5,
-    "pitch_break_full_deg": 16.5,
-    "pitch_break_cm_nose_down": 17.5,
-    "post_stall_damp_floor": 18.5,
-    "aoa_rate_pitch_break_gain": 19.5,
-    "elevator_max_deflection_deg": 20.5,
-    "aileron_max_deflection_deg": 21.5,
-    "rudder_max_deflection_deg": 22.5,
-    "cm_delta_e_per_rad": 23.5,
-    "cl_delta_a_per_rad": 24.5,
-    "cn_delta_r_per_rad": 25.5,
-    "fbw_elevator_cmd_per_rate_err": 26.5,
-    "fbw_aileron_cmd_per_rate_err": 27.5,
-    "fbw_rudder_cmd_per_rate_err": 28.5,
-    "ari_rudder_cmd_per_aileron_cmd": 29.5,
+    "flap_lift_coefficient_per_full_deflection": 5.5,
+    "stores_drag_coefficient_per_drag_index": 6.5,
+    "landing_gear_drag_coefficient_per_extension": 7.5,
+    "speedbrake_drag_coefficient_per_full_extension": 8.5,
+    "flaps_drag_coefficient_per_full_deflection": 9.5,
+    "cm_alpha_per_rad": 10.5,
+    "cm_q": 11.5,
+    "alpha_stall_clean_deg": 12.5,
+    "alpha_stall_flaps_full_deg": 13.5,
+    "alpha_peak_offset_deg": 14.5,
+    "alpha_deep_offset_deg": 15.5,
+    "cl_peak_clean": 16.5,
+    "cl_peak_flaps_full": 17.5,
+    "cl_deep_clean": 18.5,
+    "cl_deep_flaps_full": 19.5,
+    "pitch_break_onset_deg": 20.5,
+    "pitch_break_full_deg": 21.5,
+    "pitch_break_cm_nose_down": 22.5,
+    "post_stall_damp_floor": 23.5,
+    "aoa_rate_pitch_break_gain": 24.5,
+    "elevator_max_deflection_deg": 25.5,
+    "aileron_max_deflection_deg": 26.5,
+    "rudder_max_deflection_deg": 27.5,
+    "cm_delta_e_per_rad": 28.5,
+    "cl_delta_a_per_rad": 29.5,
+    "cn_delta_r_per_rad": 30.5,
+    "fbw_elevator_cmd_per_rate_err": 31.5,
+    "fbw_aileron_cmd_per_rate_err": 32.5,
+    "fbw_rudder_cmd_per_rate_err": 33.5,
+    "ari_rudder_cmd_per_aileron_cmd": 34.5,
     "fbw_g_command_enabled": false,
-    "fbw_g_command_neutral": 31.5,
-    "fbw_g_command_max": 32.5,
-    "fbw_g_command_min": 33.5,
-    "fbw_pitch_rate_per_g_err": 34.5,
-    "actuator_tau_elevator_s": 35.5,
-    "actuator_tau_aileron_s": 36.5,
-    "actuator_tau_rudder_s": 37.5,
+    "fbw_g_command_neutral": 36.5,
+    "fbw_g_command_max": 37.5,
+    "fbw_g_command_min": 38.5,
+    "fbw_pitch_rate_per_g_err": 39.5,
+    "actuator_tau_elevator_s": 40.5,
+    "actuator_tau_aileron_s": 41.5,
+    "actuator_tau_rudder_s": 42.5,
     "mach_breakpoints": [1.0, 2.0, 3.0],
     "cl_alpha_scale_vs_mach": [4.0, 5.0],
     "cd0_add_vs_mach": [6.0],
@@ -567,39 +572,44 @@ TEST_SUITE("content_compile_passes") {
         CHECK(at.cl0 == doctest::Approx(2.5));
         CHECK(at.cd0_clean == doctest::Approx(3.5));
         CHECK(at.induced_drag_k == doctest::Approx(4.5));
-        CHECK(at.cm_alpha_per_rad == doctest::Approx(5.5));
-        CHECK(at.cm_q == doctest::Approx(6.5));
-        CHECK(at.alpha_stall_clean_deg == doctest::Approx(7.5));
-        CHECK(at.alpha_stall_flaps_full_deg == doctest::Approx(8.5));
-        CHECK(at.alpha_peak_offset_deg == doctest::Approx(9.5));
-        CHECK(at.alpha_deep_offset_deg == doctest::Approx(10.5));
-        CHECK(at.cl_peak_clean == doctest::Approx(11.5));
-        CHECK(at.cl_peak_flaps_full == doctest::Approx(12.5));
-        CHECK(at.cl_deep_clean == doctest::Approx(13.5));
-        CHECK(at.cl_deep_flaps_full == doctest::Approx(14.5));
-        CHECK(at.pitch_break_onset_deg == doctest::Approx(15.5));
-        CHECK(at.pitch_break_full_deg == doctest::Approx(16.5));
-        CHECK(at.pitch_break_cm_nose_down == doctest::Approx(17.5));
-        CHECK(at.post_stall_damp_floor == doctest::Approx(18.5));
-        CHECK(at.aoa_rate_pitch_break_gain == doctest::Approx(19.5));
-        CHECK(at.elevator_max_deflection_deg == doctest::Approx(20.5));
-        CHECK(at.aileron_max_deflection_deg == doctest::Approx(21.5));
-        CHECK(at.rudder_max_deflection_deg == doctest::Approx(22.5));
-        CHECK(at.cm_delta_e_per_rad == doctest::Approx(23.5));
-        CHECK(at.cl_delta_a_per_rad == doctest::Approx(24.5));
-        CHECK(at.cn_delta_r_per_rad == doctest::Approx(25.5));
-        CHECK(at.fbw_elevator_cmd_per_rate_err == doctest::Approx(26.5));
-        CHECK(at.fbw_aileron_cmd_per_rate_err == doctest::Approx(27.5));
-        CHECK(at.fbw_rudder_cmd_per_rate_err == doctest::Approx(28.5));
-        CHECK(at.ari_rudder_cmd_per_aileron_cmd == doctest::Approx(29.5));
+        CHECK(at.flap_lift_coefficient_per_full_deflection == doctest::Approx(5.5));
+        CHECK(at.stores_drag_coefficient_per_drag_index == doctest::Approx(6.5));
+        CHECK(at.landing_gear_drag_coefficient_per_extension == doctest::Approx(7.5));
+        CHECK(at.speedbrake_drag_coefficient_per_full_extension == doctest::Approx(8.5));
+        CHECK(at.flaps_drag_coefficient_per_full_deflection == doctest::Approx(9.5));
+        CHECK(at.cm_alpha_per_rad == doctest::Approx(10.5));
+        CHECK(at.cm_q == doctest::Approx(11.5));
+        CHECK(at.alpha_stall_clean_deg == doctest::Approx(12.5));
+        CHECK(at.alpha_stall_flaps_full_deg == doctest::Approx(13.5));
+        CHECK(at.alpha_peak_offset_deg == doctest::Approx(14.5));
+        CHECK(at.alpha_deep_offset_deg == doctest::Approx(15.5));
+        CHECK(at.cl_peak_clean == doctest::Approx(16.5));
+        CHECK(at.cl_peak_flaps_full == doctest::Approx(17.5));
+        CHECK(at.cl_deep_clean == doctest::Approx(18.5));
+        CHECK(at.cl_deep_flaps_full == doctest::Approx(19.5));
+        CHECK(at.pitch_break_onset_deg == doctest::Approx(20.5));
+        CHECK(at.pitch_break_full_deg == doctest::Approx(21.5));
+        CHECK(at.pitch_break_cm_nose_down == doctest::Approx(22.5));
+        CHECK(at.post_stall_damp_floor == doctest::Approx(23.5));
+        CHECK(at.aoa_rate_pitch_break_gain == doctest::Approx(24.5));
+        CHECK(at.elevator_max_deflection_deg == doctest::Approx(25.5));
+        CHECK(at.aileron_max_deflection_deg == doctest::Approx(26.5));
+        CHECK(at.rudder_max_deflection_deg == doctest::Approx(27.5));
+        CHECK(at.cm_delta_e_per_rad == doctest::Approx(28.5));
+        CHECK(at.cl_delta_a_per_rad == doctest::Approx(29.5));
+        CHECK(at.cn_delta_r_per_rad == doctest::Approx(30.5));
+        CHECK(at.fbw_elevator_cmd_per_rate_err == doctest::Approx(31.5));
+        CHECK(at.fbw_aileron_cmd_per_rate_err == doctest::Approx(32.5));
+        CHECK(at.fbw_rudder_cmd_per_rate_err == doctest::Approx(33.5));
+        CHECK(at.ari_rudder_cmd_per_aileron_cmd == doctest::Approx(34.5));
         CHECK_FALSE(at.fbw_g_command_enabled);
-        CHECK(at.fbw_g_command_neutral == doctest::Approx(31.5));
-        CHECK(at.fbw_g_command_max == doctest::Approx(32.5));
-        CHECK(at.fbw_g_command_min == doctest::Approx(33.5));
-        CHECK(at.fbw_pitch_rate_per_g_err == doctest::Approx(34.5));
-        CHECK(at.actuator_tau_elevator_s == doctest::Approx(35.5));
-        CHECK(at.actuator_tau_aileron_s == doctest::Approx(36.5));
-        CHECK(at.actuator_tau_rudder_s == doctest::Approx(37.5));
+        CHECK(at.fbw_g_command_neutral == doctest::Approx(36.5));
+        CHECK(at.fbw_g_command_max == doctest::Approx(37.5));
+        CHECK(at.fbw_g_command_min == doctest::Approx(38.5));
+        CHECK(at.fbw_pitch_rate_per_g_err == doctest::Approx(39.5));
+        CHECK(at.actuator_tau_elevator_s == doctest::Approx(40.5));
+        CHECK(at.actuator_tau_aileron_s == doctest::Approx(41.5));
+        CHECK(at.actuator_tau_rudder_s == doctest::Approx(42.5));
         CHECK(at.mach_breakpoints == std::vector<double>{1.0, 2.0, 3.0});
         CHECK(at.cl_alpha_scale_vs_mach == std::vector<double>{4.0, 5.0});
         CHECK(at.cd0_add_vs_mach == std::vector<double>{6.0});
@@ -648,6 +658,11 @@ TEST_SUITE("content_compile_passes") {
         CHECK(at.cd0_clean == doctest::Approx(0.099));               // overridden
         CHECK(at.mach_breakpoints == std::vector<double>{0.5, 0.9}); // replaced wholesale
         CHECK(at.cl_alpha_per_deg == doctest::Approx(preset.cl_alpha_per_deg));
+        CHECK(at.flap_lift_coefficient_per_full_deflection == doctest::Approx(0.35));
+        CHECK(at.stores_drag_coefficient_per_drag_index == doctest::Approx(0.001));
+        CHECK(at.landing_gear_drag_coefficient_per_extension == doctest::Approx(0.04));
+        CHECK(at.speedbrake_drag_coefficient_per_full_extension == doctest::Approx(0.08));
+        CHECK(at.flaps_drag_coefficient_per_full_deflection == doctest::Approx(0.02));
         CHECK(at.cm_q == doctest::Approx(preset.cm_q));
         CHECK(at.actuator_tau_rudder_s == doctest::Approx(preset.actuator_tau_rudder_s));
         CHECK(at.fbw_g_command_enabled == preset.fbw_g_command_enabled);

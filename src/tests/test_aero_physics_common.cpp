@@ -7,10 +7,91 @@
 #include "core/engine/simulation_kernel.h"
 #include "models/physics/aerodynamics_common.h"
 #include "models/weapons/missile_guidance_math.h"
+#include "systems/domains/air/aerodynamics_system.h"
 
 #include <limits>
 
+namespace {
+AeroState additive_aero_probe(const AeroTuning *tuning, double flaps, double speedbrake,
+                              double gear_extension, double drag_index, bool pilot_active = true) {
+    SimulationKernel kernel;
+    auto lease = kernel.acquire_world_lease();
+    auto &world = lease.world();
+    AeroState input{};
+    input.dynamic_pressure = 10000.0;
+    MassProperties props{};
+    props.reference_area_m2 = 28.0;
+    props.current_drag_index = drag_index;
+    PilotAction pilot{};
+    pilot.active = pilot_active;
+    pilot.flaps = static_cast<float>(flaps);
+    pilot.speedbrake = static_cast<float>(speedbrake);
+    LandingGear gear{};
+    gear.extension_state = gear_extension;
+    auto body = world.entity()
+                    .set<ForceAccumulator>({})
+                    .set<AeroState>(input)
+                    .set<MassProperties>(props)
+                    .set<Velocity>({0.0, 200.0, 0.0})
+                    .set<Transform>({0.0, 0.0, 5000.0, 0.0, 0.0, 0.0})
+                    .set<PilotAction>(pilot)
+                    .set<LandingGear>(gear);
+    if (tuning) body.set<AeroTuning>(*tuning);
+    REQUIRE(kernel.run_exact_stage_direct("ComputeAerodynamics"));
+    return *body.get<AeroState>();
+}
+} // namespace
+
 TEST_SUITE("aero_physics_common") {
+
+    TEST_CASE("additive aero defaults preserve the legacy coefficient increments") {
+        const auto clean = additive_aero_probe(nullptr, 0.0, 0.0, 0.0, 0.0);
+        CHECK(clean.lift_coefficient == doctest::Approx(0.0));
+        CHECK(clean.drag_coefficient == doctest::Approx(0.02));
+        const auto configured = additive_aero_probe(nullptr, 0.5, 0.25, 0.5, 10.0);
+        CHECK(configured.lift_coefficient == doctest::Approx(0.175));
+        // Profile increments plus the unchanged induced drag polar.
+        CHECK(configured.drag_coefficient == doctest::Approx(0.0830625));
+    }
+
+    TEST_CASE("additive aero tuning can alter and zero each effect") {
+        AeroTuning tuning = flight_dynamics::default_aero_tuning();
+        tuning.induced_drag_k = 0.0; // isolate additive drag from flap-induced drag
+        tuning.flap_lift_coefficient_per_full_deflection = 0.6;
+        tuning.stores_drag_coefficient_per_drag_index = 0.003;
+        tuning.landing_gear_drag_coefficient_per_extension = 0.1;
+        tuning.speedbrake_drag_coefficient_per_full_extension = 0.2;
+        tuning.flaps_drag_coefficient_per_full_deflection = 0.04;
+        const auto configured = additive_aero_probe(&tuning, 0.5, 0.25, 0.5, 10.0);
+        CHECK(configured.lift_coefficient == doctest::Approx(0.3));
+        CHECK(configured.drag_coefficient == doctest::Approx(0.17));
+        const auto inactive = additive_aero_probe(&tuning, 0.5, 0.25, 0.0, 0.0, false);
+        CHECK(inactive.lift_coefficient == doctest::Approx(0.0));
+        CHECK(inactive.drag_coefficient == doctest::Approx(0.02));
+        tuning.flap_lift_coefficient_per_full_deflection = 0.0;
+        tuning.stores_drag_coefficient_per_drag_index = 0.0;
+        tuning.landing_gear_drag_coefficient_per_extension = 0.0;
+        tuning.speedbrake_drag_coefficient_per_full_extension = 0.0;
+        tuning.flaps_drag_coefficient_per_full_deflection = 0.0;
+        const auto disabled = additive_aero_probe(&tuning, 1.0, 1.0, 1.0, 10.0);
+        CHECK(disabled.lift_coefficient == doctest::Approx(0.0));
+        CHECK(disabled.drag_coefficient == doctest::Approx(0.02));
+
+        // Activate each term independently so swapped or duplicated terms fail.
+        for (int term = 0; term < 5; ++term) {
+            AeroTuning single = tuning;
+            if (term == 0) single.flap_lift_coefficient_per_full_deflection = 0.6;
+            if (term == 1) single.stores_drag_coefficient_per_drag_index = 0.003;
+            if (term == 2) single.landing_gear_drag_coefficient_per_extension = 0.1;
+            if (term == 3) single.speedbrake_drag_coefficient_per_full_extension = 0.2;
+            if (term == 4) single.flaps_drag_coefficient_per_full_deflection = 0.04;
+            const auto result = additive_aero_probe(&single, 0.5, 0.25, 0.5, 10.0);
+            const double expected_drag[] = {0.02, 0.05, 0.07, 0.07, 0.04};
+            CAPTURE(term);
+            CHECK(result.lift_coefficient == doctest::Approx(term == 0 ? 0.3 : 0.0));
+            CHECK(result.drag_coefficient == doctest::Approx(expected_drag[term]));
+        }
+    }
 
     TEST_CASE("physics input policy preserves valid small values and rejects invalid ones") {
         CHECK(physics_runtime::valid_mass(0.25));

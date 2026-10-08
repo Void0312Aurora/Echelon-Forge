@@ -279,7 +279,7 @@ void parse_aero_tuning_json_fields(const nlohmann::json &src, AeroTuning *out_tu
     AeroTuning tuning = *out_tuning;
     // Hand-written and deliberately NOT table-driven: `enabled` takes a literal
     // `true` default (not the "missing key keeps existing value" form the other
-    // 44 keys use), which is load-bearing for the airframe.tuning / aero_tuning
+    // 49 keys use), which is load-bearing for the airframe.tuning / aero_tuning
     // codec escape hatch. See the scope note in the .inc header.
     tuning.enabled = src.value("enabled", true);
 
@@ -292,7 +292,7 @@ void parse_aero_tuning_json_fields(const nlohmann::json &src, AeroTuning *out_tu
     // literal, not the current value.
     //
     // The list is consumed in TWO passes so the emitted statement order matches
-    // the pre-change body exactly: the 37 scalar reads came before the
+    // the pre-change body exactly: the scalar reads came before the
     // parse_vector lambda declaration and the 7 vector reads after it. Pass 1
     // expands scalars only (vector rows to nothing), then the lambda is
     // declared, then pass 2 expands vectors only. A single pass would have to

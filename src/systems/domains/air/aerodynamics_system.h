@@ -88,7 +88,7 @@ inline void register_aerodynamics_system(flecs::world &ecs) {
                         speedbrake_pos =
                             std::clamp(static_cast<double>(pilot->speedbrake), 0.0, 1.0);
                     }
-                    Cl += flaps_deflection * 0.35; // dCl_flaps ~ 0.35 at full deflection
+                    Cl += flaps_deflection * tuning.flap_lift_coefficient_per_full_deflection;
 
                     const double alpha_abs = std::abs(alpha);
                     const double alpha_sign = (alpha >= 0.0) ? 1.0 : -1.0;
@@ -168,20 +168,22 @@ inline void register_aerodynamics_system(flecs::world &ecs) {
                     double Cd0 = tuning.cd0_clean;
                     Cd0 += aero_physics::lookup_1d_or(tuning.mach_breakpoints,
                                                       tuning.cd0_add_vs_mach, mach, 0.0);
-                    // Add Stores Drag index?
-                    Cd0 += props[i].current_drag_index * 0.001; // Scale factor?
+                    // Stores use the current MassProperties drag-index unit.
+                    Cd0 +=
+                        props[i].current_drag_index * tuning.stores_drag_coefficient_per_drag_index;
 
                     // Gear drag penalty
                     const LandingGear *gear = it.entity(i).get<LandingGear>();
                     if (gear) {
-                        Cd0 += gear->extension_state * 0.04;
+                        Cd0 += gear->extension_state *
+                               tuning.landing_gear_drag_coefficient_per_extension;
                     }
 
                     // [F2 FIX] Speedbrake Drag Penalty
-                    Cd0 += speedbrake_pos * 0.08; // dCd_speedbrake ~ 0.08 at full extension
+                    Cd0 += speedbrake_pos * tuning.speedbrake_drag_coefficient_per_full_extension;
 
                     // Flaps also add some drag (induced + profile)
-                    Cd0 += flaps_deflection * 0.02;
+                    Cd0 += flaps_deflection * tuning.flaps_drag_coefficient_per_full_deflection;
 
                     double k =
                         tuning.induced_drag_k *
