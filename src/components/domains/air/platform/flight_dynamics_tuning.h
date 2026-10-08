@@ -9,6 +9,17 @@ struct AeroTuning {
     double cl0 = 0.0;
     double cd0_clean = 0.02;
     double induced_drag_k = 0.1;
+
+    // Additive high-level effects retained from the original simplified model.
+    // These are dimensionless coefficient increments at full normalized input;
+    // they are provisional defaults until platform calibration data replaces
+    // them. Stores use the current drag-index unit carried by MassProperties.
+    double flap_lift_coefficient_per_full_deflection = 0.35;
+    double stores_drag_coefficient_per_drag_index = 0.001;
+    double landing_gear_drag_coefficient_per_extension = 0.04;
+    double speedbrake_drag_coefficient_per_full_extension = 0.08;
+    double flaps_drag_coefficient_per_full_deflection = 0.02;
+
     double cm_alpha_per_rad = -0.8;
     double cm_q = -12.0;
 

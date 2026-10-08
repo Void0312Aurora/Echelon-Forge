@@ -53,22 +53,40 @@ recovery. A green fixture or mirror test is not sufficient for acceptance.
   categories are tracked in
   [p4b_owner_adapter_inventory_20260830.md](p4b_owner_adapter_inventory_20260830.md).
 
-## Ship schema generation repair (2026-10-08)
+## AeroTuning schema and durable recovery repair (2026-10-08)
+
+The pre-#122 producer emits generation 3 and a 45-field `AeroTuning`.
+The five new reflected members advance the contract to 4. Generation-3
+admission materializes the five constructor defaults before staging durable
+source bytes. Current readers require those members; direct decoding of an
+incomplete current payload fails before mutation. Recovery still compares
+the complete restored serialization with the exact admitted bytes.
+
+The native regression stamps the full census and all twelve artifacts with
+the frozen historical producer generation 3, removes precisely the five new
+members, imports through the registry, commits durably, destroys the registry,
+reopens its file journal, and requires durable `Committed` recovery. Existing
+field values survive and all five defaults are explicit in restored truth.
+The current N/N-1 window is exactly 3/4. The audited generation-2 ship producer
+is now expired and its complete bundle is refused before target mutation.
+This is candidate compatibility evidence; production rollout remains gated.
+
+## Historical ship schema generation repair (superseded window)
 
 The pre-Naval-S1 producer at `cedfa01c35cb9b9c0b03f2ee9b3f211c893cd8a5`
 emits generation 2, including the retired ship turn-rate fields and no required
 ship yaw state. The changed ship reflection therefore advances the contract to
 3; it cannot retain generation 2 and rely on a generation-1 migration hook.
 Generation-2 ECS bytes pass through the explicit legacy hull/yaw migration,
-while unchanged owner byte grammars use reader promotion. Current exports use
-3. The fixed twelve-owner decoder matrix admits exactly 2/3 and rejects 1.
+while unchanged owner byte grammars use reader promotion. At that repair,
+exports used 3 and the twelve-owner decoder matrix admitted exactly 2/3.
 
-The native regression freezes the audited old producer generation at 2,
+The historical native regression froze the audited old producer generation at 2,
 constructs the exact old reflected hull shape, tags the complete source census
 and all twelve artifacts with that generation, imports durably and executes
-one restored native ship step. It also checks all twelve observations promote
+one restored native ship step. It checked all twelve observations promoted
 2 to 3 and that an expired generation-1 bundle cannot mutate the target. This
-is candidate compatibility evidence; production rollout remains gated by the
+was candidate compatibility evidence; production rollout remains gated by the
 maintained reader-first rollout authority.
 
 ## Earlier bounded repair slice (2026-08-31)

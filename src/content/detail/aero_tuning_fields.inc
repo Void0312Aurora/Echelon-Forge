@@ -1,5 +1,5 @@
 // Single-source X-macro field list for AeroTuning's JSON parse (T11 slice 4
-// bundle 3 / this iteration). Owns the 44 purely-mechanical keys read by
+// bundle 3 / this iteration). Owns the 49 purely-mechanical keys read by
 // parse_aero_tuning_json_fields (content/unit_definition_loader.cpp). This is
 // the aero sibling of the I58 missile_tuning_fields.inc precedent and follows
 // its scope-adjudication discipline.
@@ -84,6 +84,11 @@ EF_AERO_TUNING_FIELD(double, cl_alpha_per_deg, 0.1)
 EF_AERO_TUNING_FIELD(double, cl0, 0.0)
 EF_AERO_TUNING_FIELD(double, cd0_clean, 0.02)
 EF_AERO_TUNING_FIELD(double, induced_drag_k, 0.1)
+EF_AERO_TUNING_FIELD(double, flap_lift_coefficient_per_full_deflection, 0.35)
+EF_AERO_TUNING_FIELD(double, stores_drag_coefficient_per_drag_index, 0.001)
+EF_AERO_TUNING_FIELD(double, landing_gear_drag_coefficient_per_extension, 0.04)
+EF_AERO_TUNING_FIELD(double, speedbrake_drag_coefficient_per_full_extension, 0.08)
+EF_AERO_TUNING_FIELD(double, flaps_drag_coefficient_per_full_deflection, 0.02)
 EF_AERO_TUNING_FIELD(double, cm_alpha_per_rad, -0.8)
 EF_AERO_TUNING_FIELD(double, cm_q, -12.0)
 EF_AERO_TUNING_FIELD(double, alpha_stall_clean_deg, 15.0)
