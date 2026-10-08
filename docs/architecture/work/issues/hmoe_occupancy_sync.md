@@ -33,6 +33,61 @@ measurement noise, not an end-to-end training performance claim.
 CPU profiler `aten::item` events fell from 8 or 17 to 0 in all measured cases.
 CUDA timing in the tool uses events and synchronization; CPU/CUDA tests compare
 outputs, input/parameter gradients, inactive `None` gradients, two Adam steps,
-and strict checkpoint loading. CUDA tests were skipped on this CPU-only host.
-The CUDA latency/synchronization profile remains an explicit qualification gate
-before claiming a GPU performance improvement. This PR is draft for that gate.
+and strict checkpoint loading. CUDA tests were skipped on the original CPU-only
+host; they were subsequently executed on HEI as described below.
+
+## HEI CUDA qualification, 2026-10-08
+
+HEI-FRP reached HEI's RTX 3090 (driver 580.178.04). The existing CMO Python 3.13.5
+environment provides PyTorch 2.5.1+cu121, CUDA 12.1 and cuDNN 9.1. The policy,
+routing and tests were exported from `d07bd8b9ac58ec62fb7ec57771055ba1a54ae190`
+into an isolated temporary directory; their exact source hashes are recorded in
+`hmoe_occupancy_cuda_benchmark.json`. No dependency installation was needed.
+
+All nine tests passed with no skips, including all four CUDA route/empty-batch
+cases. They verify outputs, input/parameter gradients, inactive `None`
+gradients, two Adam updates and strict checkpoint loading.
+
+The benchmark runs three independent processes, each with 10 warmups and 100
+samples per before/after case, seed 42, one CPU thread, latent/action sizes 64/12,
+and the maintained five-family counts. CUDA events bracket each call; recorded
+host wall time includes event recording and final synchronization. Sampling
+alternates before/after order, and all latency measurements finish before any
+profiler activation. The initial timing/profiler-interleaved exploratory run was
+excluded from latency qualification because identical batch-1 inputs produced
+incompatible baselines; its summary is retained in the report for transparency.
+
+The GPU was shared with existing ASR and Sunshine processes. These measurements
+qualify this head-bank change on the recorded device/environment; they do not
+establish end-to-end training throughput or fully asynchronous routing.
+
+Median of the three per-run medians (CUDA event milliseconds):
+
+| Batch | Single family before / after | Mixed families before / after | Empty subexperts before / after |
+|---|---:|---:|---:|
+| 1 | 1.310 / 1.296 | 1.289 / 1.264 | 1.334 / 1.305 |
+| 16 | 1.759 / 1.590 | 6.136 / 5.102 | 4.422 / 4.009 |
+| 256 | 1.738 / 1.528 | 6.249 / 5.067 | 4.488 / 3.884 |
+| 2048 | 1.761 / 1.588 | 6.357 / 5.329 | 4.591 / 4.000 |
+
+For batches 16/256/2048, these head-only medians decrease by 9.3–18.9%, with
+improvements in every individual round. Batch 1 is effectively neutral: its
+small changes are within measurement noise, and one single-family round is
+0.5% slower. The original large first-case regression did not reproduce under
+alternating, profiler-free timing. Bracketed host wall medians support the same
+bounded conclusion.
+
+CUDA profiler `aten::sum` and `aten::item` events fall from 8/17 to zero. Observed
+stream synchronization and device-to-host copy counts change as follows:
+
+| Route | Before | After |
+|---|---:|---:|
+| Batch 1 | 13 | 11 |
+| Batch >=16, single family | 17 | 13 |
+| Batch >=16, mixed families | 56 | 39 |
+| Batch >=16, empty subexperts | 42 | 32 |
+
+Counts include common profiling/final synchronization overhead; two profiler
+`cudaDeviceSynchronize` calls are present on both paths. Dynamic `nonzero`
+synchronization remains. The CUDA parity and bounded latency/profile gate is
+satisfied, so the PR can leave draft with these limits recorded.
