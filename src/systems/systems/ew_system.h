@@ -169,6 +169,27 @@ inline void register_ew_system(flecs::world &ecs) {
         });
 
     // 3. Lifetime Management System
+    // Released expendables are intentionally outside the rigid-body integrator:
+    // they have no Mass/ForceAccumulator. Advance only Decoy entities once per
+    // frame, preserving their release velocity and avoiding aircraft double-step.
+    ecs.system<Decoy, Transform, const Velocity>("EW_Decoy_Kinematics")
+        .kind(flecs::OnUpdate)
+        .run([](flecs::iter &it) {
+            while (it.next()) {
+                auto decoys = it.field<Decoy>(0);
+                auto transforms = it.field<Transform>(1);
+                auto velocities = it.field<const Velocity>(2);
+                const double dt = std::max(0.0, static_cast<double>(it.delta_time()));
+                for (auto i : it) {
+                    (void)decoys;
+                    transforms[i].x += velocities[i].vx * dt;
+                    transforms[i].y += velocities[i].vy * dt;
+                    transforms[i].z += velocities[i].vz * dt;
+                }
+            }
+        });
+
+    // 4. Lifetime Management System
     ecs.system<Lifetime>("EW_Lifetime_Manager").run([](flecs::iter &it) {
         while (it.next()) {
             auto l = it.field<Lifetime>(0);
