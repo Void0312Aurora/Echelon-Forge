@@ -69,6 +69,11 @@ def test_entry_never_constructs_or_learns_model_after_override_failure(tmp_path,
 
 @pytest.fixture
 def leader_vec_env():
+    # Leader admission requires the optional training extras. The lightweight
+    # smoke/coverage lanes deliberately install only the core test dependencies.
+    pytest.importorskip("gymnasium")
+    pytest.importorskip("torch")
+    pytest.importorskip("stable_baselines3")
     from gym_envs.leader_env import LeaderTrainingEnv
     from stable_baselines3.common.env_util import make_vec_env
     from stable_baselines3.common.vec_env import DummyVecEnv
