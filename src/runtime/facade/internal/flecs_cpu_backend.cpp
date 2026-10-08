@@ -233,6 +233,7 @@ runtime::backend::Diagnostics FlecsCpuBackend::diagnostics() const {
             .requested_manifest_sha256 = world.requested_manifest_sha256,
             .resolved_manifest_sha256 = world.resolved_manifest_sha256,
             .executable_graph_sha256 = world.executable_graph_sha256,
+            .cpu_scheduler_topology_json = world.cpu_scheduler_topology_json,
             .scope_generations = world.scope_generations,
         });
     }

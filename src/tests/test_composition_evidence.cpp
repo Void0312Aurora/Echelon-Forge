@@ -3,6 +3,9 @@
 #include "runtime/contracts/composition/runtime_composition_evidence.v1.generated.h"
 #include "runtime/contracts/runtime_composition_evidence_contract.h"
 #include "runtime/facade/runtime_facade.h"
+#include "core/engine/simulation_kernel.h"
+#include "systems/system_contribution_registry.h"
+#include "components/physics/forces.h"
 
 #include <nlohmann/json.hpp>
 
@@ -16,6 +19,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <set>
 
 #if defined(_WIN32)
 #ifndef NOMINMAX
@@ -829,5 +833,80 @@ TEST_CASE("P7-A default CPU-exact native host and batch parity probe") {
         stream.flush();
         REQUIRE_MESSAGE(stream.good(),
                         "failed to write P7-A native report: ", report_path.string());
+    }
+}
+
+TEST_CASE("Scheduler topology records factory nodes and actual pipeline phases") {
+    SimulationKernel first;
+    SimulationKernel second;
+    const auto snapshot = Json::parse(first.realized_cpu_scheduler_topology_json());
+    CHECK(snapshot["sha256"] ==
+          Json::parse(second.realized_cpu_scheduler_topology_json())["sha256"]);
+    std::set<std::string> owners;
+    for (const auto &node : snapshot["topology"]["installed_factory_nodes"]) {
+        owners.insert(node["owner"].get<std::string>());
+    }
+    CHECK(owners.size() == 38);
+    CHECK(snapshot["topology"]["installed_factory_nodes"].size() > owners.size());
+    const auto order =
+        snapshot["topology"]["pipeline_candidate_order"].get<std::vector<std::string>>();
+    const auto clear = std::find(order.begin(), order.end(), "::ClearForces");
+    const auto control = std::find(order.begin(), order.end(), "::FlightControl");
+    REQUIRE(clear != order.end());
+    REQUIRE(control != order.end());
+    CHECK(clear < control);
+    for (const auto &node : snapshot["topology"]["nodes"]) {
+        if (node["path"] == "::ClearForces") {
+            CHECK(node["dependencies"]["depends_on"][0]["path"] == "::flecs::pipeline::OnLoad");
+        }
+    }
+    const auto hash = first.executable_composition_graph_sha256();
+    {
+        auto lease = first.acquire_world_lease();
+        // Unrelated entity allocation must not affect normalized structural identity.
+        for (int i = 0; i < 11; ++i)
+            lease.world().entity();
+    }
+    CHECK(snapshot["sha256"] ==
+          Json::parse(first.realized_cpu_scheduler_topology_json())["sha256"]);
+    {
+        auto lease = first.acquire_world_lease();
+        lease.world()
+            .lookup("ClearForces")
+            .remove(flecs::DependsOn, flecs::OnLoad)
+            .remove(flecs::OnLoad)
+            .add(flecs::DependsOn, flecs::OnUpdate)
+            .add(flecs::OnUpdate);
+    }
+    CHECK(snapshot["sha256"] !=
+          Json::parse(first.realized_cpu_scheduler_topology_json())["sha256"]);
+    CHECK(hash == first.executable_composition_graph_sha256());
+    const auto changed = Json::parse(first.realized_cpu_scheduler_topology_json())["sha256"];
+    {
+        auto lease = first.acquire_world_lease();
+        lease.world().lookup("ClearForces").disable();
+    }
+    CHECK(changed != Json::parse(first.realized_cpu_scheduler_topology_json())["sha256"]);
+}
+
+TEST_CASE("Scheduler normal progress and selected exact trace both clear prior forces") {
+    for (bool exact : {false, true}) {
+        SimulationKernel kernel;
+        ecs_entity_t id;
+        {
+            auto lease = kernel.acquire_world_lease();
+            id = lease.world().entity().set<ForceAccumulator>({91, 23, 77, 4, 5, 6}).id();
+        }
+        if (exact)
+            kernel.step_exact_stage_traceable_pipeline();
+        else
+            kernel.step();
+        auto lease = kernel.acquire_world_lease();
+        const auto *force = lease.world().entity(id).get<ForceAccumulator>();
+        REQUIRE(force != nullptr);
+        CHECK(force->fx == 0);
+        CHECK(force->fy == 0);
+        CHECK(force->fz == 0);
+        CHECK(force->torque_roll == 0);
     }
 }

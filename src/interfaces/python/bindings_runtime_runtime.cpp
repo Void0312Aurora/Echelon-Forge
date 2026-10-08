@@ -87,7 +87,9 @@ void bind_runtime_runtime(nb::module_ &m) {
         .def_rw("available", &RuntimeCompositionEvidenceResult::available)
         .def_rw("evidence", &RuntimeCompositionEvidenceResult::evidence)
         .def_rw("error_code", &RuntimeCompositionEvidenceResult::error_code)
-        .def_rw("error_detail", &RuntimeCompositionEvidenceResult::error_detail);
+        .def_rw("error_detail", &RuntimeCompositionEvidenceResult::error_detail)
+        .def_rw("cpu_scheduler_topology_json",
+                &RuntimeCompositionEvidenceResult::cpu_scheduler_topology_json);
 
     nb::class_<RuntimeCompositionEvidenceComparison>(m, "RuntimeCompositionEvidenceComparison")
         .def(nb::init<>())

@@ -276,6 +276,7 @@ std::vector<WorldCompositionDiagnostics> WorldBatchRuntime::composition_diagnost
             .requested_manifest_sha256 = world.requested_composition_sha256(),
             .resolved_manifest_sha256 = world.resolved_composition_sha256(),
             .executable_graph_sha256 = world.executable_composition_graph_sha256(),
+            .cpu_scheduler_topology_json = world.realized_cpu_scheduler_topology_json(),
             .scope_generations = world.composition_scope_generations(),
         });
     }

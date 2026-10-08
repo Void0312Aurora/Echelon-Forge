@@ -86,8 +86,10 @@ RuntimeCompositionEvidenceResult RuntimeFacade::export_composition_evidence() co
     value.stage_contract_version = std::string(generated::kStageContractVersion);
     value.host_mode = identity_->host_context.host_mode;
     value.binding_version = identity_->host_context.binding_version;
+    std::vector<std::string> topology;
 
     for (const auto &world : diagnostics.world_compositions) {
+        topology.push_back(world.cpu_scheduler_topology_json);
         if (world.requested_manifest_sha256 != value.requested_manifest_sha256 ||
             world.resolved_manifest_sha256 != value.resolved_manifest_sha256 ||
             world.executable_graph_sha256 != value.executable_graph_sha256) {
@@ -123,6 +125,7 @@ RuntimeCompositionEvidenceResult RuntimeFacade::export_composition_evidence() co
         .evidence = std::move(value),
         .error_code = {},
         .error_detail = {},
+        .cpu_scheduler_topology_json = std::move(topology),
     };
 }
 

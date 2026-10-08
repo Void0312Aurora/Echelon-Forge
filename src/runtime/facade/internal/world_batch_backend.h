@@ -198,6 +198,7 @@ struct Diagnostics {
         std::string requested_manifest_sha256;
         std::string resolved_manifest_sha256;
         std::string executable_graph_sha256;
+        std::string cpu_scheduler_topology_json;
         std::array<std::uint64_t, 5> scope_generations{};
     };
     std::vector<WorldComposition> world_compositions;
