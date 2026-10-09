@@ -67,8 +67,31 @@ than a complete fleet simulation:
   true-bearing screen station control with scenario-owned guide routes
 
 These surfaces do not establish full fleet doctrine, fleet-wide maneuver
-calibration, replenishment operations, or authoritative naval
-weapon and damage calibration.
+calibration, or authoritative naval weapon and damage calibration. A separate
+bounded ship-level transfer primitive is present when authored
+`LogisticsNode`/`NavalStores` parameters admit it; that primitive does not
+establish ship endurance or fleet-wide replenishment operations.
+
+## Logistics Capability Boundary
+
+`src/systems/domains/naval/naval_logistics_system.h` registers a per-tick query
+in the default graph. When both sides provide the required components and
+parameters, it selects a provider using separation and relative-speed limits and
+transfers bounded fuel, missile, and dry-cargo store units through the
+`NavalResupplyStage` state machine. The configurable fields live in
+`src/components/systems/logistics.h`, and the default registration is recorded
+in `src/core/engine/system_contribution_registry.cpp`.
+
+This is implementation evidence for an abstract, conditional ship-level
+inventory-transfer mechanism. The maintained test tree has no focused
+behavioral regression that qualifies the transfer end to end, so it remains an
+implemented primitive rather than an accepted or calibrated UNREP capability.
+The following remain unadmitted and are still owned by the CSG S1-C dependency:
+
+- ship fuel-burn and endurance accounting;
+- a CSG-wide replenishment scheduler or group-level logistics doctrine;
+- operational UNREP geometry/qualification and stage acceptance;
+- calibrated fleet-level outcomes.
 
 ## Standardization Rules
 
@@ -104,3 +127,5 @@ weapon and damage calibration.
   [source ledger](reviews/csg_order_of_battle_20260928/csg_source_ledger_20260928.md).
 - [Joint Command and Modeling Baseline](../joint/standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../joint/standards/command_link_and_reporting_baseline.md)
+- [Naval logistics system](../../../src/systems/domains/naval/naval_logistics_system.h)
+- [Naval logistics components](../../../src/components/systems/logistics.h)

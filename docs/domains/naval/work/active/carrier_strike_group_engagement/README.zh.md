@@ -137,6 +137,11 @@ S1-A/B 实现已验证，待集成审阅；S1-C/D/X 仍受共享依赖阻塞。�
 | 舰载机弹射起飞与着舰 | 空域 owner | 于 `CSG-S2` 开启 | `S2` | 甲板资源与回收航线 |
 | 结局裁定、终止、回放 | `systems/weapons` 与 architecture | 于 `CSG-S6` 开启 | `S6`；吞吐量与回放自 `S0` 起 | CSG 结局条件 |
 
+已注册的 `NavalStores`/`NavalResupplyStage` transfer primitive 仅是有条件的舰艇级
+存量机制。它的存在不会结清 `CSG-S1`/`S1-C` 依赖：舰艇燃油/续航核算、CSG 级补给
+调度、海上补给运行几何以及阶段验收仍然开放。维护中的测试目前没有端到端资格化
+该转移行为的重点回归。
+
 ## 任务簇
 
 - 任务簇计划：
@@ -183,7 +188,7 @@ S1-A/B 实现已验证，待集成审阅；S1-C/D/X 仍受共享依赖阻塞。�
   不需要 agent；配套的 `*_spectator.json` profile 直接步进原生 kernel。`CSG-S1` 与 `CSG-U1` 的 S0 前置依赖已结清。
 - [S1-A/B 检查点](carrier_strike_group_engagement_acceptance_20260928.md#csg-s1-ab-runtime-checkpoint-2026-10-08)
   验证了一小时实名/镜像航渡、终点驻站收敛、有来源的加速/停车检查，以及合成毁伤到机动的耦合。
-  S1-C 等待共享舰船燃油/续航合同；S1-D 等待 Environment Runtime `P3-A`，之后完成环境与 Joint 层级集成。
+  S1-C 等待共享舰船燃油/续航合同与 CSG 级补给调度器；S1-D 等待 Environment Runtime `P3-A`，之后完成环境与 Joint 层级集成。
   S1-X 需要两者闭合；不派发本地替代实现。
 - [大地坐标系](../../../../../systems/physics/work/active/geodetic_frame/README.zh.md) 工作包的锚点与换算已被两套 S0 场景消费。
 - `CSG-S1`/`CSG-S2` 的吞吐量记录将决定统一高保真步进能否承载完整编制。混合步长需另行决策；
