@@ -4,11 +4,11 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-Echelon Forge is a semantic-causal simulation compiler and learning platform
-for multi-domain mission research. It turns scenario and content definitions,
-mission and tasking semantics, domain models, agent interfaces, fidelity
-requirements, and experiment protocols into executable simulation runs that
-can be inspected, compared, and evaluated.
+Echelon Forge is a semantic-causal simulation platform with an optional
+learning layer for multi-domain mission research. It turns scenario and
+content definitions, mission and tasking semantics, domain models, agent
+interfaces, fidelity requirements, and experiment protocols into executable
+simulation runs that can be inspected, compared, and evaluated.
 
 ## What the project contains
 
@@ -17,8 +17,8 @@ can be inspected, compared, and evaluated.
 - A typed C++ runtime facade and `nanobind` Python bindings exposed as `ef_py`.
 - Scenario compilation and realization, including content, unit, profile, and
   mission setup.
-- Gymnasium-style environment adapters, vectorized world-batch execution, and
-  cooperative command/tasking surfaces.
+- Optional Gymnasium-style environment adapters, vectorized world-batch
+  execution, and cooperative command/tasking surfaces for policy experiments.
 - Domain model families for control, sensing, guidance, weapons, effects, and
   platform capabilities, attached to a shared runtime lifecycle.
 - Evaluation, diagnostics, replay/evidence exports, contract specifications,
@@ -73,11 +73,50 @@ behind the current fixed-step runtime, facade contracts, and evidence surfaces.
 The complete P0-P10 stage vocabulary, graph-of-graphs model, and stage-contract
 rules are maintained in the [Simulation System Architecture Design](docs/architecture/standards/simulation_system_architecture_design.md).
 
+## Simulation and learning are separate layers
+
+The simulation layer is independently usable. It owns authoritative world
+state, state evolution, causal-temporal scheduling, event ordering,
+facade-visible snapshots, simulation-semantic termination, and compiled mission
+products. It does not own a training loop, curriculum, policy state, or a
+frontend-specific observation encoder.
+
+The learning and policy layer is a consumer of that simulation. A learned
+policy, scripted doctrine, human operator, or other decision model selects an
+observation view and produces action or coordination intents through facade
+contracts. An RL environment is an **Env-as-View** adapter: it consumes
+`ObservationPacket` data, injects actions through the facade, and mirrors
+episode state; it is not the owner of simulation truth or episode phase.
+
+The repository therefore maintains two routes that meet at the same native
+truth boundary:
+
+```text
+Direct simulation route (no RL dependency)
+scenario compiler -> facade_batch -> RuntimeFacade -> native simulation
+                                     -> snapshots / step results / replay
+
+RL or policy route (optional consumer)
+scenario loader + policy adapter -> explicit world_batch / WorldBatchVecEnv
+                                  -> the same RuntimeFacade and native simulation
+                                  -> observation/action bridge -> rollout data
+```
+
+`facade_batch` is the default no-RL scenario route. `world_batch` is selected
+explicitly for maintained RL training and evaluation. The two adapters share
+the native truth boundary, but route-specific reward, termination, and
+autoreset behavior must not be assumed identical without a corresponding
+parity gate. The lightweight simulation path does not require Gymnasium,
+Stable-Baselines3, or PyTorch.
+
 ## Why this architecture
 
 - **Shared semantics:** new domain behavior attaches to a common lifecycle, so
   cross-domain comparisons use the same task, state, observation, and evidence
   vocabulary.
+- **Simulation independence:** scenarios, scripted runs, diagnostics, and
+  facade clients can exercise the native runtime without importing an RL stack;
+  learning remains a replaceable consumer.
 - **Stable boundaries:** frontends depend on `src/runtime/facade` and typed
   packets instead of raw Flecs entities, kernel ordering, or backend details.
 - **Authoritative truth:** the native CPU runtime owns world state and episode

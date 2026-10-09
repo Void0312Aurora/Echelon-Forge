@@ -5,7 +5,7 @@
 - 英文主文：`README.md`
 - 中文辅文：[README.zh.md](README.zh.md)
 
-Echelon Forge 是一个面向多域任务研究的语义-因果仿真编译与学习平台。
+Echelon Forge 是一个面向多域任务研究的语义-因果仿真平台，并带有可选的学习层。
 它把场景和内容定义、任务与 tasking 语义、领域模型、agent 接口、保真度要求以及实验协议，
 组合为可执行、可检查、可比较和可评估的仿真运行。
 
@@ -14,7 +14,7 @@ Echelon Forge 是一个面向多域任务研究的语义-因果仿真编译与�
 - 基于 `flecs` 的原生 C++ ECS 仿真运行时，提供固定步长 CPU 执行和确定性重置种子。
 - 类型化 C++ runtime facade，以及通过 `nanobind` 暴露为 `ef_py` 的 Python 绑定。
 - 场景编译与实现，覆盖 content、unit、profile 和 mission setup。
-- Gymnasium 风格环境适配器、向量化 world-batch 执行，以及协同 command/tasking 表面。
+- 可选的 Gymnasium 风格环境适配器、向量化 world-batch 执行，以及面向 policy 实验的协同 command/tasking 表面。
 - 用于控制、感知、制导、武器、effects 和平台 capability 的领域模型族，并接入共享运行时生命周期。
 - 评估、诊断、replay/evidence 导出、契约规范和架构回归门禁。
 
@@ -58,9 +58,38 @@ scenario + content + profile + experiment settings
 完整的 P0-P10 阶段词汇、graph-of-graphs 模型和 stage contract 规则维护在
 [Simulation System Architecture Design](docs/architecture/standards/simulation_system_architecture_design.zh.md) 中。
 
+## 仿真层与学习层是分离的
+
+仿真层可以独立运行。它拥有权威 world state、状态演化、因果-时间调度、event 顺序、
+facade 可见 snapshot、仿真语义 termination 和编译后的 mission product；它不拥有训练循环、
+curriculum、policy state 或前端专用的 observation encoder。
+
+学习与 policy 层是仿真的消费者。learned policy、scripted doctrine、人类操作员或其他 decision
+model 选择 observation view，并通过 facade contract 产生 action 或 coordination intent。RL environment
+是 **Env-as-View** 适配器：它消费 `ObservationPacket`，通过 facade 注入 action，并镜像 episode state；
+它不拥有仿真真值或 episode phase。
+
+因此，仓库维护两条在同一 native truth boundary 汇合的路径：
+
+```text
+直接仿真路径（不依赖 RL）
+scenario compiler -> facade_batch -> RuntimeFacade -> native simulation
+                                     -> snapshot / step result / replay
+
+RL 或 policy 路径（可选消费者）
+scenario loader + policy adapter -> 显式 world_batch / WorldBatchVecEnv
+                                 -> 同一个 RuntimeFacade 和 native simulation
+                                 -> observation/action bridge -> rollout data
+```
+
+`facade_batch` 是默认的 no-RL 场景路径；维护中的 RL 训练和评估显式选择 `world_batch`。
+两条适配路径共享 native truth boundary，但不能在没有 parity gate 的情况下假定它们的 reward、
+termination 和 autoreset 行为完全相同。轻量仿真路径不要求安装 Gymnasium、Stable-Baselines3 或 PyTorch。
+
 ## 这种架构带来的优势
 
 - **共享语义：** 新领域功能接入同一生命周期，使跨领域比较使用一致的 task、state、observation 和 evidence 词汇。
+- **仿真独立性：** 场景、scripted run、诊断和 facade client 可以不导入 RL 栈而运行原生仿真；学习层保持为可替换消费者。
 - **稳定边界：** 前端依赖 `src/runtime/facade` 和类型化 packet，而不是直接依赖 Flecs entity、kernel 顺序或 backend 细节。
 - **权威真值：** 原生 CPU runtime 拥有世界状态和 episode 真值；Python mirror 与 GPU 辅助路径保持为适配器或有界 capability。
 - **实验可比：** 固定步长、显式 seed、profile、scenario/config 输入和评估协议让运行更容易复现和比较。
