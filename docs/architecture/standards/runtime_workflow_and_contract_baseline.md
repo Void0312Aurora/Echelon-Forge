@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/standards/runtime_workflow_and_contract_baseline.md`
 Owner: `architecture/runtime-workflow`
-Last verified: `2026-08-13`
+Last verified: `2026-10-09`
 
 Status: maintained runtime workflow and contract baseline, subordinate to the
 [strict simulation architecture baseline](simulation_system_architecture_design.md).
@@ -48,6 +48,38 @@ In repository terms, the main stages are:
 3. step-evaluation input assembly
 4. pure mission/runtime computation
 5. product application, status tracking, and episode roundtrip
+
+## Execution Routes
+
+The five stages above describe the shared semantic boundary. They are reached
+through two maintained adapters with different orchestration owners:
+
+| Route | Entry surface | Scenario and command owner | Step products and episode owner | Evidence and status |
+| --- | --- | --- | --- | --- |
+| RL/Gym/WorldBatch | `create_single_backend(backend_id="world_batch")`, `WorldBatchVecEnv`, and the cooperative WorldBatch adapter | `ScenarioLoader` plus the Python RL runtime assemble the batch request and command chain | Python environment adapters apply C++ mission/runtime products, reward, termination, and autoreset | `tests/world_batch/` and `tests/architecture/simulation/test_backend_boundary.py`; maintained RL route |
+| Direct facade / simulation-owned scenario | `create_scenario_backend()` (defaults to `facade_batch`) and `FacadeBatchBackend` | `ScenarioCompiler` and `load_compiled_scenario_for_setup_target` materialize setup; `python/simulation/air/scenario_runtime.py` owns scripted Air command/action/step/replay order | `RuntimeFacade` and the selected scenario runner expose snapshots and step results; reward/termination parity with the RL route is not established | `python/README.md`, `python/simulation/`, and the facade/scenario focused tests; maintained no-RL route, with unadmitted parity claims held |
+
+Both routes meet at the native runtime truth boundary: the C++ facade/engine
+owns the authoritative setup, state transition, and runtime products exposed by
+the selected adapter. Python owns provider selection, scenario materialization,
+command ordering, and route-specific product application. A direct-facade
+scenario is therefore not a second C++ truth implementation, and the presence
+of a shared protocol does not establish identical reward or termination
+semantics across adapters.
+
+The route-specific ownership is intentionally narrow:
+
+- scenario materialization belongs to the selected Python provider and its
+  compiler/setup seam;
+- command ordering belongs to the adapter that drives the scenario or
+  environment;
+- native observation, step, reward, and termination products belong to the C++
+  mission/runtime owners where that product is implemented;
+- episode bookkeeping, autoreset, and replay records belong to the consuming
+  Python route unless a focused contract explicitly assigns them elsewhere.
+
+Candidate snapshot, fork, restore, and cross-route replay equivalence remain
+held until a named contract and focused evidence admit them.
 
 ## Stage 1: Scenario Loading And Normalization
 
@@ -219,3 +251,6 @@ the repository converges them.
 - [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
 - [Simulation Conventions](simulation_conventions.md)
 - [src/core/mission/README.md](../../../src/core/mission/README.md)
+- [Python runtime entrypoint](../../../python/README.md)
+- [Simulation backend boundary](../../../python/simulation/backend.py)
+- [WorldBatch scenario tests](../../../tests/world_batch/test_batch_scenario_runtime.py)

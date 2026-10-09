@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/standards/runtime_workflow_and_contract_baseline.md`
 Owner: `architecture/runtime-workflow`
-Last verified: `2026-08-13`
+Last verified: `2026-10-09`
 
 状态：维护中的 runtime workflow 与 contract 基线，服从
 [严格仿真架构基线](simulation_system_architecture_design.zh.md)。
@@ -46,6 +46,32 @@ Last verified: `2026-08-13`
 3. step-evaluation 输入装配
 4. C++ mission/runtime 纯计算
 5. product 回写、状态追踪与 episode roundtrip
+
+## 执行路径
+
+上面的五个阶段描述共享的语义边界；实际进入这些阶段时，维护中的仓库存在两条
+编排 owner 不同的 adapter 路径：
+
+| 路径 | 入口表面 | 场景与 command owner | step product 与 episode owner | 证据与状态 |
+| --- | --- | --- | --- | --- |
+| RL/Gym/WorldBatch | `create_single_backend(backend_id="world_batch")`、`WorldBatchVecEnv` 与 cooperative WorldBatch adapter | `ScenarioLoader` 与 Python RL runtime 组装 batch request 和 command chain | Python environment adapter 回写 C++ mission/runtime product、reward、termination 与 autoreset | `tests/world_batch/` 与 `tests/architecture/simulation/test_backend_boundary.py`；维护中的 RL 路径 |
+| 直接 facade / simulation-owned scenario | `create_scenario_backend()`（默认 `facade_batch`）与 `FacadeBatchBackend` | `ScenarioCompiler` 和 `load_compiled_scenario_for_setup_target` 物化 setup；`python/simulation/air/scenario_runtime.py` 负责脚本化 Air command/action/step/replay 顺序 | `RuntimeFacade` 与选定的 scenario runner 暴露 snapshot 和 step result；与 RL 路径的 reward/termination 等价性尚未建立 | `python/README.md`、`python/simulation/` 与 facade/scenario 重点测试；维护中的 no-RL 路径，但等价性仍保持 held |
+
+两条路径在 native runtime truth boundary 汇合：C++ facade/engine 在选定 adapter
+暴露的范围内拥有权威的 setup、状态变更与 runtime product。Python 侧拥有 provider
+选择、场景物化、command 顺序，以及路径特有的 product 回写。因此，直接 facade
+scenario 不是第二套 C++ truth 实现；共享 protocol 也不自动建立两条 adapter 在
+reward 或 termination 上的相同语义。
+
+路径归属保持为以下窄边界：
+
+- 场景物化归属于选定的 Python provider 及其 compiler/setup seam；
+- command 顺序归属于驱动 scenario 或 environment 的 adapter；
+- native observation、step、reward 与 termination product 在实现它们的范围内归属于 C++ mission/runtime owner；
+- episode bookkeeping、autoreset 与 replay record 归属于消费它们的 Python 路径，除非重点 contract 明确另有归属。
+
+candidate snapshot、fork、restore 与跨路径 replay 等价性，在出现命名 contract
+和重点证据前继续保持 held。
 
 ## 阶段 1：场景加载与规范化
 
@@ -210,3 +236,6 @@ mission-command 等数据，但这不代表这些词全部都是 common-core ont
 - [联合命令链与汇报基线](../../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
 - [仿真约定](simulation_conventions.zh.md)
 - [src/core/mission/README.md](../../../src/core/mission/README.md)
+- [Python runtime 入口](../../../python/README.md)
+- [Simulation backend boundary](../../../python/simulation/backend.py)
+- [WorldBatch 场景测试](../../../tests/world_batch/test_batch_scenario_runtime.py)
