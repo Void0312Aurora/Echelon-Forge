@@ -18,8 +18,10 @@ from __future__ import annotations
 import copy
 import json
 import math
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
@@ -106,6 +108,57 @@ def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     dp, dl = p2 - p1, math.radians(lon2 - lon1)
     h = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
     return 2 * 6371009.0 * math.asin(math.sqrt(h))
+
+
+class GroupCachePrerequisiteTests(unittest.TestCase):
+    def tearDown(self) -> None:
+        ScenarioCompiler.clear_cache()
+
+    def test_multiple_fragment_references_revalidate_warm_and_cold_cache(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            refs = [root / "first.md", root / "second.md"]
+            for ref in refs:
+                ref.write_text("provenance", encoding="utf-8")
+            source = root / "scenario.json"
+            source.write_text(json.dumps({"groups": [
+                _minimal_group(group_id="A", oob_ref=str(refs[0]) + "#row-a"),
+                _minimal_group(group_id="B", oob_ref=str(refs[1]) + "#row-b"),
+                _minimal_group(group_id="C", oob_ref=str(refs[0]) + "#row-c"),
+            ]}), encoding="utf-8")
+            for ref in refs:
+                ScenarioCompiler.clear_cache()
+                first = ScenarioCompiler.compile_path(str(source))
+                self.assertEqual(first.dependency_existence_paths, tuple(str(p.resolve()) for p in refs))
+                self.assertIs(first, ScenarioCompiler.compile_path(str(source)))
+                # Contents are not compiler inputs, so a provenance edit alone
+                # does not invalidate the compiled semantic scenario.
+                ref.write_text("edited provenance", encoding="utf-8")
+                self.assertTrue(first.is_fresh())
+                ref.unlink()
+                self.assertFalse(first.is_fresh())
+                with self.assertRaisesRegex(ValueError, "existing repository file"):
+                    ScenarioCompiler.compile_path(str(source))
+                ScenarioCompiler.clear_cache()
+                with self.assertRaisesRegex(ValueError, "existing repository file"):
+                    ScenarioCompiler.compile_path(str(source))
+                ref.write_text("restored", encoding="utf-8")
+                self.assertTrue(ScenarioCompiler.compile_path(str(source)).is_fresh())
+
+    def test_path_is_file_prerequisite_matches_cold_validation(self) -> None:
+        ScenarioCompiler.clear_cache()
+        first = ScenarioCompiler.compile_path(NAMED)
+        ref = Path(first.dependency_existence_paths[0])
+        original = Path.is_file
+        def exists(path):
+            return False if path.resolve() == ref else original(path)
+        with patch.object(Path, "is_file", exists):
+            self.assertFalse(first.is_fresh())
+            with self.assertRaisesRegex(ValueError, "existing repository file"):
+                ScenarioCompiler.compile_path(NAMED)
+            ScenarioCompiler.clear_cache()
+            with self.assertRaisesRegex(ValueError, "existing repository file"):
+                ScenarioCompiler.compile_path(NAMED)
 
 
 class GeodeticPlacementTests(unittest.TestCase):

@@ -227,6 +227,22 @@ class ScenarioCompilerTests(unittest.TestCase):
     inst1["environment"]["zones"].append({"name": "mutated"})
     self.assertEqual(len(inst2["environment"]["zones"]), compiled1.zone_count)
 
+  def test_source_and_import_mtimes_still_invalidate_path_cache(self) -> None:
+    with tempfile.TemporaryDirectory() as folder:
+      prefab = os.path.join(folder, "prefab.json")
+      with open(prefab, "w", encoding="utf-8") as handle:
+        json.dump({"entities": []}, handle)
+      scenario = _sample_scenario()
+      scenario["imports"] = [{"file": prefab}]
+      with open(self._scenario_path, "w", encoding="utf-8") as handle:
+        json.dump(scenario, handle)
+      for path in (self._scenario_path, prefab):
+        compiled = ScenarioCompiler.compile_path(self._scenario_path)
+        stamp = os.stat(path)
+        os.utime(path, ns=(stamp.st_atime_ns, stamp.st_mtime_ns + 1000000))
+        self.assertFalse(compiled.is_fresh())
+        self.assertIsNot(compiled, ScenarioCompiler.compile_path(self._scenario_path))
+
   def test_packaged_import_path_preserves_public_types(self) -> None:
     compiled = PackagedScenarioCompiler.compile_path(self._scenario_path)
 
