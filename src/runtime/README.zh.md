@@ -27,12 +27,14 @@
 - `composition/`：隔离的原生 composition ingestion、provider catalog、transaction、scope
   generation、typed handle 与 teardown owner。
 - `facade/`：当前维护中的 typed runtime facade。
+- `host/`：非生产的 dark/shadow host candidate，负责 host-bound publication、replacement、state-transfer admission、generation fencing 与有界 shutdown。它不是第二套 facade，也不授权生产 caller cutover。
 
 ## 当前阅读入口
 
 - [contracts/README.md](contracts/README.md)
 - [composition/README.md](composition/README.zh.md)
 - [facade/README.md](facade/README.md)
+- [host/README.md](host/README.md)
 
 ## 当前文件落点
 
@@ -42,6 +44,8 @@
   - `composition_json.h`, `provider_catalog.h`, `composition_runtime.h`
 - `facade/`
   - `runtime_facade.h`, `runtime_facade.cpp`, `runtime_facade_types.h`
+- `host/`
+  - `runtime_host_candidate.h` 与 host-bound candidate 生命周期 seam。
 
 ## 迁移备注
 
