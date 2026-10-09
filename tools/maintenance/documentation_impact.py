@@ -45,6 +45,7 @@ class ImpactReport:
   changed_paths: tuple[str, ...]
   impacted_rules: tuple[ImpactRule, ...]
   changed_documentation: tuple[str, ...]
+  changed_documentation_by_rule: tuple[tuple[str, tuple[str, ...]], ...]
   message: str
 
 
@@ -112,6 +113,16 @@ def evaluate(
     for path in changed
     if any(_matches(path, rule.documentation) for rule in impacted)
   )
+  changed_docs_by_rule = tuple(
+    (
+      rule.id,
+      tuple(path for path in changed if _matches(path, rule.documentation)),
+    )
+    for rule in impacted
+  )
+  missing_documentation_rules = tuple(
+    rule_id for rule_id, paths in changed_docs_by_rule if not paths
+  )
   if not impacted:
     return ImpactReport(
       status="no-impact",
@@ -119,6 +130,7 @@ def evaluate(
       changed_paths=changed,
       impacted_rules=(),
       changed_documentation=(),
+      changed_documentation_by_rule=(),
       message="no matrix owner matches the changed paths",
     )
   if decision is None:
@@ -128,18 +140,23 @@ def evaluate(
       changed_paths=changed,
       impacted_rules=impacted,
       changed_documentation=changed_docs,
+      changed_documentation_by_rule=changed_docs_by_rule,
       message="choose docs-updated, still-accurate, or candidate-or-historical",
     )
   if decision not in DECISIONS:
     raise ValueError(f"unsupported decision: {decision}")
-  if decision == "docs-updated" and not changed_docs:
+  if decision == "docs-updated" and missing_documentation_rules:
     return ImpactReport(
       status="invalid",
       decision=decision,
       changed_paths=changed,
       impacted_rules=impacted,
       changed_documentation=changed_docs,
-      message="docs-updated requires a changed documentation target from the matched owner rows",
+      changed_documentation_by_rule=changed_docs_by_rule,
+      message=(
+        "docs-updated requires a changed documentation target for every matched owner row; "
+        "missing: " + ", ".join(missing_documentation_rules)
+      ),
     )
   if decision != "docs-updated" and not reason.strip():
     return ImpactReport(
@@ -148,6 +165,7 @@ def evaluate(
       changed_paths=changed,
       impacted_rules=impacted,
       changed_documentation=changed_docs,
+      changed_documentation_by_rule=changed_docs_by_rule,
       message="a still-accurate or candidate-or-historical decision requires a short reason",
     )
   return ImpactReport(
@@ -156,14 +174,22 @@ def evaluate(
     changed_paths=changed,
     impacted_rules=impacted,
     changed_documentation=changed_docs,
+    changed_documentation_by_rule=changed_docs_by_rule,
     message=reason.strip() or "matched documentation targets are included",
   )
 
 
-def _changed_paths(base: str, head: str) -> tuple[str, ...]:
+def _changed_paths(base: str, head: str, *, repo: Path = REPO_ROOT) -> tuple[str, ...]:
   result = subprocess.run(
-    ["git", "diff", "--name-only", "--diff-filter=ACMR", f"{base}..{head}"],
-    cwd=REPO_ROOT,
+    [
+      "git",
+      "diff",
+      "--no-renames",
+      "--name-only",
+      "--diff-filter=ACMRD",
+      f"{base}..{head}",
+    ],
+    cwd=repo,
     check=True,
     capture_output=True,
     text=True,
@@ -178,12 +204,17 @@ def _json_report(report: ImpactReport) -> dict[str, object]:
     "changed_paths": list(report.changed_paths),
     "impacted_rules": [asdict(rule) for rule in report.impacted_rules],
     "changed_documentation": list(report.changed_documentation),
+    "changed_documentation_by_rule": [
+      {"id": rule_id, "paths": list(paths)}
+      for rule_id, paths in report.changed_documentation_by_rule
+    ],
     "message": report.message,
   }
 
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(description=__doc__)
+  parser.add_argument("--repo", default=str(REPO_ROOT), help="repository to diff")
   parser.add_argument("--base", required=True, help="git revision at the start of the change")
   parser.add_argument("--head", default="HEAD", help="git revision at the end of the change")
   parser.add_argument("--decision", choices=DECISIONS)
@@ -191,7 +222,11 @@ def main(argv: list[str] | None = None) -> int:
   parser.add_argument("--check", action="store_true", help="fail when an impacted change has no valid decision")
   parser.add_argument("--json", action="store_true", dest="as_json")
   args = parser.parse_args(argv)
-  report = evaluate(_changed_paths(args.base, args.head), decision=args.decision, reason=args.reason)
+  report = evaluate(
+    _changed_paths(args.base, args.head, repo=Path(args.repo).resolve()),
+    decision=args.decision,
+    reason=args.reason,
+  )
   if args.as_json:
     print(json.dumps(_json_report(report), ensure_ascii=False, indent=2))
   else:
