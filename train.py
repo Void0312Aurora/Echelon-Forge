@@ -139,13 +139,13 @@ def _build_launch_decision_checkpoint_callback(deps, *, save_freq: int, save_pat
     )
 
 
-def main():
+def main() -> int:
     parser = build_train_arg_parser()
     args = parser.parse_args()
 
     bootstrap = prepare_training_bootstrap(args)
     if bootstrap is None:
-        return
+        return 1
     train_config = bootstrap.train_config
     agent_layer = bootstrap.agent_layer
     env_settings = bootstrap.env_settings
@@ -164,7 +164,7 @@ def main():
     if args.test_only and test_only_load_path is None:
         print_test_only_preflight_runtime_summary(bootstrap)
         print("Error: --test_only requires --resume_path or a valid existing run directory with final_model.zip")
-        return
+        return 1
 
     deps = load_training_dependencies()
 
@@ -206,7 +206,7 @@ def main():
         load_path = test_only_load_path
         assert load_path is not None
         if not _validate_launch_decision_checkpoint_for_config(load_path, train_config):
-            return
+            return 1
         print(f"Loading model for testing: {load_path}")
         model = algo_cls.load(load_path, env=vec_env)
         try:
@@ -217,7 +217,7 @@ def main():
             )
         except LaunchDecisionMigrationError as exc:
             print(f"Error: loaded launch-decision artifacts are incompatible: {exc}")
-            return
+            return 1
         
         obs = vec_env.reset()
         for i in range(1000):
@@ -228,7 +228,7 @@ def main():
             if dones[0]:
                 print("Episode Done.")
                 obs = vec_env.reset()
-        return
+        return 0
 
     # 4. Training Setup
     hyperparams = train_config.get("hyperparameters", {})
@@ -247,7 +247,7 @@ def main():
 
     if args.resume_path:
         if not _validate_launch_decision_checkpoint_for_config(args.resume_path, train_config):
-            return
+            return 1
         print(f"Loading Checkpoint: {args.resume_path}")
         model = algo_cls.load(args.resume_path, env=vec_env, tensorboard_log=log_dir)
         try:
@@ -258,7 +258,7 @@ def main():
             )
         except LaunchDecisionMigrationError as exc:
             print(f"Error: loaded launch-decision artifacts are incompatible: {exc}")
-            return
+            return 1
     else:
         policy_name = train_config.get("policy", "MultiInputPolicy")
         policy_cls = policy_name
@@ -278,7 +278,7 @@ def main():
             init_path = os.path.abspath(args.init_from)
             if not os.path.exists(init_path):
                 print(f"Error: Initialization checkpoint not found: {init_path}")
-                return
+                return 1
             print(f"Initializing Parameters From: {init_path}")
             model.set_parameters(init_path, exact_match=False, device=hyperparams.get("device", "auto"))
         elif agent_layer in {"execution", "cooperative_execution"} and not args.no_init_safe_action_bias:
@@ -405,7 +405,7 @@ def main():
         model.save(save_path)
         _write_launch_decision_sidecar(save_path, model, train_config)
         print("Done.")
-        sys.exit(0)
+        return 130
     except deps.NonFiniteProbeError as exc:
         print("\nTraining aborted by non-finite probe.")
         if probe is not None:
@@ -418,5 +418,7 @@ def main():
         print("Done.")
         raise
 
+    return 0
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
