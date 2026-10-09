@@ -38,6 +38,7 @@ gpu
 - `content/`：面向 air、naval 与早期 ground-aware setup 数据的内容 schema、单位定义和加载器。
 - `core/`：C++ 运行时编排、单 world kernel、batch runtime，以及 mission/episode runtime。
 - `runtime/`：维护中的应用层 C++ 运行时契约，尤其是 facade 与共享 DTO contracts。
+- `runtime/host/`：用于生命周期与 state-transfer 证据的非生产 dark/shadow host candidate；它不是第二套 facade，也不代表生产 cutover。
 - `interfaces/`：语言绑定和外部接口适配。
 - `gpu/`：GPU 辅助工具、packet runtime 和显式实验探针。
 - `tools/`：开发期工具和实验工具，不进入主线运行时契约。
@@ -65,6 +66,7 @@ gpu
 - [runtime/README.md](runtime/README.md)
 - [runtime/contracts/README.md](runtime/contracts/README.md)
 - [runtime/facade/README.md](runtime/facade/README.md)
+- [runtime/host/README.md](runtime/host/README.zh.md)
 - [models/README.md](models/README.md)
 - [models/domains/README.md](models/domains/README.md)
 - [models/core/README.md](models/core/README.md)

@@ -31,12 +31,17 @@ owner and schema exist.
 - `composition/`: Isolated native composition ingestion, provider catalog,
   transaction, scope generation, typed-handle, and teardown owner.
 - `facade/`: Current maintained typed runtime facade.
+- `host/`: Non-production dark/shadow host candidate for host-bound publication,
+  replacement, state-transfer admission, generation fencing, and bounded
+  shutdown. It is not a second facade and does not authorize production caller
+  cutover.
 
 ## Current Entry Points for Reading
 
 - [contracts/README.md](contracts/README.md)
 - [composition/README.md](composition/README.md)
 - [facade/README.md](facade/README.md)
+- [host/README.md](host/README.md)
 
 ## Current File Locations
 
@@ -46,6 +51,8 @@ owner and schema exist.
   - `composition_json.h`, `provider_catalog.h`, `composition_runtime.h`
 - `facade/`
   - `runtime_facade.h`, `runtime_facade.cpp`, `runtime_facade_types.h`
+- `host/`
+  - `runtime_host_candidate.h` and the host-bound candidate lifecycle seams.
 
 ## Migration Notes
 
