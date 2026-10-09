@@ -87,11 +87,16 @@ inline void register_instrument_system(flecs::world &ecs) {
     ecs.system<InstrumentState, const Transform, const Velocity, const AeroState,
                const ForceAccumulator, const Mass, const Propulsion, const AngularVelocity>(
            "UpdateInstruments")
-        .term_at(3).optional()
-        .term_at(4).optional()
-        .term_at(5).optional()
-        .term_at(6).optional()
-        .term_at(7).optional()
+        .term_at(3)
+        .optional()
+        .term_at(4)
+        .optional()
+        .term_at(5)
+        .optional()
+        .term_at(6)
+        .optional()
+        .term_at(7)
+        .optional()
         .kind(flecs::OnUpdate) // Runs after physics loop
         .run([](flecs::iter &it) {
             const EnvironmentModelRef *env_ref = it.world().get<EnvironmentModelRef>();
@@ -130,8 +135,7 @@ inline void register_instrument_system(flecs::world &ecs) {
 
                     // Speed
                     inst[i].mach = aero->mach_number;
-                    inst[i].ias_mps =
-                        std::sqrt(2.0 * aero->dynamic_pressure / 1.225); // IAS approx
+                    inst[i].ias_mps = std::sqrt(2.0 * aero->dynamic_pressure / 1.225); // IAS approx
                     inst[i].vvi_mps = velocity[i].vz;
 
                     inst[i].aoa_deg = aero->angle_of_attack;

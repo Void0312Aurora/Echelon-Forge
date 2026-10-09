@@ -16,7 +16,7 @@
 // velocity/track fall back to truth; GPS/position uncertainty remain unavailable.
 // This projection owns no aero or EW fields and runs in UpdateInstruments.
 inline void project_naval_instruments(flecs::entity entity, InstrumentState &inst,
-                                     const Transform &transform, const Velocity &velocity) {
+                                      const Transform &transform, const Velocity &velocity) {
     inst.alt_baro_m = transform.z;
     inst.vvi_mps = velocity.vz;
     inst.heading_deg = Math::normalize_heading_deg(transform.heading);
@@ -37,8 +37,8 @@ inline void project_naval_instruments(flecs::entity entity, InstrumentState &ins
         nav.ve_mps = velocity.vx;
         nav.vd_mps = -velocity.vz;
         nav.ground_speed_mps = std::hypot(velocity.vx, velocity.vy);
-        nav.ground_track_deg = Math::ground_track_deg_from_velocity(
-            velocity.vx, velocity.vy, inst.heading_deg);
+        nav.ground_track_deg =
+            Math::ground_track_deg_from_velocity(velocity.vx, velocity.vy, inst.heading_deg);
     }
     inst.lat_deg = nav.lat_deg;
     inst.lon_deg = nav.lon_deg;

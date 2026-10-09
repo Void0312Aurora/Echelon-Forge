@@ -370,17 +370,22 @@ TEST_SUITE("naval_instruments") {
             InstrumentState initial{};
             initial.jammer_snapshot_time_s = 123.0;
             initial.countermeasure_snapshot_time_s = 124.0;
-            auto unit = world.entity().set<Transform>({0, 0, submarine ? -50.0 : 0.0, 0, 0, 0})
-                            .set<Velocity>({0, 8, 0}).set<InstrumentState>(initial);
-            if (submarine) unit.set<SubmarinePlatform>({});
-            else unit.set<ShipPlatform>(ddg51_flight_i()).set<AngularVelocity>({});
+            auto unit = world.entity()
+                            .set<Transform>({0, 0, submarine ? -50.0 : 0.0, 0, 0, 0})
+                            .set<Velocity>({0, 8, 0})
+                            .set<InstrumentState>(initial);
+            if (submarine)
+                unit.set<SubmarinePlatform>({});
+            else
+                unit.set<ShipPlatform>(ddg51_flight_i()).set<AngularVelocity>({});
             NavalCommandIntent command{};
             command.active = true;
             command.cmd_heading_deg = 90;
             command.cmd_speed_mps = 10;
             command.cmd_depth_m = 80;
             unit.set<NavalCommandIntent>(command);
-            for (int step = 0; step < 10; ++step) world.progress(0.1);
+            for (int step = 0; step < 10; ++step)
+                world.progress(0.1);
             const auto &position = *unit.get<Transform>();
             const auto &velocity = *unit.get<Velocity>();
             const auto &inst = *unit.get<InstrumentState>();
@@ -401,9 +406,13 @@ TEST_SUITE("naval_instruments") {
             // Installed navigation reports remain authoritative even when
             // deliberately different from truth (e.g. an INS drift test).
             EGI egi{};
-            egi.vn_mps = 3; egi.ve_mps = 4; egi.vd_mps = 2;
-            egi.lat_deg = 30; egi.lon_deg = 120;
-            egi.gps_available = true; egi.position_uncertainty_m = 5;
+            egi.vn_mps = 3;
+            egi.ve_mps = 4;
+            egi.vd_mps = 2;
+            egi.lat_deg = 30;
+            egi.lon_deg = 120;
+            egi.gps_available = true;
+            egi.position_uncertainty_m = 5;
             unit.set<EGI>(egi);
             world.progress(0.1);
             const auto &reported = *unit.get<InstrumentState>();
