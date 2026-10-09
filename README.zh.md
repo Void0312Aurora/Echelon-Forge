@@ -184,34 +184,55 @@ cmo_python -m pytest -q \
 `python.rl.runtime.cooperative_world_batch_vec_env.CooperativeWorldBatchVecEnv`。
 `UniversalEnv` 保留兼容导入名称，其构造函数会立即报错，不能作为训练或评估后端。
 
-## 架构边界
+## 系统架构
 
-维护的依赖方向为：
+Echelon Forge 由原生仿真核心、类型化运行时契约，以及负责场景执行、训练、评估和诊断的
+Python 消费层组成。维护的场景输入到步结果路径如下：
 
 ```text
-interfaces/python
-  -> runtime/facade
-    -> core/engine and core/mission
-      -> systems
-        -> models / components / content
+场景 JSON + profile
+  -> python/scenario/compiler 和 python/scenario/runtime
+  -> python/simulation 后端选择
+       -> facade_batch（默认的非 RL 与 scripted 路径）
+       -> 显式 world_batch（训练与评估路径）
+  -> ef_py / src/runtime/facade
+  -> src/core/mission 和 src/core/engine
+  -> src/systems 修改 ECS 世界
+  -> observation 与 result packet
+  -> gym_envs 和 python/rl
+  -> train.py / evaluate.py / tools / tests
 ```
 
-关键规则：
+原生代码的职责边界如下：
 
-- `components/` 存放 ECS 组件和类似 DTO 的结构
-- `systems/` 存放每步突变逻辑
-- `models/` 存放可替换的领域模型
-- `core/engine` 拥有 `SimulationKernel` 和批量运行时
-- `core/mission` 拥有任务运行时和情节编排
-- `runtime/facade` 是维护的 C++ 应用程序契约
-- `interfaces/python` 应仅保留为绑定/适配
+```text
+src/runtime/facade
+  -> src/core/mission
+    -> src/core/engine
+      -> src/systems
+        -> src/models + src/components + src/content
+```
+
+- `src/core/engine` 负责规范的 CPU `SimulationKernel`、`WorldBatchRuntime`、世界步进和引擎级传输。
+- `src/core/mission` 负责任务目标、奖励与终止决策，以及围绕引擎的 episode 编排。
+- `src/systems` 注册 Flecs systems，并应用每个 timestep 的状态修改。
+- `src/models` 存放可替换的控制、传感器、制导和 effects 实现；`src/components` 存放 ECS 状态及类型化 command/tasking 数据；`src/content` 负责静态 schema、unit 定义和加载器。
+- `src/runtime/facade` 是位于 core 之上的维护型类型化 C++ 应用契约；`src/interfaces/python` 通过 `ef_py` 暴露该契约，只应承担类型转换和错误映射。
+- `python/scenario/` 编译并实例化场景；`python/simulation/` 选择后端；`gym_envs/` 将运行时结果适配为 Gymnasium 风格接口；`python/rl/` 负责训练侧消费者。
+- `tools/` 和 `tests/` 提供评估、诊断、契约检查和回归门禁，不应成为另一套运行时 authority。
+
+CPU runtime 仍是规范的世界步进真值。GPU 辅助路径可以提供 packet 支持或实验能力，但不替代 CPU 路径。
+`UniversalEnv` 名称仍可作为兼容性导入，但其构造函数会快速失败；维护的训练和评估应使用上面的显式
+world-batch/facade 适配器。
 
 另见：
 
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
-- [docs/operations/reference/src_layer_map.zh.md](docs/operations/reference/src_layer_map.zh.md)
-- docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md (`git show 3dc34673:docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md`)
+- [python/README.md](python/README.md)
+- [gym_envs/README.md](gym_envs/README.md)
+- [架构 owner](docs/architecture/README.zh.md)
+- [代码层地图](docs/operations/reference/src_layer_map.zh.md)
 
 ## 场景与训练配置
 

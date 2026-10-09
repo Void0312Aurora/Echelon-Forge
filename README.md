@@ -208,34 +208,67 @@ uses `build_cooperative_world_batch_vec_env` and
 `UniversalEnv` remains an importable compatibility name whose constructor fails
 fast; it is unavailable as a training or evaluation backend.
 
-## Architecture Boundary
+## System Architecture
 
-The maintained dependency direction is:
+Echelon Forge has a native simulation core, a typed runtime contract, and
+Python consumers for scenario execution, training, evaluation, and diagnostics.
+The maintained path from an input scenario to a step result is:
 
 ```text
-interfaces/python
-  -> runtime/facade
-    -> core/engine and core/mission
-      -> systems
-        -> models / components / content
+scenario JSON + profile
+  -> python/scenario/compiler and python/scenario/runtime
+  -> python/simulation backend selection
+       -> facade_batch (default non-RL and scripted path)
+       -> explicit world_batch (training and evaluation path)
+  -> ef_py / src/runtime/facade
+  -> src/core/mission and src/core/engine
+  -> src/systems mutate the ECS world
+  -> observations and result packets
+  -> gym_envs and python/rl
+  -> train.py / evaluate.py / tools / tests
 ```
 
-Key rules:
+The native ownership boundaries are:
 
-- `components/` holds ECS components and DTO-like structures
-- `systems/` holds per-tick mutation logic
-- `models/` holds replaceable domain models
-- `core/engine` owns `SimulationKernel` and batch runtime
-- `core/mission` owns mission runtime and episode orchestration
-- `runtime/facade` is the maintained C++ application contract
-- `interfaces/python` should stay as bindings/adaptation only
+```text
+src/runtime/facade
+  -> src/core/mission
+    -> src/core/engine
+      -> src/systems
+        -> src/models + src/components + src/content
+```
+
+- `src/core/engine` owns the canonical CPU `SimulationKernel`,
+  `WorldBatchRuntime`, world stepping, and engine-level transport.
+- `src/core/mission` owns mission objectives, reward and termination decisions,
+  and episode orchestration around the engine.
+- `src/systems` registers Flecs systems and applies per-tick state mutation.
+- `src/models` contains replaceable control, sensor, guidance, and effects
+  implementations; `src/components` stores ECS state and typed command/tasking
+  data; `src/content` owns static schemas, unit definitions, and loaders.
+- `src/runtime/facade` is the maintained typed C++ application contract above
+  the core. `src/interfaces/python` exposes that contract through `ef_py` and
+  should contain conversion and error mapping only.
+- `python/scenario/` compiles and realizes scenarios. `python/simulation/`
+  selects the backend, while `gym_envs/` adapts runtime results to
+  Gymnasium-style interfaces and `python/rl/` owns training-side consumers.
+- `tools/` and `tests/` provide evaluation, diagnostics, contract checks, and
+  regression gates; they do not become alternate runtime authorities.
+
+The CPU runtime remains the canonical world-step truth. GPU helpers may provide
+packet support or experiments, but they do not replace the CPU path. The
+`UniversalEnv` name remains an importable compatibility surface whose
+constructor fails fast; maintained training and evaluation use the explicit
+world-batch/facade adapters above.
 
 See also:
 
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
-- [docs/operations/reference/src_layer_map.md](docs/operations/reference/src_layer_map.md)
-- docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md (`git show 3dc34673:docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md`)
+- [python/README.md](python/README.md)
+- [gym_envs/README.md](gym_envs/README.md)
+- [Architecture owner](docs/architecture/README.md)
+- [Code layer map](docs/operations/reference/src_layer_map.md)
 
 ## Scenarios and Training Configs
 
