@@ -20,6 +20,31 @@ from python.tasking_contracts.air.execution.stable_flight import ScriptedStableF
 from gym_envs.scenario_loader.spatial_runtime.geometry import select_ils_beacon
 
 
+def _apply_action_rate_reward(reward: float, info: dict, penalty: float) -> float:
+    """Return final reward and account for the penalty as a signed tracked term.
+
+    The outer action_rate_penalty remains a positive magnitude. The breakdown
+    component is negative, so tracked_total + untracked equals the final total.
+    Copy the nested breakdown because callers may retain the base info object.
+    """
+    reward_out = float(reward) - float(penalty)
+    if penalty != 0.0:
+        info["action_rate_penalty"] = float(penalty)
+    terms = info.get("reward_terms")
+    if isinstance(terms, dict):
+        terms = dict(terms)
+        tracked = float(terms["tracked_total"]) if "tracked_total" in terms else sum(
+            float(value) for key, value in terms.items()
+            if key not in {"total", "tracked_total", "untracked"}
+        )
+        terms["action_rate_penalty"] = float(terms.get("action_rate_penalty", 0.0)) - float(penalty)
+        terms["tracked_total"] = tracked - float(penalty)
+        terms["total"] = reward_out
+        terms["untracked"] = reward_out - terms["tracked_total"]
+        info["reward_terms"] = terms
+    return reward_out
+
+
 def _selected_runway_length(loader) -> float:
     if loader is None:
         return 0.0
@@ -527,10 +552,7 @@ class MultiTimescaleActionController:
         if prepared.scripted_active_mode is not None:
             info_out["scripted_baseline_mode_active"] = str(prepared.scripted_active_mode)
 
-        reward_out = float(reward)
-        if prepared.rate_penalty != 0.0:
-            reward_out -= float(prepared.rate_penalty)
-            info_out["action_rate_penalty"] = float(prepared.rate_penalty)
+        reward_out = _apply_action_rate_reward(reward, info_out, prepared.rate_penalty)
 
         self._held_action = np.array(prepared.action, dtype=np.float32)
         self._t += 1
@@ -1032,10 +1054,7 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
         if prepared.scripted_active_mode is not None:
             info_out["scripted_baseline_mode_active"] = str(prepared.scripted_active_mode)
 
-        reward_out = float(reward)
-        if prepared.rate_penalty != 0.0:
-            reward_out -= float(prepared.rate_penalty)
-            info_out["action_rate_penalty"] = float(prepared.rate_penalty)
+        reward_out = _apply_action_rate_reward(reward, info_out, prepared.rate_penalty)
 
         self._held_action = np.array(prepared.action, dtype=np.float32)
         self._t += 1
