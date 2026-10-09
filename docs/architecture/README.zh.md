@@ -55,6 +55,10 @@ packet 只作为归档 provenance。
 
 - [系统模块化 issue](work/issues/modularization_plan.md)：draft residual 分析；
   目录位置不授权实施。
+- [跨域脚本化 agent 系统](work/issues/cross_domain_scripted_agent_system_plan.md)：
+  面向 Air、Naval、Ground 与未来领域 profile 的独立、可完整运行脚本化 agent 线路 draft plan。
+- [Python 依赖边界](work/issues/python_dependency_boundaries.md)：
+  可执行 import 与分层边界普查，以及带 ratchet 的迁移登记。
 - [系统分层与引擎封装](work/issues/system_layering_and_engine_encapsulation_plan.md)
 - [架构与性能研究后续](work/issues/architecture_and_performance_research_followup.md)
 - [Runtime facade contract](work/issues/runtime_facade_contract_plan.md)
@@ -110,6 +114,13 @@ packet 只作为归档 provenance。
 - [架构规范性与正确性评审 — 2026-06-03](reviews/architecture_norms_correctness_review_20260603.zh.md)
 - [架构重构审计 — 2026-05-22](reviews/architecture_refactoring_audit_20260522.zh.md)
 - [UniversalEnv caller 存续表 — 2026-06-12（仅中文）](reviews/universal_env_runtime_compatibility_caller_survival_table_20260612.zh.md)
+- [跨域脚本化 agent 系统 consumer 普查 — 2026-09-24](reviews/cross_domain_scripted_agent_system_consumer_census_20260924.md)：
+  advisory WP0 review，确认 neutral tasking seam、编译后的 AgentRole/intent authority、
+  RL-adjacent entanglement 与领域能力边界。
+- [跨域脚本化 agent 能力证据矩阵 — 2026-09-25](reviews/cross_domain_scripted_agent_capability_matrix_20250925.md)：
+  Air candidate、Naval 有界 adapter 与 Ground held 标签的维护中证据边界。
+- [Air 脚本化算法替换调研 — 2026-09-26](reviews/air_scripted_algorithm_substitution_research_20260926.md)：
+  planner/assessor/observation/action strategy seam、依赖注入、迁移批次与替换 gate 的维护中研究记录。
 
 这些文档是保留的评审快照，不能替代当前 standards、plans、实现或可执行证据。
 

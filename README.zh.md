@@ -135,6 +135,8 @@ ctest --test-dir build-local-win -R ef_test_all --output-on-failure
 - `.[rl]` 添加 Gymnasium、Stable-Baselines3 和 PyTorch，用于环境/运行时导入。
 - `.[train]` 添加训练栈及 TensorBoard。
 - `.[world-model]` 覆盖世界模型工具。
+- `.[geometry]` 添加 airframe geometry review 工具 whole-airframe alpha-shape
+  contour diagnostic 所需的 SciPy 与 Shapely。
 - `.[dev]` 是本地开发的便利超集，并非锁定发布环境。
 
 注意：维护的烟雾工作流当前直接安装小型依赖集，然后使用 `cmo_env.sh` / `cmo_env.ps1` 将 Python 指向本地构建的扩展。由于这是一个 scikit-build 项目，`pip install -e ".[test]"` 可能尝试执行可编辑包构建；仅当你有意测试包安装而非快速本地构建循环时才使用它。

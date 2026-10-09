@@ -64,6 +64,15 @@
 - [README.md](diagnostics/README.md)
   - 诊断目录的目录和范围说明。
 
+## Geometry
+
+- [airframe_geometry_review.py](geometry/airframe_geometry_review.py)
+  - 从保留的 glTF 审计资产生成仅供 review 的机体几何 manifest。当前 F-16
+    slice 记录来源、hash、坐标轴、公开尺寸缩放，以及可视外形候选与现有轴对齐
+    毁伤盒之间的差异；同时输出首轮低保真外区候选、component binding report、
+    review-point 距离诊断、离线 HTML packet 与 top/side/front SVG overlay。它不创建
+    runtime collision mesh，也不建立真实机体结构 authority。
+
 ## 运行器
 
 - [run_scenario_contract.py](runners/run_scenario_contract.py)
@@ -103,6 +112,9 @@
   - 将选定的实验/数据集目录移开，以创建一个更小的复现工作区。
 - [translate_docs_batch.py](maintenance/translate_docs_batch.py)
   - 审计双语覆盖率，并使用与 OpenAI 兼容的 API 批量翻译 Markdown 文档对等文件。
+- [internal_code_governance](maintenance/internal_code_governance/)
+  - 审计新增 production 与 documentation 行中的 work-tracking code 或不透明字母阶段标识；
+    CI 会阻止高置信度 source/runtime 违规，文档 finding 在治理期间保留为 warning。
 ## 退役登记
 
 `tools/archive/` 已不存在。把退役的一次性探测留在工作树里，只会在每次普查时
