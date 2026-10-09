@@ -590,16 +590,18 @@ TEST_SUITE("simulation_kernel_smoke") {
         for (const auto &name : {"Ship", "Submarine", "DDG-51_Flight_I_USS_Arleigh_Burke",
                                  "CSG_US_SSN_Virginia_Block_III_IV"}) {
             CAPTURE(name);
-            const bool submarine = std::string(name) == "Submarine" || std::string(name).starts_with("CSG_US_SSN");
+            const bool submarine =
+                std::string(name) == "Submarine" || std::string(name).starts_with("CSG_US_SSN");
             SimulationKernel kernel;
             kernel.reset(13);
             kernel.set_time_step(0.05);
             REQUIRE(kernel.load_database("examples/config/database"));
-            auto unit = kernel.spawn_unit(Side::Blue, name, 1000000, 1000000,
-                                          submarine ? -50 : 0, 0, 0, 0, 0, 8, 0);
+            auto unit = kernel.spawn_unit(Side::Blue, name, 1000000, 1000000, submarine ? -50 : 0,
+                                          0, 0, 0, 0, 8, 0);
             REQUIRE(unit.is_valid());
             const auto before = kernel.get_unit_position(unit.id());
-            for (int step = 0; step < 100; ++step) kernel.step();
+            for (int step = 0; step < 100; ++step)
+                kernel.step();
             REQUIRE(kernel.is_unit_active(unit.id()));
             const auto after = kernel.get_unit_position(unit.id());
             const auto velocity = kernel.get_unit_velocity(unit.id());
