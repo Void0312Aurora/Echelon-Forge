@@ -6,6 +6,7 @@ import math
 import os
 import tempfile
 import unittest
+from types import SimpleNamespace
 
 import numpy as np
 
@@ -492,6 +493,33 @@ class SpatialQueryRuntimeTests(unittest.TestCase):
     self.assertLess(abs(ils.loc_dev), 1.0e-6)
     self.assertLess(abs(ils.gs_dev), 1.0e-3)
     self.assertTrue(math.isclose(ils.approach_dist_m, approach_dist_m, rel_tol=1.0e-6, abs_tol=1.0e-6))
+
+  def test_ils_front_course_availability_reaches_maintained_observation(self) -> None:
+    from gym_envs.scenario_loader.spatial_runtime.utils import get_ils_observation
+    geom = _make_geometry()
+    loader = SimpleNamespace(_spatial_geometry=geom, mission_cmd={"threshold_crossing_height_m": 15.0})
+    aligned_alt = 15.0 + math.tan(math.radians(3.0)) * 1500.0
+    cases = (
+      (0.0, -2000.0, aligned_alt, True),
+      (0.0, 2000.0, 1000.0, False),
+      (0.0, 2000.0, 15.0, False),
+      (500.0, -2000.0, aligned_alt, True),
+      (0.0, -2000.0, aligned_alt + 30.0, True),
+      (0.0, -500.0, 15.0, False),
+      (0.0, -501.0, 15.0, False),
+      (0.0, -501.01, 15.0, True),
+      (0.0, -20000.0, 1000.0, False),
+    )
+    for x, y, alt, valid in cases:
+      with self.subTest(x=x, y=y, alt=alt):
+        result = geom.query_ils(x, y, alt, 15.0, 7)
+        observation = get_ils_observation(loader, x, y, alt, runway_id=7)
+        self.assertEqual(result.valid, valid)
+        self.assertEqual(observation[0], float(valid))
+        self.assertAlmostEqual(observation[1], result.loc_dev, places=6)
+        self.assertAlmostEqual(observation[2], result.gs_dev, places=6)
+    self.assertGreater(abs(geom.query_ils(500.0, -2000.0, aligned_alt, 15.0, 7).loc_dev), 0.0)
+    self.assertGreater(abs(geom.query_ils(0.0, -2000.0, aligned_alt + 30, 15.0, 7).gs_dev), 0.0)
 
   def test_route_query_reports_leg_geometry_and_turn_preview(self) -> None:
     geom = _make_geometry()

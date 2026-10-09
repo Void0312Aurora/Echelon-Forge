@@ -41,6 +41,8 @@ struct SpatialRunwayFrameResult {
 };
 
 struct SpatialILSResult {
+    // Combined front-course LOC/GS availability: within slant range and more
+    // than 1 m before the threshold. Consumers must gate deviations on valid.
     bool valid = false;
     int runway_id = -1;
     double loc_dev = 0.0;
