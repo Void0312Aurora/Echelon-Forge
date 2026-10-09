@@ -6,8 +6,10 @@
 - 中文辅文：[README.zh.md](README.zh.md)
 
 Echelon Forge 是一个面向多域任务研究的语义-因果仿真平台，并带有可选的学习层。
-它把场景和内容定义、任务与 tasking 语义、领域模型、agent 接口、保真度要求以及实验协议，
-组合为可执行、可检查、可比较和可评估的仿真运行。
+它构建一套架构，用于把场景和内容定义、任务与 tasking 语义、领域模型、agent 接口、保真度要求
+以及实验协议接入可复现的仿真工作流。当前维护的仓库只准入有界的原生 CPU composition 和有限的
+领域/runtime 路径；完整保真度 composition 以及不受约束的外部 provider 或 plugin 准入仍由单独的
+治理规则决定。
 
 ## 项目内容
 
@@ -15,7 +17,8 @@ Echelon Forge 是一个面向多域任务研究的语义-因果仿真平台，�
 - 类型化 C++ runtime facade，以及通过 `nanobind` 暴露为 `ef_py` 的 Python 绑定。
 - 场景编译与实现，覆盖 content、unit、profile 和 mission setup。
 - 可选的 Gymnasium 风格环境适配器、向量化 world-batch 执行，以及面向 policy 实验的协同 command/tasking 表面。
-- 用于控制、感知、制导、武器、effects 和平台 capability 的领域模型族，并接入共享运行时生命周期。
+- 用于控制、感知、制导、武器、effects 和平台 capability 的领域模型族，并通过共享生命周期 contract
+  接入已经准入的路径。
 - 评估、诊断、replay/evidence 导出、契约规范和架构回归门禁。
 
 当前维护主线最完整的端到端覆盖位于 air/execution 和 cooperative execution。Naval 与 Ground
@@ -36,8 +39,9 @@ Echelon Forge 是一个面向多域任务研究的语义-因果仿真平台，�
 这五面模型是维护中的架构方向；各部分实现成熟度并不相同。下面的准入表说明当前哪些领域路径已经被实际运行，哪些仍然是有界或实验性的。
 
 Evidence 是贯穿各面的公共层：trace、packet ancestry、snapshot version、event order 和 validation
-verdict 解释一个运行为什么可信。领域功能通过明确的 model family、capability contract 和 stage
-contract 接入这些公共面，而不是创建私有的 `air`、`naval` 或 `weapon` runtime stack。
+verdict 解释一个运行为什么可信。作为架构规则，领域功能通过明确的 model family、capability contract
+和 stage contract 接入这些公共面，而不是创建私有的 `air`、`naval` 或 `weapon` runtime stack；每条领域
+路径仍需单独完成 stage、contract 和 evidence 准入。
 
 实现遵循以下执行形状：
 
@@ -51,17 +55,18 @@ scenario + content + profile + experiment settings
   -> policy、评估、诊断和 evidence 消费者
 ```
 
-这些阶段组成因果-时间执行图，可以使用不同频率运行；有界场景也可以跳过空阶段。反馈必须经过显式
-的 state version、event timestamp 或 barrier。这是当前固定步长运行时、facade contract 和 evidence
-表面的共同架构规则。
+P0-P10 定义的是因果-时间架构模型。当前维护的 CPU runtime 仍是固定步长；显式 stage-node manifest
+以及依赖/clock-domain 准入正在逐步扩展。模型允许不同频率和空阶段，但当前有界运行只使用已经准入的
+contract，不表示完整的多频率 scheduler 已投入运行。已实现的反馈经过显式 state version、event timestamp
+或 barrier。
 
 完整的 P0-P10 阶段词汇、graph-of-graphs 模型和 stage contract 规则维护在
 [Simulation System Architecture Design](docs/architecture/standards/simulation_system_architecture_design.zh.md) 中。
 
 ## 仿真层与学习层是分离的
 
-仿真层可以独立运行。它拥有权威 world state、状态演化、因果-时间调度、event 顺序、
-facade 可见 snapshot、仿真语义 termination 和编译后的 mission product；它不拥有训练循环、
+仿真层可以独立运行。它拥有权威 world state、状态演化、当前已准入的固定步长执行顺序与调度 contract、
+event 顺序、facade 可见 snapshot、仿真语义 termination 和编译后的 mission product；它不拥有训练循环、
 curriculum、policy state 或前端专用的 observation encoder。
 
 学习与 policy 层是仿真的消费者。learned policy、scripted doctrine、人类操作员或其他 decision
@@ -82,13 +87,20 @@ scenario loader + policy adapter -> 显式 world_batch / WorldBatchVecEnv
                                  -> observation/action bridge -> rollout data
 ```
 
-`facade_batch` 是默认的 no-RL 场景路径；维护中的 RL 训练和评估显式选择 `world_batch`。
-两条适配路径共享 native truth boundary，但不能在没有 parity gate 的情况下假定它们的 reward、
-termination 和 autoreset 行为完全相同。轻量仿真路径不要求安装 Gymnasium、Stable-Baselines3 或 PyTorch。
+`facade_batch` 是默认的 no-RL 场景路径；维护中的 RL 训练和评估显式选择 `world_batch`。当前维护的
+默认 composition 是仓库自有的 `builtin.default_compatibility` profile 与 `cpu_exact.reference` backend。
+Provider 和 plugin 接口属于受治理的准入点；外部 provider 或 plugin 能被接口加载，并不代表它已经准入。
+两条适配路径共享 native truth boundary，但不能在没有 parity gate 的情况下假定它们的 reward、termination
+和 autoreset 行为完全相同。轻量仿真路径不要求安装 Gymnasium、Stable-Baselines3 或 PyTorch。
+
+可运行的 no-RL 示例见
+[`python/simulation/air/demo.py`](python/simulation/air/demo.py)；确定性 replay 覆盖见
+[`tests/runtime/simulation/test_air_facade_demo.py`](tests/runtime/simulation/test_air_facade_demo.py)。
 
 ## 这种架构带来的优势
 
-- **共享语义：** 新领域功能接入同一生命周期，使跨领域比较使用一致的 task、state、observation 和 evidence 词汇。
+- **共享语义：** 架构为新领域功能提供共同生命周期，使已准入的跨领域比较使用一致的 task、state、observation
+  和 evidence 词汇。
 - **仿真独立性：** 场景、scripted run、诊断和 facade client 可以不导入 RL 栈而运行原生仿真；学习层保持为可替换消费者。
 - **稳定边界：** 前端依赖 `src/runtime/facade` 和类型化 packet，而不是直接依赖 Flecs entity、kernel 顺序或 backend 细节。
 - **权威真值：** 原生 CPU runtime 拥有世界状态和 episode 真值；Python mirror 与 GPU 辅助路径保持为适配器或有界 capability。
@@ -260,15 +272,21 @@ cmo_python -m pytest -q \
 场景 JSON + profile
   -> python/scenario/compiler 和 python/scenario/runtime
   -> python/simulation 后端选择
-       -> facade_batch（默认的非 RL 与 scripted 路径）
-       -> 显式 world_batch（训练与评估路径）
-  -> ef_py / src/runtime/facade
-  -> src/core/mission 和 src/core/engine
-  -> src/systems 修改 ECS 世界
-  -> observation 与 result packet
-  -> gym_envs 和 python/rl
-  -> train.py / evaluate.py / tools / tests
+       +-> facade_batch（默认的非 RL 与 scripted 路径）
+       |   -> ef_py / src/runtime/facade
+       |   -> src/core/mission 和 src/core/engine
+       |   -> src/systems 修改 ECS 世界
+       |   -> snapshot / step result / replay
+       +-> 显式 world_batch（训练与评估路径）
+           -> ef_py / src/runtime/facade
+           -> src/core/mission 和 src/core/engine
+           -> src/systems 修改 ECS 世界
+           -> observation 与 result packet
+           -> gym_envs 和 python/rl
+           -> train.py / evaluate.py / tools / tests
 ```
+
+两条分支在 native truth boundary 汇合；只有显式的 `world_batch` 分支继续进入 Gym/RL 和训练消费者。
 
 原生代码的职责边界如下：
 

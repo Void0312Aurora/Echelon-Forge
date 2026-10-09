@@ -5,10 +5,13 @@ Language:
 - Chinese companion: [README.zh.md](README.zh.md)
 
 Echelon Forge is a semantic-causal simulation platform with an optional
-learning layer for multi-domain mission research. It turns scenario and
-content definitions, mission and tasking semantics, domain models, agent
-interfaces, fidelity requirements, and experiment protocols into executable
-simulation runs that can be inspected, compared, and evaluated.
+learning layer for multi-domain mission research. It develops an architecture
+for integrating scenario and content definitions, mission and tasking
+semantics, domain models, agent interfaces, fidelity requirements, and
+experiment protocols into reproducible simulation workflows. The maintained
+repository admits a scoped native CPU composition and bounded domain/runtime
+paths; full-fidelity composition and unrestricted external provider or plugin
+admission remain separately governed.
 
 ## What the project contains
 
@@ -20,7 +23,8 @@ simulation runs that can be inspected, compared, and evaluated.
 - Optional Gymnasium-style environment adapters, vectorized world-batch
   execution, and cooperative command/tasking surfaces for policy experiments.
 - Domain model families for control, sensing, guidance, weapons, effects, and
-  platform capabilities, attached to a shared runtime lifecycle.
+  platform capabilities, connected through shared lifecycle contracts on
+  admitted paths.
 - Evaluation, diagnostics, replay/evidence exports, contract specifications,
   and architecture regression gates.
 
@@ -48,10 +52,11 @@ maturity is uneven. The admission table below identifies which domain paths are
 currently exercised and which remain bounded or experimental.
 
 Evidence is cross-cutting: traces, packet ancestry, snapshot versions, event
-order, and validation verdicts explain why a run should be trusted. Domain
-features join these shared faces through explicit model families, capability
-contracts, and stage contracts instead of creating private `air`, `naval`, or
-`weapon` runtime stacks.
+order, and validation verdicts explain why a run should be trusted. As an
+architecture rule, domain features join these shared faces through explicit
+model families, capability contracts, and stage contracts instead of creating
+private `air`, `naval`, or `weapon` runtime stacks; each domain path still
+requires its own stage, contract, and evidence admission.
 
 The implementation follows this execution shape:
 
@@ -65,10 +70,13 @@ scenario + content + profile + experiment settings
   -> policy, evaluation, diagnostics, and evidence consumers
 ```
 
-The stages form a causal-temporal execution graph. They may run at different
-rates and may be empty for a bounded scenario; feedback crosses explicit
-state versions, event timestamps, or barriers. This is the architecture rule
-behind the current fixed-step runtime, facade contracts, and evidence surfaces.
+P0-P10 defines the causal-temporal architecture model. The maintained CPU
+runtime is currently fixed-step; explicit stage-node manifests and
+dependency/clock-domain admission are being expanded incrementally. The model
+allows different cadences and empty stages, but current bounded slices use
+only the admitted contracts and do not claim that a full multi-rate scheduler
+is operational. Where feedback is implemented, it crosses explicit state
+versions, event timestamps, or barriers.
 
 The complete P0-P10 stage vocabulary, graph-of-graphs model, and stage-contract
 rules are maintained in the [Simulation System Architecture Design](docs/architecture/standards/simulation_system_architecture_design.md).
@@ -76,10 +84,11 @@ rules are maintained in the [Simulation System Architecture Design](docs/archite
 ## Simulation and learning are separate layers
 
 The simulation layer is independently usable. It owns authoritative world
-state, state evolution, causal-temporal scheduling, event ordering,
-facade-visible snapshots, simulation-semantic termination, and compiled mission
-products. It does not own a training loop, curriculum, policy state, or a
-frontend-specific observation encoder.
+state, state evolution, the currently admitted fixed-step execution order and
+scheduling contracts, event ordering, facade-visible snapshots,
+simulation-semantic termination, and compiled mission products. It does not
+own a training loop, curriculum, policy state, or a frontend-specific
+observation encoder.
 
 The learning and policy layer is a consumer of that simulation. A learned
 policy, scripted doctrine, human operator, or other decision model selects an
@@ -103,17 +112,25 @@ scenario loader + policy adapter -> explicit world_batch / WorldBatchVecEnv
 ```
 
 `facade_batch` is the default no-RL scenario route. `world_batch` is selected
-explicitly for maintained RL training and evaluation. The two adapters share
-the native truth boundary, but route-specific reward, termination, and
-autoreset behavior must not be assumed identical without a corresponding
-parity gate. The lightweight simulation path does not require Gymnasium,
-Stable-Baselines3, or PyTorch.
+explicitly for maintained RL training and evaluation. The default maintained
+composition is the repository-owned `builtin.default_compatibility` profile on
+the `cpu_exact.reference` backend. Provider and plugin interfaces are governed
+admission points; an external provider or plugin is not admitted merely
+because the interface can load it. The two adapters share the native truth
+boundary, but route-specific reward, termination, and autoreset behavior must
+not be assumed identical without a corresponding parity gate. The lightweight
+simulation path does not require Gymnasium, Stable-Baselines3, or PyTorch.
+
+For a runnable no-RL example, see
+[`python/simulation/air/demo.py`](python/simulation/air/demo.py); deterministic
+replay coverage is in
+[`tests/runtime/simulation/test_air_facade_demo.py`](tests/runtime/simulation/test_air_facade_demo.py).
 
 ## Why this architecture
 
-- **Shared semantics:** new domain behavior attaches to a common lifecycle, so
-  cross-domain comparisons use the same task, state, observation, and evidence
-  vocabulary.
+- **Shared semantics:** the architecture gives new domain behavior a common
+  lifecycle, so admitted cross-domain comparisons use the same task, state,
+  observation, and evidence vocabulary.
 - **Simulation independence:** scenarios, scripted runs, diagnostics, and
   facade clients can exercise the native runtime without importing an RL stack;
   learning remains a replaceable consumer.
@@ -318,15 +335,22 @@ result is:
 scenario JSON + profile
   -> python/scenario/compiler and python/scenario/runtime
   -> python/simulation backend selection
-       -> facade_batch (default non-RL and scripted path)
-       -> explicit world_batch (training and evaluation path)
-  -> ef_py / src/runtime/facade
-  -> src/core/mission and src/core/engine
-  -> src/systems mutate the ECS world
-  -> observations and result packets
-  -> gym_envs and python/rl
-  -> train.py / evaluate.py / tools / tests
+       +-> facade_batch (default non-RL and scripted path)
+       |   -> ef_py / src/runtime/facade
+       |   -> src/core/mission and src/core/engine
+       |   -> src/systems mutate the ECS world
+       |   -> snapshots / step results / replay
+       +-> explicit world_batch (training and evaluation path)
+           -> ef_py / src/runtime/facade
+           -> src/core/mission and src/core/engine
+           -> src/systems mutate the ECS world
+           -> observations and result packets
+           -> gym_envs and python/rl
+           -> train.py / evaluate.py / tools / tests
 ```
+
+Both branches meet at the native truth boundary. Only the explicit
+`world_batch` branch continues into Gym/RL and training consumers.
 
 The native ownership boundaries are:
 
