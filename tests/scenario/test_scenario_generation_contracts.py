@@ -611,6 +611,25 @@ def test_wp21_generation_runtime_is_byte_identical_for_same_request_seed_and_bas
   assert baseline == baseline_before
 
 
+def test_generation_helper_does_not_reimport_expanded_baseline() -> None:
+  with tempfile.TemporaryDirectory() as folder:
+    prefab = os.path.join(folder, "prefab.json")
+    with open(prefab, "w", encoding="utf-8") as handle:
+      json.dump({"entities": [{"name": "Imported_Tower", "type": "Facility", "pos": [0, 0, 0]}],
+                 "zones": [{"name": "Imported_Zone", "x": 0, "y": 0, "length": 100, "width": 50}]}, handle)
+    raw = _sample_scenario()
+    raw["imports"] = [{"file": prefab}]
+    baseline = ScenarioCompiler.compile_data(raw)
+    artifact = build_scenario_generation_runtime_artifact(
+      _request(17), baseline_setup_ref="setup:baseline:21",
+      baseline_scenario_data=baseline.instantiate(), variations=_variation_specs(),
+    )
+    generated = artifact.compile_generated_scenario()
+    assert generated.entity_count == baseline.entity_count
+    assert generated.zone_count == baseline.zone_count
+    assert "imports" not in generated.instantiate()
+
+
 def test_wp21_generation_runtime_changes_only_declared_variation_fields_across_seeds() -> None:
   baseline = _sample_scenario()
   artifact_a = build_scenario_generation_runtime_artifact(

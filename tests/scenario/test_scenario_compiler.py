@@ -6,6 +6,7 @@ import math
 import os
 import tempfile
 import unittest
+from types import SimpleNamespace
 
 import numpy as np
 
@@ -225,6 +226,57 @@ class ScenarioCompilerTests(unittest.TestCase):
     inst2 = compiled1.instantiate()
     inst1["environment"]["zones"].append({"name": "mutated"})
     self.assertEqual(len(inst2["environment"]["zones"]), compiled1.zone_count)
+
+  def test_expanded_imports_roundtrip_named_and_unnamed_entries_without_growth(self) -> None:
+    for named in (True, False):
+      with self.subTest(named=named), tempfile.TemporaryDirectory() as folder:
+        prefab_path = os.path.join(folder, "prefab.json")
+        entity = {"type": "Facility", "side": "Blue", "pos": [0.0, 0.0, 0.0]}
+        zone = {"x": 0.0, "y": 0.0, "length": 100.0, "width": 50.0}
+        if named:
+          entity["name"] = "Imported_Facility"
+          zone["name"] = "Imported_Zone"
+        with open(prefab_path, "w", encoding="utf-8") as handle:
+          json.dump({"zones": [zone], "entities": [entity]}, handle)
+        raw = _sample_scenario()
+        raw["imports"] = [{"file": prefab_path}]
+        first = ScenarioCompiler.compile_data(raw)
+        self.assertIn("imports", raw)
+        self.assertNotIn("imports", first.instantiate())
+        self.assertEqual(first.imported_files, (prefab_path,))
+        self.assertIn(prefab_path, dict(first.dependency_mtimes_ns))
+        second = ScenarioCompiler.compile_data(first.instantiate())
+        self.assertEqual(first.zone_count, second.zone_count)
+        self.assertEqual(first.entity_count, second.entity_count)
+        self.assertEqual(first.instantiate(), second.instantiate())
+        os.unlink(prefab_path)
+        self.assertFalse(first.is_fresh())
+        with self.assertRaises(FileNotFoundError):
+          ScenarioCompiler.compile_data(raw)
+
+  def test_canonical_takeoff_instantiation_is_recompilable(self) -> None:
+    first = ScenarioCompiler.compile_path(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                                                      "scenarios", "takeoff", "takeoff.json"))
+    second = ScenarioCompiler.compile_data(first.instantiate(), source_path=first.source_path)
+    self.assertEqual(first.zone_count, second.zone_count)
+    self.assertEqual(first.entity_count, second.entity_count)
+    self.assertEqual(first.instantiate(), second.instantiate())
+
+  def test_source_and_import_mtimes_still_invalidate_path_cache(self) -> None:
+    with tempfile.TemporaryDirectory() as folder:
+      prefab = os.path.join(folder, "prefab.json")
+      with open(prefab, "w", encoding="utf-8") as handle:
+        json.dump({"entities": []}, handle)
+      scenario = _sample_scenario()
+      scenario["imports"] = [{"file": prefab}]
+      with open(self._scenario_path, "w", encoding="utf-8") as handle:
+        json.dump(scenario, handle)
+      for path in (self._scenario_path, prefab):
+        compiled = ScenarioCompiler.compile_path(self._scenario_path)
+        stamp = os.stat(path)
+        os.utime(path, ns=(stamp.st_atime_ns, stamp.st_mtime_ns + 1000000))
+        self.assertFalse(compiled.is_fresh())
+        self.assertIsNot(compiled, ScenarioCompiler.compile_path(self._scenario_path))
 
   def test_packaged_import_path_preserves_public_types(self) -> None:
     compiled = PackagedScenarioCompiler.compile_path(self._scenario_path)
@@ -492,6 +544,33 @@ class SpatialQueryRuntimeTests(unittest.TestCase):
     self.assertLess(abs(ils.loc_dev), 1.0e-6)
     self.assertLess(abs(ils.gs_dev), 1.0e-3)
     self.assertTrue(math.isclose(ils.approach_dist_m, approach_dist_m, rel_tol=1.0e-6, abs_tol=1.0e-6))
+
+  def test_ils_front_course_availability_reaches_maintained_observation(self) -> None:
+    from gym_envs.scenario_loader.spatial_runtime.utils import get_ils_observation
+    geom = _make_geometry()
+    loader = SimpleNamespace(_spatial_geometry=geom, mission_cmd={"threshold_crossing_height_m": 15.0})
+    aligned_alt = 15.0 + math.tan(math.radians(3.0)) * 1500.0
+    cases = (
+      (0.0, -2000.0, aligned_alt, True),
+      (0.0, 2000.0, 1000.0, False),
+      (0.0, 2000.0, 15.0, False),
+      (500.0, -2000.0, aligned_alt, True),
+      (0.0, -2000.0, aligned_alt + 30.0, True),
+      (0.0, -500.0, 15.0, False),
+      (0.0, -501.0, 15.0, False),
+      (0.0, -501.01, 15.0, True),
+      (0.0, -20000.0, 1000.0, False),
+    )
+    for x, y, alt, valid in cases:
+      with self.subTest(x=x, y=y, alt=alt):
+        result = geom.query_ils(x, y, alt, 15.0, 7)
+        observation = get_ils_observation(loader, x, y, alt, runway_id=7)
+        self.assertEqual(result.valid, valid)
+        self.assertEqual(observation[0], float(valid))
+        self.assertAlmostEqual(observation[1], result.loc_dev, places=6)
+        self.assertAlmostEqual(observation[2], result.gs_dev, places=6)
+    self.assertGreater(abs(geom.query_ils(500.0, -2000.0, aligned_alt, 15.0, 7).loc_dev), 0.0)
+    self.assertGreater(abs(geom.query_ils(0.0, -2000.0, aligned_alt + 30, 15.0, 7).gs_dev), 0.0)
 
   def test_route_query_reports_leg_geometry_and_turn_preview(self) -> None:
     geom = _make_geometry()

@@ -22,7 +22,9 @@
 #include "components/domains/naval/platform/ship_platform.h"
 #include "components/physics/forces.h"
 #include "systems/domains/naval/ship_motion_system.h"
+#include "systems/domains/naval/submarine_motion_system.h"
 #include "systems/combat/damage_system_naval.h"
+#include "systems/physics/instrument_system.h"
 
 #include <doctest/doctest.h>
 #include <flecs.h>
@@ -307,5 +309,120 @@ TEST_SUITE("ship_maneuvering") {
             0.0, 0.0, 0.0, 0.0, 90.0, 1000.0, 990.0, 0.0, 90.0, 2.0);
         CHECK(arrived.speed_mps == 0.0);
         CHECK(arrived.heading_deg == 90.0);
+    }
+}
+
+TEST_SUITE("submarine_motion") {
+    TEST_CASE("vertical motion uses shared nose-up pitch and clamps at fifteen degrees") {
+        for (const double depth_rate : {3.0, 10.0}) {
+            for (const double target_depth : {20.0, 50.0, 80.0}) {
+                flecs::world world;
+                register_submarine_motion_system(world);
+                SubmarinePlatform platform{};
+                platform.max_speed_submerged_mps = 20.0;
+                platform.max_depth_rate_mps = depth_rate;
+                Transform initial{};
+                initial.z = -50.0;
+                auto unit = world.entity()
+                                .set<Transform>(initial)
+                                .set<Velocity>({0.0, 8.0, 0.0})
+                                .set<SubmarinePlatform>(platform);
+                NavalCommandIntent command{};
+                command.active = true;
+                command.cmd_speed_mps = 8.0;
+                command.cmd_depth_m = target_depth;
+                unit.set<NavalCommandIntent>(command);
+                world.progress(0.1);
+                const auto &position = *unit.get<Transform>();
+                const auto &velocity = *unit.get<Velocity>();
+                const double sign = target_depth < 50.0 ? 1.0 : target_depth > 50.0 ? -1.0 : 0.0;
+                CHECK(velocity.vz == doctest::Approx(sign * depth_rate));
+                CHECK(position.pitch == doctest::Approx(sign * (depth_rate == 3.0 ? 12.0 : 15.0)));
+                CHECK(position.roll == 0.0);
+                CHECK(velocity.vx == doctest::Approx(0.0));
+                CHECK(velocity.vy == doctest::Approx(8.0));
+                const auto forward = Math::body_to_world({1.0, 0.0, 0.0}, position);
+                CHECK(forward.z * velocity.vz >= 0.0);
+                if (sign == 0.0) CHECK(forward.z == doctest::Approx(0.0));
+            }
+        }
+    }
+    TEST_CASE("hull-forward geometry changes with attitude at fixed position and velocity") {
+        Transform hull{100.0, 200.0, -50.0, 0.0, 10.0, 0.0};
+        const auto up = Math::body_to_world({1.0, 0.0, 0.0}, hull);
+        hull.pitch = -10.0;
+        const auto down = Math::body_to_world({1.0, 0.0, 0.0}, hull);
+        CHECK(up.z == doctest::Approx(std::sin(Math::to_radians(10.0))));
+        CHECK(down.z == doctest::Approx(-up.z));
+        CHECK(down.x == doctest::Approx(up.x));
+        CHECK(down.y == doctest::Approx(up.y));
+        CHECK(hull.z == -50.0);
+    }
+}
+
+TEST_SUITE("naval_instruments") {
+    TEST_CASE("ship and submarine instruments follow motion without aero components") {
+        for (const bool submarine : {false, true}) {
+            flecs::world world;
+            register_ship_motion_system(world);
+            register_submarine_motion_system(world);
+            register_instrument_system(world);
+            InstrumentState initial{};
+            initial.jammer_snapshot_time_s = 123.0;
+            initial.countermeasure_snapshot_time_s = 124.0;
+            auto unit = world.entity()
+                            .set<Transform>({0, 0, submarine ? -50.0 : 0.0, 0, 0, 0})
+                            .set<Velocity>({0, 8, 0})
+                            .set<InstrumentState>(initial);
+            if (submarine)
+                unit.set<SubmarinePlatform>({});
+            else
+                unit.set<ShipPlatform>(ddg51_flight_i()).set<AngularVelocity>({});
+            NavalCommandIntent command{};
+            command.active = true;
+            command.cmd_heading_deg = 90;
+            command.cmd_speed_mps = 10;
+            command.cmd_depth_m = 80;
+            unit.set<NavalCommandIntent>(command);
+            for (int step = 0; step < 10; ++step)
+                world.progress(0.1);
+            const auto &position = *unit.get<Transform>();
+            const auto &velocity = *unit.get<Velocity>();
+            const auto &inst = *unit.get<InstrumentState>();
+            CHECK(position.heading > 0);
+            CHECK(inst.heading_deg == doctest::Approx(position.heading));
+            CHECK(inst.ground_speed_mps == doctest::Approx(std::hypot(velocity.vx, velocity.vy)));
+            CHECK(inst.vn_mps == doctest::Approx(velocity.vy));
+            CHECK(inst.ve_mps == doctest::Approx(velocity.vx));
+            CHECK(inst.vd_mps == doctest::Approx(-velocity.vz));
+            CHECK(inst.vvi_mps == doctest::Approx(velocity.vz));
+            CHECK(inst.pitch_deg == doctest::Approx(position.pitch));
+            CHECK(inst.cmd_heading_deg == 90);
+            CHECK(inst.cmd_speed_mps == 10);
+            CHECK(inst.cmd_alt_m == (submarine ? -80 : 0));
+            CHECK(inst.jammer_snapshot_time_s == 123);
+            CHECK(inst.countermeasure_snapshot_time_s == 124);
+            CHECK_FALSE(unit.has<AeroState>());
+            // Installed navigation reports remain authoritative even when
+            // deliberately different from truth (e.g. an INS drift test).
+            EGI egi{};
+            egi.vn_mps = 3;
+            egi.ve_mps = 4;
+            egi.vd_mps = 2;
+            egi.lat_deg = 30;
+            egi.lon_deg = 120;
+            egi.gps_available = true;
+            egi.position_uncertainty_m = 5;
+            unit.set<EGI>(egi);
+            world.progress(0.1);
+            const auto &reported = *unit.get<InstrumentState>();
+            CHECK(reported.ground_speed_mps == 5);
+            CHECK(reported.vn_mps == 3);
+            CHECK(reported.ve_mps == 4);
+            CHECK(reported.vd_mps == 2);
+            CHECK(reported.lat_deg == 30);
+            CHECK(reported.lon_deg == 120);
+            CHECK(reported.gps_available);
+        }
     }
 }

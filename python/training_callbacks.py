@@ -39,6 +39,7 @@ class CMODiagnosticsCallback(BaseCallback):
 
     TERMINAL_REWARD_KEYS = (
         "total",
+        "action_rate_penalty",
         "crash_penalty",
         "failfast_penalty",
         "off_runway_terminate_penalty",
@@ -66,6 +67,7 @@ class CMODiagnosticsCallback(BaseCallback):
 
     STEP_REWARD_KEYS = (
         "total",
+        "action_rate_penalty",
         "survival",
         "crash_penalty",
         "stall_penalty",

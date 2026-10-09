@@ -2493,7 +2493,7 @@ runtime_state_decoder_replay_matrix() noexcept {
                  // Missile field tables and serialized component reflection.
                  // Pinned by
                  // test_runtime_state_transfer_candidate_contract.py.
-             "e8487346eb4baddd955a54dbbe494a57b0610966d7f8d03042782a9f5ae7b50f"},
+             "c746a35dd7a0726d28177eff9b8d38727e6174ad4f4f4174d6edac5a660596a0"},
             {.category = RuntimeStateCategory::RngState,
              .disposition = RuntimeStateDisposition::Transfer,
              .owner_id = "native.rng-owner",

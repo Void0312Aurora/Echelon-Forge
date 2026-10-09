@@ -247,7 +247,16 @@ class DefaultUnitFactory : public IUnitFactory {
         ship.sensor = make_unit_definition_default_sensor_preset(
             30000.0, 120.0, 2.0, 0.9, 2.0, 50.0, 3.0, 0.2, static_cast<int>(SensorType::Radar));
         ship.has_flight_model = false;
-        ship.has_ship_platform = false;
+        // Synthetic compatibility template, not a calibrated vessel record.
+        // Declare the same owned mobility component used by database ships.
+        ship.has_ship_platform = true;
+        ship.ship_platform.length_m = 100.0;
+        ship.ship_platform.beam_m = 15.0;
+        ship.ship_platform.draft_m = 5.0;
+        ship.ship_platform.displacement_full_load_kg = 5000000.0;
+        ship.ship_platform.max_speed_mps = 15.0;
+        ship.ship_platform.economical_speed_mps = 8.0;
+        ship.ship_platform.steady_turning_diameter_m = 500.0;
         ship.has_score = true;
         ship.score = {0.0, 0, 0, 0};
         ship.has_ammo = false;
@@ -262,6 +271,15 @@ class DefaultUnitFactory : public IUnitFactory {
         submarine.type = UnitType::Submarine;
         submarine.name = "Submarine";
         submarine.health = {100.0, 100.0, false, false, false};
+        // Synthetic compatibility template; named database platforms carry
+        // their authored maneuvering and acoustic parameters.
+        submarine.has_submarine_platform = true;
+        submarine.submarine_platform.length_m = 80.0;
+        submarine.submarine_platform.beam_m = 8.0;
+        submarine.submarine_platform.draft_m = 7.0;
+        submarine.submarine_platform.submerged_displacement_kg = 3000000.0;
+        submarine.submarine_platform.max_speed_submerged_mps = 12.0;
+        submarine.submarine_platform.quiet_speed_mps = 5.0;
         submarine.has_sonar = true;
         submarine.sonar = {};
         submarine.sonar.max_range_m = 22000.0;

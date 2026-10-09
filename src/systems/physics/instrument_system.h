@@ -17,6 +17,8 @@
 #include "components/systems/logistics.h"           // FuelSystem
 #include "components/systems/navigation.h"          // EGI
 #include "core/interfaces/environment_model.h"
+#include "components/domains/naval/platform/ship_platform.h"
+#include "systems/domains/naval/naval_instrument_projection.h"
 
 namespace {
 inline double inst_rad_to_deg(double rad) {
@@ -85,6 +87,16 @@ inline void register_instrument_system(flecs::world &ecs) {
     ecs.system<InstrumentState, const Transform, const Velocity, const AeroState,
                const ForceAccumulator, const Mass, const Propulsion, const AngularVelocity>(
            "UpdateInstruments")
+        .term_at(3)
+        .optional()
+        .term_at(4)
+        .optional()
+        .term_at(5)
+        .optional()
+        .term_at(6)
+        .optional()
+        .term_at(7)
+        .optional()
         .kind(flecs::OnUpdate) // Runs after physics loop
         .run([](flecs::iter &it) {
             const EnvironmentModelRef *env_ref = it.world().get<EnvironmentModelRef>();
@@ -93,13 +105,18 @@ inline void register_instrument_system(flecs::world &ecs) {
                 auto inst = it.field<InstrumentState>(0);
                 auto transform = it.field<const Transform>(1);
                 auto velocity = it.field<const Velocity>(2);
-                auto aero = it.field<const AeroState>(3);
-                auto forces = it.field<const ForceAccumulator>(4);
-                auto mass = it.field<const Mass>(5);
-                auto propulsion = it.field<const Propulsion>(6);
-                auto ang_vel = it.field<const AngularVelocity>(7);
-
                 for (auto i : it) {
+                    const auto entity = it.entity(i);
+                    if (entity.has<ShipPlatform>() || entity.has<SubmarinePlatform>()) {
+                        project_naval_instruments(entity, inst[i], transform[i], velocity[i]);
+                        continue;
+                    }
+                    const auto *aero = entity.get<AeroState>();
+                    const auto *forces = entity.get<ForceAccumulator>();
+                    const auto *mass = entity.get<Mass>();
+                    const auto *propulsion = entity.get<Propulsion>();
+                    const auto *ang_vel = entity.get<AngularVelocity>();
+                    if (!aero || !forces || !mass || !propulsion || !ang_vel) continue;
                     // 1. Flight Dynamics
                     inst[i].alt_baro_m = transform[i].z;
 
@@ -117,21 +134,20 @@ inline void register_instrument_system(flecs::world &ecs) {
                     inst[i].heading_deg = transform[i].heading;
 
                     // Speed
-                    inst[i].mach = aero[i].mach_number;
-                    inst[i].ias_mps =
-                        std::sqrt(2.0 * aero[i].dynamic_pressure / 1.225); // IAS approx
+                    inst[i].mach = aero->mach_number;
+                    inst[i].ias_mps = std::sqrt(2.0 * aero->dynamic_pressure / 1.225); // IAS approx
                     inst[i].vvi_mps = velocity[i].vz;
 
-                    inst[i].aoa_deg = aero[i].angle_of_attack;
-                    inst[i].beta_deg = aero[i].sideslip_angle;
+                    inst[i].aoa_deg = aero->angle_of_attack;
+                    inst[i].beta_deg = aero->sideslip_angle;
 
                     // Rates
-                    inst[i].p_deg_s = inst_rad_to_deg(ang_vel[i].p);
-                    inst[i].q_deg_s = inst_rad_to_deg(ang_vel[i].q);
-                    inst[i].r_deg_s = inst_rad_to_deg(ang_vel[i].r);
+                    inst[i].p_deg_s = inst_rad_to_deg(ang_vel->p);
+                    inst[i].q_deg_s = inst_rad_to_deg(ang_vel->q);
+                    inst[i].r_deg_s = inst_rad_to_deg(ang_vel->r);
 
                     // G-Load
-                    double total_mass = mass[i].get_total_kg();
+                    double total_mass = mass->get_total_kg();
                     if (total_mass < 1.0) total_mass = 1.0;
 
                     // Remove gravity from Fz (ForceAccumulator includes gravity)
@@ -141,8 +157,8 @@ inline void register_instrument_system(flecs::world &ecs) {
                     // Wait, ForceAccumulator stores F_total.
                     // If F_total has gravity (-mg), then removing it means - (-mg) = +mg.
                     // Correct.
-                    Math::Vector3 f_contact = {forces[i].fx, forces[i].fy,
-                                               forces[i].fz + (total_mass * 9.80665)};
+                    Math::Vector3 f_contact = {forces->fx, forces->fy,
+                                               forces->fz + (total_mass * 9.80665)};
 
                     Math::Vector3 f_body = project_forces_to_body(f_contact, transform[i]);
 
@@ -155,17 +171,17 @@ inline void register_instrument_system(flecs::world &ecs) {
                     if (const FuelSystem *fuel = it.entity(i).get<FuelSystem>()) {
                         fuel_flow_kg_s = fuel->current_flow_rate;
                     } else {
-                        fuel_flow_kg_s = propulsion_readouts::fuel_flow_kg_per_s(propulsion[i]);
+                        fuel_flow_kg_s = propulsion_readouts::fuel_flow_kg_per_s(*propulsion);
                     }
                     inst[i].fuel_flow_kg_h = fuel_flow_kg_s * 3600.0;
-                    inst[i].engine_rpm_pct = propulsion_readouts::engine_rpm_pct(propulsion[i]);
+                    inst[i].engine_rpm_pct = propulsion_readouts::engine_rpm_pct(*propulsion);
                     inst[i].engine_temp_c = 600.0 + inst[i].engine_rpm_pct * 3.0; // Mocked EGT
 
                     if (const FuelSystem *fuel = it.entity(i).get<FuelSystem>()) {
                         inst[i].fuel_internal_kg = fuel->internal_fuel_kg;
                         inst[i].fuel_external_kg = fuel->external_fuel_kg;
                     } else {
-                        inst[i].fuel_internal_kg = mass[i].fuel_mass_kg;
+                        inst[i].fuel_internal_kg = mass->fuel_mass_kg;
                         inst[i].fuel_external_kg = 0.0;
                     }
 
@@ -181,7 +197,7 @@ inline void register_instrument_system(flecs::world &ecs) {
                         it.entity(i).get<PilotAction>(),
                         it.entity(i).get<MissionCommandControlState>(), nullptr);
 
-                    inst[i].throttle_pos = propulsion[i].throttle_command;
+                    inst[i].throttle_pos = propulsion->throttle_command;
                     inst[i].flaps_pos = control_input.instrument_control.flaps_pos;
                     inst[i].speedbrake_pos = control_input.instrument_control.speedbrake_pos;
                     inst[i].master_arm = control_input.instrument_control.master_arm;

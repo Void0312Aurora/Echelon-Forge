@@ -1859,6 +1859,33 @@ bool normalize_legacy_ecs_aero_tuning(nlohmann::json &document) {
     return true;
 }
 
+// ECS truth migration implementation: normalize_legacy_ecs_ground_commands
+bool normalize_legacy_ecs_ground_commands(nlohmann::json &document) {
+    if (!document.is_object() || !document.contains("results") || !document["results"].is_array())
+        return false;
+    for (auto &result : document["results"]) {
+        if (!result.is_object() || !result.contains("components") ||
+            !result["components"].is_object())
+            return false;
+        auto &components = result["components"];
+        const auto add_stance = [](nlohmann::json &ground) {
+            if (!ground.is_object()) return false;
+            if (!ground.contains("stance")) ground["stance"] = 0; // legacy producer implied Stand
+            return true;
+        };
+        if (components.contains("MissionCommandGround") &&
+            !add_stance(components["MissionCommandGround"]))
+            return false;
+        if (components.contains("MissionCommand")) {
+            auto &command = components["MissionCommand"];
+            if (!command.is_object() || !command.contains("ground") ||
+                !add_stance(command["ground"]))
+                return false;
+        }
+    }
+    return true;
+}
+
 bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
                                                      const std::vector<std::uint8_t> &payload) {
     // Validate and stage the complete document before mutating the live ECS.
@@ -1897,6 +1924,20 @@ bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
                 !result["components"].is_object())
                 return false;
             const auto &components = result["components"];
+            const auto valid_stance = [](const nlohmann::json &ground) {
+                return ground.is_object() && ground.contains("stance") &&
+                       ground["stance"].is_number_integer() &&
+                       ground["stance"].get<std::int64_t>() >= 0 &&
+                       ground["stance"].get<std::int64_t>() <= 2;
+            };
+            if (components.contains("MissionCommandGround") &&
+                !valid_stance(components["MissionCommandGround"]))
+                return false;
+            if (components.contains("MissionCommand") &&
+                (!components["MissionCommand"].is_object() ||
+                 !components["MissionCommand"].contains("ground") ||
+                 !valid_stance(components["MissionCommand"]["ground"])))
+                return false;
             if (!components.contains("AeroTuning")) continue;
             const auto &tuning = components["AeroTuning"];
             for (const char *name : {"flap_lift_coefficient_per_full_deflection",
@@ -2697,7 +2738,8 @@ SimulationKernelStateOwnerBridge::create_registry(SimulationKernelStateOwnerRegi
                     }
                     auto document = nlohmann::json::parse(text(source.payload));
                     if (!normalize_legacy_ecs_ships(document) ||
-                        !normalize_legacy_ecs_aero_tuning(document)) {
+                        !normalize_legacy_ecs_aero_tuning(document) ||
+                        !normalize_legacy_ecs_ground_commands(document)) {
                         throw std::runtime_error(
                             "N-1 ECS state is malformed or mixes component schemas");
                     }

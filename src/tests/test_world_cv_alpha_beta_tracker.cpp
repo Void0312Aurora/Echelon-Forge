@@ -42,9 +42,82 @@ void check_vector(const Vec3 &actual, const Vec3 &expected) {
     CHECK(actual.z == doctest::Approx(expected.z).epsilon(1.0e-12));
 }
 
+template <class State, class Params, class Observe>
+void check_timing_and_velocity_admission(Observe observe_track) {
+    const Params params{};
+    const auto truth = [](double t) { return Vec3{20000.0, 300.0 * t, 0.0}; };
+    const auto check_velocity = [](const Vec3 &velocity, const Vec3 &expected) {
+        // CVA's least-squares history at large world coordinates has roundoff;
+        // a micrometre/second tolerance is far below the admission envelope.
+        CHECK(std::hypot(velocity.x - expected.x, velocity.y - expected.y,
+                         velocity.z - expected.z) < 1.0e-6);
+    };
+    State state;
+    for (int k = 0; k < 40; ++k)
+        observe_track(state, params, k * 0.05, truth(k * 0.05));
+    REQUIRE(state.velocity_valid);
+    const auto saved_position = state.corrected_position_world_m;
+    const auto saved_velocity = state.corrected_velocity_world_mps;
+    const auto saved_count = state.accepted_measurement_count;
+    const auto saved_time = state.last_measurement_time_s;
+    const double tiny_time = saved_time + 0.0001;
+    const auto p = truth(tiny_time);
+    const double angle = std::acos(-1.0) / 180.0;
+    const Vec3 noisy{p.x * std::cos(angle) - p.y * std::sin(angle),
+                     p.x * std::sin(angle) + p.y * std::cos(angle), 0.0};
+    const auto rejected = observe_track(state, params, tiny_time, noisy);
+    CHECK_FALSE(rejected.measurement_accepted);
+    CHECK(rejected.measurement_rejected_kinematics);
+    CHECK(state.accepted_measurement_count == saved_count);
+    CHECK(state.last_measurement_time_s == saved_time);
+    check_vector(state.corrected_position_world_m, saved_position);
+    check_vector(state.corrected_velocity_world_mps, saved_velocity);
+    // No universal short-interval cutoff: the uncorrupted sample at the same
+    // epoch and then variable cadence remain admissible.
+    double time = saved_time;
+    for (const double dt : {0.0001, 0.003, 0.02, 0.15, 0.0002, 0.1}) {
+        time += dt;
+        const auto result = observe_track(state, params, time, truth(time));
+        REQUIRE(result.measurement_accepted);
+        REQUIRE(result.velocity_valid);
+        check_velocity(result.velocity_world_mps, {0, 300, 0});
+    }
+    for (int k = 1; k <= 30; ++k) {
+        const auto result = observe_track(state, params, time + k * 0.05, truth(time + k * 0.05));
+        REQUIRE(result.measurement_accepted);
+        check_velocity(result.velocity_world_mps, {0, 300, 0});
+    }
+    State cold;
+    observe_track(cold, params, 0, truth(0));
+    const auto cold_rejection = observe_track(cold, params, 0.0001, noisy);
+    CHECK_FALSE(cold_rejection.measurement_accepted);
+    CHECK(cold_rejection.measurement_rejected_kinematics);
+    CHECK_FALSE(cold.velocity_valid);
+    CHECK(cold.accepted_measurement_count == 1);
+    for (int k = 1; k <= 20; ++k)
+        observe_track(cold, params, k * 0.05, truth(k * 0.05));
+    REQUIRE(cold.velocity_valid);
+    check_velocity(cold.corrected_velocity_world_mps, {0, 300, 0});
+
+    State fast;
+    Params fast_params = params;
+    fast_params.maximum_speed_mps = 6000;
+    for (int k = 0; k <= 20; ++k) {
+        const auto result = observe_track(fast, fast_params, k * 0.05, {0, 5000 * k * 0.05, 0});
+        REQUIRE(result.measurement_accepted);
+    }
+    REQUIRE(fast.velocity_valid);
+    check_velocity(fast.corrected_velocity_world_mps, {0, 5000, 0});
+}
+
 } // namespace
 
 TEST_SUITE("world_cv_alpha_beta_tracker") {
+
+    TEST_CASE("CV rejects implausible bootstrap and correction without a cadence cutoff") {
+        check_timing_and_velocity_admission<WorldCvAlphaBetaTrackerState,
+                                            WorldCvAlphaBetaTrackerParams>(observe);
+    }
 
     TEST_CASE("first position and second velocity bootstrap remain explicitly staged") {
         WorldCvAlphaBetaTrackerState state;
@@ -172,6 +245,11 @@ TEST_SUITE("world_cv_alpha_beta_tracker") {
 } // TEST_SUITE("world_cv_alpha_beta_tracker")
 
 TEST_SUITE("world_cva_alpha_beta_gamma_tracker") {
+
+    TEST_CASE("CVA rejects implausible bootstrap and correction without contaminating history") {
+        check_timing_and_velocity_admission<WorldCvaAlphaBetaGammaTrackerState,
+                                            WorldCvaAlphaBetaGammaTrackerParams>(observe_cva);
+    }
 
     TEST_CASE("constant acceleration becomes observable and converges") {
         WorldCvaAlphaBetaGammaTrackerState state;

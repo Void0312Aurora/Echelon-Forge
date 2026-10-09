@@ -170,6 +170,7 @@ class WorldBatchVecEnvCommandChainTests(unittest.TestCase):
         "task_order_shared_core",
         "task_order_air_owner_slice",
         "task_order_naval_owner_slice",
+        "task_order_ground_owner_slice",
       ),
     )
     projection_map = {name: dict(fields) for name, fields in snapshot}
@@ -195,6 +196,47 @@ class WorldBatchVecEnvCommandChainTests(unittest.TestCase):
       tuple(projection_map["task_order_naval_owner_slice"].keys()),
       tuple(name for name in dir(ef_py.task_order_naval_owner_slice(order)) if not name.startswith("_")),
     )
+
+  def test_ground_task_projection_and_facade_roundtrip_detect_ground_only_updates(self) -> None:
+    order = ef_py.TaskOrder()
+    order.active = True
+    order.task_id = 11
+    order.objective_area_id = 4242
+    order.objective_node_id = 4343
+    order.ground_commander_id = 4444
+    order.tactical_cadence_hz = 3.0
+    expected = ef_py.task_order_ground_static_task_directive(order)
+    before = command_chain_cache.task_order_snapshot(order)
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/inline_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(_inline_vec_env_scenario(), f)
+      vec_env = WorldBatchVecEnv(scenario_path=scenario_path, n_envs=1,
+                               include_visual=False, include_proprio=False)
+      try:
+        vec_env.reset()
+        entity_id = int(vec_env.envs[0].agent_id)
+        assignment = ef_py.WorldTaskOrderMaintainedAssignment()
+        project_world_task_order_maintained_assignment(
+          assignment, world_index=0, entity_id=entity_id,
+          compatibility_task_order_shell=order,
+        )
+        facade = vec_env.runtime_facade
+        facade.set_task_orders_maintained_batch([assignment])
+        ref = ef_py.WorldEntityRef()
+        ref.world_index = 0
+        ref.entity_id = entity_id
+        got = facade.get_task_orders_maintained_batch([ref])[0]
+        ground = ef_py.task_order_maintained_ground_static_task(got)
+        for name in ("objective_area_id", "objective_node_id", "ground_commander_id", "tactical_cadence_hz"):
+          self.assertEqual(getattr(ground, name), getattr(expected, name))
+        for name in ("objective_area_id", "objective_node_id", "ground_commander_id", "tactical_cadence_hz"):
+          original = getattr(order, name)
+          setattr(order, name, original + 1)
+          self.assertTrue(command_chain_cache.snapshot_changed(before, command_chain_cache.task_order_snapshot(order)))
+          setattr(order, name, original)
+      finally:
+        vec_env.close()
 
   def test_world_batch_vec_env_applies_worker_thread_config(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:

@@ -297,16 +297,33 @@ const std::vector<ExactStepStageContractDescriptor> &exact_gpu_stage_contract_in
          "Instrument readout and exact packed hidden surfaces both depend on the post-integration "
          "EGI cache."},
         {21, "UpdateInstruments", "OnUpdate", "observation", true, true,
-         string_list({"InstrumentState", "Transform", "Velocity", "AeroState", "ForceAccumulator",
-                      "Mass", "Propulsion", "AngularVelocity", "FuelSystem", "LandingGear",
-                      "PilotAction", "MissionCommandControlState", "MissionCommand", "RWR", "Ammo",
-                      "EGI", "EnvironmentModelRef"}),
+         string_list({"InstrumentState",
+                      "Transform",
+                      "Velocity",
+                      "AeroState",
+                      "ForceAccumulator",
+                      "Mass",
+                      "Propulsion",
+                      "AngularVelocity",
+                      "FuelSystem",
+                      "LandingGear",
+                      "PilotAction",
+                      "MissionCommandControlState",
+                      "MissionCommand",
+                      "RWR",
+                      "Ammo",
+                      "EGI",
+                      "EnvironmentModelRef",
+                      "ShipPlatform",
+                      "SubmarinePlatform",
+                      "NavalCommandIntent"}),
          string_list({"InstrumentState"}), string_list({"instrument", "terminal"}),
          string_list({"NavigationSystem"}),
          "Build learner-facing instrument outputs from exact physics, navigation, and typed or "
          "mission command projections.",
          "Instrument consumers now read MissionCommand plus typed air-control overlays instead of "
-         "treating MovementCommand as maintained truth. Legacy mirrors remain upstream "
+         "treating MovementCommand as maintained truth. Naval projections additionally consume "
+         "owned platform state and NavalCommandIntent. Legacy mirrors remain upstream "
          "compatibility evidence only."},
         {26, "FuelConsumption", "OnUpdate", "logistics", true, true,
          string_list({"FuelSystem", "Propulsion"}), string_list({"FuelSystem"}),

@@ -59,7 +59,7 @@ def _subprocess_pythonpath_parts(repo_root: str) -> list[str]:
   return parts
 
 
-def _run_subprocess_specs(spec_paths: list[str]) -> int:
+def _run_subprocess_specs(spec_paths: list[str], *, allow_skips: bool = False) -> int:
   from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
   repo_root = ensure_repo_imports()
@@ -73,7 +73,7 @@ def _run_subprocess_specs(spec_paths: list[str]) -> int:
 
   for spec_path in spec_paths:
     proc = subprocess.run(
-      [sys.executable, runner, "--spec", spec_path],
+      [sys.executable, runner, "--spec", spec_path] + (["--allow-skips"] if allow_skips else []),
       cwd=repo_root,
       env=child_env,
       capture_output=True,
@@ -93,20 +93,10 @@ def _run_subprocess_specs(spec_paths: list[str]) -> int:
   return 0
 
 
-def _run_direct_specs(spec_paths: list[str]) -> int:
-  from python.testing.contracts import ContractSkipped, run_contract
+def _run_direct_specs(spec_paths: list[str], *, allow_skips: bool = False) -> int:
+  from tools.runners.run_scenario_contract import run_selected_contracts
 
-  for spec_path in spec_paths:
-    try:
-      ok, message = run_contract(spec_path)
-    except ContractSkipped as exc:
-      print(f"SKIP: {spec_path}: {exc}")
-      continue
-    if not ok:
-      print(f"FAIL: {spec_path}: {message}")
-      return 1
-    print(f"PASS: {spec_path}: {message}")
-  return 0
+  return run_selected_contracts(spec_paths, allow_skips=allow_skips)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -124,6 +114,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     default="all",
     help="Default group set to run when --group is omitted.",
   )
+  parser.add_argument("--allow-skips", action="store_true",
+                      help="Explicitly allow optional selected contracts to skip")
   return parser.parse_args(argv)
 
 
@@ -145,9 +137,9 @@ def main() -> int:
       print(f"FAIL: {empty_message}")
       return 1
     if mode == "subprocess":
-      rc = _run_subprocess_specs(spec_paths)
+      rc = _run_subprocess_specs(spec_paths, allow_skips=args.allow_skips)
     else:
-      rc = _run_direct_specs(spec_paths)
+      rc = _run_direct_specs(spec_paths, allow_skips=args.allow_skips)
     if rc != 0:
       return rc
   return 0

@@ -502,6 +502,7 @@ TEST_SUITE("simulation_kernel_smoke") {
 
         auto pos = kernel.get_unit_position(ship.id());
         REQUIRE(all_finite(pos));
+        CHECK(std::hypot(pos[0], pos[1]) > 0.0);
     }
 
     TEST_CASE("spawn_missile_unit") {
@@ -580,6 +581,35 @@ TEST_SUITE("simulation_kernel_smoke") {
         for (int i = 0; i < 10; ++i) {
             kernel.step();
             REQUIRE(kernel.is_unit_active(sub.id()));
+        }
+        const auto position = kernel.get_unit_position(sub.id());
+        CHECK(std::hypot(position[0], position[1]) > 0.0);
+    }
+
+    TEST_CASE("builtin and database naval platforms integrate declared velocity") {
+        for (const auto &name : {"Ship", "Submarine", "DDG-51_Flight_I_USS_Arleigh_Burke",
+                                 "CSG_US_SSN_Virginia_Block_III_IV"}) {
+            CAPTURE(name);
+            const bool submarine =
+                std::string(name) == "Submarine" || std::string(name).starts_with("CSG_US_SSN");
+            SimulationKernel kernel;
+            kernel.reset(13);
+            kernel.set_time_step(0.05);
+            REQUIRE(kernel.load_database("examples/config/database"));
+            auto unit = kernel.spawn_unit(Side::Blue, name, 1000000, 1000000, submarine ? -50 : 0,
+                                          0, 0, 0, 0, 8, 0);
+            REQUIRE(unit.is_valid());
+            const auto before = kernel.get_unit_position(unit.id());
+            for (int step = 0; step < 100; ++step)
+                kernel.step();
+            REQUIRE(kernel.is_unit_active(unit.id()));
+            const auto after = kernel.get_unit_position(unit.id());
+            const auto velocity = kernel.get_unit_velocity(unit.id());
+            CHECK(after[1] - before[1] == doctest::Approx(40.0).epsilon(0.01));
+            CHECK(velocity[1] == doctest::Approx(8.0).epsilon(0.01));
+            CHECK(after[2] == doctest::Approx(before[2]));
+            const auto inst = kernel.get_instrument_state(unit.id());
+            CHECK(inst.ground_speed_mps == doctest::Approx(8.0).epsilon(0.01));
         }
     }
 
@@ -889,6 +919,18 @@ TEST_SUITE("simulation_kernel_smoke") {
         };
         CHECK(has_contract("ComputePropulsion"));
         CHECK(has_contract("AdvanceControlSurfaces"));
+
+        const auto instruments =
+            std::find_if(contracts.begin(), contracts.end(), [&](const auto &contract) {
+                return contract.name == "UpdateInstruments";
+            });
+        REQUIRE(instruments != contracts.end());
+        CHECK(std::find(instruments->reads.begin(), instruments->reads.end(), "ShipPlatform") !=
+              instruments->reads.end());
+        CHECK(std::find(instruments->reads.begin(), instruments->reads.end(),
+                        "SubmarinePlatform") != instruments->reads.end());
+        CHECK(std::find(instruments->reads.begin(), instruments->reads.end(),
+                        "NavalCommandIntent") != instruments->reads.end());
     }
 
     TEST_CASE("exact_stage_trace_does_not_crash") {

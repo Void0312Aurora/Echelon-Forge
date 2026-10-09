@@ -285,6 +285,31 @@ def _check_task_order_common_core(spec: dict[str, Any]) -> tuple[bool, str]:
     if not expected_common:
         expected_common = dict(order_spec)
 
+    # Expectations are an oracle: explicit enums must never fall back to the
+    # production normalizer's defaults. Missing fields may still be inferred.
+    enum_fields = _task_order_enum_fields()
+    for name, raw in expected_common.items():
+        namespace = enum_fields.get(name)
+        if namespace is None:
+            continue
+        try:
+            if isinstance(raw, str):
+                value = getattr(namespace, raw)
+                if not isinstance(value, namespace):
+                    raise ValueError('not an enum member')
+            elif isinstance(raw, namespace):
+                value = raw
+            elif isinstance(raw, int) and not isinstance(raw, bool):
+                value = namespace(raw)
+            else:
+                raise ValueError('expected an enum name or integer member')
+        except (AttributeError, TypeError, ValueError, RuntimeError):
+            return False, f"invalid expected enum {name}: {raw!r}"
+        # Compare explicit expectations directly, before any default inference.
+        if name in _common_core_field_names('task_order'):
+            if int(getattr(order, name)) != int(value):
+                return False, f"task_order_common_core {name} mismatch: {getattr(order, name)} != {value}"
+
     expected = ef_py.TaskOrder()
     apply_task_order_common_core_spec(expected, expected_common)
     apply_task_order_common_core_defaults(

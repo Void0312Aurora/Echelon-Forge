@@ -74,7 +74,7 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                     velocity[i].vz = -(next_depth_m - current_depth_m) / dt;
 
                     transform[i].heading = next_heading_deg;
-                    transform[i].pitch = std::clamp(-velocity[i].vz * 4.0, -15.0, 15.0);
+                    transform[i].pitch = std::clamp(velocity[i].vz * 4.0, -15.0, 15.0);
                     transform[i].roll = 0.0;
                     transform[i].x += velocity[i].vx * dt;
                     transform[i].y += velocity[i].vy * dt;

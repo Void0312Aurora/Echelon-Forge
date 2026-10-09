@@ -176,8 +176,7 @@ SpatialILSResult CompiledScenarioGeometry::query_ils(double x_m, double y_m, dou
 
     double along = -(dx * fwd_x + dy * fwd_y);
     double cross = dx * right_x + dy * right_y;
-    double along_abs = std::max(std::abs(along), 1.0);
-    double loc_angle_deg = std::atan2(cross, along_abs) * 180.0 / std::numbers::pi_v<double>;
+    double loc_angle_deg = std::atan2(cross, along) * 180.0 / std::numbers::pi_v<double>;
 
     double thr_dx = x_m - best->threshold_x_m;
     double thr_dy = y_m - best->threshold_y_m;
@@ -201,7 +200,13 @@ SpatialILSResult CompiledScenarioGeometry::query_ils(double x_m, double y_m, dou
     out.gs_dev = gs_dev;
     out.dme_m = dme_m;
     out.approach_dist_m = approach_dist_m;
-    out.valid = (dme_m <= best->range_m);
+    // This model supports the front approach half-space only, beyond the
+    // 1 m threshold guard where a glideslope angle is available. Deflection
+    // scales are display saturation limits, not extra coverage-sector limits.
+    // Back-course reception is not represented by this combined LOC/GS result.
+    out.valid = std::isfinite(dme_m) && std::isfinite(loc_angle_deg) && std::isfinite(alt_m) &&
+                std::isfinite(threshold_crossing_height_m) && approach_dist_m > 1.0 &&
+                along > 0.0 && dme_m <= best->range_m;
     return out;
 }
 

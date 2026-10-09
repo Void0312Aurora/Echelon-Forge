@@ -33,7 +33,9 @@ the five constructor defaults into the staged bytes. The native registry test
 imports the historical 45-field shape, commits durably, reopens the file journal,
 and requires `Committed` recovery across all twelve owners. Direct current
 payloads omitting any new field and unknown fields are rejected without mutation.
-Generation 2 has expired from the N/N-1 window. Exact-byte recovery checks and
+The subsequent ground-stance repair (#162) advances the current window to 5/4;
+generation 3 is now expired. The AeroTuning normalizer and constructor defaults
+remain retained. Generation 2 has expired from the N/N-1 window. Exact-byte recovery checks and
 the existing candidate boundary are preserved.
 
 ## Review remediation validation (2026-10-08)

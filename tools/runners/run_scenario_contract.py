@@ -39,8 +39,6 @@ def main() -> int:
 
     ensure_repo_imports()
 
-    from python.testing.contracts import ContractSkipped, run_contract
-
     parser = argparse.ArgumentParser(description="Run JSON-driven scenario contract checks")
     parser.add_argument("--spec", nargs="+", default=[], help="One or more JSON contract spec paths")
     parser.add_argument(
@@ -49,6 +47,8 @@ def main() -> int:
         default=[],
         help="Checked-in JSON suite manifest with a 'specs' list. Repeatable.",
     )
+    parser.add_argument("--allow-skips", action="store_true",
+                        help="Explicitly allow optional contracts to skip; failures still fail")
     args = parser.parse_args()
 
     spec_paths: list[str] = []
@@ -65,19 +65,31 @@ def main() -> int:
             print(f"  - {spec_path}", file=sys.stderr)
         return 2
 
-    all_ok = True
+    return run_selected_contracts(spec_paths, allow_skips=args.allow_skips)
+
+
+def run_selected_contracts(spec_paths: list[str], *, allow_skips: bool = False) -> int:
+    """Selected assertions are required by default; optional skips need opt-in."""
+    from python.testing.contracts import ContractSkipped, run_contract
+
+    passed = failed = skipped = 0
     for spec_path in spec_paths:
         try:
-            ok, message = run_contract(os.path.abspath(spec_path))
+            ok, message = run_contract(spec_path)
         except ContractSkipped as exc:
             print(f"SKIP: {spec_path}: {exc}")
+            skipped += 1
             continue
+        except Exception as exc:
+            ok, message = False, str(exc)
         if ok:
             print(f"PASS: {spec_path}: {message}")
-            continue
-        print(f"FAIL: {spec_path}: {message}")
-        all_ok = False
-    return 0 if all_ok else 1
+            passed += 1
+        else:
+            print(f"FAIL: {spec_path}: {message}")
+            failed += 1
+    print(f"[contract-runner] PASS={passed} FAIL={failed} SKIP={skipped} allow_skips={allow_skips}")
+    return 1 if failed or (skipped and not allow_skips) else 0
 
 
 if __name__ == "__main__":

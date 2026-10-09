@@ -4,6 +4,7 @@ import atexit
 import json
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from .clone import (
@@ -52,6 +53,7 @@ class CompiledScenario:
     warnings: tuple[str, ...]
     zone_count: int
     entity_count: int
+    dependency_existence_paths: tuple[str, ...] = ()
 
     def instantiate(self) -> dict[str, Any]:
         return _clone_scenario_value(self.merged_scenario_data)
@@ -63,6 +65,10 @@ class CompiledScenario:
         return _clone_runtime_context_scenario_data(self.merged_scenario_data)
 
     def is_fresh(self) -> bool:
+        # Group OOB references are provenance prerequisites, not imported
+        # semantic content. Revalidate existence without hashing their contents.
+        if any(not Path(path).is_file() for path in self.dependency_existence_paths):
+            return False
         for path, expected_mtime_ns in self.dependency_mtimes_ns:
             try:
                 if _mtime_ns(path) != int(expected_mtime_ns):
@@ -72,7 +78,9 @@ class CompiledScenario:
         return True
 
 
-def _expand_scenario_groups(merged: dict[str, Any]) -> dict[str, Any]:
+def _expand_scenario_groups(
+    merged: dict[str, Any], *, dependency_existence_paths: list[str]
+) -> dict[str, Any]:
     """Expand a ``groups`` block into plain entities and ``meta.csg`` (CSG S0-D).
 
     ``groups`` is popped so a recompile of ``instantiate()`` output cannot expand
@@ -82,6 +90,10 @@ def _expand_scenario_groups(merged: dict[str, Any]) -> dict[str, Any]:
     if "groups" not in merged:
         return merged
     entities, csg_meta = expand_group_composition(merged, project_root=REPO_ROOT)
+    dependency_existence_paths.extend(
+        str((Path(REPO_ROOT) / group["oob_ref"].split("#", 1)[0]).resolve())
+        for group in merged.get("groups") or []
+    )
     expanded = dict(merged)
     expanded.pop("groups")
     expanded["entities"] = list(expanded.get("entities", [])) + entities
@@ -148,7 +160,8 @@ class ScenarioCompiler:
             )
         if ingestion.scenario_data is not None:
             merged = ingestion.scenario_data
-        merged = _expand_scenario_groups(merged)
+        dependency_existence_paths: list[str] = []
+        merged = _expand_scenario_groups(merged, dependency_existence_paths=dependency_existence_paths)
         validate_scenario_compiler_shape(
             merged,
             source_path=source_path,
@@ -206,6 +219,7 @@ class ScenarioCompiler:
             warnings=warnings,
             zone_count=len(zones),
             entity_count=len(entities),
+            dependency_existence_paths=tuple(dict.fromkeys(dependency_existence_paths)),
         )
 
 

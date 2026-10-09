@@ -746,7 +746,8 @@ void register_command_scalar_reflection(flecs::world &ecs) {
         .member<std::uint64_t>("objective_area_id")
         .member<std::uint64_t>("objective_node_id")
         .member<std::uint64_t>("ground_commander_id")
-        .member<double>("tactical_cadence_hz");
+        .member<double>("tactical_cadence_hz")
+        .member<std::int32_t>("stance", 1, offsetof(MissionCommandGround, stance));
     ecs.component<MissionCommand>()
         .member<MissionCommandCore>("core", 1, base_offset<MissionCommand, MissionCommandCore>())
         .member<MissionCommandAir>("air", 1, base_offset<MissionCommand, MissionCommandAir>())

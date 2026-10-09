@@ -16,6 +16,17 @@ inline bool finite_world_cva_vector(const Vec3 &value) {
     return std::isfinite(value.x) && std::isfinite(value.y) && std::isfinite(value.z);
 }
 
+// Monotonic samples have no universal minimum interval. Admit an update only
+// when its implied velocity fits the configured target-motion envelope. This
+// bounds beta * innovation / dt for converged tracks and displacement/baseline
+// for bootstrap tracks. 2000 m/s is the default supported envelope, not a
+// calibrated limit of any platform; callers tracking faster targets must widen it.
+inline bool world_tracker_velocity_supported(const Vec3 &velocity, double maximum_speed_mps) {
+    return finite_world_cva_vector(velocity) && std::isfinite(maximum_speed_mps) &&
+           maximum_speed_mps > 0.0 &&
+           std::hypot(velocity.x, velocity.y, velocity.z) <= maximum_speed_mps;
+}
+
 inline Vec3 suppress_world_cva_acceleration_roundoff(const Vec3 &value) {
     constexpr double kRoundoffFloorMps2 = 1.0e-10;
     return {std::abs(value.x) < kRoundoffFloorMps2 ? 0.0 : value.x,
@@ -29,6 +40,7 @@ struct WorldCvaAlphaBetaGammaTrackerParams {
     double gamma = 0.5;
     double minimum_velocity_baseline_s = 0.5;
     double minimum_acceleration_baseline_s = 0.5;
+    double maximum_speed_mps = 2000.0;
 };
 
 inline void append_world_cva_measurement(WorldCvaAlphaBetaGammaTrackerState &state,
@@ -128,6 +140,7 @@ struct WorldCvaAlphaBetaGammaTrackerOutput {
     bool measurement_accepted = false;
     bool measurement_rejected_nonmonotonic = false;
     bool measurement_rejected_invalid = false;
+    bool measurement_rejected_kinematics = false;
     bool coasted = false;
     Vec3 position_world_m{};
     Vec3 velocity_world_mps{};
@@ -209,26 +222,34 @@ update_world_cva_alpha_beta_gamma_tracker(WorldCvaAlphaBetaGammaTrackerState &st
                                    state.corrected_velocity_world_mps * dt +
                                    state.corrected_acceleration_world_mps2 * (0.5 * dt * dt);
             const Vec3 residual = input.measurement_position_world_m - predicted;
+            const Vec3 candidate_velocity =
+                state.velocity_valid ? state.corrected_velocity_world_mps +
+                                           state.corrected_acceleration_world_mps2 * dt +
+                                           residual * (std::clamp(params.beta, 0.0, 2.0) / dt)
+                                     : (input.measurement_position_world_m -
+                                        state.first_measurement_position_world_m) /
+                                           baseline;
+            if (!world_tracker_velocity_supported(candidate_velocity, params.maximum_speed_mps)) {
+                auto output =
+                    propagate_world_cva_alpha_beta_gamma_tracker(state, input.current_time_s);
+                output.measurement_rejected_kinematics = true;
+                return output; // Do not contaminate correction state or history.
+            }
             state.last_prediction_position_world_m = predicted;
             state.last_residual_world_m = residual;
             if (!state.velocity_valid) {
                 // Bootstrap over a widening baseline, matching the CV tracker's
                 // noise-resistant admission rule. Acceleration is not published
                 // until a later correction has a valid velocity state.
-                state.corrected_velocity_world_mps = (input.measurement_position_world_m -
-                                                      state.first_measurement_position_world_m) /
-                                                     baseline;
+                state.corrected_velocity_world_mps = candidate_velocity;
                 state.corrected_position_world_m = input.measurement_position_world_m;
                 state.velocity_valid =
                     state.accepted_measurement_count >= 2 &&
                     baseline >= std::max(0.0, params.minimum_velocity_baseline_s);
             } else {
                 const double alpha = std::clamp(params.alpha, 0.0, 1.0);
-                const double beta = std::clamp(params.beta, 0.0, 2.0);
-                const Vec3 predicted_velocity = state.corrected_velocity_world_mps +
-                                                state.corrected_acceleration_world_mps2 * dt;
                 state.corrected_position_world_m = predicted + residual * alpha;
-                state.corrected_velocity_world_mps = predicted_velocity + residual * (beta / dt);
+                state.corrected_velocity_world_mps = candidate_velocity;
             }
             state.last_measurement_position_world_m = input.measurement_position_world_m;
             state.correction_time_s = input.measurement_time_s;
@@ -261,6 +282,7 @@ struct WorldCvAlphaBetaTrackerParams {
     double alpha = 0.20;
     double beta = 0.02;
     double minimum_velocity_baseline_s = 0.5;
+    double maximum_speed_mps = 2000.0;
 };
 
 struct WorldCvAlphaBetaTrackerInput {
@@ -276,6 +298,7 @@ struct WorldCvAlphaBetaTrackerOutput {
     bool measurement_accepted = false;
     bool measurement_rejected_nonmonotonic = false;
     bool measurement_rejected_invalid = false;
+    bool measurement_rejected_kinematics = false;
     bool coasted = false;
 
     Vec3 position_world_m{};
@@ -361,14 +384,26 @@ update_world_cv_alpha_beta_tracker(WorldCvAlphaBetaTrackerState &state,
         } else {
             const double measurement_dt_s =
                 input.measurement_time_s - state.last_measurement_time_s;
+            const double baseline_dt_s = input.measurement_time_s - state.first_measurement_time_s;
+            const Vec3 predicted = state.corrected_position_world_m +
+                                   state.corrected_velocity_world_mps * measurement_dt_s;
+            const Vec3 candidate_velocity =
+                state.velocity_valid
+                    ? state.corrected_velocity_world_mps +
+                          (input.measurement_position_world_m - predicted) *
+                              (std::clamp(params.beta, 0.0, 2.0) / measurement_dt_s)
+                    : (input.measurement_position_world_m -
+                       state.first_measurement_position_world_m) /
+                          baseline_dt_s;
+            if (!world_tracker_velocity_supported(candidate_velocity, params.maximum_speed_mps)) {
+                auto output = propagate_world_cv_alpha_beta_tracker(state, input.current_time_s);
+                output.measurement_rejected_kinematics = true;
+                return output;
+            }
             if (!state.velocity_valid) {
                 // Bootstrap across a widening baseline so short-cadence angular
                 // noise is not published as a several-hundred-m/s velocity.
-                const double baseline_dt_s =
-                    input.measurement_time_s - state.first_measurement_time_s;
-                state.corrected_velocity_world_mps = (input.measurement_position_world_m -
-                                                      state.first_measurement_position_world_m) /
-                                                     baseline_dt_s;
+                state.corrected_velocity_world_mps = candidate_velocity;
                 state.last_prediction_position_world_m = state.corrected_position_world_m;
                 state.last_residual_world_m =
                     input.measurement_position_world_m - state.corrected_position_world_m;
@@ -386,12 +421,10 @@ update_world_cv_alpha_beta_tracker(WorldCvAlphaBetaTrackerState &state,
                 state.last_prediction_position_world_m = predicted_position_world_m;
                 state.last_residual_world_m = residual_world_m;
                 const double alpha = std::clamp(params.alpha, 0.0, 1.0);
-                const double beta = std::clamp(params.beta, 0.0, 2.0);
 
                 state.corrected_position_world_m =
                     predicted_position_world_m + residual_world_m * alpha;
-                state.corrected_velocity_world_mps = state.corrected_velocity_world_mps +
-                                                     residual_world_m * (beta / measurement_dt_s);
+                state.corrected_velocity_world_mps = candidate_velocity;
                 ++state.accepted_measurement_count;
                 state.velocity_valid = true;
             }

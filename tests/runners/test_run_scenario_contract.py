@@ -4,6 +4,7 @@ import importlib
 import json
 import sys
 from pathlib import Path
+import pytest
 
 from tools.runners import run_scenario_contract
 
@@ -74,3 +75,28 @@ def test_main_reports_missing_suite_specs(monkeypatch, tmp_path: Path, capsys) -
 
   assert run_scenario_contract.main() == 2
   assert str(missing_spec) in capsys.readouterr().err
+
+
+@pytest.mark.parametrize('outcomes,allow_skips,status', [
+  (['skip', 'skip'], False, 1), (['pass', 'skip'], False, 1),
+  (['skip', 'skip'], True, 0), (['pass', 'skip'], True, 0),
+  (['fail', 'skip'], True, 1), (['pass', 'pass'], False, 0),
+])
+@pytest.mark.parametrize('batch', [False, True])
+def test_selected_completion_policy(monkeypatch, capsys, outcomes, allow_skips, status, batch):
+  contracts = importlib.import_module('python.testing.contracts')
+  def run(path):
+    if path == 'skip':
+      raise contracts.ContractSkipped('optional artifact absent')
+    return path == 'pass', 'checked assertion'
+  monkeypatch.setattr(contracts, 'run_contract', run)
+  if batch:
+    from tools.runners.run_contract_batches import _run_direct_specs
+    execute = _run_direct_specs
+  else:
+    execute = run_scenario_contract.run_selected_contracts
+  assert execute(outcomes, allow_skips=allow_skips) == status
+  report = capsys.readouterr().out
+  assert f'PASS={outcomes.count("pass")}' in report
+  assert f'FAIL={outcomes.count("fail")}' in report
+  assert f'SKIP={outcomes.count("skip")}' in report
