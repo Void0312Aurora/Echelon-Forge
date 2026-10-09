@@ -53,7 +53,8 @@ void check_timing_and_velocity_admission(Observe observe_track) {
                          velocity.z - expected.z) < 1.0e-6);
     };
     State state;
-    for (int k = 0; k < 40; ++k) observe_track(state, params, k * 0.05, truth(k * 0.05));
+    for (int k = 0; k < 40; ++k)
+        observe_track(state, params, k * 0.05, truth(k * 0.05));
     REQUIRE(state.velocity_valid);
     const auto saved_position = state.corrected_position_world_m;
     const auto saved_velocity = state.corrected_velocity_world_mps;
@@ -93,7 +94,8 @@ void check_timing_and_velocity_admission(Observe observe_track) {
     CHECK(cold_rejection.measurement_rejected_kinematics);
     CHECK_FALSE(cold.velocity_valid);
     CHECK(cold.accepted_measurement_count == 1);
-    for (int k = 1; k <= 20; ++k) observe_track(cold, params, k * 0.05, truth(k * 0.05));
+    for (int k = 1; k <= 20; ++k)
+        observe_track(cold, params, k * 0.05, truth(k * 0.05));
     REQUIRE(cold.velocity_valid);
     check_velocity(cold.corrected_velocity_world_mps, {0, 300, 0});
 
@@ -113,7 +115,8 @@ void check_timing_and_velocity_admission(Observe observe_track) {
 TEST_SUITE("world_cv_alpha_beta_tracker") {
 
     TEST_CASE("CV rejects implausible bootstrap and correction without a cadence cutoff") {
-        check_timing_and_velocity_admission<WorldCvAlphaBetaTrackerState, WorldCvAlphaBetaTrackerParams>(observe);
+        check_timing_and_velocity_admission<WorldCvAlphaBetaTrackerState,
+                                            WorldCvAlphaBetaTrackerParams>(observe);
     }
 
     TEST_CASE("first position and second velocity bootstrap remain explicitly staged") {
@@ -244,7 +247,8 @@ TEST_SUITE("world_cv_alpha_beta_tracker") {
 TEST_SUITE("world_cva_alpha_beta_gamma_tracker") {
 
     TEST_CASE("CVA rejects implausible bootstrap and correction without contaminating history") {
-        check_timing_and_velocity_admission<WorldCvaAlphaBetaGammaTrackerState, WorldCvaAlphaBetaGammaTrackerParams>(observe_cva);
+        check_timing_and_velocity_admission<WorldCvaAlphaBetaGammaTrackerState,
+                                            WorldCvaAlphaBetaGammaTrackerParams>(observe_cva);
     }
 
     TEST_CASE("constant acceleration becomes observable and converges") {

@@ -222,12 +222,16 @@ update_world_cva_alpha_beta_gamma_tracker(WorldCvaAlphaBetaGammaTrackerState &st
                                    state.corrected_velocity_world_mps * dt +
                                    state.corrected_acceleration_world_mps2 * (0.5 * dt * dt);
             const Vec3 residual = input.measurement_position_world_m - predicted;
-            const Vec3 candidate_velocity = state.velocity_valid
-                ? state.corrected_velocity_world_mps + state.corrected_acceleration_world_mps2 * dt +
-                      residual * (std::clamp(params.beta, 0.0, 2.0) / dt)
-                : (input.measurement_position_world_m - state.first_measurement_position_world_m) / baseline;
+            const Vec3 candidate_velocity =
+                state.velocity_valid ? state.corrected_velocity_world_mps +
+                                           state.corrected_acceleration_world_mps2 * dt +
+                                           residual * (std::clamp(params.beta, 0.0, 2.0) / dt)
+                                     : (input.measurement_position_world_m -
+                                        state.first_measurement_position_world_m) /
+                                           baseline;
             if (!world_tracker_velocity_supported(candidate_velocity, params.maximum_speed_mps)) {
-                auto output = propagate_world_cva_alpha_beta_gamma_tracker(state, input.current_time_s);
+                auto output =
+                    propagate_world_cva_alpha_beta_gamma_tracker(state, input.current_time_s);
                 output.measurement_rejected_kinematics = true;
                 return output; // Do not contaminate correction state or history.
             }
@@ -383,11 +387,14 @@ update_world_cv_alpha_beta_tracker(WorldCvAlphaBetaTrackerState &state,
             const double baseline_dt_s = input.measurement_time_s - state.first_measurement_time_s;
             const Vec3 predicted = state.corrected_position_world_m +
                                    state.corrected_velocity_world_mps * measurement_dt_s;
-            const Vec3 candidate_velocity = state.velocity_valid
-                ? state.corrected_velocity_world_mps +
-                      (input.measurement_position_world_m - predicted) *
-                          (std::clamp(params.beta, 0.0, 2.0) / measurement_dt_s)
-                : (input.measurement_position_world_m - state.first_measurement_position_world_m) / baseline_dt_s;
+            const Vec3 candidate_velocity =
+                state.velocity_valid
+                    ? state.corrected_velocity_world_mps +
+                          (input.measurement_position_world_m - predicted) *
+                              (std::clamp(params.beta, 0.0, 2.0) / measurement_dt_s)
+                    : (input.measurement_position_world_m -
+                       state.first_measurement_position_world_m) /
+                          baseline_dt_s;
             if (!world_tracker_velocity_supported(candidate_velocity, params.maximum_speed_mps)) {
                 auto output = propagate_world_cv_alpha_beta_tracker(state, input.current_time_s);
                 output.measurement_rejected_kinematics = true;
