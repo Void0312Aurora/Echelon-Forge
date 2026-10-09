@@ -66,7 +66,7 @@ gpu
 - [runtime/README.md](runtime/README.md)
 - [runtime/contracts/README.md](runtime/contracts/README.md)
 - [runtime/facade/README.md](runtime/facade/README.md)
-- [runtime/host/README.md](runtime/host/README.zh.md)
+- [runtime/host/README.md](runtime/host/README.md)
 - [models/README.md](models/README.md)
 - [models/domains/README.md](models/domains/README.md)
 - [models/core/README.md](models/core/README.md)
