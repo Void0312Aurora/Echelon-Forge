@@ -204,9 +204,9 @@ SpatialILSResult CompiledScenarioGeometry::query_ils(double x_m, double y_m, dou
     // 1 m threshold guard where a glideslope angle is available. Deflection
     // scales are display saturation limits, not extra coverage-sector limits.
     // Back-course reception is not represented by this combined LOC/GS result.
-    out.valid = std::isfinite(dme_m) && std::isfinite(loc_angle_deg) &&
-                std::isfinite(alt_m) && std::isfinite(threshold_crossing_height_m) &&
-                approach_dist_m > 1.0 && along > 0.0 && dme_m <= best->range_m;
+    out.valid = std::isfinite(dme_m) && std::isfinite(loc_angle_deg) && std::isfinite(alt_m) &&
+                std::isfinite(threshold_crossing_height_m) && approach_dist_m > 1.0 &&
+                along > 0.0 && dme_m <= best->range_m;
     return out;
 }
 
