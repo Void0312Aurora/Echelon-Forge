@@ -60,8 +60,26 @@ Naval 可以约束这些形状在海上执行中的使用方式，但不重新�
 - 初始舰艇与 naval weapon-system 配置基线
 - S1-A/B 有界舰艇机动、实时毁伤到机动耦合，以及场景领舰航路驱动的真方位护航站位控制
 
-这些 surface 不构成完整舰队 doctrine、全舰队机动标定、海上补给行动，
-也不构成权威的海军武器与伤害标定。
+这些 surface 不构成完整舰队 doctrine、全舰队机动标定，也不构成权威的海军武器
+与伤害标定。另有一个有界的舰艇级存量转移 primitive；只有在作者提供
+`LogisticsNode`/`NavalStores` 参数时才会生效，它不等价于舰艇续航或全舰队补给行动。
+
+## 后勤能力边界
+
+`src/systems/domains/naval/naval_logistics_system.h` 在默认图中注册每 tick query。
+当双方提供所需 component 与参数时，它根据间隔和相对速度限制选择 provider，
+并通过 `NavalResupplyStage` 状态机转移有界的燃油、导弹与干货存量。可配置字段位于
+`src/components/systems/logistics.h`，默认注册记录在
+`src/core/engine/system_contribution_registry.cpp`。
+
+这些是抽象且有条件的舰艇级库存转移机制的实现证据。维护中的测试树目前没有覆盖
+该转移端到端行为的重点回归测试，因此它仍是已实现 primitive，而不是已接受或已标定
+的 UNREP 能力。以下能力仍未准入，并继续属于 CSG S1-C 依赖：
+
+- 舰艇燃油消耗与续航核算；
+- CSG 级补给调度器或编队级后勤 doctrine；
+- 海上补给几何/运行资格与阶段验收；
+- 已标定的舰队级结果。
 
 ## 标准化规则
 
@@ -92,3 +110,5 @@ Naval 可以约束这些形状在海上执行中的使用方式，但不重新�
   [来源台账](reviews/csg_order_of_battle_20260928/csg_source_ledger_20260928.md)。
 - [Joint 指挥与建模基线](../joint/standards/command_and_modeling_baseline.zh.md)
 - [Joint 指挥链路与汇报基线](../joint/standards/command_link_and_reporting_baseline.zh.md)
+- [Naval logistics system](../../../src/systems/domains/naval/naval_logistics_system.h)
+- [Naval logistics components](../../../src/components/systems/logistics.h)

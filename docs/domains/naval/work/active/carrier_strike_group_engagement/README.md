@@ -165,6 +165,13 @@ ready to start.
 | Aircraft carrier launch and landing | Air owner | opens at `CSG-S2` | `S2` | deck resources and recovery pattern |
 | Outcome adjudication, termination, replay | `systems/weapons` with architecture | opens at `CSG-S6` | `S6`; throughput and replay from `S0` | CSG outcome conditions |
 
+The registered `NavalStores`/`NavalResupplyStage` transfer primitive is a
+conditional ship-level inventory mechanism only. Its presence does not
+discharge the `CSG-S1`/`S1-C` dependency: ship fuel/endurance accounting, CSG
+group replenishment scheduling, operational UNREP geometry, and stage acceptance
+remain open. No focused maintained regression currently qualifies the transfer
+end to end.
+
 ## Task Clusters
 
 - Task-cluster plan:
@@ -222,7 +229,8 @@ The package can be marked accepted only when:
 - The [S1-A/B checkpoint](carrier_strike_group_engagement_acceptance_20260928.md#csg-s1-ab-runtime-checkpoint-2026-10-08)
   validates one-hour named/mirror transits, terminal station settling, sourced
   acceleration/stopping checks and synthetic damage-to-mobility coupling.
-  S1-C waits for the shared ship fuel/endurance contract; S1-D waits for
+  S1-C waits for the shared ship fuel/endurance contract and a CSG-level
+  replenishment scheduler; S1-D waits for
   Environment Runtime `P3-A`, then completes environment and Joint hierarchy
   integration. S1-X requires both clusters; no local stand-ins are dispatched.
 - The [Geodetic Frame](../../../../../systems/physics/work/active/geodetic_frame/README.md)
