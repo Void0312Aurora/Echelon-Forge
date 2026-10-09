@@ -32,7 +32,9 @@ def _compile_merged_scenario_data(
     project_root: str,
 ) -> tuple[dict[str, Any], tuple[str, ...], tuple[str, ...]]:
     merged = _clone_scenario_value(raw_scenario_data)
-    imports = merged.get("imports", None)
+    # Expanded output is valid compiler input. Keep provenance in the compiled
+    # dependency list, while consuming the directives that materialized it.
+    imports = merged.pop("imports", None)
     imported_files: list[str] = []
     warnings: list[str] = []
 
