@@ -1,6 +1,6 @@
 # Stable Entity Identity For Stochastic Draws
 
-Status: `2026-10-08` bounded implementation integrated on `main`: the #74-#78 stable-identity stack merged 2026-09-30 and the #82-#85 Ground stack followed 2026-10-01, including Ground direct-fire draw-site integration. P0-P5 and the original review HOLD/repairs remain historical evidence. Raw-Flecs-id semantic-reference portability is still a separate residual.
+Status: `2026-10-09` bounded implementation integrated on `main`: the #74-#78 stable-identity stack merged 2026-09-30 and the #82-#85 Ground stack followed 2026-10-01, including Ground direct-fire draw-site integration. P0-P5 and the original review HOLD/repairs remain historical evidence. Raw-Flecs-id semantic-reference portability is still a separate residual.
 
 Language:
 - English canonical: `README.md`
@@ -10,7 +10,14 @@ Document kind: `task`
 Lifecycle: `active`
 Canonical: `docs/architecture/work/active/stable_entity_identity/README.md`
 Owner: `architecture/runtime-composition`
-Last verified: `2026-09-30`
+Last verified: `2026-10-09`
+
+Size exception: this maintained README remains above 300 lines because it is the
+single canonical boundary for the pre-fix measurement, current-mainline status,
+task clusters, review disposition, and acceptance gate. Splitting the historical
+inventory from the decisions would make the measured evidence harder to trace to
+the gate that consumed it; volatile command details remain in the referenced
+source and test files.
 
 Inputs:
 
@@ -22,7 +29,11 @@ Inputs:
 - [Simulation conventions](../../../standards/simulation_conventions.md) (determinism)
 - [Subproject creation standard](../../../../engineering/automation/rules/subproject_creation_standard.md)
 
-## Defect
+## Historical Pre-Fix Defect Snapshot (`9ee4558e`)
+
+The following defect statement and measurements are retained as the original
+pre-fix experiment. They are historical evidence, not a present-tense claim
+about `main`.
 
 Every per-engagement and per-detection stochastic draw mixes **raw Flecs entity ids** into
 its seed. A Flecs id is an allocation handle, not an identity. It moves with the
@@ -43,7 +54,7 @@ profiled blast-fragmentation hits, then 80 steps.
 | same kernel, `reset(20260529)`, episode 0 | `0x245, 0x24a` | survives |
 | same kernel, same reset, episodes 1–3 | `0x1_0000_024a…` | removed at step 1 |
 
-## Main-Branch Inventory (`9ee4558e`)
+## Historical Mainline Inventory — Pre-Fix Snapshot (`9ee4558e`)
 
 | # | Site | Draw | Id inputs | Seed-aware |
 | --- | --- | --- | --- | --- |
@@ -58,6 +69,22 @@ profiled blast-fragmentation hits, then 80 steps.
 Sites 1–2 seed the munition's `rng_state`, which its downstream draws inherit: fuze
 reliability in `damage_system_common.h`, component failure in the effects model, and the
 legacy splash roll.
+
+## Current Mainline Status (`main@5fa8cafc85ddd1893536a9b7a41690f8e8581a96`)
+
+The current source and focused tests were re-read at the audited mainline
+revision above. This table supersedes the historical inventory for present
+status without changing the recorded measurements.
+
+| Surface | Current fact | Evidence | Claim ceiling |
+| --- | --- | --- | --- |
+| Stable draw helper and accepted sites | `draw_seed` derives from the reset seed, `StableEntitySerial`, draw site, time, participant order, and explicit words; the helper rejects missing identity state/serials | `src/core/interfaces/stochastic_draw.h`; `src/tests/test_stable_entity_identity.cpp`; `tests/runtime/air_combat/test_stable_entity_identity_draws.py` | Invariance to census and raw-id movement is covered; creation-order invariance is not claimed |
+| Ground direct fire | `SimulationKernel.fire_ground_weapon` reaches the weapon-release service, and the native identity suite exercises `DrawSite::ground_direct_fire` for the bounded Ground fixture | `src/core/engine/simulation_kernel_weapon_api.cpp`; `src/tests/test_stable_entity_identity.cpp`; `docs/domains/ground/README.md` | Bounded tracked-target/rifle proxy only; no full Ground fire-control, LOS, cover, or suppression |
+| Semantic references | Raw entity ids remain valid within an episode where existing observations/contacts use them; cross-process semantic-reference portability remains unresolved | `README.md` Out Of Scope; runtime observation/contact contracts | No cross-process portability or replay-identity admission |
+
+The current table deliberately names the residual separately from the fixed draw
+seed defect. A future semantic-reference change needs its own contract and
+evidence; it must not rewrite this historical experiment.
 
 - **Primitive copies.** There are five private splitmix64 copies: command_api,
   weapon_release_service, the sensor model, the acoustic model, and
