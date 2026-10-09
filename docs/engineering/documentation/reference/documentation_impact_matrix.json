@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "status": "maintained",
+  "owner": "engineering/documentation-governance",
+  "selection": "all matching rows are reported; the nearest owner remains the reviewer decision",
+  "entries": [
+    {
+      "id": "runtime-application-contract",
+      "code_prefixes": [
+        "src/runtime/",
+        "src/core/engine/",
+        "src/core/mission/",
+        "interfaces/python/"
+      ],
+      "documentation": [
+        "src/README.md",
+        "src/README.zh.md",
+        "src/runtime/README.md",
+        "src/runtime/README.zh.md",
+        "docs/architecture/standards/runtime_workflow_and_contract_baseline.md",
+        "docs/architecture/standards/runtime_workflow_and_contract_baseline.zh.md"
+      ],
+      "evidence": [
+        "tests/architecture/governance/test_runtime_infrastructure_documentation.py",
+        "tests/runtime/"
+      ],
+      "note": "Record facade, host, mission, binding, and workflow ownership before claiming a maintained entrypoint."
+    },
+    {
+      "id": "simulation-provider-boundary",
+      "code_prefixes": [
+        "python/simulation/",
+        "python/rl/runtime/"
+      ],
+      "documentation": [
+        "python/README.md",
+        "docs/architecture/standards/runtime_workflow_and_contract_baseline.md",
+        "docs/architecture/standards/runtime_workflow_and_contract_baseline.zh.md"
+      ],
+      "evidence": [
+        "tests/architecture/simulation/test_backend_boundary.py",
+        "tests/world_batch/"
+      ],
+      "note": "State provider selection and route-specific ownership; do not infer RL/no-RL parity from a shared protocol."
+    },
+    {
+      "id": "domain-system-owner",
+      "code_prefixes": [
+        "src/systems/domains/"
+      ],
+      "documentation": [
+        "docs/domains/*/README.md",
+        "docs/domains/*/README.zh.md",
+        "docs/systems/*/README.md",
+        "docs/systems/*/README.zh.md"
+      ],
+      "evidence": [
+        "tests/architecture/",
+        "tests/runtime/"
+      ],
+      "note": "Use the domain or cross-domain system owner; distinguish registered mechanisms from accepted behavior."
+    },
+    {
+      "id": "python-dependency-groups",
+      "code_prefixes": [
+        "pyproject.toml"
+      ],
+      "documentation": [
+        "README.md",
+        "README.zh.md",
+        "tools/README.md",
+        "tools/README.zh.md"
+      ],
+      "evidence": [
+        "tests/architecture/governance/test_standards_documentation_governance.py"
+      ],
+      "note": "Keep optional dependency descriptions aligned with declared groups without inventing an install workflow."
+    }
+  ]
+}

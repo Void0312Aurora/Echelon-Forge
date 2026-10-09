@@ -93,6 +93,34 @@ research owner 所属的 standards 子树，共同定义仓库的命名、分层
 不要只依赖带日期 review 文件作为当前权威。最近的维护 owner README 或 standards
 入口必须指向当前解释。
 
+## 代码到文档影响检查
+
+代码或合同发生变化时，先检查维护中的影响矩阵：
+[`documentation_impact_matrix.json`](../reference/documentation_impact_matrix.json)。
+该窄检查会报告所有匹配的 owner 行：
+
+```bash
+python tools/maintenance/documentation_impact.py --base origin/main --head HEAD
+```
+
+匹配某一行时，pull request 必须记录以下一种判断：
+
+- `docs-updated`：同一变更已更新列出的维护目标；
+- `still-accurate`：现有 owner 文档仍然准确，并给出简短理由；
+- `candidate-or-historical`：变更仅限于非维护中的 candidate 或历史表面，并给出简短理由。
+
+使用 `--check` 加判断和理由可把这项记录变成确定性 gate。例如：
+
+```bash
+python tools/maintenance/documentation_impact.py \
+  --base origin/main --head HEAD --check \
+  --decision still-accurate \
+  --reason "The changed candidate remains outside the maintained runtime boundary."
+```
+
+矩阵负责报告匹配的 owner，不创建第二套全局权威。链接、双语、依赖与聚焦行为测试
+仍保持确定性；语义上的提升或退役仍需人工审阅和可执行证据。
+
 ## 状态与 Header 规则
 
 维护中的 standards 页面应在顶部附近包含状态行：

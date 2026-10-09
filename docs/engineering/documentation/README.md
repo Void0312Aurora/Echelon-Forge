@@ -34,6 +34,8 @@ owner's documents.
 - [Document alignment map](reference/document_alignment_map.md): current
   distributed owner and authority routing; it does not own another owner’s
   technical rules.
+- [Documentation impact matrix](reference/documentation_impact_matrix.json):
+  narrow code-to-documentation owner matching for change review.
 
 The examples describe required shape. They do not promote a draft, review, or
 reference into a standard and must not be copied with placeholder claims intact.

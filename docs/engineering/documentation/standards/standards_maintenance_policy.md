@@ -108,6 +108,39 @@ Do not rely on dated review files alone as current authority. The nearest
 maintained owner README or standards entry must point to the current
 interpretation.
 
+## Code-to-Documentation Impact Check
+
+For a code or contract change, inspect the maintained impact matrix:
+[`documentation_impact_matrix.json`](../reference/documentation_impact_matrix.json).
+The narrow check reports every matching owner row:
+
+```bash
+python tools/maintenance/documentation_impact.py --base origin/main --head HEAD
+```
+
+When a row matches, the pull request records one of these decisions:
+
+- `docs-updated`: a named maintained target changed in the same change;
+- `still-accurate`: the existing owner documentation remains accurate, with a
+  short reason;
+- `candidate-or-historical`: the change is limited to a non-maintained
+  candidate or historical surface, with a short reason.
+
+Use `--check` with the decision and reason to make that record a deterministic
+gate. For example:
+
+```bash
+python tools/maintenance/documentation_impact.py \
+  --base origin/main --head HEAD --check \
+  --decision still-accurate \
+  --reason "The changed candidate remains outside the maintained runtime boundary."
+```
+
+The matrix reports matching owners; it does not create a second global
+authority. Link, bilingual, dependency, and focused behavior tests remain
+deterministic. Semantic promotion or retirement still requires manual review
+with executable evidence.
+
 ## Status And Header Rules
 
 Maintained standards pages should include a status line near the top:
