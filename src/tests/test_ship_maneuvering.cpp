@@ -24,6 +24,7 @@
 #include "systems/domains/naval/ship_motion_system.h"
 #include "systems/domains/naval/submarine_motion_system.h"
 #include "systems/combat/damage_system_naval.h"
+#include "systems/physics/instrument_system.h"
 
 #include <doctest/doctest.h>
 #include <flecs.h>
@@ -356,5 +357,63 @@ TEST_SUITE("submarine_motion") {
         CHECK(down.x == doctest::Approx(up.x));
         CHECK(down.y == doctest::Approx(up.y));
         CHECK(hull.z == -50.0);
+    }
+}
+
+TEST_SUITE("naval_instruments") {
+    TEST_CASE("ship and submarine instruments follow motion without aero components") {
+        for (const bool submarine : {false, true}) {
+            flecs::world world;
+            register_ship_motion_system(world);
+            register_submarine_motion_system(world);
+            register_instrument_system(world);
+            InstrumentState initial{};
+            initial.jammer_snapshot_time_s = 123.0;
+            initial.countermeasure_snapshot_time_s = 124.0;
+            auto unit = world.entity().set<Transform>({0, 0, submarine ? -50.0 : 0.0, 0, 0, 0})
+                            .set<Velocity>({0, 8, 0}).set<InstrumentState>(initial);
+            if (submarine) unit.set<SubmarinePlatform>({});
+            else unit.set<ShipPlatform>(ddg51_flight_i()).set<AngularVelocity>({});
+            NavalCommandIntent command{};
+            command.active = true;
+            command.cmd_heading_deg = 90;
+            command.cmd_speed_mps = 10;
+            command.cmd_depth_m = 80;
+            unit.set<NavalCommandIntent>(command);
+            for (int step = 0; step < 10; ++step) world.progress(0.1);
+            const auto &position = *unit.get<Transform>();
+            const auto &velocity = *unit.get<Velocity>();
+            const auto &inst = *unit.get<InstrumentState>();
+            CHECK(position.heading > 0);
+            CHECK(inst.heading_deg == doctest::Approx(position.heading));
+            CHECK(inst.ground_speed_mps == doctest::Approx(std::hypot(velocity.vx, velocity.vy)));
+            CHECK(inst.vn_mps == doctest::Approx(velocity.vy));
+            CHECK(inst.ve_mps == doctest::Approx(velocity.vx));
+            CHECK(inst.vd_mps == doctest::Approx(-velocity.vz));
+            CHECK(inst.vvi_mps == doctest::Approx(velocity.vz));
+            CHECK(inst.pitch_deg == doctest::Approx(position.pitch));
+            CHECK(inst.cmd_heading_deg == 90);
+            CHECK(inst.cmd_speed_mps == 10);
+            CHECK(inst.cmd_alt_m == (submarine ? -80 : 0));
+            CHECK(inst.jammer_snapshot_time_s == 123);
+            CHECK(inst.countermeasure_snapshot_time_s == 124);
+            CHECK_FALSE(unit.has<AeroState>());
+            // Installed navigation reports remain authoritative even when
+            // deliberately different from truth (e.g. an INS drift test).
+            EGI egi{};
+            egi.vn_mps = 3; egi.ve_mps = 4; egi.vd_mps = 2;
+            egi.lat_deg = 30; egi.lon_deg = 120;
+            egi.gps_available = true; egi.position_uncertainty_m = 5;
+            unit.set<EGI>(egi);
+            world.progress(0.1);
+            const auto &reported = *unit.get<InstrumentState>();
+            CHECK(reported.ground_speed_mps == 5);
+            CHECK(reported.vn_mps == 3);
+            CHECK(reported.ve_mps == 4);
+            CHECK(reported.vd_mps == 2);
+            CHECK(reported.lat_deg == 30);
+            CHECK(reported.lon_deg == 120);
+            CHECK(reported.gps_available);
+        }
     }
 }
