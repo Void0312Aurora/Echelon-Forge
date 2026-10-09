@@ -121,6 +121,8 @@
   - Moves selected experiment/dataset directories aside to create a smaller repro workspace.
 - [translate_docs_batch.py](maintenance/translate_docs_batch.py)
   - Audits bilingual coverage and batch-translates Markdown doc peers with an OpenAI-compatible API.
+- [documentation_impact.py](maintenance/documentation_impact.py)
+  - Reports and gates the maintained documentation owners affected by a code or contract change.
 - [internal_code_governance](maintenance/internal_code_governance/)
   - Audits added production and documentation lines for work-tracking codes or
     opaque lettered-phase identifiers; CI blocks high-confidence source/runtime

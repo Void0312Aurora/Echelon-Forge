@@ -29,6 +29,8 @@ Last verified: `2026-08-08`
   机器可读同步注册表的人类可读合同。
 - [文档对齐映射](reference/document_alignment_map.zh.md)：当前分布式 owner 与 authority
   路由；它不拥有其他 owner 的技术规则。
+- [文档影响矩阵](reference/documentation_impact_matrix.json)：用于变更审阅的窄范围
+  代码到文档 owner 匹配。
 
 结构实例只描述必需形态，不能把 draft、review 或 reference 提升为 standard，
 也不得保留占位 claim 后直接复制发布。

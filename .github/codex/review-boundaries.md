@@ -29,6 +29,9 @@ it belongs to and takes its severity from the ladder below.
 7. **Documentation sync** — user-visible behavior changes update the
    affected docs; bilingual document clusters stay paired when both
    languages exist (`docs/engineering/documentation/reference/bilingual_document_clusters.json`).
+   Code or contract changes also run the maintained impact matrix and record
+   `docs-updated`, `still-accurate`, or `candidate-or-historical` for each
+   matching owner.
 
 Style and formatting are machine-gate territory (clang-format, ruff), not
 review findings, unless the gates cannot express the rule.

@@ -112,6 +112,8 @@
   - 将选定的实验/数据集目录移开，以创建一个更小的复现工作区。
 - [translate_docs_batch.py](maintenance/translate_docs_batch.py)
   - 审计双语覆盖率，并使用与 OpenAI 兼容的 API 批量翻译 Markdown 文档对等文件。
+- [documentation_impact.py](maintenance/documentation_impact.py)
+  - 报告并 gate 代码或合同变更影响到的维护文档 owner。
 - [internal_code_governance](maintenance/internal_code_governance/)
   - 审计新增 production 与 documentation 行中的 work-tracking code 或不透明字母阶段标识；
     CI 会阻止高置信度 source/runtime 违规，文档 finding 在治理期间保留为 warning。
