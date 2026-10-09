@@ -5,30 +5,110 @@
 - 英文主文：`README.md`
 - 中文辅文：[README.zh.md](README.zh.md)
 
-Echelon Forge 是一个面向空中、海军、地面任务、协同指挥和飞行任务研究的
-多域仿真与强化学习工作台。
+Echelon Forge 是一个面向多域任务研究的语义-因果仿真平台，并带有可选的学习层。
+它构建一套架构，用于把场景和内容定义、任务与 tasking 语义、领域模型、agent 接口、保真度要求
+以及实验协议接入可复现的仿真工作流。当前维护的仓库只准入有界的原生 CPU composition 和有限的
+领域/runtime 路径；完整保真度 composition 以及不受约束的外部 provider 或 plugin 准入仍由单独的
+治理规则决定。
 
-该仓库整合了：
+## 项目内容
 
-- 基于 `flecs` 的 C++ ECS 仿真内核
-- 通过 `nanobind` 暴露为 `ef_py` 的 Python 绑定
-- 场景编译/运行时工具
-- Gymnasium 风格训练环境
-- 批量 rollout 和协作训练基础设施
-- 面向 air、naval、ground 和 combined/cooperative 任务的多域场景、内容和 profile 层
-- 评估、诊断和契约式回归工具
+- 基于 `flecs` 的原生 C++ ECS 仿真运行时，提供固定步长 CPU 执行和确定性重置种子。
+- 类型化 C++ runtime facade，以及通过 `nanobind` 暴露为 `ef_py` 的 Python 绑定。
+- 场景编译与实现，覆盖 content、unit、profile 和 mission setup。
+- 可选的 Gymnasium 风格环境适配器、向量化 world-batch 执行，以及面向 policy 实验的协同 command/tasking 表面。
+- 用于控制、感知、制导、武器、effects 和平台 capability 的领域模型族，并通过共享生命周期 contract
+  接入已经准入的路径。
+- 评估、诊断、replay/evidence 导出、契约规范和架构回归门禁。
 
-该项目仍在演进中，但维护的主线已支持：
+当前维护主线最完整的端到端覆盖位于 air/execution 和 cooperative execution。Naval 与 Ground
+已经准入有界的 tasking、平台、移动、地形、接触、射击和 evidence 表面；这些领域还不代表完整的生产级任务运行时。
 
-- 固定步长仿真和确定性重置种子
-- 任务/指令/奖励/终止运行时
-- 起飞、巡航、着陆及组合任务训练线路
-- 协作执行实验
-- 海军 pre-fire 任务、接触与报告夹具
-- 有界 Ground 单兵移动、地形、直射和毁伤探针（不代表完整生产级陆战 runtime）
-- 活跃的诊断和评估工具
+## 核心架构概览
 
-## 仓库状态
+架构围绕五个问题组织，而不是拆成互相独立的垂直 runtime stack：
+
+| 面向 | 问题 | 负责内容 |
+| --- | --- | --- |
+| Semantic | 世界中有什么？ | 领域 ontology、场景/content 编译、capability、role、task 和类型化契约。 |
+| Causal | 什么导致什么？ | 状态转移、事件顺序、阶段依赖、barrier 和可 replay 的因果证据。 |
+| Agentic | 谁知道、决定并行动？ | information state、authority scope、command/tasking、policy 接口和协同。 |
+| Learning | 系统如何改进？ | 评估、curriculum、capability profile、场景生成、policy 和 world-model 消费者。 |
+| Experiment | 具体比较什么？ | 场景引用、配置组合、seed、评估协议和可比性规则。 |
+
+这五面模型是维护中的架构方向；各部分实现成熟度并不相同。下面的准入表说明当前哪些领域路径已经被实际运行，哪些仍然是有界或实验性的。
+
+Evidence 是贯穿各面的公共层：trace、packet ancestry、snapshot version、event order 和 validation
+verdict 解释一个运行为什么可信。作为架构规则，领域功能通过明确的 model family、capability contract
+和 stage contract 接入这些公共面，而不是创建私有的 `air`、`naval` 或 `weapon` runtime stack；每条领域
+路径仍需单独完成 stage、contract 和 evidence 准入。
+
+实现遵循以下执行形状：
+
+```text
+scenario + content + profile + experiment settings
+  -> content 编译与 world setup
+  -> tasking 与 command delivery
+  -> control 与 physics 状态更新
+  -> sensing、track、link、fire/effects 与 damage
+  -> observation/result 导出
+  -> policy、评估、诊断和 evidence 消费者
+```
+
+P0-P10 定义的是因果-时间架构模型。当前维护的 CPU runtime 仍是固定步长；显式 stage-node manifest
+以及依赖/clock-domain 准入正在逐步扩展。模型允许不同频率和空阶段，但当前有界运行只使用已经准入的
+contract，不表示完整的多频率 scheduler 已投入运行。已实现的反馈经过显式 state version、event timestamp
+或 barrier。
+
+完整的 P0-P10 阶段词汇、graph-of-graphs 模型和 stage contract 规则维护在
+[Simulation System Architecture Design](docs/architecture/standards/simulation_system_architecture_design.zh.md) 中。
+
+## 仿真层与学习层是分离的
+
+仿真层可以独立运行。它拥有权威 world state、状态演化、当前已准入的固定步长执行顺序与调度 contract、
+event 顺序、facade 可见 snapshot、仿真语义 termination 和编译后的 mission product；它不拥有训练循环、
+curriculum、policy state 或前端专用的 observation encoder。
+
+学习与 policy 层是仿真的消费者。learned policy、scripted doctrine、人类操作员或其他 decision
+model 选择 observation view，并通过 facade contract 产生 action 或 coordination intent。RL environment
+是 **Env-as-View** 适配器：它消费 `ObservationPacket`，通过 facade 注入 action，并镜像 episode state；
+它不拥有仿真真值或 episode phase。
+
+因此，仓库维护两条在同一 native truth boundary 汇合的路径：
+
+```text
+直接仿真路径（不依赖 RL）
+scenario compiler -> facade_batch -> RuntimeFacade -> native simulation
+                                     -> snapshot / step result / replay
+
+RL 或 policy 路径（可选消费者）
+scenario loader + policy adapter -> 显式 world_batch / WorldBatchVecEnv
+                                 -> 同一个 RuntimeFacade 和 native simulation
+                                 -> observation/action bridge -> rollout data
+```
+
+`facade_batch` 是默认的 no-RL 场景路径；维护中的 RL 训练和评估显式选择 `world_batch`。当前维护的
+默认 composition 是仓库自有的 `builtin.default_compatibility` profile 与 `cpu_exact.reference` backend。
+Provider 和 plugin 接口属于受治理的准入点；外部 provider 或 plugin 能被接口加载，并不代表它已经准入。
+两条适配路径共享 native truth boundary，但不能在没有 parity gate 的情况下假定它们的 reward、termination
+和 autoreset 行为完全相同。轻量仿真路径不要求安装 Gymnasium、Stable-Baselines3 或 PyTorch。
+
+可运行的 no-RL 示例见
+[`python/simulation/air/demo.py`](python/simulation/air/demo.py)；确定性 replay 覆盖见
+[`tests/runtime/simulation/test_air_facade_demo.py`](tests/runtime/simulation/test_air_facade_demo.py)。
+
+## 这种架构带来的优势
+
+- **共享语义：** 架构为新领域功能提供共同生命周期，使已准入的跨领域比较使用一致的 task、state、observation
+  和 evidence 词汇。
+- **仿真独立性：** 场景、scripted run、诊断和 facade client 可以不导入 RL 栈而运行原生仿真；学习层保持为可替换消费者。
+- **稳定边界：** 前端依赖 `src/runtime/facade` 和类型化 packet，而不是直接依赖 Flecs entity、kernel 顺序或 backend 细节。
+- **权威真值：** 原生 CPU runtime 拥有世界状态和 episode 真值；Python mirror 与 GPU 辅助路径保持为适配器或有界 capability。
+- **实验可比：** 固定步长、显式 seed、profile、scenario/config 输入和评估协议让运行更容易复现和比较。
+- **结果可解释：** observation provenance、诊断、契约测试和回归门禁可以说明结果使用了什么，以及哪个边界真正得到验证。
+- **受控扩展：** 新领域在成为维护路径前，需要声明参与的 lifecycle stage、packet、capability seam 和 evidence。
+
+## 项目范围与状态
 
 本仓库是一个活跃的研究/工程代码库，并非完善的产物发布。
 
@@ -41,7 +121,7 @@ Echelon Forge 是一个面向空中、海军、地面任务、协同指挥和飞
 - 社区贡献目前采用 issue-first 和 owner-scoped 模式；见
   [CONTRIBUTING.md](CONTRIBUTING.md)
 
-## 领域成熟度快照
+## 项目内容与成熟度
 
 本仓库已经是多域项目，但各领域成熟度并不相同。下面的表格是入口地图，不是发布承诺。
 
@@ -65,7 +145,7 @@ Echelon Forge 是一个面向空中、海军、地面任务、协同指挥和飞
 
 不要将 `cmo` 视为独立产品名，也不要在机会主义下重命名包 ID、CMake ID、辅助名称或脚本路径。完整的命名迁移应作为一个独立的有范围更改来处理，并附上兼容性说明和产物/缓存清理指南。
 
-## 快速开始
+## 构建与开发
 
 本地验证期望在仓库虚拟环境中运行：
 
@@ -166,7 +246,7 @@ cmo_python -m pytest -q \
 
 如果使用不同的构建目录，请在 sourcing `tools/maintenance/cmo_env.sh` 之前导出 `CMO_BUILD_DIR=/path/to/build`，或在 Windows 上调用 `tools\maintenance\cmo_env.ps1` 之前设置 `$env:CMO_BUILD_DIR`。
 
-## 项目布局
+## 如何浏览代码
 
 - [src/](src/README.md)：C++ 内核、任务运行时、运行时外观、Python 绑定、GPU 辅助。
 - [python/](python/README.md)：RL 运行时、训练辅助、场景编译器/运行时、诊断支持。
@@ -184,36 +264,62 @@ cmo_python -m pytest -q \
 `python.rl.runtime.cooperative_world_batch_vec_env.CooperativeWorldBatchVecEnv`。
 `UniversalEnv` 保留兼容导入名称，其构造函数会立即报错，不能作为训练或评估后端。
 
-## 架构边界
+## 实现边界
 
-维护的依赖方向为：
+下面是面向代码导航的场景输入到步结果路径：
 
 ```text
-interfaces/python
-  -> runtime/facade
-    -> core/engine and core/mission
-      -> systems
-        -> models / components / content
+场景 JSON + profile
+  -> python/scenario/compiler 和 python/scenario/runtime
+  -> python/simulation 后端选择
+       +-> facade_batch（默认的非 RL 与 scripted 路径）
+       |   -> ef_py / src/runtime/facade
+       |   -> src/core/mission 和 src/core/engine
+       |   -> src/systems 修改 ECS 世界
+       |   -> snapshot / step result / replay
+       +-> 显式 world_batch（训练与评估路径）
+           -> ef_py / src/runtime/facade
+           -> src/core/mission 和 src/core/engine
+           -> src/systems 修改 ECS 世界
+           -> observation 与 result packet
+           -> gym_envs 和 python/rl
+           -> train.py / evaluate.py / tools / tests
 ```
 
-关键规则：
+两条分支在 native truth boundary 汇合；只有显式的 `world_batch` 分支继续进入 Gym/RL 和训练消费者。
 
-- `components/` 存放 ECS 组件和类似 DTO 的结构
-- `systems/` 存放每步突变逻辑
-- `models/` 存放可替换的领域模型
-- `core/engine` 拥有 `SimulationKernel` 和批量运行时
-- `core/mission` 拥有任务运行时和情节编排
-- `runtime/facade` 是维护的 C++ 应用程序契约
-- `interfaces/python` 应仅保留为绑定/适配
+原生代码的职责边界如下：
+
+```text
+src/runtime/facade
+  -> src/core/mission
+    -> src/core/engine
+      -> src/systems
+        -> src/models + src/components + src/content
+```
+
+- `src/core/engine` 负责规范的 CPU `SimulationKernel`、`WorldBatchRuntime`、世界步进和引擎级传输。
+- `src/core/mission` 负责任务目标、奖励与终止决策，以及围绕引擎的 episode 编排。
+- `src/systems` 注册 Flecs systems，并应用每个 timestep 的状态修改。
+- `src/models` 存放可替换的控制、传感器、制导和 effects 实现；`src/components` 存放 ECS 状态及类型化 command/tasking 数据；`src/content` 负责静态 schema、unit 定义和加载器。
+- `src/runtime/facade` 是位于 core 之上的维护型类型化 C++ 应用契约；`src/interfaces/python` 通过 `ef_py` 暴露该契约，只应承担类型转换和错误映射。
+- `python/scenario/` 编译并实例化场景；`python/simulation/` 选择后端；`gym_envs/` 将运行时结果适配为 Gymnasium 风格接口；`python/rl/` 负责训练侧消费者。
+- `tools/` 和 `tests/` 提供评估、诊断、契约检查和回归门禁，不应成为另一套运行时 authority。
+
+CPU runtime 仍是规范的世界步进真值。GPU 辅助路径可以提供 packet 支持或实验能力，但不替代 CPU 路径。
+`UniversalEnv` 名称仍可作为兼容性导入，但其构造函数会快速失败；维护的训练和评估应使用上面的显式
+world-batch/facade 适配器。
 
 另见：
 
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
-- [docs/operations/reference/src_layer_map.zh.md](docs/operations/reference/src_layer_map.zh.md)
-- docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md (`git show 3dc34673:docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md`)
+- [python/README.md](python/README.md)
+- [gym_envs/README.md](gym_envs/README.md)
+- [架构 owner](docs/architecture/README.zh.md)
+- [代码层地图](docs/operations/reference/src_layer_map.zh.md)
 
-## 场景与训练配置
+## 场景与实验输入
 
 维护的场景位于 [scenarios/](scenarios/README.md)，分为：
 
@@ -249,7 +355,7 @@ interfaces/python
 - `experiments/`、`datasets/` 和 `output/` 是运行时或产物工作区，默认被忽略。
 - 大型运行输出应通过报告、归档清单或留存诊断（位于文档化的产物路径下）来保留，而非将整个实验目录签入主仓库。
 
-## 训练
+## 训练与评估
 
 当前根/操作人员入口点：
 
