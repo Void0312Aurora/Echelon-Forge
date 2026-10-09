@@ -4,32 +4,94 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-Echelon Forge is a multi-domain simulation and reinforcement-learning
-workbench for air, naval, ground-tasking, cooperative command, and flight-task
-research.
+Echelon Forge is a semantic-causal simulation compiler and learning platform
+for multi-domain mission research. It turns scenario and content definitions,
+mission and tasking semantics, domain models, agent interfaces, fidelity
+requirements, and experiment protocols into executable simulation runs that
+can be inspected, compared, and evaluated.
 
-The repository combines:
+## What the project contains
 
-- a C++ ECS simulation kernel built around `flecs`
-- Python bindings exposed through `nanobind` as `ef_py`
-- scenario compilation / runtime utilities
-- Gymnasium-style training environments
-- batch rollout and cooperative training infrastructure
-- multi-domain scenario, content, and profile layers for air, naval, ground,
-  and combined/cooperative tasks
-- evaluation, diagnostics, and contract-style regression tooling
+- A native C++ ECS simulation runtime built around `flecs`, with fixed-step CPU
+  execution and deterministic reset seeds.
+- A typed C++ runtime facade and `nanobind` Python bindings exposed as `ef_py`.
+- Scenario compilation and realization, including content, unit, profile, and
+  mission setup.
+- Gymnasium-style environment adapters, vectorized world-batch execution, and
+  cooperative command/tasking surfaces.
+- Domain model families for control, sensing, guidance, weapons, effects, and
+  platform capabilities, attached to a shared runtime lifecycle.
+- Evaluation, diagnostics, replay/evidence exports, contract specifications,
+  and architecture regression gates.
 
-The project is still evolving, but the maintained mainline already supports:
+The maintained mainline currently has its deepest end-to-end coverage in
+air/execution and cooperative execution. Naval and ground work is admitted in
+bounded tasking, platform, movement, terrain, contact, fire, and evidence
+surfaces; those domains do not yet represent complete production mission
+runtimes.
 
-- fixed-step simulation and deterministic reset seeds
-- mission / command / reward / termination runtime
-- takeoff, cruise, landing, and combined-task training lines
-- cooperative execution experiments
-- naval pre-fire tasking/contact/reporting fixtures
-- bounded Ground infantry movement, terrain, direct-fire and damage probes (not a complete production Ground runtime)
-- active diagnostics and evaluation tooling
+## Core architecture at a glance
 
-## Repository Status
+The architecture is organized around five questions rather than separate
+vertical stacks:
+
+| Face | Question | What it owns |
+| --- | --- | --- |
+| Semantic | What exists in the world? | Domain ontology, scenario/content compilation, capabilities, roles, tasks, and typed contracts. |
+| Causal | What causes what? | State transitions, event ordering, stage dependencies, barriers, and replayable causal evidence. |
+| Agentic | Who knows, decides, and acts? | Information state, authority scopes, command/tasking, policy interfaces, and coordination. |
+| Learning | How does the system improve? | Evaluation, curriculum, capability profiles, scenario generation, policy, and world-model consumers. |
+| Experiment | What exactly is being compared? | Scenario reference, configuration composition, seeds, evaluation protocol, and comparability rules. |
+
+This five-face model is the maintained architecture direction; implementation
+maturity is uneven. The admission table below identifies which domain paths are
+currently exercised and which remain bounded or experimental.
+
+Evidence is cross-cutting: traces, packet ancestry, snapshot versions, event
+order, and validation verdicts explain why a run should be trusted. Domain
+features join these shared faces through explicit model families, capability
+contracts, and stage contracts instead of creating private `air`, `naval`, or
+`weapon` runtime stacks.
+
+The implementation follows this execution shape:
+
+```text
+scenario + content + profile + experiment settings
+  -> content compilation and world setup
+  -> tasking and command delivery
+  -> control and physics state update
+  -> sensing, tracks, links, fire/effects, and damage
+  -> observation/result export
+  -> policy, evaluation, diagnostics, and evidence consumers
+```
+
+The stages form a causal-temporal execution graph. They may run at different
+rates and may be empty for a bounded scenario; feedback crosses explicit
+state versions, event timestamps, or barriers. This is the architecture rule
+behind the current fixed-step runtime, facade contracts, and evidence surfaces.
+
+The complete P0-P10 stage vocabulary, graph-of-graphs model, and stage-contract
+rules are maintained in the [Simulation System Architecture Design](docs/architecture/standards/simulation_system_architecture_design.md).
+
+## Why this architecture
+
+- **Shared semantics:** new domain behavior attaches to a common lifecycle, so
+  cross-domain comparisons use the same task, state, observation, and evidence
+  vocabulary.
+- **Stable boundaries:** frontends depend on `src/runtime/facade` and typed
+  packets instead of raw Flecs entities, kernel ordering, or backend details.
+- **Authoritative truth:** the native CPU runtime owns world state and episode
+  truth; Python mirrors and GPU helpers remain adapters or bounded capabilities.
+- **Comparable experiments:** fixed-step execution, explicit seeds, profiles,
+  scenario/config inputs, and evaluation protocols make runs easier to repeat
+  and compare.
+- **Explainable results:** observation provenance, diagnostics, contract tests,
+  and regression gates make it possible to tell what a result used and which
+  boundary has actually been validated.
+- **Controlled extension:** a domain addition declares its lifecycle stages,
+  packets, capability seams, and evidence before it becomes a maintained path.
+
+## Scope and status
 
 This repository is an active research/engineering codebase, not a polished
 product release.
@@ -43,7 +105,7 @@ That means:
 - community contribution is currently issue-first and owner-scoped; see
   [CONTRIBUTING.md](CONTRIBUTING.md)
 
-## Domain Maturity Snapshot
+## Project content and maturity
 
 The repository is multi-domain, but the domains are not equally mature. Treat
 the table below as an entry-map, not as a release promise.
@@ -74,7 +136,7 @@ CMake ids, helper names, or script paths opportunistically. A full naming
 migration should be handled as its own scoped change with compatibility notes
 and artifact/cache cleanup guidance.
 
-## Quick Start
+## Build and development
 
 Local validation is expected to run inside the repository virtual environment:
 
@@ -189,7 +251,7 @@ If you use a different build directory, export `CMO_BUILD_DIR=/path/to/build`
 before sourcing `tools/maintenance/cmo_env.sh`, or set `$env:CMO_BUILD_DIR` before
 calling `tools\maintenance\cmo_env.ps1` on Windows.
 
-## Project Layout
+## Where to explore
 
 - [src/](src/README.md): C++ kernel, mission runtime, runtime facade, Python bindings, GPU helpers.
 - [python/](python/README.md): RL runtime, training helpers, scenario compiler/runtime, diagnostics support.
@@ -208,11 +270,10 @@ uses `build_cooperative_world_batch_vec_env` and
 `UniversalEnv` remains an importable compatibility name whose constructor fails
 fast; it is unavailable as a training or evaluation backend.
 
-## System Architecture
+## Implementation boundaries
 
-Echelon Forge has a native simulation core, a typed runtime contract, and
-Python consumers for scenario execution, training, evaluation, and diagnostics.
-The maintained path from an input scenario to a step result is:
+For code-level navigation, the maintained path from an input scenario to a step
+result is:
 
 ```text
 scenario JSON + profile
@@ -270,7 +331,7 @@ See also:
 - [Architecture owner](docs/architecture/README.md)
 - [Code layer map](docs/operations/reference/src_layer_map.md)
 
-## Scenarios and Training Configs
+## Scenarios and experiment inputs
 
 Maintained scenarios live in [scenarios/](scenarios/README.md), grouped into:
 
@@ -307,7 +368,7 @@ Repository retention policy at a glance:
 - `experiments/`, `datasets/`, and `output/` are runtime or artifact workspaces and remain ignored by default.
 - Large run outputs should be preserved through reports, archived manifests, or retained diagnostics under documented artifact paths rather than by checking whole experiment directories into the main repo.
 
-## Training
+## Training and evaluation
 
 Current root/operator entrypoints:
 

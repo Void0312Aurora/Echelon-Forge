@@ -5,30 +5,69 @@
 - 英文主文：`README.md`
 - 中文辅文：[README.zh.md](README.zh.md)
 
-Echelon Forge 是一个面向空中、海军、地面任务、协同指挥和飞行任务研究的
-多域仿真与强化学习工作台。
+Echelon Forge 是一个面向多域任务研究的语义-因果仿真编译与学习平台。
+它把场景和内容定义、任务与 tasking 语义、领域模型、agent 接口、保真度要求以及实验协议，
+组合为可执行、可检查、可比较和可评估的仿真运行。
 
-该仓库整合了：
+## 项目内容
 
-- 基于 `flecs` 的 C++ ECS 仿真内核
-- 通过 `nanobind` 暴露为 `ef_py` 的 Python 绑定
-- 场景编译/运行时工具
-- Gymnasium 风格训练环境
-- 批量 rollout 和协作训练基础设施
-- 面向 air、naval、ground 和 combined/cooperative 任务的多域场景、内容和 profile 层
-- 评估、诊断和契约式回归工具
+- 基于 `flecs` 的原生 C++ ECS 仿真运行时，提供固定步长 CPU 执行和确定性重置种子。
+- 类型化 C++ runtime facade，以及通过 `nanobind` 暴露为 `ef_py` 的 Python 绑定。
+- 场景编译与实现，覆盖 content、unit、profile 和 mission setup。
+- Gymnasium 风格环境适配器、向量化 world-batch 执行，以及协同 command/tasking 表面。
+- 用于控制、感知、制导、武器、effects 和平台 capability 的领域模型族，并接入共享运行时生命周期。
+- 评估、诊断、replay/evidence 导出、契约规范和架构回归门禁。
 
-该项目仍在演进中，但维护的主线已支持：
+当前维护主线最完整的端到端覆盖位于 air/execution 和 cooperative execution。Naval 与 Ground
+已经准入有界的 tasking、平台、移动、地形、接触、射击和 evidence 表面；这些领域还不代表完整的生产级任务运行时。
 
-- 固定步长仿真和确定性重置种子
-- 任务/指令/奖励/终止运行时
-- 起飞、巡航、着陆及组合任务训练线路
-- 协作执行实验
-- 海军 pre-fire 任务、接触与报告夹具
-- 有界 Ground 单兵移动、地形、直射和毁伤探针（不代表完整生产级陆战 runtime）
-- 活跃的诊断和评估工具
+## 核心架构概览
 
-## 仓库状态
+架构围绕五个问题组织，而不是拆成互相独立的垂直 runtime stack：
+
+| 面向 | 问题 | 负责内容 |
+| --- | --- | --- |
+| Semantic | 世界中有什么？ | 领域 ontology、场景/content 编译、capability、role、task 和类型化契约。 |
+| Causal | 什么导致什么？ | 状态转移、事件顺序、阶段依赖、barrier 和可 replay 的因果证据。 |
+| Agentic | 谁知道、决定并行动？ | information state、authority scope、command/tasking、policy 接口和协同。 |
+| Learning | 系统如何改进？ | 评估、curriculum、capability profile、场景生成、policy 和 world-model 消费者。 |
+| Experiment | 具体比较什么？ | 场景引用、配置组合、seed、评估协议和可比性规则。 |
+
+这五面模型是维护中的架构方向；各部分实现成熟度并不相同。下面的准入表说明当前哪些领域路径已经被实际运行，哪些仍然是有界或实验性的。
+
+Evidence 是贯穿各面的公共层：trace、packet ancestry、snapshot version、event order 和 validation
+verdict 解释一个运行为什么可信。领域功能通过明确的 model family、capability contract 和 stage
+contract 接入这些公共面，而不是创建私有的 `air`、`naval` 或 `weapon` runtime stack。
+
+实现遵循以下执行形状：
+
+```text
+scenario + content + profile + experiment settings
+  -> content 编译与 world setup
+  -> tasking 与 command delivery
+  -> control 与 physics 状态更新
+  -> sensing、track、link、fire/effects 与 damage
+  -> observation/result 导出
+  -> policy、评估、诊断和 evidence 消费者
+```
+
+这些阶段组成因果-时间执行图，可以使用不同频率运行；有界场景也可以跳过空阶段。反馈必须经过显式
+的 state version、event timestamp 或 barrier。这是当前固定步长运行时、facade contract 和 evidence
+表面的共同架构规则。
+
+完整的 P0-P10 阶段词汇、graph-of-graphs 模型和 stage contract 规则维护在
+[Simulation System Architecture Design](docs/architecture/standards/simulation_system_architecture_design.zh.md) 中。
+
+## 这种架构带来的优势
+
+- **共享语义：** 新领域功能接入同一生命周期，使跨领域比较使用一致的 task、state、observation 和 evidence 词汇。
+- **稳定边界：** 前端依赖 `src/runtime/facade` 和类型化 packet，而不是直接依赖 Flecs entity、kernel 顺序或 backend 细节。
+- **权威真值：** 原生 CPU runtime 拥有世界状态和 episode 真值；Python mirror 与 GPU 辅助路径保持为适配器或有界 capability。
+- **实验可比：** 固定步长、显式 seed、profile、scenario/config 输入和评估协议让运行更容易复现和比较。
+- **结果可解释：** observation provenance、诊断、契约测试和回归门禁可以说明结果使用了什么，以及哪个边界真正得到验证。
+- **受控扩展：** 新领域在成为维护路径前，需要声明参与的 lifecycle stage、packet、capability seam 和 evidence。
+
+## 项目范围与状态
 
 本仓库是一个活跃的研究/工程代码库，并非完善的产物发布。
 
@@ -41,7 +80,7 @@ Echelon Forge 是一个面向空中、海军、地面任务、协同指挥和飞
 - 社区贡献目前采用 issue-first 和 owner-scoped 模式；见
   [CONTRIBUTING.md](CONTRIBUTING.md)
 
-## 领域成熟度快照
+## 项目内容与成熟度
 
 本仓库已经是多域项目，但各领域成熟度并不相同。下面的表格是入口地图，不是发布承诺。
 
@@ -65,7 +104,7 @@ Echelon Forge 是一个面向空中、海军、地面任务、协同指挥和飞
 
 不要将 `cmo` 视为独立产品名，也不要在机会主义下重命名包 ID、CMake ID、辅助名称或脚本路径。完整的命名迁移应作为一个独立的有范围更改来处理，并附上兼容性说明和产物/缓存清理指南。
 
-## 快速开始
+## 构建与开发
 
 本地验证期望在仓库虚拟环境中运行：
 
@@ -166,7 +205,7 @@ cmo_python -m pytest -q \
 
 如果使用不同的构建目录，请在 sourcing `tools/maintenance/cmo_env.sh` 之前导出 `CMO_BUILD_DIR=/path/to/build`，或在 Windows 上调用 `tools\maintenance\cmo_env.ps1` 之前设置 `$env:CMO_BUILD_DIR`。
 
-## 项目布局
+## 如何浏览代码
 
 - [src/](src/README.md)：C++ 内核、任务运行时、运行时外观、Python 绑定、GPU 辅助。
 - [python/](python/README.md)：RL 运行时、训练辅助、场景编译器/运行时、诊断支持。
@@ -184,10 +223,9 @@ cmo_python -m pytest -q \
 `python.rl.runtime.cooperative_world_batch_vec_env.CooperativeWorldBatchVecEnv`。
 `UniversalEnv` 保留兼容导入名称，其构造函数会立即报错，不能作为训练或评估后端。
 
-## 系统架构
+## 实现边界
 
-Echelon Forge 由原生仿真核心、类型化运行时契约，以及负责场景执行、训练、评估和诊断的
-Python 消费层组成。维护的场景输入到步结果路径如下：
+下面是面向代码导航的场景输入到步结果路径：
 
 ```text
 场景 JSON + profile
@@ -234,7 +272,7 @@ world-batch/facade 适配器。
 - [架构 owner](docs/architecture/README.zh.md)
 - [代码层地图](docs/operations/reference/src_layer_map.zh.md)
 
-## 场景与训练配置
+## 场景与实验输入
 
 维护的场景位于 [scenarios/](scenarios/README.md)，分为：
 
@@ -270,7 +308,7 @@ world-batch/facade 适配器。
 - `experiments/`、`datasets/` 和 `output/` 是运行时或产物工作区，默认被忽略。
 - 大型运行输出应通过报告、归档清单或留存诊断（位于文档化的产物路径下）来保留，而非将整个实验目录签入主仓库。
 
-## 训练
+## 训练与评估
 
 当前根/操作人员入口点：
 
