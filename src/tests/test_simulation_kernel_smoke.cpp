@@ -890,16 +890,17 @@ TEST_SUITE("simulation_kernel_smoke") {
         CHECK(has_contract("ComputePropulsion"));
         CHECK(has_contract("AdvanceControlSurfaces"));
 
-        const auto instruments = std::find_if(
-            contracts.begin(), contracts.end(),
-            [&](const auto &contract) { return contract.name == "UpdateInstruments"; });
+        const auto instruments =
+            std::find_if(contracts.begin(), contracts.end(), [&](const auto &contract) {
+                return contract.name == "UpdateInstruments";
+            });
         REQUIRE(instruments != contracts.end());
         CHECK(std::find(instruments->reads.begin(), instruments->reads.end(), "ShipPlatform") !=
               instruments->reads.end());
-        CHECK(std::find(instruments->reads.begin(), instruments->reads.end(), "SubmarinePlatform") !=
-              instruments->reads.end());
-        CHECK(std::find(instruments->reads.begin(), instruments->reads.end(), "NavalCommandIntent") !=
-              instruments->reads.end());
+        CHECK(std::find(instruments->reads.begin(), instruments->reads.end(),
+                        "SubmarinePlatform") != instruments->reads.end());
+        CHECK(std::find(instruments->reads.begin(), instruments->reads.end(),
+                        "NavalCommandIntent") != instruments->reads.end());
     }
 
     TEST_CASE("exact_stage_trace_does_not_crash") {
