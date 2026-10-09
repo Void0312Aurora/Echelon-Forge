@@ -131,6 +131,12 @@ def task_order_snapshot(value: Any) -> tuple[Any, ...] | None:
             projection_name="task_order_naval_owner_slice",
             helper_name="task_order_naval_owner_slice",
         ),
+        _named_projection_snapshot_from_helper(
+            value,
+            binding_name="TaskOrder",
+            projection_name="task_order_ground_owner_slice",
+            helper_name="task_order_ground_owner_slice",
+        ),
     )
 
 
@@ -291,32 +297,10 @@ def project_world_leader_intent_maintained_assignment(
 def task_order_maintained_batch_contract(
     compatibility_task_order_shell: Any,
 ) -> Any:
-    contract = ef_py.TaskOrderMaintainedBatchContract()
-    contract.shared_core = ef_py.task_order_shared_core_directive(
-        compatibility_task_order_shell
-    )
-    contract.air_tasking_identity = ef_py.task_order_air_tasking_identity_directive(
-        compatibility_task_order_shell
-    )
-    contract.air_stationing = ef_py.task_order_air_stationing_directive(
-        compatibility_task_order_shell
-    )
-    contract.air_recovery = ef_py.task_order_air_recovery_directive(
-        compatibility_task_order_shell
-    )
-    contract.air_takeoff = ef_py.task_order_air_takeoff_directive(
-        compatibility_task_order_shell
-    )
-    contract.air_formation = ef_py.task_order_air_formation_directive(
-        compatibility_task_order_shell
-    )
-    contract.naval_command_authority = ef_py.task_order_naval_command_authority(
-        compatibility_task_order_shell
-    )
-    contract.naval_stationing = ef_py.task_order_naval_stationing_directive(
-        compatibility_task_order_shell
-    )
-    return contract
+    return _projection_helper(
+        "TaskOrder",
+        "task_order_maintained_batch_contract",
+    )(compatibility_task_order_shell)
 
 
 def project_world_task_order_maintained_assignment(
