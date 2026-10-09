@@ -39,6 +39,8 @@ Lower layers may define data, models, and system logic. Upper layers own composi
 - `content/`: content schemas, unit definitions, and loaders for air, naval, and early ground-aware setup data.
 - `core/`: C++ runtime orchestration, the single-world kernel, batch runtime, and mission/episode runtime.
 - `runtime/`: the maintained application-layer C++ runtime contract, especially the facade and shared DTO contracts.
+- `runtime/host/`: a non-production dark/shadow host candidate for lifecycle and
+  state-transfer evidence; it is not a second facade or a production cutover.
 - `interfaces/`: language bindings and external interface adapters.
 - `gpu/`: GPU helpers, packet runtime, and explicit experimental probes.
 - `tools/`: development-time and experimental tools; they do not enter the mainline runtime contract.
@@ -66,6 +68,7 @@ Lower layers may define data, models, and system logic. Upper layers own composi
 - [runtime/README.md](runtime/README.md)
 - [runtime/contracts/README.md](runtime/contracts/README.md)
 - [runtime/facade/README.md](runtime/facade/README.md)
+- [runtime/host/README.md](runtime/host/README.md)
 - [models/README.md](models/README.md)
 - [models/domains/README.md](models/domains/README.md)
 - [models/core/README.md](models/core/README.md)
