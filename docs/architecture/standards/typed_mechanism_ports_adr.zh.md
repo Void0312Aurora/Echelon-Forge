@@ -1,0 +1,32 @@
+# ADR：类型化机制端口与递归组合
+
+语言：
+- 英文规范页：[typed_mechanism_ports_adr.md](typed_mechanism_ports_adr.md)
+- 中文配套页：`typed_mechanism_ports_adr.zh.md`
+
+Document kind: `standard`
+Lifecycle: `proposed`
+Canonical: `docs/architecture/standards/typed_mechanism_ports_adr.md`
+Owner: `architecture/mechanism-contracts`
+Last verified: `2026-10-10`
+
+**状态：** 待评审的资格验证设计；不启用生产路径。
+
+## 决策
+
+采用独立的机制图描述层，并将其编译到现有 composition 与 stage 契约。不新增第二套运行时
+执行引擎，也不引入无类型的 `execute(anything)` ABI。机制适配器声明带版本的输入/输出端口、
+单位、坐标系、时钟语义、可见性、所需能力、状态所有权和效果义务。
+
+编译器必须在 provider 或 world 发布前完成图验证，生成仅用于资格验证的规范化图产物，再通过
+现有 composition requested/resolved 产物和 native execution graph 接纳。native runtime 仍是
+唯一执行权威。
+
+## 约束
+
+连接必须检查 schema 版本、单位、坐标系、新鲜度和可见性；需要转换或估计时必须显式插入节点，
+不得凭空制造信息。禁止同一窗口内的瞬时环；延迟或有状态反馈必须声明延迟和状态所有者。组合
+节点导出类型化公共端口及状态/效果契约后，才能作为父图中的节点重新验证。
+
+首个证明应放在资格验证路径，包含兼容连接、单位/坐标系或 schema 冲突、禁止环、子机制故障和
+递归组合；不得改变 `builtin.default_compatibility` 或 facade/Cordis 的既有行为。
