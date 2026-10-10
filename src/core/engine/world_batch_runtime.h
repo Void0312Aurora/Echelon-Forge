@@ -3,6 +3,8 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -48,6 +50,12 @@ class WorldBatchRuntime {
     void set_worker_threads(size_t worker_threads) noexcept { worker_threads_ = worker_threads; }
     size_t worker_threads() const noexcept { return worker_threads_; }
     size_t effective_worker_threads() const noexcept;
+
+    // A state-mutating batch failure fail-closes this runtime generation. Raw
+    // quarantine access remains available for diagnostics, but maintained batch
+    // operations reject retries until reset_batch completes successfully.
+    [[nodiscard]] bool batch_healthy() const noexcept { return batch_healthy_; }
+    [[nodiscard]] std::string batch_failure_reason() const;
 
     std::uint64_t spawn_unit_from_world_spawn_request(const WorldSpawnRequest &request);
     std::uint64_t spawn_typed_platform_unit(const TypedPlatformSpawnRequest &request);
@@ -146,6 +154,10 @@ class WorldBatchRuntime {
                                                       int downsample, bool use_gpu = false) const;
 
   private:
+    void parallel_for_index(size_t task_count, size_t requested_threads,
+                            std::function<void(size_t)> fn) const;
+    void ensure_batch_healthy() const;
+    void record_batch_failure(std::exception_ptr failure) const noexcept;
     size_t resolve_worker_threads(size_t task_count) const noexcept;
     static InstrumentState safe_get_instrument_state(const SimulationKernel &world,
                                                      uint64_t entity_id);
@@ -154,4 +166,6 @@ class WorldBatchRuntime {
 
     std::vector<std::unique_ptr<SimulationKernel>> worlds_;
     size_t worker_threads_ = 1;
+    mutable bool batch_healthy_ = true;
+    mutable std::exception_ptr batch_failure_;
 };
