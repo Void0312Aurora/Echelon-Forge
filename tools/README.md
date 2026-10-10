@@ -291,6 +291,22 @@ cmo_python tools/diagnostics/benchmark.py \
   --n-envs 8 --steps 128 --reset-iters 24
 ```
 
+Measure transient WorldBatch worker creation across reproducible world and
+thread-count matrices:
+
+```bash
+cmo_python tools/diagnostics/benchmark.py \
+  --family world_batch_thread_matrix \
+  --n-envs 1,2,4,8,16,32,64 \
+  --worker-threads 1,2,4,8,0 \
+  --steps 64 --repeats 5 --warmup-steps 2 \
+  --json-out artifacts/world_batch_thread_matrix.json
+```
+
+The matrix records effective worker counts and median/p95 per-stage timings;
+see [the benchmark contract](../docs/architecture/standards/world_batch_thread_benchmark.md)
+for the timing boundaries and decision rule.
+
 Run the air-combat post-launch assessment benchmark through the same maintained entrypoint:
 
 ```bash
