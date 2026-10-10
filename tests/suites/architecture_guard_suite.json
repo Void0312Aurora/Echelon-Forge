@@ -113,6 +113,7 @@
     "tests/architecture/runtime_host/test_rollout_evidence_binding.py",
     "tests/architecture/runtime_host/test_sqlite_rollout_admission.py",
     "tests/architecture/runtime_profiles/test_cuda_resident_backend_contracts.py",
+    "tests/architecture/runtime_profiles/test_cuda_cache_recovery_contract.py",
     "tests/architecture/runtime_profiles/test_cuda_resident_backend_lifecycle.py",
     "tests/architecture/runtime_profiles/test_cuda_resident_control_preparation.py",
     "tests/architecture/runtime_profiles/test_cuda_resident_cpu_portability_prerequisite.py",
