@@ -1,10 +1,10 @@
 {
-  "allowlist_version": "i41.cpp_include_direction_allowlist.v5",
+  "allowlist_version": "i41.cpp_include_direction_allowlist.v6",
   "generated_at": "2026-07-20",
-  "amended_at": "2026-08-13",
+  "amended_at": "2026-10-10",
   "baseline_commit": "b618971f",
   "program_track": "T3 (unified_architecture_program) I38 slice 1, amended I41 slice 2, (f) re-adjudicated under the T1 schema-ownership option 2026-07-27",
-  "description": "Ratchet allowlist for tests/architecture/governance/test_cpp_include_direction.py. Each entry is a pre-existing include-direction violation identified by an exact (file, line, include spelling) fingerprint. The 2026-08-13 execution-controller retirement closed the engine-to-mission controller edge and the runtime-contracts-to-mission step-request edge; both stale entries were removed. The remaining entries are GPU/engine integration seams.",
+  "description": "Ratchet allowlist for tests/architecture/governance/test_cpp_include_direction.py. Each entry is a pre-existing include-direction violation identified by an exact (file, line, include spelling) fingerprint. The 2026-08-13 execution-controller retirement closed the engine-to-mission controller edge and the runtime-contracts-to-mission step-request edge; issue #226 removed the three engine-to-GPU compatibility edges on 2026-10-10. The remaining entry is the authority/parser adapter edge.",
   "entries": [
     {
       "file": "src/runtime/contracts/authority/runtime_authority_contract.cpp",
@@ -15,36 +15,6 @@
       "owner": "P5-A authority compatibility adapter (deferred physical parser split)",
       "next_gate": "Move resolved-composition parsing behind an engine-independent contract-owned boundary so the authority validator no longer includes runtime composition directly.",
       "reason": "P5-A validates the resolved manifest nested in the execution-plan authority envelope by reusing the canonical native composition parser. The dependency is intentional and currently required for exact schema parity; it is explicitly retained as a bounded adapter edge until the parser boundary is split."
-    },
-    {
-      "file": "src/core/engine/world_batch_runtime.cpp",
-      "line": 9,
-      "include": "gpu/gpu_interaction_broadphase_runtime.h",
-      "from_group": "core_engine",
-      "to_group": "gpu",
-      "owner": "T3 physical link-unit split (re-evaluated I41, deferred; design-gap pointer: T4 exact-runtime alignment)",
-      "next_gate": "Design the GPU/engine integration seam (opaque packet handle or callback injection) called out by the T3 track's 'link order and initialization' risk before WorldBatchRuntime can stop including gpu/* directly.",
-      "reason": "WorldBatchRuntime's interaction-broadphase compatibility path (run_interaction_broadphase_candidate_ids and callers) calls gpu::InteractionBroadphaseConfig/InteractionEntityPacked/InteractionQueryPacked and gpu::build_interaction_broadphase_*_batch directly; engine owns the call, inverting the src/README top-level direction note ('gpu -> core/runtime data packets ... no ownership of canonical world-step truth'). Re-evaluated at I41 (T3 second slice): confirmed a genuine design gap rather than a mechanical include fix -- the packed gpu:: types are consumed at four call sites inside world_batch_runtime.cpp's interaction-broadphase path (not a single incidental reference), so closing this entry requires the GPU/engine integration seam itself to exist first. Deferred to T4 (Exact-runtime alignment)/the next T3 physical-split slice; not attempted this iteration to keep the write set bounded to the low-risk subset."
-    },
-    {
-      "file": "src/core/engine/world_batch_visual_binding_compatibility_types.h",
-      "line": 5,
-      "include": "gpu/gpu_visual_runtime.h",
-      "from_group": "core_engine",
-      "to_group": "gpu",
-      "owner": "T3 physical link-unit split (re-evaluated I41, deferred; design-gap pointer: T4 exact-runtime alignment)",
-      "next_gate": "Same GPU/engine integration seam as the interaction-broadphase entry above; WorldBatchVisualBindingCompatibilityScene stores gpu::VisualRenderRequest/VisibleObjectPacked by value in an engine-owned public struct.",
-      "reason": "WorldBatchVisualBindingCompatibilityScene (declared in this header) stores gpu::VisualRenderRequest and std::vector<gpu::VisibleObjectPacked> by value, so the engine-owned compatibility struct's shape depends on the gpu packet layout directly. Re-evaluated at I41 (T3 second slice): confirmed the same design gap as the other two gpu entries -- this struct is also the return/parameter type of two public WorldBatchRuntime batch methods (collect_visual_binding_compatibility_scenes_from_candidate_ids_batch/collect_visual_binding_compatibility_scenes_batch), so it cannot be relocated without the same GPU/engine integration seam. Deferred to T4 (Exact-runtime alignment)/the next T3 physical-split slice; not attempted this iteration to keep the write set bounded to the low-risk subset. Re-adjudicated 2026-08-05 after the flat-directory cleanup moved this compatibility DTO from world_batch_runtime.h into its dedicated types header: the engine-owned struct and its by-value GPU packet coupling are unchanged, so the held edge follows the declaration to the new exact fingerprint."
-    },
-    {
-      "file": "src/core/engine/world_batch_visual_binding_compatibility_helper.h",
-      "line": 9,
-      "include": "gpu/gpu_visual_runtime.h",
-      "from_group": "core_engine",
-      "to_group": "gpu",
-      "owner": "T3 physical link-unit split (re-evaluated I41, deferred; design-gap pointer: T4 exact-runtime alignment)",
-      "next_gate": "Same GPU/engine integration seam; collect_scene_from_candidate_ids/render_scenes_batch build and consume gpu::VisualRenderRequest/VisibleObjectPacked and call gpu::render_visual_experiment(_batch_export)/render_visual_reference_cpu(_batch) directly.",
-      "reason": "This engine-layer compatibility helper builds gpu::VisualRenderRequest/VisibleObjectPacked values from ECS state and calls gpu::render_visual_experiment*/render_visual_reference_cpu* directly, the same engine-calls-into-gpu-helper-implementation pattern as the other two gpu entries above. Re-evaluated at I41 (T3 second slice): confirmed the same design gap -- render_scenes_batch directly branches on use_gpu to call one of four gpu:: render entry points, so the coupling is the helper's entire reason for existing, not an incidental include. Deferred to T4 (Exact-runtime alignment)/the next T3 physical-split slice; not attempted this iteration to keep the write set bounded to the low-risk subset."
     }
   ]
 }

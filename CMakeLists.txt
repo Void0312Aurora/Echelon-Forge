@@ -225,6 +225,7 @@ set(EF_CORE_ENGINE_SOURCES
     src/core/engine/simulation_kernel_weapon_api.cpp
     src/core/engine/simulation_kernel_damage_debug_api.cpp
     src/core/engine/exact_stage_inventory.cpp
+    src/core/engine/world_batch_gpu_compatibility.cpp
     src/core/engine/world_batch_runtime.cpp
     src/core/engine/default_executable_composition_graph.cpp
     src/core/engine/system_contribution_registry.cpp
@@ -727,7 +728,9 @@ if (EF_PRODUCTION_FACADE_ONLY)
         ${EF_CORE_GEOMETRY_SOURCES}
         src/runtime/compatibility/runtime_facade_visual_observation.cpp
         src/gpu/gpu_visual_runtime.cpp
+        src/gpu/gpu_world_batch_visual_binding_compatibility.cpp
         src/gpu/gpu_execution_observation_runtime.cpp
+        src/gpu/gpu_interaction_broadphase_runtime.cpp
     )
 endif()
 
@@ -774,6 +777,7 @@ endif()
 # --- Experimental GPU Scaffolding ---
 set(EF_GPU_MAINTAINED_HELPER_SOURCES
     src/gpu/gpu_visual_runtime.cpp
+    src/gpu/gpu_world_batch_visual_binding_compatibility.cpp
     src/gpu/gpu_execution_observation_runtime.cpp
     src/gpu/gpu_flight_shaping_runtime.cpp
     src/gpu/gpu_interaction_broadphase_runtime.cpp

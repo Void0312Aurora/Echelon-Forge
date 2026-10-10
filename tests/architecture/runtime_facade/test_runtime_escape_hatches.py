@@ -402,7 +402,7 @@ def test_wp22_gpu_visual_binding_routes_through_named_world_batch_compatibility_
   assert "compute_runtime_facade_visual_binding_outputs(" in source
   assert "compute_compat_world_batch_visual_binding_outputs(" in source
   assert "collect_visual_binding_compatibility_scenes_batch(" in source
-  assert "render_scenes_batch(" in source
+  assert "render_world_batch_visual_binding_compatibility(" in source
 
 def test_wp22_world_batch_runtime_quarantines_visual_binding_raw_world_access() -> None:
   header = WORLD_BATCH_RUNTIME_H.read_text(encoding="utf-8")
