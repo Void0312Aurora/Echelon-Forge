@@ -877,7 +877,6 @@ TEST_SUITE("structural_failure_break_modes") {
 
     TEST_CASE("controlled fuselage carrythrough failure produces fuselage_rupture event") {
         ComponentDamageState damage{};
-        activate_tg_p7_profile(damage);
         set_component_damage(damage, "wing_spar_center_carrythrough_segment", 0.10, "cut");
 
         const StructuralStepResult result = run_single_aircraft_structural_step(damage);
