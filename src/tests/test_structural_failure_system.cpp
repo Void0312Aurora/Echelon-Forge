@@ -40,6 +40,22 @@ void set_component_damage(ComponentDamageState &damage, const std::string &name,
     }
 }
 
+void activate_tg_p7_profile(ComponentDamageState &damage) {
+    damage.structural_topology_profile = std::string(kTgP7SplitSurfaceTopologyProfile);
+    for (const char *name : {
+             "engine_core_afterburner_segment",
+             "engine_core_hot_section_segment",
+             "engine_core_forward_compressor_segment",
+             "wing_spar_center_left_inner_wing_segment",
+             "wing_spar_center_left_root_segment",
+             "wing_spar_center_carrythrough_segment",
+             "wing_spar_center_right_root_segment",
+             "wing_spar_center_right_inner_wing_segment",
+         }) {
+        set_component_damage(damage, name, 1.0, "none");
+    }
+}
+
 struct CapturingStructuralRecorder final : IEngagementEventRecorder {
     std::vector<StructuralBreakupEvent> structural_events;
     std::vector<PlatformConsequenceEvent> platform_consequence_events;
@@ -216,6 +232,7 @@ TEST_SUITE("structural_failure_state") {
 
     TEST_CASE("TG-P7 split receivers select split mapping without parent components") {
         ComponentDamageState damage{};
+        activate_tg_p7_profile(damage);
         set_component_damage(damage, "wing_spar_center_left_inner_wing_segment", 0.20, "cut");
         set_component_damage(damage, "engine_core_afterburner_segment", 0.10,
                              "structural_weakening");
@@ -232,8 +249,22 @@ TEST_SUITE("structural_failure_state") {
         CHECK(structural_breakup_has_mode(state, StructuralBreakMode::EngineDetach));
     }
 
+    TEST_CASE("incomplete TG-P7 profile is explicitly downgraded to shared-spar fallback") {
+        ComponentDamageState damage{};
+        damage.structural_topology_profile = std::string(kTgP7SplitSurfaceTopologyProfile);
+        set_component_damage(damage, "wing_spar_center_left_inner_wing_segment", 0.20, "cut");
+
+        CHECK(structural_failure::structural_topology_admission(damage) ==
+              structural_failure::StructuralTopologyAdmission::TgP7IncompleteFallback);
+        const StructuralBreakupState state =
+            structural_failure::evaluate_structural_breakup_state(damage);
+        CHECK(state.breakup_state == StructuralBreakupPhase::Intact);
+        CHECK_FALSE(structural_breakup_has_group(state, StructuralBreakGroup::WingLeft));
+    }
+
     TEST_CASE("TG-P7 near-field cumulative wing damage produces wing_loss") {
         ComponentDamageState damage{};
+        activate_tg_p7_profile(damage);
         set_component_damage(damage, "wing_spar_center_left_inner_wing_segment", 1.00, "none");
         set_component_damage(damage, "left_aileron_actuator", 0.94, "cut");
         set_component_damage(damage, "left_wing_fuel_cell", 0.915, "cut");
@@ -250,6 +281,7 @@ TEST_SUITE("structural_failure_state") {
 
     TEST_CASE("TG-P7 rod cut severity produces wing_loss despite high component integrity") {
         ComponentDamageState damage{};
+        activate_tg_p7_profile(damage);
         set_component_damage(damage, "wing_spar_center_left_inner_wing_segment", 1.00, "none");
         set_component_damage(damage, "left_aileron_actuator", 0.986, "cut", 0.31);
         set_component_damage(damage, "left_wing_fuel_cell", 0.992, "cut", 0.27);

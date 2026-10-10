@@ -49,7 +49,15 @@ inline double structural_near_field_mode_loss(std::string_view mode, double seve
     return 0.0;
 }
 
-inline bool has_tg_p7_split_surface(const ComponentDamageState &component_damage) {
+enum class StructuralTopologyAdmission : std::uint8_t {
+    DefaultSharedSpar,
+    TgP7SplitSurface,
+    TgP7IncompleteFallback,
+    UnknownFallback,
+};
+
+inline StructuralTopologyAdmission
+structural_topology_admission(const ComponentDamageState &component_damage) {
     static constexpr std::array<std::string_view, 8> kSplitReceivers = {
         "engine_core_afterburner_segment",        "engine_core_hot_section_segment",
         "engine_core_forward_compressor_segment", "wing_spar_center_left_inner_wing_segment",
@@ -57,10 +65,24 @@ inline bool has_tg_p7_split_surface(const ComponentDamageState &component_damage
         "wing_spar_center_right_root_segment",    "wing_spar_center_right_inner_wing_segment",
     };
 
-    return std::any_of(kSplitReceivers.begin(), kSplitReceivers.end(), [&](std::string_view name) {
-        return component_damage.component_integrity.find(std::string(name)) !=
-               component_damage.component_integrity.end();
-    });
+    if (component_damage.structural_topology_profile == kDefaultStructuralTopologyProfile) {
+        return StructuralTopologyAdmission::DefaultSharedSpar;
+    }
+    if (component_damage.structural_topology_profile != kTgP7SplitSurfaceTopologyProfile) {
+        return StructuralTopologyAdmission::UnknownFallback;
+    }
+    const bool complete =
+        std::all_of(kSplitReceivers.begin(), kSplitReceivers.end(), [&](std::string_view name) {
+            return component_damage.component_integrity.find(std::string(name)) !=
+                   component_damage.component_integrity.end();
+        });
+    return complete ? StructuralTopologyAdmission::TgP7SplitSurface
+                    : StructuralTopologyAdmission::TgP7IncompleteFallback;
+}
+
+inline bool has_tg_p7_split_surface(const ComponentDamageState &component_damage) {
+    return structural_topology_admission(component_damage) ==
+           StructuralTopologyAdmission::TgP7SplitSurface;
 }
 
 inline bool component_failed_at(const ComponentDamageState &component_damage, std::string_view name,

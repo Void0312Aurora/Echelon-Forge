@@ -1460,11 +1460,29 @@ void parse_aircraft_vulnerability_json_fields(
     }
 }
 
-void parse_damage_model_json_fields(
+bool parse_damage_model_json_fields(
     const nlohmann::json &entry, UnitDefinition &def,
-    const VulnerabilityEvidenceDescriptorMap *vulnerability_descriptors) {
+    const VulnerabilityEvidenceDescriptorMap *vulnerability_descriptors, std::string *error) {
     if (entry.contains("damage_model") && entry["damage_model"].is_object()) {
         const auto &dm = entry["damage_model"];
+        if (dm.contains("structural_topology_profile")) {
+            const auto &profile = dm["structural_topology_profile"];
+            if (!profile.is_string()) {
+                if (error) {
+                    *error = "damage_model.structural_topology_profile must be a string";
+                }
+                return false;
+            }
+            def.damage_model.structural_topology_profile = profile.get<std::string>();
+        }
+        if (def.damage_model.structural_topology_profile != kDefaultStructuralTopologyProfile &&
+            def.damage_model.structural_topology_profile != kTgP7SplitSurfaceTopologyProfile) {
+            if (error) {
+                *error = "unknown damage_model.structural_topology_profile: " +
+                         def.damage_model.structural_topology_profile;
+            }
+            return false;
+        }
         if (dm.contains("hitboxes") && dm["hitboxes"].is_array()) {
             int hb_idx = 0;
             for (const auto &hb_json : dm["hitboxes"]) {
@@ -1476,6 +1494,7 @@ void parse_damage_model_json_fields(
         }
         parse_aircraft_vulnerability_json_fields(dm, def, vulnerability_descriptors);
     }
+    return true;
 }
 
 void parse_ammo_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
@@ -1991,7 +2010,9 @@ bool parse_unit_json(
     parse_naval_logistics_json_fields(entry, def);
     parse_naval_weapon_system_json_fields(entry, def);
     parse_embarked_air_ops_json_fields(entry, def);
-    parse_damage_model_json_fields(entry, def, vulnerability_descriptors);
+    if (!parse_damage_model_json_fields(entry, def, vulnerability_descriptors, error)) {
+        return false;
+    }
 
     def.has_ammo = entry.value("has_ammo", false);
     parse_ammo_json_fields(entry, def);
