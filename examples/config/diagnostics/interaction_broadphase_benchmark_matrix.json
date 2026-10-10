@@ -7,6 +7,8 @@
   "ranges_km": [1, 10, 50, 100, 300],
   "cells_km": [1, 2, 5, 10],
   "seed": 7,
+  "repetitions": 3,
+  "timeout_s": 10,
   "measurement_requirements": {
     "cuda_exercised": true,
     "cpu_reference": true,

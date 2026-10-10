@@ -203,11 +203,16 @@ Run the reproducible long-range broadphase matrix:
 python tools/diagnostics/benchmarks/interaction_broadphase.py \
   --probe build-gpu/ef_gpu_interaction_broadphase_phase0_probe \
   --output artifacts/interaction_broadphase_matrix.json \
+  --repetitions 3 --timeout-s 10 \
   --require-cuda
 ```
 
 The checked-in matrix definition is
 `examples/config/diagnostics/interaction_broadphase_benchmark_matrix.json`.
+Each matrix cell records sample count, mean, min, max, and population standard
+deviation for CPU, host-readback, and device-resident timings. A timeout is
+recorded as an incomplete cell so a sparse long-range scan cannot be mistaken
+for a successful measurement.
 
 Maintenance note:
 
