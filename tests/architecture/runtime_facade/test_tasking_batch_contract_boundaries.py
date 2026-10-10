@@ -19,6 +19,10 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   facade_cpp = runtime_facade_source_text()
   bindings_runtime = expand_binding_field_incs(runtime_bindings_source_text())
   runtime_header = WORLD_BATCH_RUNTIME_H.read_text(encoding="utf-8")
+  runtime_cpp = WORLD_BATCH_RUNTIME_CPP.read_text(encoding="utf-8")
+  runtime_engine_binding = (
+    REPO_ROOT / "src" / "interfaces" / "python" / "bindings_runtime_engine.cpp"
+  ).read_text(encoding="utf-8")
   runtime_header_single_line = " ".join(runtime_header.split())
   facade_header_single_line = " ".join(facade_header.split())
 
@@ -45,6 +49,13 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   assert "std::vector<TaskOrder> get_task_orders_batch(" not in runtime_header
   assert "void set_task_orders_compatibility_batch(" not in runtime_header
   assert "std::vector<TaskOrder> get_task_orders_compatibility_batch(" not in runtime_header
+  for retired_symbol in (
+    "set_mission_commands_batch",
+    "set_leader_intents_batch",
+    "set_pilot_reports_batch",
+  ):
+    assert f"WorldBatchRuntime::{retired_symbol}(" not in runtime_cpp
+    assert f'"{retired_symbol}"' not in runtime_engine_binding
 
   assert "void set_task_orders_maintained_batch(" in facade_header
   assert (
