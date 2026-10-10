@@ -1,0 +1,37 @@
+name: chat-repository-export
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Package checkout including Git metadata
+        shell: bash
+        run: |
+          git rev-parse HEAD > "$RUNNER_TEMP/echelon-forge-revision.txt"
+          tar -czf "$RUNNER_TEMP/echelon-forge.tar.gz" -C "$GITHUB_WORKSPACE" .
+          (cd "$RUNNER_TEMP" && sha256sum echelon-forge.tar.gz > echelon-forge.sha256)
+
+      - name: Upload repository snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: echelon-forge-source
+          path: |
+            ${{ runner.temp }}/echelon-forge.tar.gz
+            ${{ runner.temp }}/echelon-forge.sha256
+            ${{ runner.temp }}/echelon-forge-revision.txt
+          retention-days: 1
+          if-no-files-found: error
