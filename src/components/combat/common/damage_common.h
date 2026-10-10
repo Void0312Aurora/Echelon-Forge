@@ -3,8 +3,12 @@
 #include <array>
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
+
+inline constexpr std::string_view kDefaultStructuralTopologyProfile = "default_shared_spar_v1";
+inline constexpr std::string_view kTgP7SplitSurfaceTopologyProfile = "tg_p7_split_surface_v1";
 
 struct DamageComponentDependency {
     std::string system;
@@ -114,6 +118,11 @@ struct Hitbox {
 
 struct HitboxConfig {
     std::vector<Hitbox> hitboxes;
+    // Explicit admission profile for structural-breakup topology.  The
+    // default profile uses the shared-spar mapping; specialized profiles must
+    // be selected by authored content rather than inferred from component
+    // names.
+    std::string structural_topology_profile{kDefaultStructuralTopologyProfile};
 };
 
 struct SystemHealth {
@@ -121,6 +130,7 @@ struct SystemHealth {
 };
 
 struct ComponentDamageState {
+    std::string structural_topology_profile{kDefaultStructuralTopologyProfile};
     std::unordered_map<std::string, double> component_integrity;
     std::unordered_map<std::string, std::string> component_redundancy_group;
     std::unordered_map<std::string, std::string> component_system;
