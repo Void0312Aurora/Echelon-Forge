@@ -93,7 +93,6 @@ class WorldBatchRuntime {
     void set_command_links_batch(const std::vector<WorldCommandLinkAssignment> &assignments);
     std::vector<LaunchEvent>
     apply_launch_requests_batch(const std::vector<LaunchRequest> &requests);
-    void set_mission_commands_batch(const std::vector<WorldMissionCommandAssignment> &assignments);
     void set_mission_commands_maintained_batch(
         const std::vector<WorldMissionCommandMaintainedAssignment> &assignments);
     std::vector<MissionCommandMaintainedBatchContract>
@@ -102,12 +101,10 @@ class WorldBatchRuntime {
         const std::vector<WorldTaskOrderMaintainedAssignment> &assignments);
     std::vector<TaskOrderMaintainedBatchContract>
     get_task_orders_maintained_batch(const std::vector<WorldEntityRef> &refs) const;
-    void set_leader_intents_batch(const std::vector<WorldLeaderIntentAssignment> &assignments);
     void set_leader_intents_maintained_batch(
         const std::vector<WorldLeaderIntentMaintainedAssignment> &assignments);
     std::vector<LeaderIntentMaintainedBatchContract>
     get_leader_intents_maintained_batch(const std::vector<WorldEntityRef> &refs) const;
-    void set_pilot_reports_batch(const std::vector<WorldPilotReportAssignment> &assignments);
     void set_pilot_reports_maintained_batch(
         const std::vector<WorldPilotReportMaintainedAssignment> &assignments);
     std::vector<PilotReportMaintainedBatchContract>
