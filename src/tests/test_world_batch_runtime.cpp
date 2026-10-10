@@ -1,6 +1,7 @@
 #include "core/engine/world_batch_runtime.h"
 #include "components/basic/stable_identity.h"
-#include "core/engine/world_batch_visual_binding_compatibility_helper.h"
+#include "components/visual/visual_sensor.h"
+#include "gpu/gpu_world_batch_visual_binding_compatibility.h"
 #include "runtime/facade/runtime_facade.h"
 
 #include <doctest/doctest.h>
@@ -323,12 +324,12 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(scenes.front().request.out_width == arb::ARB_WIDTH / 4);
 
         const auto before_shutdown =
-            world_batch_visual_binding_compatibility::render_scenes_batch(scenes, false);
+            gpu::render_world_batch_visual_binding_compatibility(scenes, false);
         CHECK(before_shutdown.batch_size == 1);
 
         world.shutdown();
         WorldBatchVisualObservationCompatibilityExport rendered{};
-        CHECK_NOTHROW(rendered = world_batch_visual_binding_compatibility::render_scenes_batch(
+        CHECK_NOTHROW(rendered = gpu::render_world_batch_visual_binding_compatibility(
                           scenes, false));
         CHECK(rendered.batch_size == 1);
         CHECK(rendered.flat.size() == rendered.frame_size);

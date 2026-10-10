@@ -4,6 +4,8 @@
 #include <cmath>
 #include <stdexcept>
 
+#include "core/interfaces/world_batch_gpu_compatibility.h"
+
 namespace gpu::detail {
 
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
@@ -23,6 +25,42 @@ std::size_t last_interaction_broadphase_output_word_count_cuda();
 #endif
 
 }  // namespace gpu::detail
+
+namespace {
+
+std::vector<std::uint32_t> gpu_broadphase_provider(
+    const std::vector<WorldBatchInteractionEntity> &entities,
+    const std::vector<WorldBatchInteractionQuery> &queries,
+    const WorldBatchInteractionConfig &config) {
+    std::vector<gpu::InteractionEntityPacked> gpu_entities;
+    gpu_entities.reserve(entities.size());
+    for (const auto &entity : entities) {
+        gpu_entities.push_back({entity.world_index, entity.local_index, entity.x, entity.y,
+                                entity.z, entity.bounding_radius_m});
+    }
+    std::vector<gpu::InteractionQueryPacked> gpu_queries;
+    gpu_queries.reserve(queries.size());
+    for (const auto &query : queries) {
+        gpu_queries.push_back(
+            {query.world_index, query.x, query.y, query.z, query.range_m});
+    }
+    gpu::InteractionBroadphaseConfig gpu_config{};
+    gpu_config.cell_size_m = config.cell_size_m;
+    gpu_config.max_entity_radius_m = config.max_entity_radius_m;
+    gpu_config.entities_per_world = config.entities_per_world;
+    gpu_config.hash_bucket_count = config.hash_bucket_count;
+    gpu_config.bucket_capacity = config.bucket_capacity;
+    return gpu::build_interaction_broadphase_experiment_batch(gpu_entities, gpu_queries,
+                                                               gpu_config);
+}
+
+const WorldBatchGpuCompatibilityProvider kProvider{&gpu_broadphase_provider};
+const bool kProviderRegistered = [] {
+    register_world_batch_gpu_compatibility_provider(&kProvider);
+    return true;
+}();
+
+} // namespace
 
 namespace gpu {
 
