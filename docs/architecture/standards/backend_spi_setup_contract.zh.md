@@ -1,5 +1,14 @@
 # 内部 Backend SPI 的 Setup 与 Export 契约
 
+Language:
+- English canonical contract: `backend_spi_setup_contract.md`.
+- Chinese companion document.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/standards/backend_spi_setup_contract.md`
+Owner: `runtime/facade/internal/world_batch_backend.h`
+Last verified: `2026-10-10`
+
 内部 `IWorldBatchBackend` 接收封闭的 `SetupOperation` 类型和。调用方必须构造
 `std::variant<BatchSetup, LayoutSetup, WorldSpawnSetup, TypedPlatformSpawnSetup>` 中的
 一种操作。公共 `RuntimeFacade` 仍负责请求校验和公共证据；本契约只描述后端无关的

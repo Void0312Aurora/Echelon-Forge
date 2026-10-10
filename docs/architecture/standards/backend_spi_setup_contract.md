@@ -1,5 +1,14 @@
 # Internal Backend SPI Setup and Export Contract
 
+Language:
+- English canonical contract: `backend_spi_setup_contract.md`.
+- Chinese companion document.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/standards/backend_spi_setup_contract.md`
+Owner: `runtime/facade/internal/world_batch_backend.h`
+Last verified: `2026-10-10`
+
 The internal `IWorldBatchBackend` seam accepts a closed `SetupOperation` sum. A
 caller selects exactly one operation by constructing
 `std::variant<BatchSetup, LayoutSetup, WorldSpawnSetup, TypedPlatformSpawnSetup>`.
