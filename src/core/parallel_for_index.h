@@ -63,9 +63,8 @@ void parallel_for_index(std::size_t task_count, std::size_t requested_threads, F
     std::size_t begin = 0;
     for (std::size_t worker_idx = 1; worker_idx < thread_count; ++worker_idx) {
         const std::size_t end = std::min(task_count, begin + chunk_size);
-        workers.emplace_back(thread_factory(std::function<void()>([&, begin, end] {
-            run_range(begin, end);
-        })));
+        workers.emplace_back(
+            thread_factory(std::function<void()>([&, begin, end] { run_range(begin, end); })));
         begin = end;
     }
     run_range(begin, task_count);
@@ -80,9 +79,7 @@ void parallel_for_index(std::size_t task_count, std::size_t requested_threads, F
 template <typename Fn>
 void parallel_for_index(std::size_t task_count, std::size_t requested_threads, Fn &&fn) {
     parallel_for_index(task_count, requested_threads, std::forward<Fn>(fn),
-                       [](std::function<void()> task) {
-                           return std::jthread(std::move(task));
-                       });
+                       [](std::function<void()> task) { return std::jthread(std::move(task)); });
 }
 
 } // namespace runtime::detail

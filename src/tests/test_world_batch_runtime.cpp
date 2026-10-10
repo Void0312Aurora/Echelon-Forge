@@ -30,8 +30,7 @@ TEST_SUITE("world_batch_runtime") {
 
         CHECK_THROWS_AS(
             runtime::detail::parallel_for_index(
-                4, 4,
-                [&](std::size_t) { worker_finished.store(true, std::memory_order_release); },
+                4, 4, [&](std::size_t) { worker_finished.store(true, std::memory_order_release); },
                 thread_factory),
             std::runtime_error);
         CHECK(worker_finished.load(std::memory_order_acquire));
