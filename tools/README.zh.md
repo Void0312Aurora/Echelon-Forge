@@ -262,6 +262,20 @@ cmo_python tools/diagnostics/benchmark.py \
   --n-envs 8 --steps 128 --reset-iters 24
 ```
 
+使用可复现的 world/thread 矩阵测量 WorldBatch 的临时 worker 创建成本：
+
+```bash
+cmo_python tools/diagnostics/benchmark.py \
+  --family world_batch_thread_matrix \
+  --n-envs 1,2,4,8,16,32,64 \
+  --worker-threads 1,2,4,8,0 \
+  --steps 64 --repeats 5 --warmup-steps 2 \
+  --json-out artifacts/world_batch_thread_matrix.json
+```
+
+矩阵会记录有效 worker 数量以及各阶段的中位数/p95；计时边界和决策规则见
+[基准契约](../docs/architecture/standards/world_batch_thread_benchmark.zh.md)。
+
 通过同一维护入口运行 air-combat post-launch assessment 基准：
 
 ```bash
