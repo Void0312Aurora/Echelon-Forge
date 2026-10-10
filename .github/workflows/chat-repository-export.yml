@@ -2,6 +2,9 @@ name: chat-repository-export
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - chat-repository-export
 
 permissions:
   contents: read
