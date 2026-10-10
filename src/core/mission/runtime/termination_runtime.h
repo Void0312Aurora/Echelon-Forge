@@ -1,6 +1,17 @@
 #pragma once
 
+#include <cmath>
 #include <string>
+
+namespace mission_runtime {
+
+inline constexpr double kTerminationFallbackDtS = 0.05;
+
+[[nodiscard]] inline double resolve_termination_dt(double value) noexcept {
+    return std::isfinite(value) && value > 1.0e-6 ? value : kTerminationFallbackDtS;
+}
+
+} // namespace mission_runtime
 
 enum class TerminationReasonCode {
     Running = 0,

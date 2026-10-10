@@ -9,9 +9,9 @@ double clamp_value(double value, double lo, double hi) {
     return std::min(std::max(value, lo), hi);
 }
 
-}  // namespace
+} // namespace
 
-SafetyRuntimeProducts compute_safety_runtime(const SafetyRuntimeInputs& inputs) {
+SafetyRuntimeProducts compute_safety_runtime(const SafetyRuntimeInputs &inputs) {
     SafetyRuntimeProducts out{};
     out.valid = true;
 
@@ -36,19 +36,18 @@ SafetyRuntimeProducts compute_safety_runtime(const SafetyRuntimeInputs& inputs) 
     out.survival = inputs.survival_reward;
 
     if (inputs.airborne && inputs.aoa_valid && inputs.aoa_abs_deg > inputs.stall_threshold_deg) {
-        double stall_term = inputs.stall_penalty_weight * (inputs.aoa_abs_deg - inputs.stall_threshold_deg);
+        double stall_term =
+            inputs.stall_penalty_weight * (inputs.aoa_abs_deg - inputs.stall_threshold_deg);
         if (inputs.stall_penalty_clip > 0.0 && stall_term < -inputs.stall_penalty_clip) {
             stall_term = -inputs.stall_penalty_clip;
         }
         out.stall_penalty = stall_term;
     }
 
-    if (
-        inputs.airborne
-        && inputs.curr_alt_agl_m > inputs.overload_min_alt_agl_m
-        && inputs.g_abs > inputs.overload_g_threshold
-    ) {
-        double overload_term = inputs.overload_penalty_weight * (inputs.g_abs - inputs.overload_g_threshold);
+    if (inputs.airborne && inputs.curr_alt_agl_m > inputs.overload_min_alt_agl_m &&
+        inputs.g_abs > inputs.overload_g_threshold) {
+        double overload_term =
+            inputs.overload_penalty_weight * (inputs.g_abs - inputs.overload_g_threshold);
         if (inputs.overload_penalty_clip > 0.0 && overload_term < -inputs.overload_penalty_clip) {
             overload_term = -inputs.overload_penalty_clip;
         }
@@ -82,9 +81,11 @@ SafetyRuntimeProducts compute_safety_runtime(const SafetyRuntimeInputs& inputs) 
         if (inputs.gear_stress > 0.1) {
             out.gear_stress_penalty = inputs.gear_stress * inputs.gear_stress_penalty_weight;
         }
-        if (inputs.off_runway_terminate_speed > 0.0 && inputs.speed_mps >= inputs.off_runway_terminate_speed) {
-            const double dt = inputs.time_step_s > 1.0e-6 ? inputs.time_step_s : 0.05;
-            const int grace_steps = static_cast<int>(std::max(0.0, inputs.off_runway_terminate_grace_s) / dt);
+        if (inputs.off_runway_terminate_speed > 0.0 &&
+            inputs.speed_mps >= inputs.off_runway_terminate_speed) {
+            const double dt = mission_runtime::resolve_termination_dt(inputs.time_step_s);
+            const int grace_steps =
+                static_cast<int>(std::max(0.0, inputs.off_runway_terminate_grace_s) / dt);
             if (inputs.off_runway_steps > grace_steps) {
                 out.off_runway_terminate_penalty = inputs.off_runway_terminate_penalty;
                 out.terminated = true;
@@ -97,12 +98,9 @@ SafetyRuntimeProducts compute_safety_runtime(const SafetyRuntimeInputs& inputs) 
     return out;
 }
 
-TerminationReasonCode finalize_termination_reason(
-    TerminationReasonCode current_reason,
-    bool terminated,
-    bool truncated,
-    double status_flag
-) {
+TerminationReasonCode finalize_termination_reason(TerminationReasonCode current_reason,
+                                                  bool terminated, bool truncated,
+                                                  double status_flag) {
     if (terminated) {
         if (current_reason == TerminationReasonCode::Running) {
             if (status_flag > 0.5) {
@@ -123,35 +121,35 @@ TerminationReasonCode finalize_termination_reason(
 
 std::string termination_reason_name(TerminationReasonCode reason) {
     switch (reason) {
-        case TerminationReasonCode::Running:
-            return "running";
-        case TerminationReasonCode::NanGuard:
-            return "nan_guard";
-        case TerminationReasonCode::CrashHealth:
-            return "crash_health";
-        case TerminationReasonCode::FailfastDeepStall:
-            return "failfast_deep_stall";
-        case TerminationReasonCode::FailfastInvertedLowAlt:
-            return "failfast_inverted_low_alt";
-        case TerminationReasonCode::FailfastExtremePitch:
-            return "failfast_extreme_pitch";
-        case TerminationReasonCode::GearCollapse:
-            return "gear_collapse";
-        case TerminationReasonCode::OffRunwayTerminate:
-            return "off_runway_terminate";
-        case TerminationReasonCode::SuccessWaypoint:
-            return "success_waypoint";
-        case TerminationReasonCode::SuccessObjective:
-            return "success_objective";
-        case TerminationReasonCode::Success:
-            return "success";
-        case TerminationReasonCode::FailureUnknown:
-            return "failure_unknown";
-        case TerminationReasonCode::TerminatedUnknown:
-            return "terminated_unknown";
-        case TerminationReasonCode::Timeout:
-            return "timeout";
-        default:
-            return "running";
+    case TerminationReasonCode::Running:
+        return "running";
+    case TerminationReasonCode::NanGuard:
+        return "nan_guard";
+    case TerminationReasonCode::CrashHealth:
+        return "crash_health";
+    case TerminationReasonCode::FailfastDeepStall:
+        return "failfast_deep_stall";
+    case TerminationReasonCode::FailfastInvertedLowAlt:
+        return "failfast_inverted_low_alt";
+    case TerminationReasonCode::FailfastExtremePitch:
+        return "failfast_extreme_pitch";
+    case TerminationReasonCode::GearCollapse:
+        return "gear_collapse";
+    case TerminationReasonCode::OffRunwayTerminate:
+        return "off_runway_terminate";
+    case TerminationReasonCode::SuccessWaypoint:
+        return "success_waypoint";
+    case TerminationReasonCode::SuccessObjective:
+        return "success_objective";
+    case TerminationReasonCode::Success:
+        return "success";
+    case TerminationReasonCode::FailureUnknown:
+        return "failure_unknown";
+    case TerminationReasonCode::TerminatedUnknown:
+        return "terminated_unknown";
+    case TerminationReasonCode::Timeout:
+        return "timeout";
+    default:
+        return "running";
     }
 }

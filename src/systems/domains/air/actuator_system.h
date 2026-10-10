@@ -9,6 +9,7 @@
 #include "components/domains/air/combat/damage_air.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "components/physics/control_surface.h"
+#include "components/physics/physics_input_policy.h"
 
 namespace flight_dynamics {
 
@@ -31,10 +32,11 @@ inline double actuator_first_order_step(double pos, double cmd, double dt, doubl
     if (!std::isfinite(cmd)) {
         return pos;
     }
-    if (tau_s <= 1.0e-6 || dt <= 0.0) {
+    const double resolved_dt = physics_runtime::resolve_integrator_dt(dt);
+    if (tau_s <= 1.0e-6) {
         return cmd;
     }
-    const double gain = std::clamp(dt / (tau_s + dt), 0.0, 1.0);
+    const double gain = std::clamp(resolved_dt / (tau_s + resolved_dt), 0.0, 1.0);
     return pos + gain * (cmd - pos);
 }
 
@@ -42,10 +44,7 @@ inline void register_actuator_system(flecs::world &ecs) {
     ecs.system<ControlSurfaceState>("AdvanceControlSurfaces")
         .kind(flecs::OnUpdate)
         .run([](flecs::iter &it) {
-            double dt = it.delta_time();
-            if (dt <= 0.0) {
-                dt = 0.05;
-            }
+            const double dt = physics_runtime::resolve_integrator_dt(it.delta_time());
             while (it.next()) {
                 auto surfaces = it.field<ControlSurfaceState>(0);
                 for (auto i : it) {

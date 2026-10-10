@@ -9,6 +9,7 @@
 #include "components/physics/dynamics.h"
 #include "core/interfaces/environment_model.h"
 #include "models/physics/aerodynamics_common.h"
+#include "components/physics/physics_input_policy.h"
 
 namespace {
 constexpr double kAeroScalarCanonicalQuantum = 1.0e-10;
@@ -44,10 +45,7 @@ inline void register_aero_state_system(flecs::world &ecs) {
         .kind(flecs::OnUpdate)
         .run([](flecs::iter &it) {
             const EnvironmentModelRef *env_ref = it.world().get<EnvironmentModelRef>();
-            double dt = it.delta_time();
-            if (dt <= 0.0) {
-                dt = 0.05;
-            }
+            const double dt = physics_runtime::resolve_integrator_dt(it.delta_time());
 
             while (it.next()) {
                 auto aero = it.field<AeroState>(0);
