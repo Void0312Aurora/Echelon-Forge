@@ -1,5 +1,15 @@
 # Python binding 注册顺序
 
+语言：
+- 英文规范页：[python_binding_registration_order.md](python_binding_registration_order.md)
+- 中文配套页：`python_binding_registration_order.zh.md`
+
+Document kind: `standard`
+Lifecycle: `proposed`
+Canonical: `docs/architecture/standards/python_binding_registration_order.md`
+Owner: `architecture/python-bindings`
+Last verified: `2026-10-10`
+
 诊断模块 `ef_py` 与生产 facade-only 模块共用
 `bindings_runtime_detail.h` 中的一条有序注册链，nanobind DTO 注册顺序因此只维护一份。
 
