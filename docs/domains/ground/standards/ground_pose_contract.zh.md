@@ -1,13 +1,13 @@
 # Ground 移动姿态契约
 
-语言：
-- 英文规范：`ground_pose_contract.md`。
-- 本文件为中文伴随文档。
-文档类型：`standard`
-生命周期：`maintained`
-规范入口：`docs/domains/ground/standards/ground_pose_contract.md`
-所有者：`systems/domains/ground/movement_system.h`
-最后核验：`2026-10-10`
+Language:
+- English canonical contract: `ground_pose_contract.md`.
+- Chinese companion document.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/ground/standards/ground_pose_contract.md`
+Owner: `systems/domains/ground/movement_system.h`
+Last verified: `2026-10-10`
 
 ## 范围
 
