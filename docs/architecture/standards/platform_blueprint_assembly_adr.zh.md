@@ -1,5 +1,15 @@
 # ADR：版本化平台蓝图与能力组装
 
+语言：
+- 英文规范页：[platform_blueprint_assembly_adr.md](platform_blueprint_assembly_adr.md)
+- 中文配套页：`platform_blueprint_assembly_adr.zh.md`
+
+Document kind: `standard`
+Lifecycle: `proposed`
+Canonical: `docs/architecture/standards/platform_blueprint_assembly_adr.md`
+Owner: `architecture/content-contracts`
+Last verified: `2026-10-10`
+
 **状态：** 待评审的资格验证设计；旧 unit JSON 和 native materialization 仍是权威。
 
 采用可选的平台蓝图/组装 authoring 投影，并将其编译到现有 `UnitDefinition`、

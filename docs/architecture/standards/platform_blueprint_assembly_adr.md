@@ -1,5 +1,15 @@
 # ADR: versioned platform blueprints and capability assembly
 
+Language:
+- English canonical: `platform_blueprint_assembly_adr.md`
+- Chinese companion: [platform_blueprint_assembly_adr.zh.md](platform_blueprint_assembly_adr.zh.md)
+
+Document kind: `standard`
+Lifecycle: `proposed`
+Canonical: `docs/architecture/standards/platform_blueprint_assembly_adr.md`
+Owner: `architecture/content-contracts`
+Last verified: `2026-10-10`
+
 **Status:** proposed qualification design; legacy unit JSON and native
 materialization remain authoritative.
 
