@@ -369,10 +369,9 @@ WorldBatchRuntime::export_recent_engagement_events(size_t world_index) const {
 void WorldBatchRuntime::reset_batch(const std::vector<uint32_t> &seeds) {
     world_batch_setup::validate_reset_seeds(worlds_.size(), seeds);
     try {
-        runtime::detail::parallel_for_index(
-            worlds_.size(), worker_threads_, [&](size_t i) {
-                worlds_[i]->reset(world_batch_setup::resolve_reset_seed(i, worlds_.size(), seeds));
-            });
+        runtime::detail::parallel_for_index(worlds_.size(), worker_threads_, [&](size_t i) {
+            worlds_[i]->reset(world_batch_setup::resolve_reset_seed(i, worlds_.size(), seeds));
+        });
         batch_healthy_ = true;
         batch_failure_ = nullptr;
     } catch (...) {

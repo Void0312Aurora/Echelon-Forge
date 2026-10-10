@@ -1,5 +1,13 @@
 # WorldBatch failure contract
 
+Language:
+- English canonical: `world_batch_failure_contract.md`
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/standards/world_batch_failure_contract.md`
+Owner: `architecture/runtime-workflow`
+Last verified: `2026-10-10`
 `WorldBatchRuntime` does not promise transactional rollback when a state-mutating
 operation fails. A worker may have advanced or otherwise changed one world before
 another world reports an exception.
