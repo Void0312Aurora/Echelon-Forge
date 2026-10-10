@@ -1,5 +1,15 @@
 # ADR: layered simulation failure domains and recovery
 
+Language:
+- English canonical: `simulation_failure_domain_adr.md`
+- Chinese companion: [simulation_failure_domain_adr.zh.md](simulation_failure_domain_adr.zh.md)
+
+Document kind: `standard`
+Lifecycle: `proposed`
+Canonical: `docs/architecture/standards/simulation_failure_domain_adr.md`
+Owner: `architecture/failure-contracts`
+Last verified: `2026-10-10`
+
 **Status:** proposed contract; no new host, transaction engine or production
 cutover is authorized.
 
