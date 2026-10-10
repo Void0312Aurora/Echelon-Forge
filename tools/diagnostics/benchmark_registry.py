@@ -52,4 +52,9 @@ BENCHMARK_FAMILIES: dict[str, BenchmarkFamily] = {
         description="Policy-observation bridge benchmark.",
         module_path="tools.diagnostics.benchmarks.policy_observation_bridge",
     ),
+    "interaction_broadphase": BenchmarkFamily(
+        name="interaction_broadphase",
+        description="GPU interaction broadphase grid versus CPU reference matrix.",
+        module_path="tools.diagnostics.benchmarks.interaction_broadphase",
+    ),
 }

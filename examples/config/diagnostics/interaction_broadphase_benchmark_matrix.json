@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "benchmark": "interaction_broadphase",
+  "worlds": [1, 4, 16],
+  "entities_per_world": [8, 32, 128, 512, 2048],
+  "queries_per_world": [1, 8, 32, 128],
+  "ranges_km": [1, 10, 50, 100, 300],
+  "cells_km": [1, 2, 5, 10],
+  "seed": 7,
+  "measurement_requirements": {
+    "cuda_exercised": true,
+    "cpu_reference": true,
+    "candidate_superset": true,
+    "overflow_counters": true
+  }
+}
