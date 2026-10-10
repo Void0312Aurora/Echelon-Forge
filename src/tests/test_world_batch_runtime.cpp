@@ -37,6 +37,29 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(launch_count.load() == 2);
     }
 
+    TEST_CASE("state-mutating batch failure is fail-closed until reset") {
+        for (const std::size_t worker_threads : {std::size_t{1}, std::size_t{2}}) {
+            WorldBatchRuntime runtime(2);
+            runtime.set_worker_threads(worker_threads);
+            runtime.world_raw_quarantine(1).begin_exact_stage_trace_frame();
+
+            CHECK(runtime.batch_healthy());
+            CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
+            CHECK_FALSE(runtime.batch_healthy());
+            CHECK(runtime.batch_failure_reason().find("exact-stage trace frame") !=
+                  std::string::npos);
+
+            // The failed batch cannot be retried as if all worlds had advanced.
+            CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
+
+            runtime.world_raw_quarantine(1).end_exact_stage_trace_frame();
+            CHECK_NOTHROW(runtime.reset_batch({11, 17}));
+            CHECK(runtime.batch_healthy());
+            CHECK(runtime.batch_failure_reason().empty());
+            CHECK_NOTHROW(runtime.step_batch());
+        }
+    }
+
     TEST_CASE("batch reset and setup resolve documented effective seeds") {
         WorldBatchRuntime runtime(4);
         auto effective_seed = [&](std::size_t index) {
