@@ -363,10 +363,13 @@ add_library(ef_runtime_host_candidate STATIC
     src/runtime/host/runtime_host_candidate.cpp
     src/runtime/host/runtime_state_transfer_candidate.h
     src/runtime/host/runtime_state_transfer_candidate.cpp
+    src/runtime/crypto/sha256.h
 )
 target_include_directories(ef_runtime_host_candidate
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 target_compile_features(ef_runtime_host_candidate PUBLIC cxx_std_20)
 target_link_libraries(ef_runtime_host_candidate PUBLIC ef_runtime_contracts)
@@ -1062,6 +1065,7 @@ set(EF_TEST_SOURCES
     src/tests/test_aero_physics_common.cpp
     src/tests/test_geodesy.cpp
     src/tests/test_ground_contact_solver.cpp
+    src/tests/test_sha256.cpp
     src/tests/test_ship_maneuvering.cpp
     src/tests/test_world_cv_alpha_beta_tracker.cpp
     src/tests/test_track_manager_system.cpp
