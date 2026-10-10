@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from zipfile import ZipFile
 
 from tests.architecture.helpers import REPO_ROOT
@@ -14,6 +15,10 @@ FACADE_BINDINGS = (
 GPU_FACADE_BINDINGS = (
   REPO_ROOT / "src" / "interfaces" / "python" / "bindings_gpu_facade_only.cpp"
 )
+
+
+def _read(path: Path) -> str:
+  return path.read_text(encoding="utf-8")
 
 
 def test_production_binding_options_fail_closed_to_facade_only() -> None:
