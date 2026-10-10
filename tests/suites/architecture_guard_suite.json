@@ -77,6 +77,7 @@
     "tests/architecture/governance/test_internal_code_governance.py",
     "tests/architecture/governance/test_path_length_budget.py",
     "tests/architecture/governance/test_python_dependency_boundaries.py",
+    "tests/architecture/governance/test_policy_observation_action_contract_adr.py",
     "tests/architecture/governance/test_runtime_bootstrap_owner.py",
     "tests/architecture/governance/test_scenario_generation_lineage_parity.py",
     "tests/architecture/governance/test_tools_script_governance.py",
