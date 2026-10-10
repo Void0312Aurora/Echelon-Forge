@@ -1076,4 +1076,80 @@ TEST_SUITE("content_compile_passes") {
         fs::remove_all(directory);
     }
 
+    TEST_CASE("aircraft failure-mode content rejects unknown and malformed authored entries") {
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_failure_mode_validation_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const auto make_entry = [](const nlohmann::json &component_fields) {
+            nlohmann::json entry = {{"type", "Aircraft"},
+                                    {"name", "Synthetic_Failure_Mode_Validation"},
+                                    {"damage_model", {}}};
+            entry["damage_model"]["hitboxes"] = {
+                {{"components", {{{"name", "left_wing"}, {"system", "wing"}}}}}};
+            entry["damage_model"]["hitboxes"][0]["components"][0].update(component_fields);
+            return entry;
+        };
+
+        const nlohmann::json valid_entry = make_entry({
+            {"failure_modes", {"fuel-leak"}},
+            {"failure_mode_weights", {{"structural-weakening", 1.5}, {"cut", 0.25}}},
+        });
+        const fs::path valid_path = directory / "valid.json";
+        { std::ofstream(valid_path) << valid_entry.dump(2); }
+
+        std::vector<UnitDefinition> valid_definitions;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(valid_path.string(), valid_definitions, &error));
+        REQUIRE(valid_definitions.size() == 1);
+        REQUIRE(valid_definitions[0].damage_model.hitboxes.size() == 1);
+        REQUIRE(valid_definitions[0].damage_model.hitboxes[0].components.size() == 1);
+        const auto &weights =
+            valid_definitions[0].damage_model.hitboxes[0].components[0].failure_mode_weights;
+        CHECK(weights.at("fuel_leak") == doctest::Approx(1.0));
+        CHECK(weights.at("structural_weakening") == doctest::Approx(1.5));
+        CHECK(weights.at("cut") == doctest::Approx(0.25));
+
+        const fs::path object_path = directory / "valid_object.json";
+        {
+            std::ofstream(object_path)
+                << make_entry({{"failure_modes", {{"structural-weakening", 1.5}}}}).dump(2);
+        }
+        std::vector<UnitDefinition> object_definitions;
+        REQUIRE(load_unit_definitions_json(object_path.string(), object_definitions, &error));
+        REQUIRE(object_definitions.size() == 1);
+        CHECK(object_definitions[0].damage_model.hitboxes[0].components[0].failure_mode_weights.at(
+                  "structural_weakening") == doctest::Approx(1.5));
+
+        const std::vector<std::pair<std::string, nlohmann::json>> invalid_entries = {
+            {"array_unknown", {{"failure_modes", {"structural_weakning"}}}},
+            {"array_non_string", {{"failure_modes", {"cut", 7}}}},
+            {"object_unknown", {{"failure_modes", {{"structural_weakning", 1.0}}}}},
+            {"object_non_numeric", {{"failure_modes", {{"cut", "high"}}}}},
+            {"weights_unknown", {{"failure_mode_weights", {{"structural_weakning", 1.0}}}}},
+            {"weights_non_numeric", {{"failure_mode_weights", {{"cut", "high"}}}}},
+        };
+
+        for (const auto &[name, component_fields] : invalid_entries) {
+            const fs::path path = directory / (name + ".json");
+            { std::ofstream(path) << make_entry(component_fields).dump(2); }
+            std::vector<UnitDefinition> definitions;
+            std::string load_error;
+            CHECK_FALSE(load_unit_definitions_json(path.string(), definitions, &load_error));
+            CHECK(definitions.empty());
+            CHECK(load_error.find("Synthetic_Failure_Mode_Validation") != std::string::npos);
+            CHECK(load_error.find("left_wing") != std::string::npos);
+            CHECK(load_error.find("damage_model.hitboxes[0].components[0]") != std::string::npos);
+            CHECK(load_error.find("failure_mode") != std::string::npos);
+            const bool includes_offending_value =
+                load_error.find("structural_weakning") != std::string::npos ||
+                load_error.find("high") != std::string::npos ||
+                load_error.find("7") != std::string::npos;
+            CHECK(includes_offending_value);
+        }
+
+        fs::remove_all(directory);
+    }
+
 } // TEST_SUITE content_compile_passes
