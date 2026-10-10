@@ -60,4 +60,4 @@
   "measurement_scope": "Single 300 km range / 1 km cell case, one sample, 10 s timeout; timeout is retained as a measured non-completion",
   "probe": "/tmp/echelon-issue248-build/ef_gpu_interaction_broadphase_phase0_probe",
   "schema_version": 2
-}\n
+}
