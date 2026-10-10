@@ -849,6 +849,30 @@ class WorldBatchVecEnvCommandChainTests(unittest.TestCase):
     with self.assertRaisesRegex(RuntimeError, "requires maintained TaskOrder batch bindings"):
       adapter.set_task_orders_maintained_batch([])
 
+  def test_world_batch_adapter_task_order_read_distinguishes_missing_binding_from_empty_result(self) -> None:
+    adapter = vec_env_module._RuntimeFacadeAdapter(1)
+
+    class _TaskOrderReadMissingFacade:
+      pass
+
+    adapter.facade = _TaskOrderReadMissingFacade() # type: ignore[assignment]
+    self.assertFalse(adapter.capabilities.has_get_task_orders_maintained_batch)
+    self.assertIn("has_get_task_orders_maintained_batch", adapter.capabilities.missing_required)
+    self.assertIn("has_get_unit_messages_batch", adapter.capabilities.missing_optional)
+    with self.assertRaisesRegex(RuntimeError, "requires maintained facade bindings"):
+      adapter.get_task_orders_maintained_batch([])
+
+    class _TaskOrderReadFacade:
+      def get_task_orders_maintained_batch(self, refs):
+        self.refs = list(refs)
+        return []
+
+    facade = _TaskOrderReadFacade()
+    adapter.facade = facade # type: ignore[assignment]
+    self.assertTrue(adapter.capabilities.has_get_task_orders_maintained_batch)
+    self.assertEqual(adapter.get_task_orders_maintained_batch([]), [])
+    self.assertEqual(facade.refs, [])
+
   def test_world_batch_adapter_step_worlds_uses_facade_batch_step_without_raw_runtime_escape(self) -> None:
     adapter = vec_env_module._RuntimeFacadeAdapter(2)
 
