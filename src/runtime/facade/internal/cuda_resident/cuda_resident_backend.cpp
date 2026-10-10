@@ -216,18 +216,19 @@ void CudaResidentBackend::reset(const runtime::backend::ResetRequest &request) {
 
 runtime::backend::SetupResult
 CudaResidentBackend::setup(const runtime::backend::SetupRequest &request) {
-    if (request.kind != runtime::backend::SetupKind::Batch) {
+    const auto *batch = std::get_if<runtime::backend::BatchSetup>(&request.operation);
+    if (batch == nullptr) {
         throw std::logic_error(
             "CUDA fixed-air resident backend supports only canonical batch setup");
     }
     const std::size_t world_count = store_.world_capacity();
-    const auto &seeds = request.seeds.get();
-    const auto &spawns = request.spawn_requests.get();
-    const auto &time_steps = request.time_steps.get();
+    const auto &seeds = batch->seeds.get();
+    const auto &spawns = batch->spawn_requests.get();
+    const auto &time_steps = batch->time_steps.get();
     if (seeds.size() != world_count || spawns.size() != world_count ||
-        time_steps.size() != world_count || !request.terrain_assignments.empty() ||
-        !request.wind_assignments.empty() || !request.zones.empty() ||
-        !request.sun_assignments.empty() || !request.geodetic_anchor_assignments.empty()) {
+        time_steps.size() != world_count || !batch->terrain_assignments.empty() ||
+        !batch->wind_assignments.empty() || !batch->zones.empty() ||
+        !batch->sun_assignments.empty() || !batch->geodetic_anchor_assignments.empty()) {
         throw std::invalid_argument(
             "CUDA fixed-air resident setup requires one seed/spawn/time-step per world and no "
             "dynamic environment assignments");

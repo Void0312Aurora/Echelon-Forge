@@ -3,6 +3,7 @@
 #include <doctest/doctest.h>
 
 #include <type_traits>
+#include <variant>
 
 namespace {
 
@@ -49,6 +50,7 @@ static_assert(
 static_assert(
     !std::is_constructible_v<runtime::backend::VectorBatchView<WorldPilotActionAssignment>,
                              const std::vector<WorldPilotActionAssignment> &&>);
+static_assert(std::variant_size_v<runtime::backend::SetupOperation> == 4);
 
 } // namespace
 
@@ -57,4 +59,19 @@ TEST_CASE("backend batch view aliases the caller vector without ownership") {
     const runtime::backend::VectorBatchView<WorldPilotActionAssignment> view(source);
 
     CHECK(&view.get() == &source);
+}
+
+TEST_CASE("backend setup requests use one typed operation alternative") {
+    runtime::backend::SetupRequest batch{};
+    CHECK(std::holds_alternative<runtime::backend::BatchSetup>(batch.operation));
+
+    runtime::backend::SetupRequest layout{
+        .operation = runtime::backend::LayoutSetup{},
+    };
+    CHECK(std::holds_alternative<runtime::backend::LayoutSetup>(layout.operation));
+
+    runtime::backend::SetupRequest world_spawn{
+        .operation = runtime::backend::WorldSpawnSetup{},
+    };
+    CHECK(std::holds_alternative<runtime::backend::WorldSpawnSetup>(world_spawn.operation));
 }

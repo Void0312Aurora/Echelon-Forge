@@ -61,10 +61,12 @@ struct Fixture {
 Fixture setup_backend(CudaResidentBackend &backend) {
     Fixture fixture;
     const auto setup = backend.setup({
-        .kind = runtime::backend::SetupKind::Batch,
-        .seeds = fixture.seeds,
-        .spawn_requests = fixture.spawns,
-        .time_steps = fixture.time_steps,
+        .operation =
+            runtime::backend::BatchSetup{
+                .seeds = fixture.seeds,
+                .spawn_requests = fixture.spawns,
+                .time_steps = fixture.time_steps,
+            },
     });
     fixture.entity_ids = setup.entity_ids;
     fixture.actions = make_actions(fixture.entity_ids);
