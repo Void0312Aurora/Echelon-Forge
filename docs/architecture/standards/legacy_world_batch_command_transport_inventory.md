@@ -1,5 +1,15 @@
 # Legacy WorldBatch Command Transport Inventory
 
+Language:
+- English canonical: `legacy_world_batch_command_transport_inventory.md`
+- Chinese companion: [legacy_world_batch_command_transport_inventory.zh.md](legacy_world_batch_command_transport_inventory.zh.md)
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/standards/legacy_world_batch_command_transport_inventory.md`
+Owner: `architecture/runtime-contracts`
+Last verified: `2026-10-10`
+
 This inventory records the post-maintained-migration decision for the three
 raw command writers. The maintained `RuntimeFacade` path uses typed
 `*MaintainedAssignment` requests and is the only supported Python execution

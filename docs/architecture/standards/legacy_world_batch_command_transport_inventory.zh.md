@@ -1,5 +1,15 @@
 # Legacy WorldBatch 命令传输清单
 
+语言：
+- 英文规范页：[legacy_world_batch_command_transport_inventory.md](legacy_world_batch_command_transport_inventory.md)
+- 中文配套页：`legacy_world_batch_command_transport_inventory.zh.md`
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/standards/legacy_world_batch_command_transport_inventory.md`
+Owner: `architecture/runtime-contracts`
+Last verified: `2026-10-10`
+
 本清单记录维护迁移完成后三个 raw 命令写入器的处理决定。维护中的
 `RuntimeFacade` 路径使用带类型的 `*MaintainedAssignment` 请求，是唯一受支持的
 Python 执行路径。
