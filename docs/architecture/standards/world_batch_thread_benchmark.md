@@ -1,5 +1,15 @@
 # WorldBatch Thread Matrix Benchmark
 
+Language:
+- English canonical: `world_batch_thread_benchmark.md`
+- Chinese companion: [world_batch_thread_benchmark.zh.md](world_batch_thread_benchmark.zh.md)
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/standards/world_batch_thread_benchmark.md`
+Owner: `architecture/runtime-workflow`
+Last verified: `2026-10-10`
+
 `WorldBatchRuntime` defaults to one worker and creates transient workers only
 when a caller explicitly selects multiple workers or auto mode. Issue #211 is
 therefore a measurement task, not a commitment to introduce a worker pool.

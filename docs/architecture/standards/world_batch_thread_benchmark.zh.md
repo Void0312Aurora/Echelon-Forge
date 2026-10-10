@@ -1,5 +1,15 @@
 # WorldBatch 线程矩阵基准
 
+Language:
+- Chinese canonical: `world_batch_thread_benchmark.zh.md`
+- English companion: [world_batch_thread_benchmark.md](world_batch_thread_benchmark.md)
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/standards/world_batch_thread_benchmark.zh.md`
+Owner: `architecture/runtime-workflow`
+Last verified: `2026-10-10`
+
 `WorldBatchRuntime` 默认使用一个 worker。只有调用方显式选择多 worker 或
 auto 模式时才会创建临时 worker。因此 issue #211 是测量任务，不预设一定要
 引入 worker pool。
