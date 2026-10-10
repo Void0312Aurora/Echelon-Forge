@@ -476,7 +476,9 @@ class GpuRuntimeBindingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
           ef_py.build_interaction_broadphase_batch_numpy([], [], config, use_gpu)
 
-    config.cell_size_m = 1.0`r`n    config.max_entity_radius_m = 0.0`r`n    result = np.asarray(ef_py.build_interaction_broadphase_batch_numpy([], [], config, False))
+    config.cell_size_m = 1.0
+    config.max_entity_radius_m = 0.0
+    result = np.asarray(ef_py.build_interaction_broadphase_batch_numpy([], [], config, False))
     self.assertEqual(result.shape, (0, 32))
 
   def test_execution_observation_export_dlpack_matches_host(self) -> None:
