@@ -21,7 +21,7 @@ namespace {
 inline void accumulate_aircraft_structural_envelope_damage(const AircraftDamageBaseline &baseline,
                                                            const AeroState &aero, double dt_s,
                                                            AircraftDamageState &aircraft) {
-    if (dt_s <= 0.0 || aircraft.structural_integrity >= 0.985) {
+    if (dt_s <= 0.0) {
         return;
     }
 
