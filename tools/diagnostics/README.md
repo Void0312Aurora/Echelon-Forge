@@ -213,6 +213,10 @@ Each matrix cell records sample count, mean, min, max, and population standard
 deviation for CPU, host-readback, and device-resident timings. A timeout is
 recorded as an incomplete cell so a sparse long-range scan cannot be mistaken
 for a successful measurement.
+The retained HEI-FRP RTX 3090 smoke evidence is in
+`docs/architecture/work/issues/issue248_broadphase_hei_rtx3090_20261011.json`;
+the separate 300 km / 1 km timeout observation is in
+`docs/architecture/work/issues/issue248_broadphase_hei_rtx3090_long_range_timeout_20261011.json`.
 
 Maintenance note:
 
