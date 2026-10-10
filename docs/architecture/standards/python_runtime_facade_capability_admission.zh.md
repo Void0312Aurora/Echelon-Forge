@@ -1,5 +1,14 @@
 # Python RuntimeFacade 能力准入
 
+Language:
+- English canonical contract: `python_runtime_facade_capability_admission.md`.
+- Chinese companion document.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/standards/python_runtime_facade_capability_admission.md`
+Owner: `python/rl/runtime/world_batch/adapter.py`
+Last verified: `2026-10-10`
+
 `RuntimeFacadeAdapterCapabilities` 是维护中的 Python world-batch adapter 使用的唯一
 能力快照。facade 对象发生替换时会重新计算快照，因此测试和 provider 替换仍然是显式
 行为，也不会探测旧式 fallback。

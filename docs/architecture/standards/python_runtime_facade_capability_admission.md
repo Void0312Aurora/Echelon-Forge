@@ -1,5 +1,14 @@
 # Python RuntimeFacade Capability Admission
 
+Language:
+- English canonical contract: `python_runtime_facade_capability_admission.md`.
+- Chinese companion document.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/standards/python_runtime_facade_capability_admission.md`
+Owner: `python/rl/runtime/world_batch/adapter.py`
+Last verified: `2026-10-10`
+
 `RuntimeFacadeAdapterCapabilities` is the single capability snapshot used by
 the maintained Python world-batch adapter. The snapshot is recomputed when the
 facade object changes, which keeps test and provider swaps explicit without
