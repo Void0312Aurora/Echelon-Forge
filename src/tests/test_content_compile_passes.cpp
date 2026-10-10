@@ -1142,9 +1142,11 @@ TEST_SUITE("content_compile_passes") {
             CHECK(load_error.find("left_wing") != std::string::npos);
             CHECK(load_error.find("damage_model.hitboxes[0].components[0]") != std::string::npos);
             CHECK(load_error.find("failure_mode") != std::string::npos);
-            CHECK(load_error.find("structural_weakning") != std::string::npos ||
-                  load_error.find("high") != std::string::npos ||
-                  load_error.find("7") != std::string::npos);
+            const bool includes_offending_value =
+                load_error.find("structural_weakning") != std::string::npos ||
+                load_error.find("high") != std::string::npos ||
+                load_error.find("7") != std::string::npos;
+            CHECK(includes_offending_value);
         }
 
         fs::remove_all(directory);
