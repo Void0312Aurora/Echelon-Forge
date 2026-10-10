@@ -153,6 +153,9 @@
     "tests/architecture/structural_boundaries/test_stochastic_draw_guard.py",
     "tests/architecture/structural_boundaries/test_weapon_release_structure.py",
     "tests/architecture/tasking_contracts/test_scenario_loader_runtime_contract.py",
-    "tests/architecture/tasking_contracts/test_tasking_contracts_boundary.py"
+    "tests/architecture/tasking_contracts/test_tasking_contracts_boundary.py",
+    "tests/architecture/tasking_contracts/test_policy_contract.py"
   ]
 }
+
+
