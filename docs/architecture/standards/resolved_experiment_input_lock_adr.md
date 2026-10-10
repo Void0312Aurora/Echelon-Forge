@@ -1,5 +1,15 @@
 # ADR: resolved experiment input lock and comparability
 
+Language:
+- English canonical: `resolved_experiment_input_lock_adr.md`
+- Chinese companion: [resolved_experiment_input_lock_adr.zh.md](resolved_experiment_input_lock_adr.zh.md)
+
+Document kind: `standard`
+Lifecycle: `proposed`
+Canonical: `docs/architecture/standards/resolved_experiment_input_lock_adr.md`
+Owner: `architecture/experiment-contracts`
+Last verified: `2026-10-10`
+
 **Status:** proposed static/qualification projection; native composition and
 RunReceipt authorities remain canonical.
 

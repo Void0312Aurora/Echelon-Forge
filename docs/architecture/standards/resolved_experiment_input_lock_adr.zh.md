@@ -1,5 +1,15 @@
 # ADR：已解析实验输入锁与可比性
 
+语言：
+- 英文规范页：[resolved_experiment_input_lock_adr.md](resolved_experiment_input_lock_adr.md)
+- 中文配套页：`resolved_experiment_input_lock_adr.zh.md`
+
+Document kind: `standard`
+Lifecycle: `proposed`
+Canonical: `docs/architecture/standards/resolved_experiment_input_lock_adr.md`
+Owner: `architecture/experiment-contracts`
+Last verified: `2026-10-10`
+
 **状态：** 可选的静态/资格验证投影；native composition 与 RunReceipt authority 仍是权威。
 
 新增可选的 `ResolvedExperiment` 投影，只引用而不重算或替代现有 native composition identity、
