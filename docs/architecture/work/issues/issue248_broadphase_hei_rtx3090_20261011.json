@@ -1002,4 +1002,4 @@
   "measurement_scope": "Reduced 8-cell smoke matrix: worlds=1, entities=8/32, queries=1, ranges=1/10 km, cells=1/5 km, repetitions=3, timeout=10 s",
   "probe": "/tmp/echelon-issue248-build/ef_gpu_interaction_broadphase_phase0_probe",
   "schema_version": 2
-}\n
+}
