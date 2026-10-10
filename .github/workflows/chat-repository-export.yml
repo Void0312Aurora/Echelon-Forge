@@ -1,9 +1,7 @@
 name: chat-repository-export
 
 on:
-  push:
-    branches:
-      - chat-repository-export-20261010
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -25,7 +23,7 @@ jobs:
         run: |
           git rev-parse HEAD > "$RUNNER_TEMP/echelon-forge-revision.txt"
           tar -czf "$RUNNER_TEMP/echelon-forge.tar.gz" -C "$GITHUB_WORKSPACE" .
-          sha256sum "$RUNNER_TEMP/echelon-forge.tar.gz" > "$RUNNER_TEMP/echelon-forge.sha256"
+          (cd "$RUNNER_TEMP" && sha256sum echelon-forge.tar.gz > echelon-forge.sha256)
 
       - name: Upload repository snapshot
         uses: actions/upload-artifact@v4
