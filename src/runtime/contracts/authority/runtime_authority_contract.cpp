@@ -14,6 +14,7 @@
 #include <utility>
 
 #include "runtime/composition/composition_json.h"
+#include "runtime/crypto/sha256.h"
 
 namespace runtime::authority_contracts {
 namespace {
@@ -43,83 +44,6 @@ Json sorted_json_value(const Json &value) {
 
 std::string sorted_json_dump(const Json &value) {
     return sorted_json_value(value).dump();
-}
-
-std::string sha256_hex_impl(std::string_view input) {
-    constexpr std::array<std::uint32_t, 64> constants = {
-        0x428a2f98U, 0x71374491U, 0xb5c0fbcfU, 0xe9b5dba5U, 0x3956c25bU, 0x59f111f1U, 0x923f82a4U,
-        0xab1c5ed5U, 0xd807aa98U, 0x12835b01U, 0x243185beU, 0x550c7dc3U, 0x72be5d74U, 0x80deb1feU,
-        0x9bdc06a7U, 0xc19bf174U, 0xe49b69c1U, 0xefbe4786U, 0x0fc19dc6U, 0x240ca1ccU, 0x2de92c6fU,
-        0x4a7484aaU, 0x5cb0a9dcU, 0x76f988daU, 0x983e5152U, 0xa831c66dU, 0xb00327c8U, 0xbf597fc7U,
-        0xc6e00bf3U, 0xd5a79147U, 0x06ca6351U, 0x14292967U, 0x27b70a85U, 0x2e1b2138U, 0x4d2c6dfcU,
-        0x53380d13U, 0x650a7354U, 0x766a0abbU, 0x81c2c92eU, 0x92722c85U, 0xa2bfe8a1U, 0xa81a664bU,
-        0xc24b8b70U, 0xc76c51a3U, 0xd192e819U, 0xd6990624U, 0xf40e3585U, 0x106aa070U, 0x19a4c116U,
-        0x1e376c08U, 0x2748774cU, 0x34b0bcb5U, 0x391c0cb3U, 0x4ed8aa4aU, 0x5b9cca4fU, 0x682e6ff3U,
-        0x748f82eeU, 0x78a5636fU, 0x84c87814U, 0x8cc70208U, 0x90befffaU, 0xa4506cebU, 0xbef9a3f7U,
-        0xc67178f2U,
-    };
-    // This compact implementation is the same SHA-256 primitive used by the
-    // existing projection contract, kept local so authority validation has no
-    // dependency on the transitional composition target.
-    std::array<std::uint32_t, 8> state = {0x6a09e667U, 0xbb67ae85U, 0x3c6ef372U, 0xa54ff53aU,
-                                          0x510e527fU, 0x9b05688cU, 0x1f83d9abU, 0x5be0cd19U};
-    std::vector<std::uint8_t> bytes(input.begin(), input.end());
-    const auto bit_length = static_cast<std::uint64_t>(bytes.size()) * 8U;
-    bytes.push_back(0x80U);
-    while (bytes.size() % 64U != 56U)
-        bytes.push_back(0U);
-    for (int shift = 56; shift >= 0; shift -= 8)
-        bytes.push_back(static_cast<std::uint8_t>((bit_length >> shift) & 0xffU));
-    const auto rotr = [](std::uint32_t value, unsigned count) {
-        return (value >> count) | (value << (32U - count));
-    };
-    for (std::size_t offset = 0; offset < bytes.size(); offset += 64U) {
-        std::array<std::uint32_t, 64> words{};
-        for (std::size_t index = 0; index < 16; ++index) {
-            const auto base = offset + index * 4U;
-            words[index] = (static_cast<std::uint32_t>(bytes[base]) << 24U) |
-                           (static_cast<std::uint32_t>(bytes[base + 1U]) << 16U) |
-                           (static_cast<std::uint32_t>(bytes[base + 2U]) << 8U) |
-                           static_cast<std::uint32_t>(bytes[base + 3U]);
-        }
-        for (std::size_t index = 16; index < words.size(); ++index) {
-            const auto s0 = rotr(words[index - 15U], 7) ^ rotr(words[index - 15U], 18) ^
-                            (words[index - 15U] >> 3U);
-            const auto s1 = rotr(words[index - 2U], 17) ^ rotr(words[index - 2U], 19) ^
-                            (words[index - 2U] >> 10U);
-            words[index] = words[index - 16U] + s0 + words[index - 7U] + s1;
-        }
-        auto [a, b, c, d, e, f, g, h] = state;
-        for (std::size_t index = 0; index < words.size(); ++index) {
-            const auto s1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
-            const auto choose = (e & f) ^ (~e & g);
-            const auto temp1 = h + s1 + choose + constants[index] + words[index];
-            const auto s0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
-            const auto majority = (a & b) ^ (a & c) ^ (b & c);
-            const auto temp2 = s0 + majority;
-            h = g;
-            g = f;
-            f = e;
-            e = d + temp1;
-            d = c;
-            c = b;
-            b = a;
-            a = temp1 + temp2;
-        }
-        state[0] += a;
-        state[1] += b;
-        state[2] += c;
-        state[3] += d;
-        state[4] += e;
-        state[5] += f;
-        state[6] += g;
-        state[7] += h;
-    }
-    std::ostringstream output;
-    output << std::hex << std::setfill('0');
-    for (const auto word : state)
-        output << std::setw(8) << word;
-    return output.str();
 }
 
 ValidationResult invalid(std::string code, std::string detail) {
@@ -245,11 +169,11 @@ std::string authority_digest_sha256_hex(std::string_view domain, std::string_vie
     input.append(media_type);
     input.push_back('\0');
     input.append(payload_bytes);
-    return sha256_hex_impl(input);
+    return runtime::crypto::sha256_hex(input);
 }
 
 std::string sha256_hex(std::string_view bytes) {
-    return sha256_hex_impl(bytes);
+    return runtime::crypto::sha256_hex(bytes);
 }
 
 std::optional<std::string> canonical_authority_json(std::string_view json_bytes) {
@@ -275,7 +199,7 @@ checkpoint_replay_aggregate_sha256(std::string_view checkpoint_payload_json) {
             {"transfer_fence_sequence", payload.at("transfer_fence_sequence")},
             {"world_fragments", payload.at("world_fragments")},
         };
-        return sha256_hex_impl(sorted_json_dump(material));
+        return runtime::crypto::sha256_hex(sorted_json_dump(material));
     } catch (const Json::exception &) {
         return std::nullopt;
     }
@@ -567,16 +491,16 @@ ValidationResult validate_authority_envelope_json(std::string_view envelope_json
         std::string binding_input = payload.at("request_sha256").get<std::string>();
         binding_input.push_back('\0');
         binding_input += payload.at("source_requested_manifest_sha256").get<std::string>();
-        if (sha256_hex_impl(binding_input) !=
+        if (runtime::crypto::sha256_hex(binding_input) !=
             payload.at("source_request_manifest_binding_sha256").get<std::string>()) {
             return invalid("authority.payload_binding",
                            "source request/manifest provenance binding differs");
         }
         auto resolved_body = resolved;
         resolved_body.erase("resolved_manifest_sha256");
-        if (sha256_hex_impl(resolved_body.dump()) !=
+        if (runtime::crypto::sha256_hex(resolved_body.dump()) !=
                 resolved.at("resolved_manifest_sha256").get<std::string>() ||
-            sha256_hex_impl(resolved.dump()) !=
+            runtime::crypto::sha256_hex(resolved.dump()) !=
                 payload.at("source_artifact_sha256").get<std::string>()) {
             return invalid("authority.payload_digest",
                            "resolved plan legacy digest does not match source bytes");
@@ -764,14 +688,16 @@ ValidationResult validate_resolved_execution_plan_json(std::string_view plan_jso
         if (!owner_inputs.at(field).is_object())
             return invalid("plan.owner_inputs", "owner input is not an object");
     }
-    const auto request_sha = sha256_hex_impl(sorted_json_dump(owner_inputs.at("request")));
+    const auto request_sha =
+        runtime::crypto::sha256_hex(sorted_json_dump(owner_inputs.at("request")));
     if (request_sha != bindings.at("request_sha256").get<std::string>())
         return invalid("plan.owner_inputs", "request digest mismatch");
-    const auto backend_sha = sha256_hex_impl(sorted_json_dump(owner_inputs.at("backend_request")));
+    const auto backend_sha =
+        runtime::crypto::sha256_hex(sorted_json_dump(owner_inputs.at("backend_request")));
     if (backend_sha != bindings.at("backend_request_sha256").get<std::string>())
         return invalid("plan.owner_inputs", "backend request digest mismatch");
     const auto requested_sha =
-        sha256_hex_impl(sorted_json_dump(owner_inputs.at("requested_manifest")));
+        runtime::crypto::sha256_hex(sorted_json_dump(owner_inputs.at("requested_manifest")));
     if (requested_sha != bindings.at("requested_manifest_sha256").get<std::string>())
         return invalid("plan.owner_inputs", "requested manifest digest mismatch");
     Json lock_payload = owner_inputs.at("catalog_lock");
@@ -789,7 +715,8 @@ ValidationResult validate_resolved_execution_plan_json(std::string_view plan_jso
         return invalid("plan.owner_inputs",
                        "catalog lock canonical bytes are not sorted UTF-8 JSON");
     }
-    const auto lock_sha = sha256_hex_impl(lock_payload.at("canonical_json").get<std::string>());
+    const auto lock_sha =
+        runtime::crypto::sha256_hex(lock_payload.at("canonical_json").get<std::string>());
     if (lock_sha != lock_payload.at("lock_sha256").get<std::string>() ||
         lock_sha != bindings.at("catalog_lock_sha256").get<std::string>()) {
         return invalid("plan.owner_inputs", "catalog lock digest mismatch");
@@ -803,7 +730,7 @@ ValidationResult validate_resolved_execution_plan_json(std::string_view plan_jso
         !projection_payload.contains("projection_sha256") ||
         !projection_payload.at("canonical_json").is_string() ||
         !sha256_string(projection_payload.at("projection_sha256")) ||
-        sha256_hex_impl(projection_payload.at("canonical_json").get<std::string>()) !=
+        runtime::crypto::sha256_hex(projection_payload.at("canonical_json").get<std::string>()) !=
             projection_payload.at("projection_sha256").get<std::string>() ||
         projection_payload.at("projection_sha256").get<std::string>() !=
             bindings.at("profile_projection_sha256").get<std::string>()) {
@@ -827,7 +754,7 @@ ValidationResult validate_resolved_execution_plan_json(std::string_view plan_jso
     }
     const auto resolved_hash = resolved_payload.at("resolved_manifest_sha256").get<std::string>();
     resolved_payload.erase("resolved_manifest_sha256");
-    if (sha256_hex_impl(sorted_json_dump(resolved_payload)) != resolved_hash ||
+    if (runtime::crypto::sha256_hex(sorted_json_dump(resolved_payload)) != resolved_hash ||
         resolved_hash != bindings.at("resolved_manifest_sha256").get<std::string>()) {
         return invalid("plan.owner_inputs", "resolved manifest digest mismatch");
     }
@@ -1003,14 +930,14 @@ ValidationResult validate_resolved_execution_plan_json(std::string_view plan_jso
         return invalid("plan.noncanonical_payload",
                        "canonical_json does not match the closed plan payload");
     }
-    if (sha256_hex_impl(canonical_bytes) != plan.at("plan_sha256").get<std::string>()) {
+    if (runtime::crypto::sha256_hex(canonical_bytes) != plan.at("plan_sha256").get<std::string>()) {
         return invalid("plan.digest", "closed plan digest mismatch");
     }
     return ValidationResult{true, {}, {}};
 }
 
 std::string resolved_execution_plan_sha256_hex(std::string_view canonical_payload_bytes) {
-    return sha256_hex_impl(canonical_payload_bytes);
+    return runtime::crypto::sha256_hex(canonical_payload_bytes);
 }
 
 std::optional<std::string> resolved_manifest_from_execution_plan_json(std::string_view plan_json) {

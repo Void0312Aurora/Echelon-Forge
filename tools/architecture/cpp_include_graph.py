@@ -52,6 +52,7 @@ _FINE_GROUP_PREFIXES: tuple[tuple[str, str], ...] = (
   ("runtime/facade", "runtime_facade"),
   ("runtime/providers", "runtime_providers"),
   ("runtime/host", "runtime_host"),
+  ("runtime/crypto", "runtime_crypto"),
   ("runtime/composition", "runtime_composition"),
   ("runtime/contracts", "runtime_contracts"),
   ("content", "content"),
@@ -73,6 +74,7 @@ COARSE_LAYER_OF_FINE: dict[str, str] = {
   "runtime_facade": "facade",
   "runtime_providers": "other",
   "runtime_host": "other",
+  "runtime_crypto": "other",
   "runtime_composition": "other",
   "runtime_contracts": "facade",
   "content": "content",
@@ -97,6 +99,7 @@ FINE_GROUP_DESCRIPTION: dict[str, str] = {
   "runtime_facade": "src/runtime/facade (T3 facade layer: RuntimeFacade application API)",
   "runtime_providers": "src/runtime/providers (native provider catalogs and composition-root adapters)",
   "runtime_host": "src/runtime/host (dark/shadow host candidate and transfer admission owner)",
+  "runtime_crypto": "src/runtime/crypto (dependency-neutral byte hashing primitives)",
   "runtime_composition": "src/runtime/composition (isolated host-neutral composition realization/lifecycle owner)",
   "runtime_contracts": "src/runtime/contracts (T3 facade layer per task mapping; shared leaf DTOs in the repo's own boundary docs)",
   "content": "src/content (T3 content layer: unit/scenario content schemas and loaders)",
@@ -324,10 +327,12 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
   # runtime owners ... must not own world state ... Forbidden: ...Pulling in
   # core/engine/* just for include convenience." Pure leaf; may reference
   # components for shared value types.
-  "runtime_contracts": frozenset({"components"}),
+  "runtime_contracts": frozenset({"components", "runtime_crypto"}),
+  # Dependency-neutral byte hashing is a leaf consumed by runtime owners.
+  "runtime_crypto": frozenset(),
   # Host-neutral composition realization owns catalog/validation/lifecycle but
   # remains independent of engine, facade, Flecs, models, and bindings.
-  "runtime_composition": frozenset({"runtime_contracts"}),
+  "runtime_composition": frozenset({"runtime_contracts", "runtime_crypto"}),
   # Native provider catalogs are the explicit integration seam between the
   # host-neutral composition kernel and engine/model owners. They may bind
   # admitted native implementations, but do not become a second composition
@@ -340,6 +345,7 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
       "core_interfaces",
       "components",
       "models",
+      "runtime_crypto",
     }
   ),
   # The host candidate owns dark/shadow host publication and transfer
@@ -354,6 +360,7 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
       "core_interfaces",
       "components",
       "models",
+      "runtime_crypto",
     }
   ),
   # "Combined calls to core/engine and core/mission" (Allowed); contracts is
@@ -363,7 +370,7 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
   # (test_runtime_facade_contract_boundaries.py) and by the header-vs-impl
   # split enforced in this module's report, not by widening this matrix.
   "runtime_facade": frozenset(
-    {"runtime_contracts", "core_engine", "core_mission_runtime", "core_mission_episode", "components", "core_interfaces", "gpu"}
+    {"runtime_contracts", "core_engine", "core_mission_runtime", "core_mission_episode", "components", "core_interfaces", "gpu", "runtime_crypto"}
   ),
   # "exposes runtime/facade, required compatibility APIs from core, and the
   # relevant data types to Python." Documented as the outermost consumer;
@@ -385,6 +392,7 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
       "systems",
       "content",
       "gpu",
+      "runtime_crypto",
     }
   ),
   # "GPU helpers, batch packet runtime ... must not silently alter the
@@ -406,6 +414,7 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
       "content",
       "models",
       "systems",
+      "runtime_crypto",
     }
   ),
   # "development-time utilities ... may call runtime APIs for probing."
@@ -428,6 +437,7 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
       "systems",
       "interfaces_python",
       "gpu",
+      "runtime_crypto",
     }
   ),
   # C++ doctest suite: exempt consumer, may reach anywhere (diagnostic path,
@@ -450,6 +460,7 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
       "models",
       "systems",
       "gpu",
+      "runtime_crypto",
     }
   ),
   # `ef_app` standalone local-testing entry point; documented as needing to
