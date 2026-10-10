@@ -1,5 +1,15 @@
 # ADR：策略观测与动作字段级接纳
 
+语言：
+- 英文规范页：[policy_observation_action_contract_adr.md](policy_observation_action_contract_adr.md)
+- 中文配套页：`policy_observation_action_contract_adr.zh.md`
+
+Document kind: `standard`
+Lifecycle: `proposed`
+Canonical: `docs/architecture/standards/policy_observation_action_contract_adr.md`
+Owner: `architecture/agent-contracts`
+Last verified: `2026-10-10`
+
 **状态：** 待评审的资格验证设计；现有 `DecisionModel`、Gym space 和领域 packet owner 不变。
 
 引入可选、非权威的 policy compatibility descriptor，用于协商字段级 observation/action 契约，

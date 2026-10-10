@@ -1,5 +1,15 @@
 # ADR: field-level policy observation and action admission
 
+Language:
+- English canonical: `policy_observation_action_contract_adr.md`
+- Chinese companion: [policy_observation_action_contract_adr.zh.md](policy_observation_action_contract_adr.zh.md)
+
+Document kind: `standard`
+Lifecycle: `proposed`
+Canonical: `docs/architecture/standards/policy_observation_action_contract_adr.md`
+Owner: `architecture/agent-contracts`
+Last verified: `2026-10-10`
+
 **Status:** proposed qualification design; current `DecisionModel`, Gym spaces
 and domain packet owners remain unchanged.
 
