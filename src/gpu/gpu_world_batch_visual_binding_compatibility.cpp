@@ -15,8 +15,9 @@ bool default_environment_snapshots_equal(const DefaultEnvironmentSnapshot &lhs,
         return false;
     }
     if (lhs.raster.origin_x != rhs.raster.origin_x || lhs.raster.origin_y != rhs.raster.origin_y ||
-        lhs.raster.resolution_m != rhs.raster.resolution_m || lhs.raster.width != rhs.raster.width ||
-        lhs.raster.height != rhs.raster.height || lhs.raster.surface_codes != rhs.raster.surface_codes) {
+        lhs.raster.resolution_m != rhs.raster.resolution_m ||
+        lhs.raster.width != rhs.raster.width || lhs.raster.height != rhs.raster.height ||
+        lhs.raster.surface_codes != rhs.raster.surface_codes) {
         return false;
     }
     if (lhs.zones.size() != rhs.zones.size()) {
@@ -64,8 +65,7 @@ VisibleObjectPacked to_gpu_object(const WorldBatchVisibleObject &object) {
 
 } // namespace
 
-WorldBatchVisualObservationCompatibilityExport
-render_world_batch_visual_binding_compatibility(
+WorldBatchVisualObservationCompatibilityExport render_world_batch_visual_binding_compatibility(
     const std::vector<WorldBatchVisualBindingCompatibilityScene> &scenes, bool use_gpu) {
     std::vector<VisualRenderRequest> requests;
     std::vector<std::vector<VisibleObjectPacked>> objects_batch;

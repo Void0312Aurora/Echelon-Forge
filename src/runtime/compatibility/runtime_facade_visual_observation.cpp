@@ -14,8 +14,7 @@ render_runtime_facade_visual_observation_batch(const RuntimeFacade &facade,
 
     const auto scenes =
         facade.collect_visual_binding_compatibility_scenes_batch(refs, factor, use_gpu);
-    const auto rendered =
-        gpu::render_world_batch_visual_binding_compatibility(scenes, use_gpu);
+    const auto rendered = gpu::render_world_batch_visual_binding_compatibility(scenes, use_gpu);
 
     RuntimeFacadeVisualObservationExport out{};
     out.batch_size = rendered.batch_size;

@@ -61,13 +61,14 @@ std::vector<std::uint32_t> world_batch_interaction_broadphase_reference_cpu_batc
                 continue;
             }
             if (entity.local_index < 0 || entity.local_index >= config.entities_per_world) {
-                throw std::invalid_argument("entity local_index out of range for entities_per_world");
+                throw std::invalid_argument(
+                    "entity local_index out of range for entities_per_world");
             }
             const double dx = entity.x - query.x;
             const double dy = entity.y - query.y;
             const double dz = entity.z - query.z;
-            const double limit = std::max(0.0, query.range_m) +
-                                 std::max(0.0, entity.bounding_radius_m);
+            const double limit =
+                std::max(0.0, query.range_m) + std::max(0.0, entity.bounding_radius_m);
             if ((dx * dx + dy * dy + dz * dz) <= (limit * limit)) {
                 const std::size_t word_index = static_cast<std::size_t>(entity.local_index) / 32u;
                 dst[word_index] |= bit_mask_for_local_index(entity.local_index);

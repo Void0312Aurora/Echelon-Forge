@@ -133,8 +133,8 @@ double entity_bounding_radius_m(flecs::entity entity, UnitType fallback_type) {
     return default_bounding_radius_m(fallback_type);
 }
 
-WorldBatchInteractionConfig
-make_interaction_broadphase_config(std::size_t max_entities_per_world, double range_hint_m) {
+WorldBatchInteractionConfig make_interaction_broadphase_config(std::size_t max_entities_per_world,
+                                                               double range_hint_m) {
     WorldBatchInteractionConfig config{};
     config.entities_per_world = static_cast<int>(std::max<std::size_t>(1, max_entities_per_world));
     config.cell_size_m = std::clamp(range_hint_m, 1000.0, 10000.0);
@@ -150,12 +150,11 @@ make_interaction_broadphase_config(std::size_t max_entities_per_world, double ra
     return config;
 }
 
-std::vector<std::vector<uint64_t>>
-decode_broadphase_candidate_ids(const std::vector<std::uint32_t> &words,
-                                const std::vector<WorldBatchInteractionQuery> &queries,
-                                const std::vector<std::vector<uint64_t>> &ids_by_world,
-                                int entities_per_world) {
-    const std::size_t words_per_query = world_batch_interaction_broadphase_word_count(entities_per_world);
+std::vector<std::vector<uint64_t>> decode_broadphase_candidate_ids(
+    const std::vector<std::uint32_t> &words, const std::vector<WorldBatchInteractionQuery> &queries,
+    const std::vector<std::vector<uint64_t>> &ids_by_world, int entities_per_world) {
+    const std::size_t words_per_query =
+        world_batch_interaction_broadphase_word_count(entities_per_world);
     std::vector<std::vector<uint64_t>> out(queries.size());
     if (queries.empty() || words.empty()) {
         return out;
@@ -189,8 +188,7 @@ std::vector<std::vector<uint64_t>>
 run_interaction_broadphase_candidate_ids(const std::vector<WorldBatchInteractionEntity> &entities,
                                          const std::vector<WorldBatchInteractionQuery> &queries,
                                          const std::vector<std::vector<uint64_t>> &ids_by_world,
-                                         const WorldBatchInteractionConfig &config,
-                                         bool use_gpu) {
+                                         const WorldBatchInteractionConfig &config, bool use_gpu) {
     auto words =
         use_gpu ? world_batch_interaction_broadphase_experiment_batch(entities, queries, config)
                 : world_batch_interaction_broadphase_reference_cpu_batch(entities, queries, config);

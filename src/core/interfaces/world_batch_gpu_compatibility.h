@@ -31,9 +31,9 @@ struct WorldBatchInteractionConfig {
     int bucket_capacity = 64;
 };
 
-using WorldBatchInteractionBroadphaseFn = std::vector<std::uint32_t> (*) (
-    const std::vector<WorldBatchInteractionEntity> &, const std::vector<WorldBatchInteractionQuery> &,
-    const WorldBatchInteractionConfig &);
+using WorldBatchInteractionBroadphaseFn = std::vector<std::uint32_t> (*)(
+    const std::vector<WorldBatchInteractionEntity> &,
+    const std::vector<WorldBatchInteractionQuery> &, const WorldBatchInteractionConfig &);
 
 struct WorldBatchGpuCompatibilityProvider {
     WorldBatchInteractionBroadphaseFn experiment_broadphase = nullptr;

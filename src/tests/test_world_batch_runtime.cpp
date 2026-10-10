@@ -329,8 +329,8 @@ TEST_SUITE("world_batch_runtime") {
 
         world.shutdown();
         WorldBatchVisualObservationCompatibilityExport rendered{};
-        CHECK_NOTHROW(rendered = gpu::render_world_batch_visual_binding_compatibility(
-                          scenes, false));
+        CHECK_NOTHROW(rendered =
+                          gpu::render_world_batch_visual_binding_compatibility(scenes, false));
         CHECK(rendered.batch_size == 1);
         CHECK(rendered.flat.size() == rendered.frame_size);
         CHECK(rendered.flat == before_shutdown.flat);
