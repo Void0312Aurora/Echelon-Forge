@@ -423,7 +423,7 @@
                         "critical": false
                     },
                     {
-                        "name": "left_horizontal_tail_actuator_or_surface_component",
+                        "name": "left_stabilator_surface",
                         "system": "flight_control",
                         "offset": [-6.00, -1.79, -1.05],
                         "size": [1.80, 1.00, 0.32],
@@ -446,7 +446,7 @@
                         "critical": false
                     },
                     {
-                        "name": "right_horizontal_tail_actuator_or_surface_component",
+                        "name": "right_stabilator_surface",
                         "system": "flight_control",
                         "offset": [-6.00, 1.79, -1.05],
                         "size": [1.80, 1.00, 0.32],

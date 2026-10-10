@@ -248,9 +248,11 @@ inline std::vector<std::string> component_names_for_group(StructuralBreakGroup g
                 "right_leading_edge_flap_actuator",
                 "right_wing_fuel_cell"};
     case StructuralBreakGroup::TailLeft:
-        return {"left_horizontal_tail_actuator_or_surface_component"};
+        return {"left_stabilator_surface", "left_stabilator_hinge",
+                "left_horizontal_tail_actuator_or_surface_component"};
     case StructuralBreakGroup::TailRight:
-        return {"right_horizontal_tail_actuator_or_surface_component"};
+        return {"right_stabilator_surface", "right_stabilator_hinge",
+                "right_horizontal_tail_actuator_or_surface_component"};
     case StructuralBreakGroup::VerticalTail:
         return {"rudder_actuator"};
     case StructuralBreakGroup::EngineRight:
@@ -263,6 +265,28 @@ inline std::vector<std::string> component_names_for_group(StructuralBreakGroup g
         break;
     }
     return {};
+}
+
+inline bool component_present(const ComponentDamageState &component_damage, std::string_view name) {
+    return component_damage.component_integrity.find(std::string(name)) !=
+           component_damage.component_integrity.end();
+}
+
+inline bool stabilator_structural_detachment_at(const ComponentDamageState &component_damage,
+                                                std::string_view surface_name,
+                                                std::string_view hinge_name,
+                                                std::string_view legacy_name) {
+    const bool has_split_semantics = component_present(component_damage, surface_name) ||
+                                     component_present(component_damage, hinge_name);
+    if (has_split_semantics) {
+        // Actuator/control-linkage receivers are intentionally absent here:
+        // losing control authority does not itself detach the stabilator.
+        return component_failed_at(component_damage, surface_name, 0.20) ||
+               component_failed_at(component_damage, hinge_name, 0.20);
+    }
+    // Legacy combined receivers remain supported during content migration,
+    // but only their structurally damaging modes can detach the surface.
+    return component_failed_at(component_damage, legacy_name, 0.20);
 }
 
 inline StructuralBreakupState
@@ -382,12 +406,14 @@ evaluate_structural_breakup_state(const ComponentDamageState &component_damage,
     }
 
     add_group_if(newly_failed_groups,
-                 component_failed_at(component_damage,
-                                     "left_horizontal_tail_actuator_or_surface_component", 0.20),
+                 stabilator_structural_detachment_at(
+                     component_damage, "left_stabilator_surface", "left_stabilator_hinge",
+                     "left_horizontal_tail_actuator_or_surface_component"),
                  StructuralBreakGroup::TailLeft);
     add_group_if(newly_failed_groups,
-                 component_failed_at(component_damage,
-                                     "right_horizontal_tail_actuator_or_surface_component", 0.20),
+                 stabilator_structural_detachment_at(
+                     component_damage, "right_stabilator_surface", "right_stabilator_hinge",
+                     "right_horizontal_tail_actuator_or_surface_component"),
                  StructuralBreakGroup::TailRight);
     add_group_if(newly_failed_groups,
                  component_failed_at(component_damage, "rudder_actuator", 0.25),
