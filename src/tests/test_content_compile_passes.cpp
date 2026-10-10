@@ -1076,4 +1076,33 @@ TEST_SUITE("content_compile_passes") {
         fs::remove_all(directory);
     }
 
+    TEST_CASE("F-16C content exposes stabilator surface receivers separately") {
+        namespace fs = std::filesystem;
+        const fs::path path = fs::path("examples/config/database/aircraft/units/f16c_block50.json");
+        REQUIRE(fs::exists(path));
+
+        std::vector<UnitDefinition> definitions;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(path.string(), definitions, &error));
+        REQUIRE(definitions.size() == 1);
+
+        const UnitDefinition &f16 = definitions.front();
+        bool left_surface = false;
+        bool right_surface = false;
+        bool legacy_receiver = false;
+        for (const auto &hitbox : f16.damage_model.hitboxes) {
+            for (const auto &component : hitbox.components) {
+                left_surface = left_surface || component.name == "left_stabilator_surface";
+                right_surface = right_surface || component.name == "right_stabilator_surface";
+                legacy_receiver =
+                    legacy_receiver ||
+                    component.name == "left_horizontal_tail_actuator_or_surface_component" ||
+                    component.name == "right_horizontal_tail_actuator_or_surface_component";
+            }
+        }
+        CHECK(left_surface);
+        CHECK(right_surface);
+        CHECK_FALSE(legacy_receiver);
+    }
+
 } // TEST_SUITE content_compile_passes

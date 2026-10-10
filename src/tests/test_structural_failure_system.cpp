@@ -834,6 +834,31 @@ TEST_SUITE("structural_failure_break_modes") {
         CHECK(result.events[0].detached_part_count == 1);
     }
 
+    TEST_CASE("stabilator actuator failure does not detach the lifting surface") {
+        ComponentDamageState damage{};
+        set_component_damage(damage, "left_stabilator_actuator", 0.10, "cut");
+
+        const StructuralBreakupState state =
+            structural_failure::evaluate_structural_breakup_state(damage);
+
+        CHECK(state.breakup_state == StructuralBreakupPhase::Intact);
+        CHECK_FALSE(structural_breakup_has_group(state, StructuralBreakGroup::TailLeft));
+        CHECK_FALSE(structural_breakup_has_mode(state, StructuralBreakMode::TailLoss));
+    }
+
+    TEST_CASE("stabilator surface structural failure detaches the admitted surface") {
+        ComponentDamageState damage{};
+        set_component_damage(damage, "left_stabilator_surface", 0.10, "structural_weakening");
+
+        const StructuralBreakupState state =
+            structural_failure::evaluate_structural_breakup_state(damage);
+
+        CHECK(state.breakup_state == StructuralBreakupPhase::PartialDetachment);
+        CHECK(structural_breakup_has_group(state, StructuralBreakGroup::TailLeft));
+        CHECK(structural_breakup_has_mode(state, StructuralBreakMode::TailLoss));
+        CHECK(state.detached_part_count == 1u);
+    }
+
     TEST_CASE("controlled engine core failure produces engine_detach event") {
         ComponentDamageState damage{};
         set_component_damage(damage, "engine_core", 0.10, "structural_weakening");
