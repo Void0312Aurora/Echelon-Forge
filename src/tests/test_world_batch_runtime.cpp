@@ -1,11 +1,14 @@
 #include "core/engine/world_batch_runtime.h"
+#include "core/engine/parallel_for_index.h"
 #include "components/basic/stable_identity.h"
 #include "core/engine/world_batch_visual_binding_compatibility_helper.h"
 #include "runtime/facade/runtime_facade.h"
 
 #include <doctest/doctest.h>
 
+#include <atomic>
 #include <cmath>
+#include <functional>
 #include <stdexcept>
 #include <limits>
 #include <type_traits>
@@ -14,6 +17,25 @@ static_assert(!std::is_polymorphic_v<WorldBatchRuntime>,
               "WorldBatchRuntime compatibility ABI must remain non-polymorphic");
 
 TEST_SUITE("world_batch_runtime") {
+
+    TEST_CASE("worker launch failure joins already started workers before propagating") {
+        std::atomic<std::size_t> launch_count{0};
+        std::atomic<bool> worker_finished{false};
+        auto thread_factory = [&](std::function<void()> task) -> std::jthread {
+            if (launch_count.fetch_add(1) == 1) {
+                throw std::runtime_error("injected worker launch failure");
+            }
+            return std::jthread(std::move(task));
+        };
+
+        CHECK_THROWS_AS(
+            runtime::detail::parallel_for_index(
+                4, 4, [&](std::size_t) { worker_finished.store(true, std::memory_order_release); },
+                thread_factory),
+            std::runtime_error);
+        CHECK(worker_finished.load(std::memory_order_acquire));
+        CHECK(launch_count.load() == 2);
+    }
 
     TEST_CASE("batch reset and setup resolve documented effective seeds") {
         WorldBatchRuntime runtime(4);
