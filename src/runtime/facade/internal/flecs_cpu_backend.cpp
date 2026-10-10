@@ -90,41 +90,44 @@ void FlecsCpuBackend::reset(const runtime::backend::ResetRequest &request) {
 runtime::backend::SetupResult
 FlecsCpuBackend::setup(const runtime::backend::SetupRequest &request) {
     runtime::backend::SetupResult result{};
-    switch (request.kind) {
-    case runtime::backend::SetupKind::Batch:
+    if (const auto *batch = std::get_if<runtime::backend::BatchSetup>(&request.operation)) {
         result.entity_ids = runtime_.apply_world_setup_batch(
-            request.seeds.get(), request.terrain_assignments.get(), request.wind_assignments.get(),
-            request.zones.get(), request.spawn_requests.get(), request.time_steps.get(),
-            request.sun_assignments.get(), request.geodetic_anchor_assignments.get(),
-            request.maritime_assignments.get());
+            batch->seeds.get(), batch->terrain_assignments.get(), batch->wind_assignments.get(),
+            batch->zones.get(), batch->spawn_requests.get(), batch->time_steps.get(),
+            batch->sun_assignments.get(), batch->geodetic_anchor_assignments.get(),
+            batch->maritime_assignments.get());
         return result;
-    case runtime::backend::SetupKind::Layout:
+    }
+    if (const auto *layout = std::get_if<runtime::backend::LayoutSetup>(&request.operation)) {
         result.entity_ids = runtime_.apply_world_layout(
-            request.world_index, request.seed,
-            required_string(request.terrain_type, "layout terrain_type"), request.wind_speed_mps,
-            request.wind_dir_from_deg, request.wind_shear_mps_per_km, request.maritime_configured,
-            request.sea_state, request.wave_heading_deg, request.wave_period_s, request.zones.get(),
-            request.spawn_requests.get(), request.time_steps.get(), request.sun_azimuth_deg,
-            request.sun_elevation_deg,
-            WorldGeodeticAnchorAssignment{request.world_index, request.anchor_latitude_deg,
-                                          request.anchor_longitude_deg, request.anchor_height_m});
+            layout->world_index, layout->seed,
+            required_string(layout->terrain_type, "layout terrain_type"), layout->wind_speed_mps,
+            layout->wind_dir_from_deg, layout->wind_shear_mps_per_km, layout->maritime_configured,
+            layout->sea_state, layout->wave_heading_deg, layout->wave_period_s, layout->zones.get(),
+            layout->spawn_requests.get(), layout->time_steps.get(), layout->sun_azimuth_deg,
+            layout->sun_elevation_deg,
+            WorldGeodeticAnchorAssignment{layout->world_index, layout->anchor_latitude_deg,
+                                          layout->anchor_longitude_deg, layout->anchor_height_m});
         return result;
-    case runtime::backend::SetupKind::WorldSpawn:
-        if (request.world_spawn_request == nullptr) {
+    }
+    if (const auto *world_spawn =
+            std::get_if<runtime::backend::WorldSpawnSetup>(&request.operation)) {
+        if (world_spawn->request == nullptr) {
             throw std::invalid_argument("backend world spawn request is missing");
         }
         result.entity_ids.push_back(
-            runtime_.spawn_unit_from_world_spawn_request(*request.world_spawn_request));
-        return result;
-    case runtime::backend::SetupKind::TypedPlatformSpawn:
-        if (request.typed_platform_spawn_request == nullptr) {
-            throw std::invalid_argument("backend typed platform spawn request is missing");
-        }
-        result.entity_ids.push_back(
-            runtime_.spawn_typed_platform_unit(*request.typed_platform_spawn_request));
+            runtime_.spawn_unit_from_world_spawn_request(*world_spawn->request));
         return result;
     }
-    throw std::invalid_argument("unknown backend setup kind");
+    if (const auto *typed_spawn =
+            std::get_if<runtime::backend::TypedPlatformSpawnSetup>(&request.operation)) {
+        if (typed_spawn->request == nullptr) {
+            throw std::invalid_argument("backend typed platform spawn request is missing");
+        }
+        result.entity_ids.push_back(runtime_.spawn_typed_platform_unit(*typed_spawn->request));
+        return result;
+    }
+    throw std::invalid_argument("unknown backend setup operation");
 }
 
 runtime::backend::InputResult FlecsCpuBackend::inject(const runtime::backend::InputBatch &input) {

@@ -62,10 +62,12 @@ TEST_CASE("CUDA flight dynamics commits CPU-parity airframe dynamics from reside
     const std::vector<double> time_steps(kCudaResidentFlightDynamicsFixtureTimeSteps.begin(),
                                          kCudaResidentFlightDynamicsFixtureTimeSteps.end());
     const auto setup = backend.setup({
-        .kind = runtime::backend::SetupKind::Batch,
-        .seeds = seeds,
-        .spawn_requests = spawns,
-        .time_steps = time_steps,
+        .operation =
+            runtime::backend::BatchSetup{
+                .seeds = seeds,
+                .spawn_requests = spawns,
+                .time_steps = time_steps,
+            },
     });
     std::vector<WorldPilotActionAssignment> actions;
     for (std::size_t world = 0; world < seeds.size(); ++world) {

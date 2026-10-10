@@ -173,7 +173,8 @@ TEST_CASE("RB4 backend shell keeps unsupported semantics fail closed") {
     }
 
     CHECK_THROWS_AS(backend.load_content({}), std::logic_error);
-    CHECK_THROWS_AS(backend.setup({.kind = runtime::backend::SetupKind::Layout}), std::logic_error);
+    CHECK_THROWS_AS(backend.setup({.operation = runtime::backend::LayoutSetup{}}),
+                    std::logic_error);
     runtime::backend::InputBatch unsupported_input{};
     unsupported_input.kinematics_write = runtime::backend::EntityKinematicsWrite{};
     CHECK_THROWS_AS(backend.inject(unsupported_input), std::logic_error);

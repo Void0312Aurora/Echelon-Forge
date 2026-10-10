@@ -37,10 +37,12 @@ struct ControlPreparationFixture {
 
     runtime::backend::SetupRequest request() const {
         return {
-            .kind = runtime::backend::SetupKind::Batch,
-            .seeds = seeds,
-            .spawn_requests = spawns,
-            .time_steps = time_steps,
+            .operation =
+                runtime::backend::BatchSetup{
+                    .seeds = seeds,
+                    .spawn_requests = spawns,
+                    .time_steps = time_steps,
+                },
         };
     }
 };
