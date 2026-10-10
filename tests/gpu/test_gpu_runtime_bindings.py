@@ -422,6 +422,24 @@ class GpuRuntimeBindingTests(unittest.TestCase):
       self.assertAlmostEqual(float(reference.heading_hold_bonus), float(got.heading_hold_bonus), places=6)
       self.assertAlmostEqual(float(reference.speed_reward), float(got.speed_reward), places=6)
 
+  def test_flight_shaping_extreme_finite_power_is_rejected_before_float_pack(self) -> None:
+    inputs = ef_py.FlightShapingRuntimeInputs()
+    inputs.airborne = True
+    inputs.curr_alt_baro_m = 1.0e6
+    inputs.altitude_error_weight = 1.0
+    inputs.altitude_error_power = 8.0
+    inputs.altitude_error_norm_m = 1.0
+    inputs.altitude_error_clip = 0.0
+
+    reference = ef_py.compute_flight_shaping_terms(inputs)
+    cpu = ef_py.compute_flight_shaping_batch([inputs], False)[0]
+    gpu = ef_py.compute_flight_shaping_batch([inputs], True)[0]
+
+    for product in (reference, cpu, gpu):
+      self.assertFalse(bool(product.valid))
+      self.assertTrue(np.isfinite(float(product.altitude_error_penalty)))
+      self.assertEqual(float(product.altitude_error_penalty), 0.0)
+
   def test_interaction_broadphase_binding_matches_reference_superset(self) -> None:
     config = ef_py.InteractionBroadphaseConfig()
     config.cell_size_m = 5000.0

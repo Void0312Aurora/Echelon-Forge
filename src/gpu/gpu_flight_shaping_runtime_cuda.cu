@@ -10,12 +10,12 @@
 namespace {
 
 gpu::FlightShapingExperimentStats g_last_stats{};
-const void* g_last_output_device_ptr = nullptr;
+const void *g_last_output_device_ptr = nullptr;
 std::size_t g_last_output_float_count = 0;
 
 struct DeviceFlightShapingCache {
-    FlightShapingRuntimeInputs* d_inputs = nullptr;
-    float* d_output = nullptr;
+    FlightShapingRuntimeInputs *d_inputs = nullptr;
+    float *d_output = nullptr;
     std::size_t input_capacity = 0;
     std::size_t output_capacity = 0;
 };
@@ -26,7 +26,8 @@ __host__ __device__ inline double clamp_value(double value, double lo, double hi
     return fmin(fmax(value, lo), hi);
 }
 
-__host__ __device__ inline double clipped_power_term(double err, double norm, double power, double clip) {
+__host__ __device__ inline double clipped_power_term(double err, double norm, double power,
+                                                     double clip) {
     if (err <= 0.0) {
         return 0.0;
     }
@@ -42,18 +43,21 @@ __host__ __device__ inline double clipped_power_term(double err, double norm, do
     return pow(x, p);
 }
 
-__global__ void compute_flight_shaping_kernel(
-    const FlightShapingRuntimeInputs* inputs,
-    int count,
-    float* out
-) {
+__host__ __device__ inline bool packable_flight_shaping_value(double value) {
+    constexpr double kFloatMax = 3.4028234663852886e38;
+    return isfinite(value) && fabs(value) <= kFloatMax;
+}
+
+__global__ void compute_flight_shaping_kernel(const FlightShapingRuntimeInputs *inputs, int count,
+                                              float *out) {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= count) {
         return;
     }
 
-    const auto& in = inputs[idx];
-    float* dst = out + static_cast<std::size_t>(idx) * static_cast<std::size_t>(gpu::kFlightShapingOutputCount);
+    const auto &in = inputs[idx];
+    float *dst = out + static_cast<std::size_t>(idx) *
+                           static_cast<std::size_t>(gpu::kFlightShapingOutputCount);
 
     const double d_alt = in.truth_altitude_m - in.prev_altitude_m;
     const double d_spd = in.curr_ias_mps - in.prev_ias_mps;
@@ -91,7 +95,8 @@ __global__ void compute_flight_shaping_kernel(
     double departure_track_reward = 0.0;
     double alignment_reward = 0.0;
 
-    if ((in.target_altitude_m <= 0.0 || in.truth_altitude_m < in.target_altitude_m) && d_alt > 0.0) {
+    if ((in.target_altitude_m <= 0.0 || in.truth_altitude_m < in.target_altitude_m) &&
+        d_alt > 0.0) {
         altitude_progress = d_alt * in.altitude_progress_weight;
     } else if (in.truth_altitude_m < 10.0 && d_alt < -1.0) {
         low_alt_descent_penalty = d_alt * 0.1;
@@ -103,32 +108,24 @@ __global__ void compute_flight_shaping_kernel(
         speed_regress = d_spd * in.speed_progress_negative_weight;
     }
 
-    if (
-        in.stationary_penalty != 0.0 &&
-        in.step_count > in.stationary_grace_steps &&
+    if (in.stationary_penalty != 0.0 && in.step_count > in.stationary_grace_steps &&
         in.truth_speed_mps < in.stationary_speed_threshold_mps &&
-        in.truth_altitude_m < in.stationary_alt_threshold_m
-    ) {
+        in.truth_altitude_m < in.stationary_alt_threshold_m) {
         stationary_penalty = in.stationary_penalty;
     }
 
-    if (
-        in.liftoff_bonus != 0.0 &&
-        !in.liftoff_awarded &&
+    if (in.liftoff_bonus != 0.0 && !in.liftoff_awarded &&
         in.curr_ias_mps >= in.liftoff_speed_threshold_mps &&
-        in.curr_alt_agl_m >= in.liftoff_alt_threshold_m
-    ) {
+        in.curr_alt_agl_m >= in.liftoff_alt_threshold_m) {
         liftoff_bonus = in.liftoff_bonus;
         next_liftoff_awarded = true;
     }
 
-    if (
-        in.rotation_reward_weight != 0.0 &&
-        in.curr_ias_mps >= in.rotation_speed_threshold_mps &&
-        in.curr_alt_agl_m <= in.rotation_alt_threshold_m
-    ) {
+    if (in.rotation_reward_weight != 0.0 && in.curr_ias_mps >= in.rotation_speed_threshold_mps &&
+        in.curr_alt_agl_m <= in.rotation_alt_threshold_m) {
         const double rot_pitch_cap_deg = fmax(0.0, in.rotation_pitch_cap_deg);
-        const double pitch_term = clamp_value(in.curr_pitch_deg, -rot_pitch_cap_deg, rot_pitch_cap_deg);
+        const double pitch_term =
+            clamp_value(in.curr_pitch_deg, -rot_pitch_cap_deg, rot_pitch_cap_deg);
         rotation_reward = pitch_term * in.rotation_reward_weight;
         if (in.rotation_overpitch_penalty_weight != 0.0 && in.curr_pitch_deg > rot_pitch_cap_deg) {
             rotation_overpitch_penalty =
@@ -136,12 +133,8 @@ __global__ void compute_flight_shaping_kernel(
         }
     }
 
-    if (
-        in.gear_up_bonus != 0.0 &&
-        !in.gear_bonus_awarded &&
-        in.curr_alt_agl_m > in.gear_up_bonus_min_alt_agl_m &&
-        in.curr_gear_fraction < 0.1
-    ) {
+    if (in.gear_up_bonus != 0.0 && !in.gear_bonus_awarded &&
+        in.curr_alt_agl_m > in.gear_up_bonus_min_alt_agl_m && in.curr_gear_fraction < 0.1) {
         gear_up_bonus = in.gear_up_bonus;
         next_gear_bonus_awarded = true;
     }
@@ -151,40 +144,44 @@ __global__ void compute_flight_shaping_kernel(
     }
 
     if (in.heading_error_weight != 0.0) {
-        const double turn_heading_relief_max = clamp_value(in.waypoint_turn_heading_relief_max, 0.0, 0.95);
-        const double heading_penalty_scale = 1.0 - turn_heading_relief_max * in.waypoint_turn_relief_activation;
-        heading_error_penalty = in.heading_error_deg * in.heading_error_weight * heading_penalty_scale;
-        if (in.heading_hold_bonus != 0.0 && in.heading_error_deg <= fmax(0.0, in.heading_hold_deadband_deg)) {
+        const double turn_heading_relief_max =
+            clamp_value(in.waypoint_turn_heading_relief_max, 0.0, 0.95);
+        const double heading_penalty_scale =
+            1.0 - turn_heading_relief_max * in.waypoint_turn_relief_activation;
+        heading_error_penalty =
+            in.heading_error_deg * in.heading_error_weight * heading_penalty_scale;
+        if (in.heading_hold_bonus != 0.0 &&
+            in.heading_error_deg <= fmax(0.0, in.heading_hold_deadband_deg)) {
             heading_hold_bonus = in.heading_hold_bonus;
         }
     }
 
     if (in.airborne) {
         if (in.altitude_error_weight != 0.0 && in.curr_alt_baro_m >= in.altitude_error_min_alt_m) {
-            const double alt_err = fabs(in.curr_alt_baro_m - in.altitude_error_target_m)
-                - fmax(0.0, in.altitude_error_deadband_m);
+            const double alt_err = fabs(in.curr_alt_baro_m - in.altitude_error_target_m) -
+                                   fmax(0.0, in.altitude_error_deadband_m);
             if (alt_err > 0.0) {
-                altitude_error_penalty = in.altitude_error_weight * clipped_power_term(
-                    alt_err,
-                    in.altitude_error_norm_m <= 1.0e-6 ? 100.0 : in.altitude_error_norm_m,
-                    in.altitude_error_power,
-                    in.altitude_error_clip
-                );
+                altitude_error_penalty =
+                    in.altitude_error_weight *
+                    clipped_power_term(
+                        alt_err,
+                        in.altitude_error_norm_m <= 1.0e-6 ? 100.0 : in.altitude_error_norm_m,
+                        in.altitude_error_power, in.altitude_error_clip);
             } else if (in.altitude_hold_bonus != 0.0) {
                 altitude_hold_bonus = in.altitude_hold_bonus;
             }
         }
 
         if (in.speed_error_weight != 0.0 && in.curr_ias_mps >= in.speed_error_min_ias_mps) {
-            const double speed_err = fabs(in.curr_ias_mps - in.speed_error_target_mps)
-                - fmax(0.0, in.speed_error_deadband_mps);
+            const double speed_err = fabs(in.curr_ias_mps - in.speed_error_target_mps) -
+                                     fmax(0.0, in.speed_error_deadband_mps);
             if (speed_err > 0.0) {
-                speed_error_penalty = in.speed_error_weight * clipped_power_term(
-                    speed_err,
-                    in.speed_error_norm_mps <= 1.0e-6 ? 30.0 : in.speed_error_norm_mps,
-                    in.speed_error_power,
-                    in.speed_error_clip
-                );
+                speed_error_penalty =
+                    in.speed_error_weight *
+                    clipped_power_term(speed_err,
+                                       in.speed_error_norm_mps <= 1.0e-6 ? 30.0
+                                                                         : in.speed_error_norm_mps,
+                                       in.speed_error_power, in.speed_error_clip);
             } else if (in.speed_hold_bonus != 0.0) {
                 speed_hold_bonus = in.speed_hold_bonus;
             }
@@ -193,60 +190,58 @@ __global__ void compute_flight_shaping_kernel(
         if (in.roll_abs_weight != 0.0) {
             const double roll_err = fabs(in.curr_roll_deg) - fmax(0.0, in.roll_abs_deadband_deg);
             if (roll_err > 0.0) {
-                roll_abs_penalty = in.roll_abs_weight * clipped_power_term(
-                    roll_err,
-                    in.roll_abs_norm_deg <= 1.0e-6 ? 30.0 : in.roll_abs_norm_deg,
-                    in.roll_abs_power,
-                    0.0
-                );
+                roll_abs_penalty =
+                    in.roll_abs_weight *
+                    clipped_power_term(roll_err,
+                                       in.roll_abs_norm_deg <= 1.0e-6 ? 30.0 : in.roll_abs_norm_deg,
+                                       in.roll_abs_power, 0.0);
             }
         }
 
         if (in.pitch_abs_weight != 0.0) {
             const double pitch_err = fabs(in.curr_pitch_deg) - fmax(0.0, in.pitch_abs_deadband_deg);
             if (pitch_err > 0.0) {
-                pitch_abs_penalty = in.pitch_abs_weight * clipped_power_term(
-                    pitch_err,
-                    in.pitch_abs_norm_deg <= 1.0e-6 ? 20.0 : in.pitch_abs_norm_deg,
-                    in.pitch_abs_power,
-                    0.0
-                );
+                pitch_abs_penalty =
+                    in.pitch_abs_weight *
+                    clipped_power_term(
+                        pitch_err, in.pitch_abs_norm_deg <= 1.0e-6 ? 20.0 : in.pitch_abs_norm_deg,
+                        in.pitch_abs_power, 0.0);
             }
         }
 
         if (in.yaw_rate_abs_weight != 0.0) {
-            const double yaw_rate_err = fabs(in.curr_yaw_rate_deg_s) - fmax(0.0, in.yaw_rate_abs_deadband_deg_s);
+            const double yaw_rate_err =
+                fabs(in.curr_yaw_rate_deg_s) - fmax(0.0, in.yaw_rate_abs_deadband_deg_s);
             if (yaw_rate_err > 0.0) {
-                yaw_rate_abs_penalty = in.yaw_rate_abs_weight * clipped_power_term(
-                    yaw_rate_err,
-                    in.yaw_rate_abs_norm_deg_s <= 1.0e-6 ? 10.0 : in.yaw_rate_abs_norm_deg_s,
-                    in.yaw_rate_abs_power,
-                    0.0
-                );
+                yaw_rate_abs_penalty =
+                    in.yaw_rate_abs_weight * clipped_power_term(yaw_rate_err,
+                                                                in.yaw_rate_abs_norm_deg_s <= 1.0e-6
+                                                                    ? 10.0
+                                                                    : in.yaw_rate_abs_norm_deg_s,
+                                                                in.yaw_rate_abs_power, 0.0);
             }
         }
 
         if (in.beta_abs_weight != 0.0) {
             const double beta_err = fabs(in.curr_beta_deg) - fmax(0.0, in.beta_abs_deadband_deg);
             if (beta_err > 0.0) {
-                beta_abs_penalty = in.beta_abs_weight * clipped_power_term(
-                    beta_err,
-                    in.beta_abs_norm_deg <= 1.0e-6 ? 10.0 : in.beta_abs_norm_deg,
-                    in.beta_abs_power,
-                    0.0
-                );
+                beta_abs_penalty =
+                    in.beta_abs_weight *
+                    clipped_power_term(beta_err,
+                                       in.beta_abs_norm_deg <= 1.0e-6 ? 10.0 : in.beta_abs_norm_deg,
+                                       in.beta_abs_power, 0.0);
             }
         }
 
         if (in.g_deviation_weight != 0.0 && in.curr_alt_agl_m > in.g_deviation_min_alt_agl_m) {
-            const double g_dev_err = fabs(in.curr_g_load - 1.0) - fmax(0.0, in.g_deviation_deadband);
+            const double g_dev_err =
+                fabs(in.curr_g_load - 1.0) - fmax(0.0, in.g_deviation_deadband);
             if (g_dev_err > 0.0) {
-                g_deviation_penalty = in.g_deviation_weight * clipped_power_term(
-                    g_dev_err,
-                    in.g_deviation_norm <= 1.0e-6 ? 0.5 : in.g_deviation_norm,
-                    in.g_deviation_power,
-                    0.0
-                );
+                g_deviation_penalty =
+                    in.g_deviation_weight *
+                    clipped_power_term(g_dev_err,
+                                       in.g_deviation_norm <= 1.0e-6 ? 0.5 : in.g_deviation_norm,
+                                       in.g_deviation_power, 0.0);
             }
         }
     }
@@ -258,22 +253,26 @@ __global__ void compute_flight_shaping_kernel(
         double frac = fabs(in.runway_cross_m) / half_w;
         frac = fmin(frac, 2.0);
         double runway_scale = 1.0;
-        if (in.runway_centerline_penalty_max_ias_mps > in.runway_centerline_penalty_min_ias_mps + 1.0e-6) {
-            runway_scale =
-                (in.curr_ias_mps - in.runway_centerline_penalty_min_ias_mps)
-                / (in.runway_centerline_penalty_max_ias_mps - in.runway_centerline_penalty_min_ias_mps);
+        if (in.runway_centerline_penalty_max_ias_mps >
+            in.runway_centerline_penalty_min_ias_mps + 1.0e-6) {
+            runway_scale = (in.curr_ias_mps - in.runway_centerline_penalty_min_ias_mps) /
+                           (in.runway_centerline_penalty_max_ias_mps -
+                            in.runway_centerline_penalty_min_ias_mps);
             runway_scale = clamp_value(runway_scale, 0.0, 1.0);
         }
 
         if (in.runway_centerline_m_penalty_weight != 0.0) {
-            const double err_m = fabs(in.runway_cross_m) - fmax(0.0, in.runway_centerline_m_deadband_m);
+            const double err_m =
+                fabs(in.runway_cross_m) - fmax(0.0, in.runway_centerline_m_deadband_m);
             if (err_m > 0.0) {
-                runway_centerline_m_penalty = in.runway_centerline_m_penalty_weight * clipped_power_term(
-                    err_m,
-                    in.runway_centerline_m_norm_m <= 1.0e-6 ? 5.0 : in.runway_centerline_m_norm_m,
-                    in.runway_centerline_m_power,
-                    in.runway_centerline_m_clip
-                ) * runway_scale;
+                runway_centerline_m_penalty =
+                    in.runway_centerline_m_penalty_weight *
+                    clipped_power_term(err_m,
+                                       in.runway_centerline_m_norm_m <= 1.0e-6
+                                           ? 5.0
+                                           : in.runway_centerline_m_norm_m,
+                                       in.runway_centerline_m_power, in.runway_centerline_m_clip) *
+                    runway_scale;
             }
         }
 
@@ -281,30 +280,35 @@ __global__ void compute_flight_shaping_kernel(
             const double safe_frac = clamp_value(in.runway_centerline_safe_frac, 0.0, 0.99);
             const double x = fmax(0.0, frac - safe_frac) / fmax(1.0 - safe_frac, 1.0e-6);
             runway_centerline_penalty =
-                in.runway_centerline_penalty_weight
-                * pow(x, clamp_value(in.runway_centerline_penalty_power, 1.0, 8.0))
-                * runway_scale;
+                in.runway_centerline_penalty_weight *
+                pow(x, clamp_value(in.runway_centerline_penalty_power, 1.0, 8.0)) * runway_scale;
         }
 
         if (in.runway_centerline_barrier_weight != 0.0) {
-            const double clip_frac = clamp_value(in.runway_centerline_barrier_clip_frac, 1.0e-6, 0.999999);
+            const double clip_frac =
+                clamp_value(in.runway_centerline_barrier_clip_frac, 1.0e-6, 0.999999);
             const double frac_c = clamp_value(frac, 0.0, clip_frac);
             const double barrier = -log(fmax(1.0e-6, 1.0 - frac_c));
-            runway_centerline_barrier = in.runway_centerline_barrier_weight * barrier * runway_scale;
+            runway_centerline_barrier =
+                in.runway_centerline_barrier_weight * barrier * runway_scale;
         }
     }
 
     if (in.has_runway_cross_m) {
-        if (in.airborne && in.departure_centerline_max_alt_agl_m > 0.0 && in.curr_alt_agl_m <= in.departure_centerline_max_alt_agl_m) {
+        if (in.airborne && in.departure_centerline_max_alt_agl_m > 0.0 &&
+            in.curr_alt_agl_m <= in.departure_centerline_max_alt_agl_m) {
             if (in.departure_centerline_m_penalty_weight != 0.0) {
-                const double dep_err_m = fabs(in.runway_cross_m) - fmax(0.0, in.departure_centerline_m_deadband_m);
+                const double dep_err_m =
+                    fabs(in.runway_cross_m) - fmax(0.0, in.departure_centerline_m_deadband_m);
                 if (dep_err_m > 0.0) {
-                    departure_centerline_m_penalty = in.departure_centerline_m_penalty_weight * clipped_power_term(
-                        dep_err_m,
-                        in.departure_centerline_m_norm_m <= 1.0e-6 ? 20.0 : in.departure_centerline_m_norm_m,
-                        in.departure_centerline_m_power,
-                        in.departure_centerline_m_clip
-                    );
+                    departure_centerline_m_penalty =
+                        in.departure_centerline_m_penalty_weight *
+                        clipped_power_term(dep_err_m,
+                                           in.departure_centerline_m_norm_m <= 1.0e-6
+                                               ? 20.0
+                                               : in.departure_centerline_m_norm_m,
+                                           in.departure_centerline_m_power,
+                                           in.departure_centerline_m_clip);
                 }
             }
 
@@ -312,19 +316,23 @@ __global__ void compute_flight_shaping_kernel(
                 const double band_m = fmax(1.0, in.departure_centerline_reward_band_m);
                 const double center_frac = fmax(0.0, 1.0 - fabs(in.runway_cross_m) / band_m);
                 if (center_frac > 0.0) {
-                    departure_centerline_reward = in.departure_centerline_reward_weight * center_frac;
+                    departure_centerline_reward =
+                        in.departure_centerline_reward_weight * center_frac;
                 }
             }
 
             if (in.departure_track_error_weight != 0.0) {
-                const double dep_track_err = in.ground_track_error_deg - fmax(0.0, in.departure_track_error_deadband_deg);
+                const double dep_track_err =
+                    in.ground_track_error_deg - fmax(0.0, in.departure_track_error_deadband_deg);
                 if (dep_track_err > 0.0) {
-                    departure_track_error_penalty = in.departure_track_error_weight * clipped_power_term(
-                        dep_track_err,
-                        in.departure_track_error_norm_deg <= 1.0e-6 ? 10.0 : in.departure_track_error_norm_deg,
-                        in.departure_track_error_power,
-                        in.departure_track_error_clip
-                    );
+                    departure_track_error_penalty =
+                        in.departure_track_error_weight *
+                        clipped_power_term(dep_track_err,
+                                           in.departure_track_error_norm_deg <= 1.0e-6
+                                               ? 10.0
+                                               : in.departure_track_error_norm_deg,
+                                           in.departure_track_error_power,
+                                           in.departure_track_error_clip);
                 }
             }
 
@@ -350,6 +358,43 @@ __global__ void compute_flight_shaping_kernel(
                 alignment_reward = align_factor * in.alignment_reward_weight;
             }
         }
+    }
+
+    const bool packable = packable_flight_shaping_value(altitude_progress) &&
+                          packable_flight_shaping_value(low_alt_descent_penalty) &&
+                          packable_flight_shaping_value(speed_progress) &&
+                          packable_flight_shaping_value(speed_regress) &&
+                          packable_flight_shaping_value(stationary_penalty) &&
+                          packable_flight_shaping_value(liftoff_bonus) &&
+                          packable_flight_shaping_value(rotation_reward) &&
+                          packable_flight_shaping_value(rotation_overpitch_penalty) &&
+                          packable_flight_shaping_value(gear_up_bonus) &&
+                          packable_flight_shaping_value(roll_stability) &&
+                          packable_flight_shaping_value(heading_error_penalty) &&
+                          packable_flight_shaping_value(heading_hold_bonus) &&
+                          packable_flight_shaping_value(altitude_error_penalty) &&
+                          packable_flight_shaping_value(altitude_hold_bonus) &&
+                          packable_flight_shaping_value(speed_error_penalty) &&
+                          packable_flight_shaping_value(speed_hold_bonus) &&
+                          packable_flight_shaping_value(roll_abs_penalty) &&
+                          packable_flight_shaping_value(pitch_abs_penalty) &&
+                          packable_flight_shaping_value(yaw_rate_abs_penalty) &&
+                          packable_flight_shaping_value(beta_abs_penalty) &&
+                          packable_flight_shaping_value(g_deviation_penalty) &&
+                          packable_flight_shaping_value(speed_reward) &&
+                          packable_flight_shaping_value(runway_centerline_m_penalty) &&
+                          packable_flight_shaping_value(runway_centerline_penalty) &&
+                          packable_flight_shaping_value(runway_centerline_barrier) &&
+                          packable_flight_shaping_value(departure_centerline_m_penalty) &&
+                          packable_flight_shaping_value(departure_centerline_reward) &&
+                          packable_flight_shaping_value(departure_track_error_penalty) &&
+                          packable_flight_shaping_value(departure_track_reward) &&
+                          packable_flight_shaping_value(alignment_reward);
+    if (!packable) {
+        for (int output_index = 0; output_index < gpu::kFlightShapingOutputCount; ++output_index) {
+            dst[output_index] = 0.0f;
+        }
+        return;
     }
 
     dst[0] = 1.0f;
@@ -393,7 +438,8 @@ bool ensure_cache_capacity(std::size_t input_count, std::size_t output_count) {
             cudaFree(g_cache.d_inputs);
             g_cache.d_inputs = nullptr;
         }
-        if (cudaMalloc(&g_cache.d_inputs, input_count * sizeof(FlightShapingRuntimeInputs)) != cudaSuccess) {
+        if (cudaMalloc(&g_cache.d_inputs, input_count * sizeof(FlightShapingRuntimeInputs)) !=
+            cudaSuccess) {
             return false;
         }
         g_cache.input_capacity = input_count;
@@ -411,11 +457,8 @@ bool ensure_cache_capacity(std::size_t input_count, std::size_t output_count) {
     return true;
 }
 
-bool run_flight_shaping_batch_cuda_impl(
-    const std::vector<FlightShapingRuntimeInputs>& inputs_batch,
-    bool copy_output_to_host,
-    std::vector<float>* host_output
-) {
+bool run_flight_shaping_batch_cuda_impl(const std::vector<FlightShapingRuntimeInputs> &inputs_batch,
+                                        bool copy_output_to_host, std::vector<float> *host_output) {
     g_last_stats = gpu::FlightShapingExperimentStats{};
     g_last_output_device_ptr = nullptr;
     g_last_output_float_count = 0;
@@ -433,7 +476,8 @@ bool run_flight_shaping_batch_cuda_impl(
     g_last_stats.used_cuda = true;
 
     const std::size_t input_count = inputs_batch.size();
-    const std::size_t output_count = input_count * static_cast<std::size_t>(gpu::kFlightShapingOutputCount);
+    const std::size_t output_count =
+        input_count * static_cast<std::size_t>(gpu::kFlightShapingOutputCount);
     const std::size_t input_bytes = input_count * sizeof(FlightShapingRuntimeInputs);
     const std::size_t output_bytes = output_count * sizeof(float);
 
@@ -467,15 +511,10 @@ bool run_flight_shaping_batch_cuda_impl(
     cudaEventRecord(ev_h2d_end);
 
     const int threads = 128;
-    const int blocks = static_cast<int>(
-        (input_count + static_cast<std::size_t>(threads) - 1) /
-        static_cast<std::size_t>(threads)
-    );
+    const int blocks = static_cast<int>((input_count + static_cast<std::size_t>(threads) - 1) /
+                                        static_cast<std::size_t>(threads));
     compute_flight_shaping_kernel<<<blocks, threads>>>(
-        g_cache.d_inputs,
-        static_cast<int>(input_count),
-        g_cache.d_output
-    );
+        g_cache.d_inputs, static_cast<int>(input_count), g_cache.d_output);
     cudaEventRecord(ev_kernel_end);
 
     status = cudaGetLastError();
@@ -486,7 +525,8 @@ bool run_flight_shaping_batch_cuda_impl(
     if (status == cudaSuccess && copy_output_to_host && host_output != nullptr) {
         host_output->assign(output_count, 0.0f);
         const auto d2h_start = std::chrono::steady_clock::now();
-        status = cudaMemcpy(host_output->data(), g_cache.d_output, output_bytes, cudaMemcpyDeviceToHost);
+        status =
+            cudaMemcpy(host_output->data(), g_cache.d_output, output_bytes, cudaMemcpyDeviceToHost);
         const auto d2h_end = std::chrono::steady_clock::now();
         d2h_wall_ms = std::chrono::duration<double, std::milli>(d2h_end - d2h_start).count();
         if (status == cudaSuccess) {
@@ -514,9 +554,7 @@ bool run_flight_shaping_batch_cuda_impl(
     g_last_stats.kernel_ms = static_cast<double>(kernel_ms);
     g_last_stats.device_to_host_ms = copy_output_to_host ? d2h_wall_ms : 0.0;
     g_last_stats.total_ms =
-        g_last_stats.host_to_device_ms +
-        g_last_stats.kernel_ms +
-        g_last_stats.device_to_host_ms;
+        g_last_stats.host_to_device_ms + g_last_stats.kernel_ms + g_last_stats.device_to_host_ms;
     g_last_output_device_ptr = g_cache.d_output;
     g_last_output_float_count = output_count;
 
@@ -527,7 +565,7 @@ bool run_flight_shaping_batch_cuda_impl(
     return true;
 }
 
-}  // namespace
+} // namespace
 
 namespace gpu::detail {
 
@@ -535,7 +573,7 @@ FlightShapingExperimentStats last_flight_shaping_cuda_stats() {
     return g_last_stats;
 }
 
-const void* last_flight_shaping_output_device_ptr_cuda() {
+const void *last_flight_shaping_output_device_ptr_cuda() {
     return g_last_output_device_ptr;
 }
 
@@ -544,8 +582,7 @@ std::size_t last_flight_shaping_output_float_count_cuda() {
 }
 
 std::vector<float> compute_flight_shaping_experiment_batch_cuda(
-    const std::vector<FlightShapingRuntimeInputs>& inputs_batch
-) {
+    const std::vector<FlightShapingRuntimeInputs> &inputs_batch) {
     std::vector<float> out;
     if (!run_flight_shaping_batch_cuda_impl(inputs_batch, true, &out)) {
         return {};
@@ -554,9 +591,8 @@ std::vector<float> compute_flight_shaping_experiment_batch_cuda(
 }
 
 bool compute_flight_shaping_experiment_batch_cuda_device_resident(
-    const std::vector<FlightShapingRuntimeInputs>& inputs_batch
-) {
+    const std::vector<FlightShapingRuntimeInputs> &inputs_batch) {
     return run_flight_shaping_batch_cuda_impl(inputs_batch, false, nullptr);
 }
 
-}  // namespace gpu::detail
+} // namespace gpu::detail
