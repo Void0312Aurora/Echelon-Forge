@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gc
+import math
 import unittest
 
 import numpy as np
@@ -456,6 +457,29 @@ class GpuRuntimeBindingTests(unittest.TestCase):
     )
     self.assertEqual(reference.shape, experiment.shape)
     self.assertTrue(np.all((reference.astype(np.uint32) & ~experiment.astype(np.uint32)) == 0))
+
+  def test_interaction_broadphase_rejects_nonfinite_and_invalid_config(self) -> None:
+    config = ef_py.InteractionBroadphaseConfig()
+    for field, value in (
+      ("cell_size_m", math.nan),
+      ("cell_size_m", math.inf),
+      ("cell_size_m", -math.inf),
+      ("cell_size_m", 0.0),
+      ("cell_size_m", -1.0),
+      ("max_entity_radius_m", math.nan),
+      ("max_entity_radius_m", math.inf),
+      ("max_entity_radius_m", -math.inf),
+      ("max_entity_radius_m", -1.0),
+    ):
+      setattr(config, field, value)
+      for use_gpu in (False, True):
+        with self.assertRaises(ValueError):
+          ef_py.build_interaction_broadphase_batch_numpy([], [], config, use_gpu)
+
+    config.cell_size_m = 1.0
+    config.max_entity_radius_m = 0.0
+    result = np.asarray(ef_py.build_interaction_broadphase_batch_numpy([], [], config, False))
+    self.assertEqual(result.shape, (0, 32))
 
   def test_execution_observation_export_dlpack_matches_host(self) -> None:
     if torch is None:

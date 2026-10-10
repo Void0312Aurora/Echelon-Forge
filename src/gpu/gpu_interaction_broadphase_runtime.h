@@ -41,28 +41,25 @@ struct InteractionBroadphaseExperimentStats {
     int overflow_query_count = 0;
 };
 
+void validate_interaction_broadphase_config(const InteractionBroadphaseConfig &config);
+
 std::size_t interaction_broadphase_word_count(int entities_per_world);
 
 InteractionBroadphaseExperimentStats last_interaction_broadphase_stats();
-const void* last_interaction_broadphase_output_device_ptr();
+const void *last_interaction_broadphase_output_device_ptr();
 std::size_t last_interaction_broadphase_output_word_count();
 
 std::vector<std::uint32_t> build_interaction_broadphase_reference_cpu_batch(
-    const std::vector<InteractionEntityPacked>& entities,
-    const std::vector<InteractionQueryPacked>& queries,
-    const InteractionBroadphaseConfig& config
-);
+    const std::vector<InteractionEntityPacked> &entities,
+    const std::vector<InteractionQueryPacked> &queries, const InteractionBroadphaseConfig &config);
 
-std::vector<std::uint32_t> build_interaction_broadphase_experiment_batch(
-    const std::vector<InteractionEntityPacked>& entities,
-    const std::vector<InteractionQueryPacked>& queries,
-    const InteractionBroadphaseConfig& config
-);
+std::vector<std::uint32_t>
+build_interaction_broadphase_experiment_batch(const std::vector<InteractionEntityPacked> &entities,
+                                              const std::vector<InteractionQueryPacked> &queries,
+                                              const InteractionBroadphaseConfig &config);
 
 bool build_interaction_broadphase_experiment_batch_device_resident(
-    const std::vector<InteractionEntityPacked>& entities,
-    const std::vector<InteractionQueryPacked>& queries,
-    const InteractionBroadphaseConfig& config
-);
+    const std::vector<InteractionEntityPacked> &entities,
+    const std::vector<InteractionQueryPacked> &queries, const InteractionBroadphaseConfig &config);
 
-}  // namespace gpu
+} // namespace gpu
