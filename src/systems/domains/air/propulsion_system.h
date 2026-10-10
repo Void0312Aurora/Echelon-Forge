@@ -13,6 +13,7 @@
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "core/interfaces/environment_model.h"
 #include "models/physics/aerodynamics_common.h"
+#include "components/physics/physics_input_policy.h"
 
 namespace flight_dynamics {
 constexpr double kPropulsionSeaLevelDensity = aero_physics::kSeaLevelDensityKgM3;
@@ -44,10 +45,11 @@ inline double first_order_step(double state, double command, double dt, double t
     if (!std::isfinite(command)) {
         return state;
     }
-    if (tau_s <= 1.0e-6 || dt <= 0.0) {
+    const double resolved_dt = physics_runtime::resolve_integrator_dt(dt);
+    if (tau_s <= 1.0e-6) {
         return command;
     }
-    const double gain = std::clamp(dt / (tau_s + dt), 0.0, 1.0);
+    const double gain = std::clamp(resolved_dt / (tau_s + resolved_dt), 0.0, 1.0);
     return state + gain * (command - state);
 }
 
@@ -172,10 +174,7 @@ inline void register_propulsion_system(flecs::world &ecs) {
         .kind(flecs::OnUpdate)
         .run([](flecs::iter &it) {
             const EnvironmentModelRef *env_ref = it.world().get<EnvironmentModelRef>();
-            double dt = it.delta_time();
-            if (dt <= 0.0) {
-                dt = 0.05;
-            }
+            const double dt = physics_runtime::resolve_integrator_dt(it.delta_time());
 
             while (it.next()) {
                 auto propulsion = it.field<Propulsion>(0);

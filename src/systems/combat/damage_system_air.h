@@ -8,6 +8,7 @@
 #include "systems/combat/damage_system_common.h"
 
 #include "components/basic/common.h"
+#include "components/physics/physics_input_policy.h"
 #include "components/command/pilot_action.h"
 #include "components/domains/air/combat/damage_air.h"
 #include "components/combat/health.h"
@@ -427,7 +428,7 @@ inline void register_aircraft_damage_system(flecs::world &ecs) {
     ecs.system<Health, PlatformDamageState, const KeyEntity>("AircraftDamageStateUpdate")
         .kind(flecs::OnUpdate)
         .run([](flecs::iter &it) {
-            const double dt_s = it.delta_time() > 0.0 ? it.delta_time() : 1.0 / 60.0;
+            const double dt_s = physics_runtime::resolve_entity_dt(it.delta_time());
             while (it.next()) {
                 auto health = it.field<Health>(0);
                 auto damage = it.field<PlatformDamageState>(1);
