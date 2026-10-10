@@ -347,6 +347,92 @@ TEST_SUITE("submarine_motion") {
             }
         }
     }
+    TEST_CASE("submarine mobility capability constrains speed and depth response") {
+        SubmarinePlatform platform{};
+        platform.max_speed_submerged_mps = 20.0;
+        platform.max_accel_mps2 = 4.0;
+        platform.max_depth_rate_mps = 3.0;
+
+        auto make_unit = [&](flecs::world &world, bool impaired) {
+            register_submarine_motion_system(world);
+            auto unit = world.entity()
+                            .set<Transform>({0.0, 0.0, -50.0, 0.0, 0.0, 0.0})
+                            .set<Velocity>({0.0, 10.0, 0.0})
+                            .set<SubmarinePlatform>(platform);
+            NavalCommandIntent command{};
+            command.active = true;
+            command.cmd_heading_deg = 0.0;
+            command.cmd_speed_mps = 20.0;
+            command.cmd_depth_m = 80.0;
+            unit.set<NavalCommandIntent>(command);
+            if (impaired) {
+                PlatformDamageState damage{};
+                damage.mobility_capability = 0.5;
+                unit.set<PlatformDamageState>(damage);
+            }
+            return unit;
+        };
+
+        flecs::world pristine_world;
+        flecs::world impaired_world;
+        const auto pristine = make_unit(pristine_world, false);
+        const auto impaired = make_unit(impaired_world, true);
+        pristine_world.progress(1.0);
+        impaired_world.progress(1.0);
+
+        CHECK(std::hypot(pristine.get<Velocity>()->vx, pristine.get<Velocity>()->vy) >
+              std::hypot(impaired.get<Velocity>()->vx, impaired.get<Velocity>()->vy));
+        CHECK(std::abs(pristine.get<Transform>()->z + 50.0) >
+              std::abs(impaired.get<Transform>()->z + 50.0));
+    }
+
+    TEST_CASE("submarine damage profile progresses flooding and mobility") {
+        flecs::world world;
+        register_submarine_motion_system(world);
+        register_naval_damage_system(world);
+
+        SubmarinePlatform platform{};
+        platform.max_speed_submerged_mps = 20.0;
+        auto unit = world.entity()
+                        .set<Transform>({0.0, 0.0, -50.0, 0.0, 0.0, 0.0})
+                        .set<Velocity>({0.0, 8.0, 0.0})
+                        .set<SubmarinePlatform>(platform)
+                        .set<Health>({100.0, 100.0})
+                        .set<PlatformDamageState>(PlatformDamageState{});
+        auto *damage = unit.get_mut<PlatformDamageState>();
+        REQUIRE(damage != nullptr);
+        damage->flooding_severity = 0.5;
+        damage->ongoing_hull_breach = 0.8;
+
+        world.progress(1.0);
+
+        const auto *after = unit.get<PlatformDamageState>();
+        REQUIRE(after != nullptr);
+        CHECK(after->flooding_severity > 0.5);
+        CHECK(after->mobility_capability < 1.0);
+        CHECK(unit.is_alive());
+    }
+    TEST_CASE("submarine damage response scales with positive timestep") {
+        const auto flooding_after = [](const double dt_s) {
+            flecs::world world;
+            register_naval_damage_system(world);
+            SubmarinePlatform platform{};
+            auto unit = world.entity()
+                            .set<Health>({100.0, 100.0})
+                            .set<SubmarinePlatform>(platform)
+                            .set<PlatformDamageState>(PlatformDamageState{});
+            auto *damage = unit.get_mut<PlatformDamageState>();
+            REQUIRE(damage != nullptr);
+            damage->flooding_severity = 0.5;
+            damage->ongoing_hull_breach = 0.8;
+            world.progress(dt_s);
+            return unit.get<PlatformDamageState>()->flooding_severity;
+        };
+
+        const double half_second_gain = flooding_after(0.5) - 0.5;
+        const double one_second_gain = flooding_after(1.0) - 0.5;
+        CHECK(half_second_gain == doctest::Approx(one_second_gain * 0.5).epsilon(1e-8));
+    }
     TEST_CASE("hull-forward geometry changes with attitude at fixed position and velocity") {
         Transform hull{100.0, 200.0, -50.0, 0.0, 10.0, 0.0};
         const auto up = Math::body_to_world({1.0, 0.0, 0.0}, hull);
