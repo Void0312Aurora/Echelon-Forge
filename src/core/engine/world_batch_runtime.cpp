@@ -1,5 +1,5 @@
 #include "core/engine/world_batch_runtime.h"
-#include "core/parallel_for_index.h"
+#include "core/engine/parallel_for_index.h"
 
 #include "components/systems/data_link.h"
 #include "components/systems/sensor.h"

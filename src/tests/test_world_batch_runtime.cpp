@@ -1,5 +1,5 @@
 #include "core/engine/world_batch_runtime.h"
-#include "core/parallel_for_index.h"
+#include "core/engine/parallel_for_index.h"
 #include "components/basic/stable_identity.h"
 #include "core/engine/world_batch_visual_binding_compatibility_helper.h"
 #include "runtime/facade/runtime_facade.h"

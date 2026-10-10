@@ -1,6 +1,6 @@
 #include "core/mission/runtime/execution_episode_runtime.h"
 #include "core/mission/runtime/execution_frame_runtime.h"
-#include "core/parallel_for_index.h"
+#include "core/engine/parallel_for_index.h"
 
 namespace {
 template <typename Fn> void parallel_for_index(size_t task_count, Fn &&fn) {
