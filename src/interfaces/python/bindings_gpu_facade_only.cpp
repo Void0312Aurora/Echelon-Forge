@@ -244,4 +244,3 @@ void bind_gpu_facade_only(nb::module_ &m) {
         nb::arg("runtime_facade"), nb::arg("refs"), nb::arg("downsample") = 1,
         nb::arg("use_gpu") = false);
 }
-
