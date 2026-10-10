@@ -1,5 +1,15 @@
 # ADR：类型化机制端口与递归组合
 
+语言：
+- 英文规范页：[typed_mechanism_ports_adr.md](typed_mechanism_ports_adr.md)
+- 中文配套页：`typed_mechanism_ports_adr.zh.md`
+
+Document kind: `standard`
+Lifecycle: `proposed`
+Canonical: `docs/architecture/standards/typed_mechanism_ports_adr.md`
+Owner: `architecture/mechanism-contracts`
+Last verified: `2026-10-10`
+
 **状态：** 待评审的资格验证设计；不启用生产路径。
 
 ## 决策

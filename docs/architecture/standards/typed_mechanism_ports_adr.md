@@ -1,5 +1,15 @@
 # ADR: typed mechanism ports and recursive composition
 
+Language:
+- English canonical: `typed_mechanism_ports_adr.md`
+- Chinese companion: [typed_mechanism_ports_adr.zh.md](typed_mechanism_ports_adr.zh.md)
+
+Document kind: `standard`
+Lifecycle: `proposed`
+Canonical: `docs/architecture/standards/typed_mechanism_ports_adr.md`
+Owner: `architecture/mechanism-contracts`
+Last verified: `2026-10-10`
+
 **Status:** proposed qualification design; no production activation.
 
 ## Decision
