@@ -417,7 +417,8 @@ evaluate_structural_breakup_state(const ComponentDamageState &component_damage,
     add_group_if(
         newly_failed_groups,
         component_failed_at(component_damage, "center_fuselage_fuel_cell", 0.30) ||
-            component_failed_at(component_damage, "dedicated_intake_lip_or_duct_component", 0.20),
+            component_failed_at(component_damage, "dedicated_intake_lip_or_duct_component", 0.20) ||
+            component_failed_at(component_damage, "wing_spar_center_carrythrough_segment", 0.20),
         StructuralBreakGroup::Fuselage);
 
     StructuralBreakupState next = prior;
