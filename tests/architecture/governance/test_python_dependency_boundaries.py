@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from tools.architecture.cmake_target_graph import (
+  _strip_comments,
   build_edges,
   strongly_connected_components as strongly_connected_components_cmake,
 )
@@ -221,4 +222,14 @@ def test_cmake_target_graph_rejects_a_synthetic_back_edge(tmp_path: Path) -> Non
 def test_cmake_target_graph_preserves_real_command_line_numbers() -> None:
   edges = build_edges(Path("CMakeLists.txt"))
 
-  assert next(edge for edge in edges if edge.source == "ef_core" and edge.target == "ef_content").line == 551
+  normalized_cmake = _strip_comments(Path("CMakeLists.txt").read_text(encoding="utf-8"))
+  cmake_lines = normalized_cmake.splitlines()
+  expected_line = next(
+    line_number
+    for line_number, line in enumerate(cmake_lines, start=1)
+    if line.strip() == "target_link_libraries(ef_core PUBLIC"
+  )
+  while expected_line > 1 and not cmake_lines[expected_line - 2].strip():
+    expected_line -= 1
+  edge = next(edge for edge in edges if edge.source == "ef_core" and edge.target == "ef_content")
+  assert edge.line == expected_line
