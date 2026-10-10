@@ -1,5 +1,15 @@
 # ADR: force-package and group composition
 
+Language:
+- English canonical: `force_package_composition_adr.md`
+- Chinese companion: [force_package_composition_adr.zh.md](force_package_composition_adr.zh.md)
+
+Document kind: `standard`
+Lifecycle: `proposed`
+Canonical: `docs/architecture/standards/force_package_composition_adr.md`
+Owner: `architecture/joint-contracts`
+Last verified: `2026-10-10`
+
 **Status:** proposed qualification design; existing scenario expansion and
 Joint/tasking contracts remain authoritative.
 

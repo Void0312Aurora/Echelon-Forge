@@ -1,5 +1,15 @@
 # ADR：兵力包与群组组合
 
+语言：
+- 英文规范页：[force_package_composition_adr.md](force_package_composition_adr.md)
+- 中文配套页：`force_package_composition_adr.zh.md`
+
+Document kind: `standard`
+Lifecycle: `proposed`
+Canonical: `docs/architecture/standards/force_package_composition_adr.md`
+Owner: `architecture/joint-contracts`
+Last verified: `2026-10-10`
+
 **状态：** 待评审的资格验证设计；现有 scenario expansion 与 Joint/tasking 契约仍是权威。
 
 定义可复用、带版本的 force-package authoring 投影，描述 unit assembly、角色、包含关系、
