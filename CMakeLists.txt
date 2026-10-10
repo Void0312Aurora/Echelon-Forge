@@ -1062,6 +1062,7 @@ set(EF_TEST_SOURCES
     src/tests/test_aero_physics_common.cpp
     src/tests/test_geodesy.cpp
     src/tests/test_ground_contact_solver.cpp
+    src/tests/test_ground_movement.cpp
     src/tests/test_ship_maneuvering.cpp
     src/tests/test_world_cv_alpha_beta_tracker.cpp
     src/tests/test_track_manager_system.cpp

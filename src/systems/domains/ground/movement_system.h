@@ -23,6 +23,16 @@ inline bool is_static_hold_task(GroundTaskMode mode) {
     return mode == GroundTaskMode::OccupyStatic || mode == GroundTaskMode::SupportStatic;
 }
 
+// GroundInfantryMovement owns only the anchor pose for the admitted native
+// infantry slice. Transform.z is absolute world elevation at the entity
+// anchor; no AGL or eye-height component is implied by this projection.
+inline void project_terrain_elevation(Transform &transform, IEnvironmentModel &environment) {
+    const double elevation = environment.get_terrain_elevation(transform.x, transform.y);
+    if (std::isfinite(elevation)) {
+        transform.z = elevation;
+    }
+}
+
 } // namespace ground_infantry_movement_detail
 
 // Ground movement is intentionally a narrow native consumer of the maintained
@@ -69,8 +79,17 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                     // concealment, sensing, or fire-control semantics.
                     if (static_hold_task) {
                         ground_infantry_movement_detail::stop(velocity[i]);
+                        ground_infantry_movement_detail::project_terrain_elevation(transform[i],
+                                                                                   *environment);
                         continue;
                     }
+
+                    // MoveStatic carries the only admitted ground-facing
+                    // intent. Preserve the NAV heading convention even when
+                    // the requested speed is zero or a transition is blocked.
+                    const double commanded_heading_deg =
+                        Math::normalize_heading_deg(command[i].cmd_heading_deg);
+                    transform[i].heading = commanded_heading_deg;
 
                     const auto terrain =
                         environment->get_terrain_at(transform[i].x, transform[i].y);
@@ -93,11 +112,12 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                         vegetation_multiplier * stance_multiplier;
                     if (current_effective_speed <= 0.0) {
                         ground_infantry_movement_detail::stop(velocity[i]);
+                        ground_infantry_movement_detail::project_terrain_elevation(transform[i],
+                                                                                   *environment);
                         continue;
                     }
 
-                    const double heading_rad =
-                        Math::to_radians(Math::normalize_heading_deg(command[i].cmd_heading_deg));
+                    const double heading_rad = Math::to_radians(commanded_heading_deg);
                     // Ground entities are not currently admitted to the shared
                     // ForceAccumulator/Mass integration path. Advance only the
                     // horizontal kinematic slice owned by this stage.
@@ -111,6 +131,8 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                             transform[i].y + probe_vy * dt);
                         if (!transition.passable) {
                             ground_infantry_movement_detail::stop(velocity[i]);
+                            ground_infantry_movement_detail::project_terrain_elevation(
+                                transform[i], *environment);
                             continue;
                         }
                         const auto transition_effects =
@@ -127,6 +149,8 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                     }
                     if (effective_speed <= 0.0) {
                         ground_infantry_movement_detail::stop(velocity[i]);
+                        ground_infantry_movement_detail::project_terrain_elevation(transform[i],
+                                                                                   *environment);
                         continue;
                     }
                     const double next_vx = std::sin(heading_rad) * effective_speed;
@@ -136,6 +160,8 @@ inline void register_ground_infantry_movement_system(flecs::world &ecs) {
                     velocity[i].vz = 0.0;
                     transform[i].x += velocity[i].vx * dt;
                     transform[i].y += velocity[i].vy * dt;
+                    ground_infantry_movement_detail::project_terrain_elevation(transform[i],
+                                                                               *environment);
                 }
             }
         });
