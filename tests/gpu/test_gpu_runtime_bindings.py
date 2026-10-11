@@ -457,6 +457,33 @@ class GpuRuntimeBindingTests(unittest.TestCase):
     self.assertEqual(reference.shape, experiment.shape)
     self.assertTrue(np.all((reference.astype(np.uint32) & ~experiment.astype(np.uint32)) == 0))
 
+  def test_interaction_broadphase_preserves_candidates_for_radius_above_250m(self) -> None:
+    config = ef_py.InteractionBroadphaseConfig()
+    config.cell_size_m = 1000.0
+    config.max_entity_radius_m = 250.1
+    config.entities_per_world = 1
+    config.hash_bucket_count = 256
+    config.bucket_capacity = 16
+
+    entity = ef_py.InteractionEntityPacked()
+    entity.world_index = 0
+    entity.local_index = 0
+    entity.x = 1000.01
+    entity.bounding_radius_m = 250.1
+
+    query = ef_py.InteractionQueryPacked()
+    query.world_index = 0
+    query.x = 749.99
+
+    reference = np.asarray(
+      ef_py.build_interaction_broadphase_batch_numpy([entity], [query], config, False)
+    )
+    experiment = np.asarray(
+      ef_py.build_interaction_broadphase_batch_numpy([entity], [query], config, True)
+    )
+    self.assertEqual(int(reference[0, 0] & 1), 1)
+    self.assertEqual(int(experiment[0, 0] & 1), 1)
+
   def test_execution_observation_export_dlpack_matches_host(self) -> None:
     if torch is None:
       self.skipTest("torch is not available")
