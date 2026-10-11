@@ -69,4 +69,3 @@ TEST_CASE("sonar content rejects unsupported modes") {
     CHECK(error.find("Passive") != std::string::npos);
     std::filesystem::remove(path);
 }
-
