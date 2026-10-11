@@ -513,8 +513,11 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_layout(
     const WorldGeodeticAnchorAssignment &geodetic_anchor) {
     ensure_batch_healthy();
     world_batch_setup::validate_time_steps(worlds_.size(), time_steps);
+    // An invalid world index is a preflight input error. Resolve it before the
+    // poisoning catch so a request that cannot have mutated a world does not
+    // invalidate the entire batch generation.
+    auto &world = checked_world(world_index);
     try {
-        auto &world = checked_world(world_index);
         world_batch_setup::apply_setup_time_step(world, world_index, time_steps);
         world.set_terrain_type(terrain_type.empty() ? WorldTerrainAssignment{}.terrain_type
                                                     : terrain_type);
