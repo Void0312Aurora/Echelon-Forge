@@ -58,6 +58,10 @@ __host__ __device__ inline double clipped_power_term(double err, double norm, do
     return pow(x, p);
 }
 
+__host__ __device__ inline bool packable_flight_shaping_value(double value) {
+    constexpr double kFloatMax = 3.4028234663852886e38;
+    return isfinite(value) && fabs(value) <= kFloatMax;
+}
 __global__ void compute_flight_shaping_kernel(const FlightShapingRuntimeInputs *inputs, int count,
                                               float *out) {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -368,6 +372,43 @@ __global__ void compute_flight_shaping_kernel(const FlightShapingRuntimeInputs *
                 alignment_reward = align_factor * in.alignment_reward_weight;
             }
         }
+    }
+
+    const bool packable = packable_flight_shaping_value(altitude_progress) &&
+                          packable_flight_shaping_value(low_alt_descent_penalty) &&
+                          packable_flight_shaping_value(speed_progress) &&
+                          packable_flight_shaping_value(speed_regress) &&
+                          packable_flight_shaping_value(stationary_penalty) &&
+                          packable_flight_shaping_value(liftoff_bonus) &&
+                          packable_flight_shaping_value(rotation_reward) &&
+                          packable_flight_shaping_value(rotation_overpitch_penalty) &&
+                          packable_flight_shaping_value(gear_up_bonus) &&
+                          packable_flight_shaping_value(roll_stability) &&
+                          packable_flight_shaping_value(heading_error_penalty) &&
+                          packable_flight_shaping_value(heading_hold_bonus) &&
+                          packable_flight_shaping_value(altitude_error_penalty) &&
+                          packable_flight_shaping_value(altitude_hold_bonus) &&
+                          packable_flight_shaping_value(speed_error_penalty) &&
+                          packable_flight_shaping_value(speed_hold_bonus) &&
+                          packable_flight_shaping_value(roll_abs_penalty) &&
+                          packable_flight_shaping_value(pitch_abs_penalty) &&
+                          packable_flight_shaping_value(yaw_rate_abs_penalty) &&
+                          packable_flight_shaping_value(beta_abs_penalty) &&
+                          packable_flight_shaping_value(g_deviation_penalty) &&
+                          packable_flight_shaping_value(speed_reward) &&
+                          packable_flight_shaping_value(runway_centerline_m_penalty) &&
+                          packable_flight_shaping_value(runway_centerline_penalty) &&
+                          packable_flight_shaping_value(runway_centerline_barrier) &&
+                          packable_flight_shaping_value(departure_centerline_m_penalty) &&
+                          packable_flight_shaping_value(departure_centerline_reward) &&
+                          packable_flight_shaping_value(departure_track_error_penalty) &&
+                          packable_flight_shaping_value(departure_track_reward) &&
+                          packable_flight_shaping_value(alignment_reward);
+    if (!packable) {
+        for (int output_index = 0; output_index < gpu::kFlightShapingOutputCount; ++output_index) {
+            dst[output_index] = 0.0f;
+        }
+        return;
     }
 
     dst[0] = 1.0f;
