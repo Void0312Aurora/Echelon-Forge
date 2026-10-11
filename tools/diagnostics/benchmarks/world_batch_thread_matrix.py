@@ -26,7 +26,6 @@ from python.runtime_bootstrap import configure_sim_log_level, ensure_repo_import
 REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)
 
-from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv  # noqa: E402
 from tools.diagnostics.common import write_json_output  # noqa: E402
 
 
@@ -105,6 +104,10 @@ def _run_case(
     seed: int,
     env_kwargs: dict[str, Any],
 ) -> dict[str, Any]:
+    # Keep metadata and action-stream helpers importable in lightweight
+    # contract tests without requiring the optional Gymnasium runtime.
+    from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv
+
     vec_env = WorldBatchVecEnv(
         scenario_path=scenario_path,
         n_envs=int(n_envs),
