@@ -9,6 +9,7 @@
 #include "components/combat/common/damage_common.h"
 #include "components/domains/naval/command/mission_command_naval.h"
 #include "components/domains/naval/platform/submarine_platform.h"
+#include "components/physics/physics_input_policy.h"
 
 inline void register_submarine_motion_system(flecs::world &ecs) {
     ecs.system<Transform, Velocity, const SubmarinePlatform>("SubmarineMotion")
@@ -18,8 +19,7 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                 auto transform = it.field<Transform>(0);
                 auto velocity = it.field<Velocity>(1);
                 auto sub = it.field<const SubmarinePlatform>(2);
-                const double raw_dt = it.delta_time();
-                const double dt = std::isfinite(raw_dt) && raw_dt > 0.0 ? raw_dt : 1.0 / 60.0;
+                const double dt = physics_runtime::resolve_entity_dt(it.delta_time());
 
                 for (auto i : it) {
                     const NavalCommandIntent *naval_intent = it.entity(i).get<NavalCommandIntent>();

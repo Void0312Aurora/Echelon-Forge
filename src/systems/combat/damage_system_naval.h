@@ -13,6 +13,7 @@
 #include "components/domains/naval/combat/weapon_naval.h"
 #include "components/domains/naval/platform/ship_platform.h"
 #include "components/domains/naval/platform/submarine_platform.h"
+#include "components/physics/physics_input_policy.h"
 
 // Naval damage-response tick (DM-N1).
 //
@@ -145,8 +146,10 @@ inline void register_naval_damage_system(flecs::world &ecs) {
     ecs.system<Health, PlatformDamageState, const ShipPlatform>("NavalDamageStateUpdate")
         .kind(flecs::OnUpdate)
         .run([](flecs::iter &it) {
-            const double raw_dt_s = it.delta_time();
-            const double dt_s = std::isfinite(raw_dt_s) && raw_dt_s > 0.0 ? raw_dt_s : 1.0 / 60.0;
+            // DM-N1 is currently a ship-only response surface. Resolving once
+            // per iteration keeps the response independent of stage ordering
+            // against the motion systems.
+            const double dt_s = physics_runtime::resolve_entity_dt(it.delta_time());
             while (it.next()) {
                 auto health = it.field<Health>(0);
                 auto damage = it.field<PlatformDamageState>(1);
@@ -169,8 +172,7 @@ inline void register_naval_damage_system(flecs::world &ecs) {
     ecs.system<Health, PlatformDamageState, const SubmarinePlatform>("SubmarineDamageStateUpdate")
         .kind(flecs::OnUpdate)
         .run([](flecs::iter &it) {
-            const double raw_dt_s = it.delta_time();
-            const double dt_s = std::isfinite(raw_dt_s) && raw_dt_s > 0.0 ? raw_dt_s : 1.0 / 60.0;
+            const double dt_s = physics_runtime::resolve_entity_dt(it.delta_time());
             while (it.next()) {
                 auto health = it.field<Health>(0);
                 auto damage = it.field<PlatformDamageState>(1);
