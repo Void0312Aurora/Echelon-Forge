@@ -1,0 +1,334 @@
+"""Qualification-only platform blueprint and assembly resolver.
+
+The resolver lowers a versioned platform assembly into a deterministic plan
+for the existing native factory.  It does not create ECS entities, replace
+UnitDefinition, or admit a new production content path.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+from dataclasses import dataclass
+from typing import Any, Mapping, Sequence
+
+from python.experiment.composition import freeze_json_mapping, thaw_json_value
+
+SCHEMA_VERSION = "echelon_forge.platform_assembly.v1"
+
+
+class PlatformAssemblyError(ValueError):
+    """Raised for malformed authoring documents."""
+
+
+@dataclass(frozen=True)
+class ModuleRecord:
+    module_id: str
+    kind: str
+    capabilities: frozenset[str] = frozenset()
+    version: str = "1"
+    evidence_refs: tuple[str, ...] = ()
+    content_digest: str = ""
+    native_ref: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.module_id.strip() or not self.kind.strip() or not self.version.strip():
+            raise ValueError("module_id, kind, and version are required")
+        if not self.evidence_refs or any(not ref.strip() for ref in self.evidence_refs):
+            raise ValueError("module evidence_refs are required")
+
+
+@dataclass(frozen=True)
+class PlatformBlueprint:
+    blueprint_id: str
+    version: str
+    platform_family: str
+    slots: tuple[tuple[str, str], ...]
+    required_capabilities: frozenset[str] = frozenset()
+    override_types: tuple[tuple[str, str], ...] = ()
+    override_ranges: tuple[tuple[str, float, float], ...] = ()
+
+    def __post_init__(self) -> None:
+        if (
+            not self.blueprint_id.strip()
+            or not self.version.strip()
+            or not self.platform_family.strip()
+        ):
+            raise ValueError("blueprint identity and platform_family are required")
+        slot_names = [name for name, _ in self.slots]
+        if len(slot_names) != len(set(slot_names)):
+            raise ValueError("blueprint slots must be unique")
+        if any(not name.strip() or not kind.strip() for name, kind in self.slots):
+            raise ValueError("blueprint slot names and kinds are required")
+        override_names = [name for name, _ in self.override_types]
+        if len(override_names) != len(set(override_names)):
+            raise ValueError("blueprint override fields must be unique")
+        if any(
+            kind not in {"float", "int", "string", "boolean"} for _, kind in self.override_types
+        ):
+            raise ValueError("unsupported blueprint override type")
+        range_names = [name for name, _, _ in self.override_ranges]
+        if len(range_names) != len(set(range_names)):
+            raise ValueError("blueprint override ranges must be unique")
+        for name, low, high in self.override_ranges:
+            if (
+                dict(self.override_types).get(name) not in {"float", "int"}
+                or not math.isfinite(low)
+                or not math.isfinite(high)
+                or low > high
+            ):
+                raise ValueError(
+                    "override range must name an allowlisted field with finite ordered bounds"
+                )
+
+    def expected_kind(self, slot: str) -> str | None:
+        return dict(self.slots).get(slot)
+
+    def override_type(self, name: str) -> str | None:
+        return dict(self.override_types).get(name)
+
+
+@dataclass(frozen=True)
+class ModuleSelection:
+    slot: str
+    module_ref: str
+
+
+@dataclass(frozen=True)
+class ResolvedPlatformSpawnPlan:
+    schema_version: str
+    assembly_id: str
+    blueprint_ref: str
+    platform_family: str
+    modules: tuple[tuple[str, str], ...]
+    parameter_overrides: tuple[tuple[str, Any], ...]
+    capabilities: tuple[str, ...]
+    identity_digest: str
+    module_digests: tuple[tuple[str, str], ...] = ()
+    native_module_refs: tuple[tuple[str, str], ...] = ()
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "assembly_id": self.assembly_id,
+            "blueprint_ref": self.blueprint_ref,
+            "platform_family": self.platform_family,
+            "modules": [{"slot": slot, "module_ref": module} for slot, module in self.modules],
+            "parameter_overrides": dict(self.parameter_overrides),
+            "capabilities": list(self.capabilities),
+            "identity_digest": self.identity_digest,
+            "module_digests": dict(self.module_digests),
+            "native_module_refs": dict(self.native_module_refs),
+        }
+
+
+def _check_override(value: Any, expected: str) -> bool:
+    if expected == "float":
+        return (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+        )
+    if expected == "int":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if expected == "string":
+        return isinstance(value, str)
+    if expected == "boolean":
+        return isinstance(value, bool)
+    return False
+
+
+def resolve_platform_assembly(
+    *,
+    assembly_id: str,
+    blueprint: PlatformBlueprint,
+    selections: Sequence[ModuleSelection],
+    modules: Mapping[str, ModuleRecord],
+    parameter_overrides: Mapping[str, Any] | None = None,
+) -> ResolvedPlatformSpawnPlan:
+    """Resolve an assembly before publication to the native factory."""
+
+    if not assembly_id.strip():
+        raise PlatformAssemblyError("assembly_id is required")
+    expected_slots = dict(blueprint.slots)
+    selected: dict[str, ModuleRecord] = {}
+    errors: list[str] = []
+    for index, selection in enumerate(selections):
+        path = f"modules[{index}]"
+        if selection.slot in selected:
+            errors.append(f"platform.duplicate_slot:{path}.slot:{selection.slot}")
+            continue
+        expected_kind = expected_slots.get(selection.slot)
+        if expected_kind is None:
+            errors.append(f"platform.unknown_slot:{path}.slot:{selection.slot}")
+            continue
+        module = modules.get(selection.module_ref)
+        if module is None:
+            errors.append(f"platform.module_unknown:{path}.module_ref:{selection.module_ref}")
+            continue
+        if module.kind != expected_kind:
+            errors.append(
+                f"platform.module_kind_mismatch:{path}.module_ref:{selection.module_ref}:{module.kind}!={expected_kind}"
+            )
+            continue
+        selected[selection.slot] = module
+    missing_slots = sorted(set(expected_slots) - set(selected))
+    errors.extend(f"platform.required_slot_missing:modules.{slot}" for slot in missing_slots)
+    all_capabilities = frozenset().union(*(module.capabilities for module in selected.values()))
+    missing_capabilities = sorted(blueprint.required_capabilities - all_capabilities)
+    errors.extend(
+        f"platform.required_capability_missing:capabilities.{capability}"
+        for capability in missing_capabilities
+    )
+
+    overrides = dict(parameter_overrides or {})
+    ranges = {name: (low, high) for name, low, high in blueprint.override_ranges}
+    for name, value in overrides.items():
+        expected_type = blueprint.override_type(name)
+        if expected_type is None:
+            errors.append(f"platform.override_not_allowlisted:parameter_overrides.{name}")
+        elif not _check_override(value, expected_type):
+            errors.append(
+                f"platform.override_type_mismatch:parameter_overrides.{name}:{expected_type}"
+            )
+        elif name in ranges and not ranges[name][0] <= value <= ranges[name][1]:
+            errors.append(f"platform.override_out_of_bounds:parameter_overrides.{name}")
+    if errors:
+        raise PlatformAssemblyError("; ".join(errors))
+
+    normalized_modules = tuple(
+        sorted((slot, selected[slot].module_id + "@" + selected[slot].version) for slot in selected)
+    )
+    normalized_overrides = tuple(sorted(overrides.items()))
+    capabilities = tuple(sorted(all_capabilities))
+    module_digests = tuple(
+        sorted((slot, module.content_digest) for slot, module in selected.items())
+    )
+    native_module_refs = tuple(
+        sorted((slot, module.native_ref) for slot, module in selected.items())
+    )
+    identity_payload = {
+        "schema_version": SCHEMA_VERSION,
+        "assembly_id": assembly_id,
+        "blueprint_ref": f"{blueprint.blueprint_id}@{blueprint.version}",
+        "platform_family": blueprint.platform_family,
+        "modules": normalized_modules,
+        "parameter_overrides": normalized_overrides,
+        "capabilities": capabilities,
+        "module_digests": module_digests,
+        "native_module_refs": native_module_refs,
+        "blueprint_contract": {
+            "slots": sorted(blueprint.slots),
+            "override_types": sorted(blueprint.override_types),
+            "override_ranges": sorted(blueprint.override_ranges),
+            "required_capabilities": sorted(blueprint.required_capabilities),
+        },
+    }
+    digest = hashlib.sha256(
+        json.dumps(
+            identity_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    return ResolvedPlatformSpawnPlan(
+        schema_version=SCHEMA_VERSION,
+        assembly_id=assembly_id,
+        blueprint_ref=f"{blueprint.blueprint_id}@{blueprint.version}",
+        platform_family=blueprint.platform_family,
+        modules=normalized_modules,
+        parameter_overrides=normalized_overrides,
+        capabilities=capabilities,
+        identity_digest=digest,
+        module_digests=module_digests,
+        native_module_refs=native_module_refs,
+    )
+
+
+@dataclass(frozen=True)
+class LegacyUnitProjection:
+    """Explicit adapter to one existing native UnitDefinition shape; no inheritance."""
+
+    blueprint_ref: str
+    definition: Mapping[str, Any]
+    slot_paths: tuple[tuple[str, str], ...] = ()
+    override_paths: tuple[tuple[str, str], ...] = ()
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "definition", freeze_json_mapping(self.definition))
+        for paths in (self.slot_paths, self.override_paths):
+            if len(dict(paths)) != len(paths) or len({path for _, path in paths}) != len(paths):
+                raise ValueError("projection paths must be unique")
+
+
+def lower_to_legacy_unit_definition(
+    plan: ResolvedPlatformSpawnPlan,
+    projection: LegacyUnitProjection,
+    *,
+    modules: Mapping[str, ModuleRecord],
+) -> dict[str, Any]:
+    """Validate all mappings, then return JSON for the existing native loader.
+
+    This is a qualification authoring adapter. Native parsing, capability
+    validation and DefaultUnitFactory still decide whether the unit may spawn.
+    """
+    if projection.blueprint_ref != plan.blueprint_ref:
+        raise PlatformAssemblyError("platform.blueprint_version_mismatch")
+    document = thaw_json_value(projection.definition)
+    slots = dict(projection.slot_paths)
+    overrides = dict(projection.override_paths)
+    if set(slots) != {slot for slot, _ in plan.modules}:
+        raise PlatformAssemblyError("platform.native_slot_projection_incomplete")
+    by_ref = {f"{m.module_id}@{m.version}": m for m in modules.values()}
+    for module in modules.values():
+        if by_ref[f"{module.module_id}@{module.version}"] != module:
+            raise PlatformAssemblyError("platform.native_module_reference_ambiguous")
+
+    def assign(path: str, value: Any) -> None:
+        parts = path.split(".")
+        target = document
+        for part in parts[:-1]:
+            if not isinstance(target, dict) or part not in target:
+                raise PlatformAssemblyError(f"platform.native_field_unknown:{path}")
+            target = target[part]
+        if not isinstance(target, dict) or parts[-1] not in target:
+            raise PlatformAssemblyError(f"platform.native_field_unknown:{path}")
+        target[parts[-1]] = value
+
+    for slot, ref in plan.modules:
+        module = by_ref.get(ref)
+        if module is None or not module.native_ref or not module.content_digest:
+            raise PlatformAssemblyError(
+                f"platform.native_module_evidence_missing:modules.{slot}:{ref}"
+            )
+        if (
+            dict(plan.module_digests).get(slot) != module.content_digest
+            or dict(plan.native_module_refs).get(slot) != module.native_ref
+        ):
+            raise PlatformAssemblyError(f"platform.native_module_identity_mismatch:modules.{slot}")
+        assign(slots[slot], module.native_ref)
+    for name, value in plan.parameter_overrides:
+        if name not in overrides:
+            raise PlatformAssemblyError(f"platform.native_override_projection_missing:{name}")
+        assign(overrides[name], value)
+    if not isinstance(document.get("name"), str) or not isinstance(document.get("type"), str):
+        raise PlatformAssemblyError("platform.native_unit_identity_missing")
+    # Reject invalid JSON before returning anything to a native caller.
+    json.dumps(document, allow_nan=False)
+    return document
+
+
+__all__ = [
+    "ModuleRecord",
+    "LegacyUnitProjection",
+    "ModuleSelection",
+    "PlatformAssemblyError",
+    "PlatformBlueprint",
+    "ResolvedPlatformSpawnPlan",
+    "SCHEMA_VERSION",
+    "resolve_platform_assembly",
+    "lower_to_legacy_unit_definition",
+]
