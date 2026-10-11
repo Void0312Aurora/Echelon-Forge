@@ -83,6 +83,7 @@ class BatchOperationOutcome:
     domain: FailureDomain
     result: BatchResult
     worlds: tuple[WorldOutcome, ...] = ()
+    expected_world_indices: tuple[int, ...] = ()
     recovery_admission: RecoveryAdmission = RecoveryAdmission.NONE
     diagnostics: tuple[str, ...] = ()
     schema_version: str = SCHEMA_VERSION
@@ -102,6 +103,12 @@ class BatchOperationOutcome:
         indexes = [world.world_index for world in self.worlds]
         if indexes != sorted(set(indexes)):
             raise ValueError("world outcomes must have unique, sorted world indexes")
+        if self.expected_world_indices != tuple(sorted(set(self.expected_world_indices))):
+            raise ValueError("expected world indexes must be unique and sorted")
+        if any(isinstance(index, bool) or not isinstance(index, int) or index < 0 for index in self.expected_world_indices):
+            raise ValueError("expected world indexes must be non-negative integers")
+        if self.expected_world_indices and not set(indexes).issubset(self.expected_world_indices):
+            raise ValueError("world outcome is outside the expected world scope")
         if self.result is BatchResult.REJECTED and self.worlds:
             raise ValueError("admission rejection must not publish world outcomes")
         states = {world.state for world in self.worlds}
@@ -113,7 +120,8 @@ class BatchOperationOutcome:
                 RecoveryAdmission.TERMINATE_GENERATION,
             }:
                 raise ValueError("unknown world state requires explicit reset/recreate or generation termination")
-        if self.result is BatchResult.PARTIAL_FAILURE and not states.intersection({WorldState.FAILED, WorldState.UNKNOWN_AFTER_FAULT}):
+        incomplete_scope = bool(self.expected_world_indices) and set(indexes) != set(self.expected_world_indices)
+        if self.result is BatchResult.PARTIAL_FAILURE and not incomplete_scope and not states.intersection({WorldState.FAILED, WorldState.UNKNOWN_AFTER_FAULT}):
             raise ValueError("partial_failure requires a failed or unknown world")
         if self.result is BatchResult.FAILED and states == {WorldState.COMPLETED}:
             raise ValueError("failed outcome cannot contain only completed worlds")
@@ -127,6 +135,7 @@ class BatchOperationOutcome:
             "domain": self.domain.value,
             "result": self.result.value,
             "worlds": [world.as_dict() for world in self.worlds],
+            "expected_world_indices": list(self.expected_world_indices),
             "recovery_admission": self.recovery_admission.value,
             "diagnostics": list(self.diagnostics),
         }
@@ -160,6 +169,7 @@ def build_batch_outcome(
     operation_ref: str,
     operation: str,
     worlds: tuple[WorldOutcome, ...],
+    expected_world_indices: frozenset[int],
     domain: FailureDomain = FailureDomain.BATCH,
     diagnostics: tuple[str, ...] = (),
 ) -> BatchOperationOutcome:
@@ -167,19 +177,30 @@ def build_batch_outcome(
 
     if not worlds:
         raise ValueError("world outcomes are required for a batch execution")
+    if not expected_world_indices:
+        raise ValueError("expected_world_indices are required for a batch execution")
+    if any(isinstance(index, bool) or not isinstance(index, int) or index < 0 for index in expected_world_indices):
+        raise ValueError("expected world indexes must be non-negative integers")
+    observed_indexes = {world.world_index for world in worlds}
+    if not observed_indexes.issubset(expected_world_indices):
+        raise ValueError("world outcome is outside the expected world scope")
+    missing_indexes = sorted(expected_world_indices - observed_indexes)
     states = {world.state for world in worlds}
-    if states == {WorldState.COMPLETED}:
+    if states == {WorldState.COMPLETED} and not missing_indexes:
         result = BatchResult.COMPLETED
         recovery = RecoveryAdmission.NONE
     elif WorldState.UNKNOWN_AFTER_FAULT in states:
         result = BatchResult.PARTIAL_FAILURE if WorldState.COMPLETED in states else BatchResult.FAILED
         recovery = RecoveryAdmission.REQUIRE_EXPLICIT_RESET_OR_RECREATE
-    elif WorldState.COMPLETED in states:
+    elif WorldState.COMPLETED in states or missing_indexes:
         result = BatchResult.PARTIAL_FAILURE
         recovery = RecoveryAdmission.REQUIRE_EXPLICIT_RESET_OR_RECREATE
     else:
         result = BatchResult.FAILED
         recovery = RecoveryAdmission.TERMINATE_GENERATION
+    effective_diagnostics = tuple(diagnostics)
+    if missing_indexes:
+        effective_diagnostics += (f"batch.world_scope_incomplete:missing={','.join(map(str, missing_indexes))}",)
     return BatchOperationOutcome(
         batch_generation_ref=batch_generation_ref,
         operation_ref=operation_ref,
@@ -187,8 +208,9 @@ def build_batch_outcome(
         domain=domain,
         result=result,
         worlds=worlds,
+        expected_world_indices=tuple(sorted(expected_world_indices)),
         recovery_admission=recovery,
-        diagnostics=diagnostics,
+        diagnostics=effective_diagnostics,
     )
 
 
