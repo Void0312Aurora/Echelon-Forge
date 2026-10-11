@@ -5,6 +5,7 @@
 #include "components/systems/sensor.h"
 #include "components/physics/dynamics.h"
 #include "core/interfaces/acoustic_model.h"
+#include "systems/system_contribution_registry.h"
 
 #include <doctest/doctest.h>
 
@@ -17,6 +18,7 @@ struct AcousticProbe {
 
 AcousticProbe run_passive_probe(double receiver_source_level_db, double target_speed_mps) {
     flecs::world world;
+    runtime::systems::register_default_component_contributions(world);
     world.set<StableIdentityState>({3, 42});
     auto owner = world.entity()
                      .set<KeyEntity>({UnitType::Ship})
