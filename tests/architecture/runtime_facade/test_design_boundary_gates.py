@@ -123,7 +123,7 @@ def test_world_batch_backend_seam_is_used_without_exposing_engine_or_gpu_owners(
   assert "gpu/" not in probe.lower()
 
   for request_marker, next_marker in (
-    ("struct ResetRequest", "enum class SetupKind"),
+    ("struct ResetRequest", "struct BatchSetup"),
     ("struct SetupRequest", "struct SetupResult"),
     ("struct InputBatch", "struct InputResult"),
     ("struct AdvanceRequest", "struct AdvanceResult"),
