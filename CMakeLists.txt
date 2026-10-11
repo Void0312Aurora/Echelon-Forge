@@ -1075,6 +1075,7 @@ set(EF_TEST_SOURCES
     src/tests/test_timestep_contract.cpp
     src/tests/test_ship_maneuvering.cpp
     src/tests/test_world_cv_alpha_beta_tracker.cpp
+    src/tests/test_air_perception_qualification.cpp
     src/tests/test_track_manager_system.cpp
     src/tests/test_kalman_seeker.cpp
     src/tests/test_structural_failure_system.cpp
