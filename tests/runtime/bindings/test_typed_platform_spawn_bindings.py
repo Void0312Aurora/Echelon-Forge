@@ -134,6 +134,21 @@ def test_typed_platform_spawn_request_fails_closed_for_missing_fields() -> None:
   assert result.rejection_reason == "typed_platform_spawn_evidence_required"
 
 
+def test_typed_platform_spawn_request_fails_closed_for_plan_bundle_capability_drift() -> None:
+  request = _valid_typed_platform_spawn_request()
+  request.resolved_spawn_plan.resolved_capabilities[0].implementation_ref = "drifted"
+
+  result = ef_py.validate_typed_platform_spawn_request(request)
+
+  assert not bool(result.valid)
+  assert bool(result.fail_closed)
+  assert result.rejection_reason == "typed_platform_spawn_resolved_plan_invalid"
+  assert any(
+    "preserve source and capability bundle identity" in error
+    for error in result.errors
+  )
+
+
 def test_legacy_world_spawn_request_type_name_path_remains_python_mainline_surface() -> None:
   legacy_spawn = ef_py.WorldSpawnRequest()
   legacy_spawn.world_index = 0
