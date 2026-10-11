@@ -65,6 +65,17 @@ and contracts that data must fill.
 | Wind, sun | scenario constants | `set_wind`, `set_sun_direction` | no clock-driven day/night |
 | Ocean data | absent | none | no bathymetry, temperature/salinity profile, or ambient noise |
 
+The shared interface now contains a reversible bathymetry admission seam:
+`IEnvironmentModel::get_bathymetry_along_segment` returns a domain-neutral
+minimum water depth plus explicit availability, vertical-datum, and source
+metadata. The default environment returns `Unavailable`; it does not synthesize
+an ocean floor. Naval motion consumes this seam only when an entity opts into
+`SubmarineBathymetryPolicy`. Missing, dry, out-of-coverage, and invalid-datum
+observations hold depth, while entities without the policy preserve the legacy
+open-water profile. A valid observation is defined over the full proposed
+horizontal step, so a provider must account for a rising seabed within that
+segment before returning `Valid`.
+
 ### Ground-coupling findings on `origin/work/army-mechanisms`
 
 Measured at `3cee10ff` on `2026-09-28`:

@@ -30,7 +30,11 @@ than owned here as a full N4 mission runtime.
 - [ship_motion_system.h](ship_motion_system.h)
   - Updates ship speed, heading, sea-state drag, and station keeping.
 - [submarine_motion_system.h](submarine_motion_system.h)
-  - Updates submarine speed, heading, and depth envelopes.
+  - Updates submarine speed, heading, and depth envelopes. An entity may
+    attach `SubmarineBathymetryPolicy` to opt into the shared environment
+    segment query. The policy treats `Transform` as the hull reference point,
+    subtracts `draft_m` and the configured keel clearance from the minimum
+    water depth, and rate-limits the resulting target depth.
 - [embarked_air_ops_system.h](embarked_air_ops_system.h)
   - Token-level runtime for launch/recovery of embarked helicopters and OTH relay behavior.
 - [naval_mission_weapon_release_system.h](naval_mission_weapon_release_system.h)
@@ -44,3 +48,17 @@ This directory may consume `components/domains/naval/platform`,
 `components/command`, `components/basic`, and the required pieces of
 `core/interfaces`. It should not depend on `runtime/facade`,
 `interfaces/python`, or training/scenario glue.
+
+### Bathymetry admission boundary
+
+Bathymetry-aware motion is an explicit profile. The environment owns
+`IEnvironmentModel::get_bathymetry_along_segment`; the naval system does not
+own a raster or infer water depth from generic terrain elevation. The provider
+must return `Valid`, a finite minimum water depth for the complete horizontal
+step, and a non-empty vertical-datum identifier. `Unavailable`, `Dry`,
+`OutOfCoverage`, and `InvalidDatum` all hold the current depth and report
+`UnknownBathymetry` through the policy status. An entity without the policy
+retains the legacy open-water kinematic behavior.
+
+This slice limits commands and trajectories only. It does not model seabed
+contact, collision response, damage, or hydrodynamics.

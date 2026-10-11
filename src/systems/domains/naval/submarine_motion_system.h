@@ -9,6 +9,7 @@
 #include "components/combat/common/damage_common.h"
 #include "components/domains/naval/command/mission_command_naval.h"
 #include "components/domains/naval/platform/submarine_platform.h"
+#include "core/interfaces/environment_model.h"
 #include "components/physics/physics_input_policy.h"
 
 inline void register_submarine_motion_system(flecs::world &ecs) {
@@ -24,6 +25,13 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                 for (auto i : it) {
                     const NavalCommandIntent *naval_intent = it.entity(i).get<NavalCommandIntent>();
                     const PlatformDamageState *damage = it.entity(i).get<PlatformDamageState>();
+                    const SubmarineBathymetryPolicy *bathymetry_config =
+                        it.entity(i).get<SubmarineBathymetryPolicy>();
+                    SubmarineBathymetryPolicy *bathymetry_policy =
+                        bathymetry_config ? it.entity(i).get_mut<SubmarineBathymetryPolicy>()
+                                          : nullptr;
+                    const EnvironmentModelRef *environment_ref =
+                        it.world().get<EnvironmentModelRef>();
                     const double mobility_factor =
                         damage ? std::clamp(damage->mobility_capability, 0.0, 1.0) : 1.0;
                     const bool mobility_kill =
@@ -71,8 +79,59 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                             next_heading_deg + std::clamp(error_deg, -turn_step, turn_step));
                     }
 
+                    const double heading_rad = Math::to_radians(next_heading_deg);
+                    const double next_vx = std::sin(heading_rad) * next_speed_mps;
+                    const double next_vy = std::cos(heading_rad) * next_speed_mps;
+                    const double proposed_x = transform[i].x + next_vx * dt;
+                    const double proposed_y = transform[i].y + next_vy * dt;
+
                     const double current_depth_m = std::max(0.0, -transform[i].z);
-                    const double depth_error_m = target_depth_m - current_depth_m;
+                    double constrained_target_depth_m = target_depth_m;
+                    if (bathymetry_policy) {
+                        bathymetry_policy->last_requested_depth_m = target_depth_m;
+                        bathymetry_policy->last_allowed_depth_m =
+                            std::max(0.0, sub[i].max_operating_depth_m);
+                        bathymetry_policy->last_status = SubmarineDepthConstraintStatus::Disabled;
+
+                        if (bathymetry_policy->enabled) {
+                            const IEnvironmentModel::BathymetrySegmentObservation observation =
+                                (environment_ref && environment_ref->model)
+                                    ? environment_ref->model->get_bathymetry_along_segment(
+                                          transform[i].x, transform[i].y, proposed_x, proposed_y)
+                                    : IEnvironmentModel::BathymetrySegmentObservation{};
+                            const bool valid_observation =
+                                observation.availability ==
+                                    IEnvironmentModel::BathymetryAvailability::Valid &&
+                                std::isfinite(observation.minimum_water_depth_m) &&
+                                observation.minimum_water_depth_m >= 0.0 &&
+                                !observation.vertical_datum.empty();
+                            if (!valid_observation) {
+                                // No-data, dry/coastal, out-of-coverage, and
+                                // datum failures are conservative: hold depth.
+                                constrained_target_depth_m = current_depth_m;
+                                bathymetry_policy->last_allowed_depth_m = current_depth_m;
+                                bathymetry_policy->last_status =
+                                    SubmarineDepthConstraintStatus::UnknownBathymetry;
+                            } else {
+                                const double available_center_depth_m =
+                                    observation.minimum_water_depth_m -
+                                    std::max(0.0, sub[i].draft_m) -
+                                    std::max(0.0, bathymetry_policy->min_keel_clearance_m);
+                                const double allowed_depth_m =
+                                    std::clamp(available_center_depth_m, 0.0,
+                                               std::max(0.0, sub[i].max_operating_depth_m));
+                                constrained_target_depth_m =
+                                    std::min(target_depth_m, allowed_depth_m);
+                                bathymetry_policy->last_allowed_depth_m = allowed_depth_m;
+                                bathymetry_policy->last_status =
+                                    target_depth_m > allowed_depth_m
+                                        ? SubmarineDepthConstraintStatus::LimitedBySeabed
+                                        : SubmarineDepthConstraintStatus::Allowed;
+                            }
+                        }
+                    }
+
+                    const double depth_error_m = constrained_target_depth_m - current_depth_m;
                     const double depth_step =
                         std::clamp(depth_error_m,
                                    -std::max(0.0, sub[i].max_depth_rate_mps) * mobility_factor * dt,
@@ -81,9 +140,8 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                         std::clamp(current_depth_m + depth_step, 0.0,
                                    std::max(0.0, sub[i].max_operating_depth_m));
 
-                    const double heading_rad = Math::to_radians(next_heading_deg);
-                    velocity[i].vx = std::sin(heading_rad) * next_speed_mps;
-                    velocity[i].vy = std::cos(heading_rad) * next_speed_mps;
+                    velocity[i].vx = next_vx;
+                    velocity[i].vy = next_vy;
                     velocity[i].vz = -(next_depth_m - current_depth_m) / dt;
 
                     transform[i].heading = next_heading_deg;

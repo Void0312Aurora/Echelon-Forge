@@ -23,6 +23,26 @@ class IEnvironmentModel {
         double wave_period_s = 8.0;
     };
 
+    // Bathymetry is an environment observation, not a naval movement or
+    // grounding decision.  A valid segment observation reports the shallowest
+    // water column along the proposed horizontal step in one declared vertical
+    // datum.  Providers must report coverage and datum provenance explicitly;
+    // consumers must not treat an unavailable result as deep water.
+    enum class BathymetryAvailability : uint8_t {
+        Unavailable = 0,
+        Valid = 1,
+        OutOfCoverage = 2,
+        Dry = 3,
+        InvalidDatum = 4,
+    };
+
+    struct BathymetrySegmentObservation {
+        BathymetryAvailability availability = BathymetryAvailability::Unavailable;
+        double minimum_water_depth_m = std::numeric_limits<double>::quiet_NaN();
+        std::string vertical_datum{};
+        std::string source{};
+    };
+
     virtual ~IEnvironmentModel() = default;
 
     // Core lookup: Get atmospheric conditions at specific position
@@ -153,6 +173,17 @@ class IEnvironmentModel {
                                     double /*wave_period_s*/) {}
     virtual void clear_maritime_state() {}
     virtual MaritimeState get_maritime_state() const { return {}; }
+
+    // Shared environment owner seam for the first bathymetry-aware naval
+    // slice.  The default provider has no admitted bathymetry and therefore
+    // returns Unavailable.  The segment result is conservative by contract:
+    // minimum_water_depth_m covers the complete proposed horizontal step.
+    virtual BathymetrySegmentObservation get_bathymetry_along_segment(double /*from_x*/,
+                                                                      double /*from_y*/,
+                                                                      double /*to_x*/,
+                                                                      double /*to_y*/) {
+        return {};
+    }
 
     // Geodetic frame of this world (Geodetic Frame P3-B): the scenario anchor of
     // the local frame and the reference earth. A world whose scenario declares no
