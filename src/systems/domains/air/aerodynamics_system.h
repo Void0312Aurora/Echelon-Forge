@@ -15,6 +15,7 @@
 #include "components/command/pilot_action.h" // For PilotAction (flaps/speedbrake)
 #include "components/systems/logistics.h"    // For MassProperties definition
 #include "core/interfaces/environment_model.h"
+#include "models/physics/aerodynamics_common.h"
 
 namespace {
 constexpr double kStallStateActiveThreshold = 0.05;
@@ -285,14 +286,9 @@ inline void register_aerodynamics_system(flecs::world &ecs) {
 
                     // --- Directions ---
                     // Use air-relative velocity for drag/lift direction (wind realism).
-                    Math::Vector3 v_vec = {velocity[i].vx, velocity[i].vy, velocity[i].vz};
-                    if (env_ref && env_ref->model) {
-                        AtmosphericData atm = env_ref->model->get_atmosphere_at(
-                            transform[i].x, transform[i].y, transform[i].z);
-                        v_vec.x -= atm.wind_velocity.x;
-                        v_vec.y -= atm.wind_velocity.y;
-                        v_vec.z -= atm.wind_velocity.z;
-                    }
+                    const aero_physics::AirRelativeFlow air_relative_flow =
+                        aero_physics::compute_air_relative_flow(transform[i], velocity[i], env_ref);
+                    const Math::Vector3 v_vec = air_relative_flow.velocity_mps;
                     Math::Vector3 v_hat = Math::vec_norm(v_vec);
 
                     // Drag Direction: -Velocity
@@ -320,9 +316,9 @@ inline void register_aerodynamics_system(flecs::world &ecs) {
                     double c_bar = props[i].chord_m;
                     if (c_bar < 0.1) c_bar = 3.0;
 
-                    double V = std::max(10.0, std::sqrt(velocity[i].vx * velocity[i].vx +
-                                                        velocity[i].vy * velocity[i].vy +
-                                                        velocity[i].vz * velocity[i].vz));
+                    // Rate coefficients use the same air-relative speed as lift/drag.  Ground
+                    // speed would make damping change under a uniform wind translation.
+                    const double V = std::max(10.0, air_relative_flow.speed_mps);
 
                     // Rates in body frame (rad/s) needed.
                     // We only have world ang_vel? No, AngularVelocity component is usually Body
