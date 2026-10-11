@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 
 #include "core/interfaces/world_batch_gpu_compatibility.h"
@@ -65,11 +66,13 @@ std::uint32_t bit_mask_for_local_index(int local_index) {
     return static_cast<std::uint32_t>(1u << (local_index & 31));
 }
 
-void validate_config(const InteractionBroadphaseConfig &config) {
-    if (config.cell_size_m <= 0.0) {
+} // namespace
+
+void validate_interaction_broadphase_config(const InteractionBroadphaseConfig &config) {
+    if (!std::isfinite(config.cell_size_m) || config.cell_size_m <= 0.0) {
         throw std::invalid_argument("interaction broadphase requires cell_size_m > 0");
     }
-    if (config.max_entity_radius_m < 0.0) {
+    if (!std::isfinite(config.max_entity_radius_m) || config.max_entity_radius_m < 0.0) {
         throw std::invalid_argument("interaction broadphase requires max_entity_radius_m >= 0");
     }
     if (config.entities_per_world <= 0) {
@@ -81,12 +84,24 @@ void validate_config(const InteractionBroadphaseConfig &config) {
     if (config.bucket_capacity <= 0) {
         throw std::invalid_argument("interaction broadphase requires bucket_capacity > 0");
     }
+    const auto bucket_count = static_cast<std::size_t>(config.hash_bucket_count);
+    const auto bucket_capacity = static_cast<std::size_t>(config.bucket_capacity);
+    if (bucket_count > std::numeric_limits<std::size_t>::max() / bucket_capacity) {
+        throw std::invalid_argument("interaction broadphase bucket allocation overflows size_t");
+    }
+    // CUDA kernels address the flat bucket array with signed int arithmetic:
+    // bucket * bucket_capacity + slot. Keep the validated allocation within
+    // that indexing domain even on hosts where size_t can represent more.
+    constexpr auto kMaxKernelBucketSlots =
+        static_cast<std::size_t>(std::numeric_limits<int>::max());
+    if (bucket_count > kMaxKernelBucketSlots / bucket_capacity) {
+        throw std::invalid_argument(
+            "interaction broadphase bucket slots exceed CUDA int indexing range");
+    }
 }
 
-} // namespace
-
 std::size_t interaction_broadphase_word_count(int entities_per_world) {
-    return static_cast<std::size_t>(std::max(0, entities_per_world) + 31) / 32u;
+    return (static_cast<std::size_t>(std::max(0, entities_per_world)) + 31u) / 32u;
 }
 
 InteractionBroadphaseExperimentStats last_interaction_broadphase_stats() {
@@ -116,7 +131,7 @@ std::size_t last_interaction_broadphase_output_word_count() {
 std::vector<std::uint32_t> build_interaction_broadphase_reference_cpu_batch(
     const std::vector<InteractionEntityPacked> &entities,
     const std::vector<InteractionQueryPacked> &queries, const InteractionBroadphaseConfig &config) {
-    validate_config(config);
+    validate_interaction_broadphase_config(config);
     const std::size_t words_per_query =
         interaction_broadphase_word_count(config.entities_per_world);
     std::vector<std::uint32_t> out(queries.size() * words_per_query, 0u);
@@ -153,6 +168,7 @@ std::vector<std::uint32_t>
 build_interaction_broadphase_experiment_batch(const std::vector<InteractionEntityPacked> &entities,
                                               const std::vector<InteractionQueryPacked> &queries,
                                               const InteractionBroadphaseConfig &config) {
+    validate_interaction_broadphase_config(config);
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     auto out =
         detail::build_interaction_broadphase_experiment_batch_cuda(entities, queries, config);
@@ -166,6 +182,7 @@ build_interaction_broadphase_experiment_batch(const std::vector<InteractionEntit
 bool build_interaction_broadphase_experiment_batch_device_resident(
     const std::vector<InteractionEntityPacked> &entities,
     const std::vector<InteractionQueryPacked> &queries, const InteractionBroadphaseConfig &config) {
+    validate_interaction_broadphase_config(config);
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     return detail::build_interaction_broadphase_experiment_batch_cuda_device_resident(
         entities, queries, config);

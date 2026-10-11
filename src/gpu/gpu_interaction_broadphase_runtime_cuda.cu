@@ -226,6 +226,7 @@ bool run_interaction_broadphase_cuda_impl(const std::vector<gpu::InteractionEnti
                                           const gpu::InteractionBroadphaseConfig &config,
                                           bool copy_output_to_host,
                                           std::vector<std::uint32_t> *host_output) {
+    gpu::validate_interaction_broadphase_config(config);
     g_last_stats = gpu::InteractionBroadphaseExperimentStats{};
     g_last_output_device_ptr = nullptr;
     g_last_output_word_count = 0;
