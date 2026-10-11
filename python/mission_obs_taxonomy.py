@@ -34,6 +34,26 @@ _MISSION_OBS_BASIC_FIELDS = [
     "target_speed_mps",
 ]
 
+
+def mission_observation_basic_field_catalogue() -> tuple[dict[str, object], ...]:
+    """Unnormalized basic packet fields in their maintained tensor order.
+
+    Metadata belongs to this packet owner. The qualification Policy checker
+    consumes this projection without defining a competing field table.
+    """
+    units = {
+        "command_code": None,
+        "target_heading_deg": "degree",
+        "target_altitude_m": "meter",
+        "target_speed_mps": "meter_per_second",
+    }
+    return tuple(
+        {"name": name, "schema": "float32", "shape": (), "unit": units[name],
+         "source_layer": "agent_observation"}
+        for name in _MISSION_OBS_BASIC_FIELDS
+    )
+
+
 _MISSION_OBS_NAV_V1_EXTRA_FIELDS = [
     "active_wp_idx",
     "total_wps",
