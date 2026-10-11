@@ -173,8 +173,8 @@ TEST_SUITE("world_batch_runtime") {
         WorldBatchRuntime runtime(1);
         runtime.apply_world_setup_batch({11}, {}, {}, {}, {}, {0.2});
 
-        CHECK_THROWS_AS(runtime.apply_world_layout(99, 17, "flat", 0.0, 0.0, 0.0, false,
-                                                   0.0, 0.0, 8.0, {}, {}, {0.1}),
+        CHECK_THROWS_AS(runtime.apply_world_layout(99, 17, "flat", 0.0, 0.0, 0.0, false, 0.0, 0.0,
+                                                   8.0, {}, {}, {0.1}),
                         std::out_of_range);
         CHECK(runtime.batch_healthy());
         CHECK(runtime.batch_failure_reason().empty());
