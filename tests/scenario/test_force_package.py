@@ -57,6 +57,34 @@ def test_nested_package_order_does_not_change_identity() -> None:
     assert compile_force_package(left, **kwargs).identity_digest == compile_force_package(right, **kwargs).identity_digest
 
 
+def test_shared_child_package_is_expanded_for_each_scoped_reference() -> None:
+    child = ForcePackage("child", "1", "Blue", (PackageMember("wingman", "assembly", "air.wing", "air_screen"),))
+    root = ForcePackage(
+        "root", "1", "Blue",
+        (
+            PackageMember("alpha", "package", child.ref, "air_screen"),
+            PackageMember("bravo", "package", child.ref, "air_screen"),
+        ),
+    )
+    compiled = compile_force_package(
+        root, packages={child.ref: child}, assemblies=_assemblies(),
+        role_capabilities={"air_screen": frozenset({"air_screen"})},
+    )
+    assert [entity.entity_id for entity in compiled.entities] == [
+        "root/alpha/wingman", "root/bravo/wingman",
+    ]
+
+
+def test_referenced_child_side_must_match_parent_side() -> None:
+    child = ForcePackage("red_child", "1", "Red", (PackageMember("wing", "assembly", "air.wing", "air_screen"),))
+    root = ForcePackage("root", "1", "Blue", (PackageMember("child", "package", child.ref, "air_screen"),))
+    with pytest.raises(ForcePackageError, match="side_conflict"):
+        compile_force_package(
+            root, packages={child.ref: child}, assemblies=_assemblies(),
+            role_capabilities={"air_screen": frozenset({"air_screen"})},
+        )
+
+
 @pytest.mark.parametrize(
     "mutator, expected",
     [

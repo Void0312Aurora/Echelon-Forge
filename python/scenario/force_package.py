@@ -123,15 +123,11 @@ def compile_force_package(
     registry.setdefault(root.ref, root)
     errors: list[str] = []
     entities: list[FlattenedEntity] = []
-    visited: set[str] = set()
 
     def visit(package: ForcePackage, path: tuple[str, ...], stack: tuple[str, ...]) -> None:
         if package.ref in stack:
             errors.append(f"force.membership_cycle:packages.{package.ref}")
             return
-        if package.ref in visited:
-            return
-        visited.add(package.ref)
         member_ids = {member.member_id for member in package.members}
         relationship_types: set[str] = set()
         for relationship in package.relationships:
@@ -147,6 +143,8 @@ def compile_force_package(
                     continue
                 if member.side is not None and member.side != package.side:
                     errors.append(f"force.side_conflict:members.{'.'.join(member_path)}")
+                if child.side != package.side:
+                    errors.append(f"force.side_conflict:members.{'.'.join(member_path)}:child_side={child.side}")
                 required = role_capabilities.get(member.role)
                 if required is None:
                     errors.append(f"force.role_unknown:members.{'.'.join(member_path)}")
