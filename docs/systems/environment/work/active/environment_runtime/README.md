@@ -67,14 +67,15 @@ and contracts that data must fill.
 
 The shared interface now contains a reversible bathymetry admission seam:
 `IEnvironmentModel::get_bathymetry_along_segment` returns a domain-neutral
-minimum water depth plus explicit availability, vertical-datum, and source
-metadata. The default environment returns `Unavailable`; it does not synthesize
-an ocean floor. Naval motion consumes this seam only when an entity opts into
-`SubmarineBathymetryPolicy`. Missing, dry, out-of-coverage, and invalid-datum
-observations hold depth, while entities without the policy preserve the legacy
-open-water profile. A valid observation is defined over the full proposed
-horizontal step, so a provider must account for a rising seabed within that
-segment before returning `Valid`.
+minimum water depth plus explicit availability, horizontal/vertical frame,
+source, surface elevation, and step-time metadata. The default environment
+returns `Unavailable`; it does not synthesize an ocean floor. Naval motion
+consumes this seam only when an entity opts into `SubmarineBathymetryPolicy`.
+Missing, dry, out-of-coverage, invalid-datum, inconsistent-frame, or
+time-ambiguous observations reject the complete step, while entities without
+the policy preserve the legacy open-water profile. A valid observation is
+defined over the full proposed horizontal step, so a provider must account for
+a rising seabed within that segment before returning `Valid`.
 
 ### Ground-coupling findings on `origin/work/army-mechanisms`
 

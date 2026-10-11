@@ -8,12 +8,17 @@
 #include <flecs.h>
 
 #include <cmath>
+#include <limits>
 #include <string>
 
 namespace {
 
 struct BathymetryTestEnvironment final : IEnvironmentModel {
     BathymetrySegmentObservation observation{};
+    double last_from_x = 0.0;
+    double last_from_y = 0.0;
+    double last_to_x = 0.0;
+    double last_to_y = 0.0;
 
     AtmosphericData get_atmosphere_at(double, double, double) override {
         return {1.225, 340.0, 101325.0, 288.15, {0.0, 0.0, 0.0}};
@@ -32,8 +37,12 @@ struct BathymetryTestEnvironment final : IEnvironmentModel {
     void clear_zones() override {}
     void add_zone(const std::string &, double, double, double, double, double,
                   SurfaceType) override {}
-    BathymetrySegmentObservation get_bathymetry_along_segment(double, double, double,
-                                                              double) override {
+    BathymetrySegmentObservation get_bathymetry_along_segment(double from_x, double from_y,
+                                                              double to_x, double to_y) override {
+        last_from_x = from_x;
+        last_from_y = from_y;
+        last_to_x = to_x;
+        last_to_y = to_y;
         return observation;
     }
 };
@@ -49,6 +58,7 @@ struct SubmarineRig {
         world.set<EnvironmentModelRef>({&environment});
         SubmarinePlatform platform{};
         platform.draft_m = 8.0;
+        platform.max_speed_submerged_mps = 5.0;
         platform.max_depth_rate_mps = 10.0;
         platform.max_operating_depth_m = 300.0;
         unit = world.entity()
@@ -60,6 +70,9 @@ struct SubmarineRig {
         REQUIRE(policy != nullptr);
         policy->enabled = true;
         policy->min_keel_clearance_m = 5.0;
+        policy->hull_reference_to_keel_m = 8.0;
+        policy->horizontal_frame = "local_xy";
+        policy->vertical_datum = "MSL";
         NavalCommandIntent command{};
         command.active = true;
         command.cmd_speed_mps = 5.0;
@@ -70,13 +83,21 @@ struct SubmarineRig {
     void step() { world.progress(1.0); }
 };
 
+void set_valid_observation(BathymetryTestEnvironment &environment, double depth_m) {
+    environment.observation.availability = IEnvironmentModel::BathymetryAvailability::Valid;
+    environment.observation.minimum_water_depth_m = depth_m;
+    environment.observation.horizontal_frame = "local_xy";
+    environment.observation.vertical_datum = "MSL";
+    environment.observation.source = "synthetic_fixture";
+    environment.observation.water_surface_elevation_m = 0.0;
+    environment.observation.time_invariant_for_step = true;
+}
+
 } // namespace
 
-TEST_CASE("bathymetry limits a commanded depth using draft and keel clearance") {
+TEST_CASE("bathymetry limits a commanded depth using explicit keel clearance") {
     SubmarineRig rig(20.0);
-    rig.environment.observation.availability = IEnvironmentModel::BathymetryAvailability::Valid;
-    rig.environment.observation.minimum_water_depth_m = 80.0;
-    rig.environment.observation.vertical_datum = "MSL";
+    set_valid_observation(rig.environment, 80.0);
 
     rig.step();
 
@@ -90,9 +111,7 @@ TEST_CASE("bathymetry limits a commanded depth using draft and keel clearance") 
 
 TEST_CASE("deep water preserves the requested depth trajectory") {
     SubmarineRig rig(20.0);
-    rig.environment.observation.availability = IEnvironmentModel::BathymetryAvailability::Valid;
-    rig.environment.observation.minimum_water_depth_m = 200.0;
-    rig.environment.observation.vertical_datum = "MSL";
+    set_valid_observation(rig.environment, 200.0);
 
     rig.step();
 
@@ -103,14 +122,16 @@ TEST_CASE("deep water preserves the requested depth trajectory") {
 
 TEST_CASE("rising seabed is represented by the segment minimum") {
     SubmarineRig rig(20.0);
-    rig.environment.observation.availability = IEnvironmentModel::BathymetryAvailability::Valid;
-    rig.environment.observation.minimum_water_depth_m = 40.0;
-    rig.environment.observation.vertical_datum = "MSL";
+    set_valid_observation(rig.environment, 40.0);
 
     rig.step();
 
     // The segment's 40 m minimum allows only 27 m center depth, so the
     // one-second step is limited to 27 m rather than entering the shallow cell.
+    CHECK(rig.environment.last_from_x == doctest::Approx(0.0));
+    CHECK(rig.environment.last_from_y == doctest::Approx(0.0));
+    CHECK(rig.environment.last_to_x == doctest::Approx(0.0));
+    CHECK(rig.environment.last_to_y == doctest::Approx(5.0));
     CHECK(rig.unit.get<Transform>()->z == doctest::Approx(-27.0));
     CHECK(rig.unit.get<SubmarineBathymetryPolicy>()->last_status ==
           SubmarineDepthConstraintStatus::LimitedBySeabed);
@@ -124,8 +145,36 @@ TEST_CASE("unknown bathymetry holds depth and reports conservative status") {
 
     rig.step();
 
+    CHECK(rig.unit.get<Transform>()->x == doctest::Approx(0.0));
+    CHECK(rig.unit.get<Transform>()->y == doctest::Approx(0.0));
     CHECK(rig.unit.get<Transform>()->z == doctest::Approx(-20.0));
     CHECK(rig.unit.get<Velocity>()->vz == doctest::Approx(0.0));
     CHECK(rig.unit.get<SubmarineBathymetryPolicy>()->last_status ==
           SubmarineDepthConstraintStatus::UnknownBathymetry);
+}
+
+TEST_CASE("bathymetry metadata and hull reference are required") {
+    SubmarineRig rig(20.0);
+    rig.environment.observation.availability = IEnvironmentModel::BathymetryAvailability::Valid;
+    rig.environment.observation.minimum_water_depth_m = 200.0;
+    rig.environment.observation.vertical_datum = "MSL";
+    // Missing horizontal frame, source, and temporal declaration must not be
+    // interpreted as a deep-water observation.
+    rig.step();
+
+    CHECK(rig.unit.get<Transform>()->x == doctest::Approx(0.0));
+    CHECK(rig.unit.get<Transform>()->y == doctest::Approx(0.0));
+    CHECK(rig.unit.get<SubmarineBathymetryPolicy>()->last_status ==
+          SubmarineDepthConstraintStatus::UnknownBathymetry);
+
+    SubmarineRig missing_keel(20.0);
+    set_valid_observation(missing_keel.environment, 80.0);
+    missing_keel.unit.get_mut<SubmarineBathymetryPolicy>()->hull_reference_to_keel_m =
+        std::numeric_limits<double>::quiet_NaN();
+    missing_keel.step();
+
+    CHECK(missing_keel.unit.get<Transform>()->x == doctest::Approx(0.0));
+    CHECK(missing_keel.unit.get<Transform>()->y == doctest::Approx(0.0));
+    CHECK(missing_keel.unit.get<SubmarineBathymetryPolicy>()->last_status ==
+          SubmarineDepthConstraintStatus::InvalidPolicy);
 }

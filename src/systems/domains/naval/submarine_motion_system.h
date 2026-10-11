@@ -80,17 +80,21 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                     }
 
                     const double heading_rad = Math::to_radians(next_heading_deg);
-                    const double next_vx = std::sin(heading_rad) * next_speed_mps;
-                    const double next_vy = std::cos(heading_rad) * next_speed_mps;
+                    double next_vx = std::sin(heading_rad) * next_speed_mps;
+                    double next_vy = std::cos(heading_rad) * next_speed_mps;
                     const double proposed_x = transform[i].x + next_vx * dt;
                     const double proposed_y = transform[i].y + next_vy * dt;
 
                     const double current_depth_m = std::max(0.0, -transform[i].z);
                     double constrained_target_depth_m = target_depth_m;
+                    bool allow_horizontal_step = true;
                     if (bathymetry_policy) {
                         bathymetry_policy->last_requested_depth_m = target_depth_m;
                         bathymetry_policy->last_allowed_depth_m =
                             std::max(0.0, sub[i].max_operating_depth_m);
+                        bathymetry_policy->last_availability = static_cast<std::uint8_t>(
+                            IEnvironmentModel::BathymetryAvailability::Unavailable);
+                        bathymetry_policy->last_source.clear();
                         bathymetry_policy->last_status = SubmarineDepthConstraintStatus::Disabled;
 
                         if (bathymetry_policy->enabled) {
@@ -104,18 +108,36 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                                     IEnvironmentModel::BathymetryAvailability::Valid &&
                                 std::isfinite(observation.minimum_water_depth_m) &&
                                 observation.minimum_water_depth_m >= 0.0 &&
-                                !observation.vertical_datum.empty();
+                                !observation.horizontal_frame.empty() &&
+                                observation.horizontal_frame ==
+                                    bathymetry_policy->horizontal_frame &&
+                                !observation.vertical_datum.empty() &&
+                                observation.vertical_datum == bathymetry_policy->vertical_datum &&
+                                !observation.source.empty() &&
+                                std::isfinite(observation.water_surface_elevation_m) &&
+                                observation.water_surface_elevation_m == 0.0 &&
+                                observation.time_invariant_for_step &&
+                                std::isfinite(bathymetry_policy->hull_reference_to_keel_m) &&
+                                bathymetry_policy->hull_reference_to_keel_m >= 0.0;
+                            bathymetry_policy->last_availability =
+                                static_cast<std::uint8_t>(observation.availability);
+                            bathymetry_policy->last_source = observation.source;
                             if (!valid_observation) {
-                                // No-data, dry/coastal, out-of-coverage, and
-                                // datum failures are conservative: hold depth.
+                                // No-data, dry/coastal, out-of-coverage, datum,
+                                // frame, source, and temporal failures are
+                                // conservative: hold the complete step.
                                 constrained_target_depth_m = current_depth_m;
                                 bathymetry_policy->last_allowed_depth_m = current_depth_m;
                                 bathymetry_policy->last_status =
-                                    SubmarineDepthConstraintStatus::UnknownBathymetry;
+                                    std::isfinite(bathymetry_policy->hull_reference_to_keel_m) &&
+                                            bathymetry_policy->hull_reference_to_keel_m >= 0.0
+                                        ? SubmarineDepthConstraintStatus::UnknownBathymetry
+                                        : SubmarineDepthConstraintStatus::InvalidPolicy;
+                                allow_horizontal_step = false;
                             } else {
                                 const double available_center_depth_m =
                                     observation.minimum_water_depth_m -
-                                    std::max(0.0, sub[i].draft_m) -
+                                    bathymetry_policy->hull_reference_to_keel_m -
                                     std::max(0.0, bathymetry_policy->min_keel_clearance_m);
                                 const double allowed_depth_m =
                                     std::clamp(available_center_depth_m, 0.0,
@@ -124,11 +146,22 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                                     std::min(target_depth_m, allowed_depth_m);
                                 bathymetry_policy->last_allowed_depth_m = allowed_depth_m;
                                 bathymetry_policy->last_status =
-                                    target_depth_m > allowed_depth_m
+                                    current_depth_m > allowed_depth_m
+                                        ? SubmarineDepthConstraintStatus::RejectedTrajectory
+                                    : target_depth_m > allowed_depth_m
                                         ? SubmarineDepthConstraintStatus::LimitedBySeabed
                                         : SubmarineDepthConstraintStatus::Allowed;
+                                // Never sweep horizontally while the current
+                                // hull reference is already outside the
+                                // admitted clearance envelope.
+                                allow_horizontal_step = current_depth_m <= allowed_depth_m;
                             }
                         }
+                    }
+
+                    if (!allow_horizontal_step) {
+                        next_vx = 0.0;
+                        next_vy = 0.0;
                     }
 
                     const double depth_error_m = constrained_target_depth_m - current_depth_m;

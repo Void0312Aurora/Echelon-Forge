@@ -39,8 +39,18 @@ class IEnvironmentModel {
     struct BathymetrySegmentObservation {
         BathymetryAvailability availability = BathymetryAvailability::Unavailable;
         double minimum_water_depth_m = std::numeric_limits<double>::quiet_NaN();
+        // The frame in which the horizontal segment coordinates are expressed.
+        // Consumers must reject observations with no declared frame.
+        std::string horizontal_frame{};
         std::string vertical_datum{};
         std::string source{};
+        // This slice requires the water surface to coincide with Transform.z
+        // zero. A nonzero tide/elevation must not be silently discarded.
+        double water_surface_elevation_m = std::numeric_limits<double>::quiet_NaN();
+        // The first admitted slice is static over a simulation step. Providers
+        // must say so explicitly; time-varying tide data needs a later contract
+        // that carries query time and validity bounds.
+        bool time_invariant_for_step = false;
     };
 
     virtual ~IEnvironmentModel() = default;
