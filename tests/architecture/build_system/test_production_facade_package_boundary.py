@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from zipfile import ZipFile
 
 from tests.architecture.helpers import REPO_ROOT
@@ -14,6 +15,10 @@ FACADE_BINDINGS = (
 GPU_FACADE_BINDINGS = (
   REPO_ROOT / "src" / "interfaces" / "python" / "bindings_gpu_facade_only.cpp"
 )
+
+
+def _read(path: Path) -> str:
+  return path.read_text(encoding="utf-8")
 
 
 def test_production_binding_options_fail_closed_to_facade_only() -> None:
@@ -65,6 +70,22 @@ def test_production_binding_options_fail_closed_to_facade_only() -> None:
   assert "target_link_libraries(ef_py PRIVATE" in production_link_block
   assert "ef_facade_backend" in production_link_block
   assert "ef_gpu_experiments" not in production_link_block
+
+
+def test_runtime_binding_modes_share_one_ordered_registration_spine() -> None:
+  detail = _read(REPO_ROOT / "src" / "interfaces" / "python" / "bindings_runtime_detail.h")
+  diagnostic = _read(REPO_ROOT / "src" / "interfaces" / "python" / "bindings_runtime.cpp")
+  facade_only = _read(
+    REPO_ROOT / "src" / "interfaces" / "python" / "bindings_runtime_facade_only.cpp"
+  )
+
+  assert "inline void bind_runtime_shared_order(nb::module_ &m, bool include_raw_engine)" in detail
+  assert "bind_runtime_engine(m);" in detail
+  assert "bind_runtime_facade(m);" in detail
+  assert "bind_runtime_shared_order(m, true);" in diagnostic
+  assert "bind_runtime_shared_order(m, false);" in facade_only
+  assert "bind_runtime_runtime(m);" not in diagnostic
+  assert "bind_runtime_runtime(m);" not in facade_only
 
 
 def test_diagnostics_binding_is_explicitly_separate_from_production_target() -> None:

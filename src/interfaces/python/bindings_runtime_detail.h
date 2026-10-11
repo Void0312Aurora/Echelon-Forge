@@ -28,6 +28,31 @@ void bind_runtime_facade(nb::module_ &m);
 // Production package registration omits raw engine and GPU bindings.
 void bind_runtime_facade_only(nb::module_ &m);
 
+// Shared ordered registration spine. The production facade-only module and
+// the diagnostic module must use the same DTO sequence; only the raw engine
+// registration is mode-specific and remains in its historical position.
+inline void bind_runtime_shared_order(nb::module_ &m, bool include_raw_engine) {
+    bind_runtime_runtime(m);
+    bind_runtime_fidelity(m);
+    bind_runtime_platform(m);
+    bind_runtime_engagement(m);
+    bind_runtime_kill_chain(m);
+    bind_runtime_policy(m);
+    bind_runtime_batch_setup(m);
+    bind_runtime_experiment(m);
+    bind_runtime_batch_request(m);
+    bind_runtime_learning(m);
+    bind_runtime_batch_packet(m);
+    bind_runtime_tasking(m);
+    bind_runtime_window(m);
+    bind_runtime_platform_world(m);
+    bind_runtime_tasking_world(m);
+    if (include_raw_engine) {
+        bind_runtime_engine(m);
+    }
+    bind_runtime_facade(m);
+}
+
 // bind_runtime_engagement() sub-slices.
 //
 // bindings_runtime_engagement.cpp calls these in the order declared below,
