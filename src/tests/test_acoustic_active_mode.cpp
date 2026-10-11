@@ -1,4 +1,5 @@
 #include "components/basic/common.h"
+#include "components/basic/stable_identity.h"
 #include "components/domains/naval/platform/submarine_platform.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/sonar.h"
@@ -17,12 +18,15 @@ namespace {
 
 std::size_t run_scan(int mode) {
     flecs::world world;
+    world.set<StableIdentityState>({3, 42});
     auto owner = world.entity()
                      .set<KeyEntity>({UnitType::Ship})
+                     .set<StableEntitySerial>({1})
                      .set<Transform>({0.0, 0.0, -20.0, 0.0, 0.0, 0.0})
                      .set<Velocity>({0.0, 0.0, 0.0});
     world.entity()
         .set<KeyEntity>({UnitType::Submarine})
+        .set<StableEntitySerial>({2})
         .set<Transform>({1000.0, 0.0, -60.0, 0.0, 0.0, 0.0})
         .set<Velocity>({0.0, 0.0, 0.0})
         .set<SubmarinePlatform>({});
