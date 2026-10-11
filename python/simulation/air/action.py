@@ -14,6 +14,21 @@ AIR_TAKEOFF2_ACTION_DIM = 2
 AIR_EW_HYBRID_ACTION_DIM = 14
 AIR_EW_HYBRID_V2_ACTION_DIM = 16
 _EW_MODES = ("air_ew_hybrid_v1", "air_ew_hybrid_v2")
+_AIR_ACTION_DIMENSIONS = {
+    "full": AIR_FULL_ACTION_DIM,
+    "takeoff4": AIR_TAKEOFF4_ACTION_DIM,
+    "takeoff2": AIR_TAKEOFF2_ACTION_DIM,
+    "air_ew_hybrid_v1": AIR_EW_HYBRID_ACTION_DIM,
+    "air_ew_hybrid_v2": AIR_EW_HYBRID_V2_ACTION_DIM,
+}
+
+
+def air_action_dimension(action_mode: str) -> int:
+    """Expose the dimension owned by this native action projection."""
+    mode = str(action_mode).strip().lower()
+    if mode not in _AIR_ACTION_DIMENSIONS:
+        raise ValueError(f"unsupported Air action mode: {mode!r}")
+    return _AIR_ACTION_DIMENSIONS[mode]
 
 
 def half_to_unit(value: float) -> float:
@@ -24,13 +39,7 @@ def build_pilot_action(action: Any, *, action_mode: str = "full", instrument_sta
     """Map a neutral Air action vector to the native PilotAction DTO."""
     values = np.asarray(action, dtype=np.float32).reshape(-1)
     mode = str(action_mode).strip().lower()
-    expected = {
-        "full": AIR_FULL_ACTION_DIM,
-        "takeoff4": AIR_TAKEOFF4_ACTION_DIM,
-        "takeoff2": AIR_TAKEOFF2_ACTION_DIM,
-        "air_ew_hybrid_v1": AIR_EW_HYBRID_ACTION_DIM,
-        "air_ew_hybrid_v2": AIR_EW_HYBRID_V2_ACTION_DIM,
-    }.get(mode)
+    expected = _AIR_ACTION_DIMENSIONS.get(mode)
     if expected is None or values.size != expected:
         raise ValueError(f"unsupported Air action mode/shape: {mode!r}, {values.shape}")
 
@@ -108,5 +117,6 @@ __all__ = [
     "AIR_TAKEOFF2_ACTION_DIM",
     "AIR_TAKEOFF4_ACTION_DIM",
     "build_pilot_action",
+    "air_action_dimension",
     "half_to_unit",
 ]
