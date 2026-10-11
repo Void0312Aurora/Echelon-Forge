@@ -1514,6 +1514,24 @@ bool parse_damage_model_json_fields(
     const VulnerabilityEvidenceDescriptorMap *vulnerability_descriptors, std::string *error) {
     if (entry.contains("damage_model") && entry["damage_model"].is_object()) {
         const auto &dm = entry["damage_model"];
+        if (dm.contains("structural_topology_profile")) {
+            const auto &profile = dm["structural_topology_profile"];
+            if (!profile.is_string()) {
+                if (error) {
+                    *error = "damage_model.structural_topology_profile must be a string";
+                }
+                return false;
+            }
+            def.damage_model.structural_topology_profile = profile.get<std::string>();
+        }
+        if (def.damage_model.structural_topology_profile != kDefaultStructuralTopologyProfile &&
+            def.damage_model.structural_topology_profile != kTgP7SplitSurfaceTopologyProfile) {
+            if (error) {
+                *error = "unknown damage_model.structural_topology_profile: " +
+                         def.damage_model.structural_topology_profile;
+            }
+            return false;
+        }
         if (dm.contains("hitboxes") && dm["hitboxes"].is_array()) {
             int hb_idx = 0;
             for (const auto &hb_json : dm["hitboxes"]) {
