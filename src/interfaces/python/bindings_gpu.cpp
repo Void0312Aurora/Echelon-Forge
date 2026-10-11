@@ -26,7 +26,7 @@
 #include "gpu/gpu_flight_shaping_runtime.h"
 #include "gpu/gpu_interaction_broadphase_runtime.h"
 #include "gpu/gpu_visual_runtime.h"
-#include "core/engine/world_batch_visual_binding_compatibility_helper.h"
+#include "gpu/gpu_world_batch_visual_binding_compatibility.h"
 #include "interfaces/python/dlpack_minimal.h"
 #include "runtime/facade/runtime_facade.h"
 
@@ -445,7 +445,7 @@ compute_compat_world_batch_visual_binding_outputs(const WorldBatchRuntime &runti
     const int factor = std::max(1, downsample);
     const auto scenes =
         runtime.collect_visual_binding_compatibility_scenes_batch(refs, factor, use_gpu);
-    return world_batch_visual_binding_compatibility::render_scenes_batch(scenes, use_gpu);
+    return gpu::render_world_batch_visual_binding_compatibility(scenes, use_gpu);
 }
 
 WorldBatchVisualObservationCompatibilityExport
@@ -455,7 +455,7 @@ compute_runtime_facade_visual_binding_outputs(const RuntimeFacade &facade,
     const int factor = std::max(1, downsample);
     const auto scenes =
         facade.collect_visual_binding_compatibility_scenes_batch(refs, factor, use_gpu);
-    return world_batch_visual_binding_compatibility::render_scenes_batch(scenes, use_gpu);
+    return gpu::render_world_batch_visual_binding_compatibility(scenes, use_gpu);
 }
 } // namespace
 
