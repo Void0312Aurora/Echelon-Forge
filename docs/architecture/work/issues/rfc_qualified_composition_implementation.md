@@ -4,7 +4,7 @@ Document kind: `work`
 Lifecycle: `active`
 Canonical: `docs/architecture/work/issues/rfc_qualified_composition_implementation.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-10-11`
+Last verified: `2026-10-12`
 
 ## Scope and source
 
@@ -31,7 +31,7 @@ newer composition diagnostics and resize operation received the same failure gua
 | RFC | Implemented in this checkpoint | Evidence and limits |
 | --- | --- | --- |
 | #229 | Complete recursive boundaries; capability/clock/backend inheritance; incompatible information layers, clocks and multiple producers reject. Immutable parameters, backend references and clock policies participate in identity. Two native Air seeker primitive adapters and one stateful CV tracker share a qualification configuration. | Native LOS conversion and world-position reconstruction feed the actual CV tracker. Four timesteps reach the same four-second horizon under a fixed measurement schedule. A child exception after native state mutation but before outer publication reuses #251's unknown-state projection. The live topology order checker still detects a reversed `ClearForces`/`FlightControl` mapping. These are bounded proofs, not installation of an authored execution graph. |
-| #236 | Numeric bounds, blueprint constraints, module digests and native reference selections participate in plan identity. An explicit immutable legacy projection returns existing UnitDefinition JSON and rejects missing fields or changed module bindings before loading. | F-16 and Ground infantry are lowered, loaded and spawned through existing native owners. All public observation fields match at setup and after four steps. This qualifies the explicit legacy JSON seam, not generalized native CapabilityBundle admission. |
+| #236 | Numeric bounds, blueprint constraints, module digests and native reference selections participate in plan identity. An explicit immutable legacy projection returns existing UnitDefinition JSON and rejects missing fields or changed module bindings before loading. The opt-in `platform_blueprint_adapter` now projects a resolved plan to the maintained typed request shape and rejects slot/cardinality, module identity and native capability-family drift before DTO publication. The native validator rejects source, bundle and resolved-capability drift. | F-16 and Ground infantry are lowered, loaded and spawned through existing native owners. All public observation fields match at setup and after four steps. A separate F-16 assembly reaches `RuntimeFacade` through the maintained typed setup and matches `WorldSpawnRequest` at setup and after four steps. Generalized factory-plan comparison, explicit unit contracts and all physical compatibility constraints remain open. |
 | #237 | Relationships survive compilation and hashing with instance-scoped endpoints; reused packages expand independently; nested role capability requirements are checked; frame/anchor/provenance references survive in package-instance evidence. | Recursive and negative fixtures. The compiler records placement references; it does not transform coordinates, install task authority or replace CSG expansion. |
 | #238 | Field provenance/frame checks, explicit optional defaults with preserved field order, action bounds/timing checks, deterministic policy selection and a legacy-kind compatibility gate. | Basic mission fields come from the mission packet owner, action dimensions from the existing native action adapter, and action bounds from the existing Gym space. Two models created through DecisionModelRegistry retain reset/decide/close and generate identical native PilotAction values. The learned registration uses a deterministic stand-in, not a trained checkpoint. |
 | #239 | Deeply immutable canonical input identity, ScenarioCompiler dependency projection, separate observed native manifest/graph/topology identity, and a join to the existing RunReceipt validator. | One existing Air matrix entry produces a static candidate with explicit effective seeds. Stale scenario snapshots reject. Receipt/comparability fixtures are synthetic owner-contract vectors; they are not durable production run records. A string `status=completed` alone cannot establish comparability. |
@@ -172,9 +172,12 @@ merge into main, accept the proposed ADRs or close RFC issues.
    owner-supplied vocabulary and enforced native admission, beyond exact nominal
    port matching. Compile reviewed descriptors into existing native contracts and
    qualify their publication/realized scheduling without a second dispatcher.
-3. **#236 native typed plan seam.** Extend the bounded legacy bridge to the
-   owned capability/spawn-plan DTO where reviewed; qualify cardinality, units,
-   native compatibility and early rejection with real content owners.
+3. **#236 native typed plan seam.** The bounded adapter and native identity
+   checks now cover slot cardinality, module digest/native-reference identity,
+   maintained capability families and an Air parity path. Owner review is still
+   required for explicit unit contracts, direct comparison with the
+   factory-resolved capability plan and broader physical compatibility before
+   any production consumer is enabled.
 4. **#237 CSG migration proof.** Consume compiled organization through the
    existing CSG/scenario placement adapter; compare generated entities, anchored
    geometry, embarked inventory and native results. Keep separate membership,
@@ -194,6 +197,24 @@ merge into main, accept the proposed ADRs or close RFC issues.
    observed through a full batch instance, or bounded fatal/nontermination controls.
    Add those probes through existing test owners and subprocess/supervisor paths;
    no transparent retry or per-world commit claim follows from current evidence.
+
+## 2026-10-12 native typed-plan continuation
+
+The continuation added `python/content/platform_blueprint_adapter.py`, a
+content-side bridge that emits the existing expanded typed-request tree without
+importing `ef_py`. The existing bindings adapter then constructs the native DTO.
+The bridge derives deterministic bundle and plan identities from the resolved
+assembly digest and carries module evidence into the capability records. Native
+request validation now checks source identity, bundle identity and exact
+resolved-capability fields before admission.
+
+The continuation passed **23 content/composition tests**, **20 binding and
+typed-request tests**, Ruff on all changed Python files, and the existing native
+lane remained **31/31 tests with 842/842 assertions** after rebuilding `ef_py`
+and `ef_test`. The Air proof is still a qualification fixture: it uses an
+existing F-16 native type and does not compare arbitrary authoring fields with
+the factory's internally derived capability bundle. Units and broader physical
+compatibility remain owner-review gates.
 
 The qualification modules, catalogue helpers, tests and proposed documents remain
 opt-in. Configuration formats, native scheduling, production profiles and

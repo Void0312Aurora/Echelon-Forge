@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/platform_blueprint_assembly_adr.md`
 Owner: `architecture/content-contracts`
-Last verified: `2026-10-11`
+Last verified: `2026-10-12`
 
 **Status:** proposed qualification design; legacy unit JSON and native
 materialization remain authoritative.
@@ -17,9 +17,11 @@ materialization remain authoritative.
 
 Add an opt-in authoring projection for reusable platform blueprints and
 assemblies. Compile it to the existing `UnitDefinition`,
-`CapabilityBundle` and `ResolvedPlatformSpawnPlan` contracts; do not replace
-the unit database or `DefaultUnitFactory`. The native factory remains the only
-owner allowed to materialize ECS entities.
+`CapabilityBundle` and `ResolvedPlatformSpawnPlan` contracts; the bounded
+`platform_blueprint_adapter` may project an admitted plan into the maintained
+`TypedPlatformSpawnRequest` shape. Do not replace the unit database or
+`DefaultUnitFactory`. The native factory remains the only owner allowed to
+materialize ECS entities.
 
 The logical artifacts are deliberately separate:
 
@@ -50,8 +52,14 @@ silently invented.
 The qualification prototype should lower one existing Air platform and one
 Naval or Ground platform, compare the generated native plan with current
 content, and exercise unknown reference, wrong family, duplicate slot, unit
-and schema-version failures. It must preserve `load_database` and `spawn_unit`
-behavior and remain outside the production profile until reviewed.
+and schema-version failures. The bounded typed adapter now covers an Air
+assembly: slot cardinality, module digest/native-reference identity and native
+capability-family checks happen before DTO publication; the existing native
+validator also rejects source, bundle and resolved-capability drift. The
+request is then materialized by `RuntimeFacade` and the existing factory, with
+observation parity against `WorldSpawnRequest`. It must preserve
+`load_database` and `spawn_unit` behavior and remain outside the production
+profile until reviewed.
 
 This ADR does not define arbitrary plugins, a new behavior engine, or a mass
 rewrite of existing JSON. Mechanism behavior remains governed by RFC #229 and
@@ -65,6 +73,6 @@ the existing provider/model contracts.
 | Explicit typed authoring projection to existing content | proposed bounded route; native factory still materializes entities |
 | Load research/template documents directly | rejected; draft evidence is not admitted executable content |
 
-The prototype records module parameter digests and native references, applies finite numeric bounds, and explicitly maps selections to existing UnitDefinition fields. F-16 and Ground infantry loader/factory observation parity is exercised at setup and after four steps. Generalized native capability-plan admission and all physical compatibility constraints remain open.
+The prototype records module parameter digests and native references, applies finite numeric bounds, and explicitly maps selections to existing UnitDefinition fields. F-16 and Ground infantry loader/factory observation parity is exercised at setup and after four steps. A separate F-16 proof projects the resolved assembly through the maintained typed request and preserves observation parity for four steps. Generalized factory-plan comparison, explicit unit contracts and all physical compatibility constraints remain open.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.
