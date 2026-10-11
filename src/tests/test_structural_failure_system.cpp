@@ -156,6 +156,56 @@ StructuralStepResult run_single_aircraft_structural_step(const ComponentDamageSt
 
 TEST_SUITE("structural_failure_state") {
 
+    TEST_CASE("intact airframe starts bounded envelope damage only beyond q or Mach limits") {
+        AircraftDamageBaseline baseline{};
+        AircraftDamageState in_envelope{};
+        AeroState in_envelope_aero{};
+        in_envelope_aero.dynamic_pressure = baseline.flutter_dynamic_pressure_pa * 0.90;
+        in_envelope_aero.mach_number = baseline.flutter_mach * 0.90;
+
+        accumulate_aircraft_structural_envelope_damage(baseline, in_envelope_aero, 1.0,
+                                                       in_envelope);
+
+        CHECK(in_envelope.structural_integrity == doctest::Approx(1.0));
+        CHECK(in_envelope.flutter_exposure == doctest::Approx(0.0));
+        CHECK(in_envelope.structural_overstress == doctest::Approx(0.0));
+
+        AircraftDamageState intact{};
+        AeroState excessive_aero{};
+        excessive_aero.dynamic_pressure = baseline.flutter_dynamic_pressure_pa * 2.0;
+        excessive_aero.mach_number = baseline.flutter_mach * 1.30;
+
+        accumulate_aircraft_structural_envelope_damage(baseline, excessive_aero, 1.0, intact);
+
+        CHECK(intact.structural_integrity < 1.0);
+        CHECK(intact.flutter_exposure > 0.0);
+        CHECK(intact.structural_overstress > 0.0);
+    }
+
+    TEST_CASE("envelope damage is finite, timestep-aware and preserves damaged amplification") {
+        AircraftDamageBaseline baseline{};
+        AeroState excessive_aero{};
+        excessive_aero.dynamic_pressure = baseline.flutter_dynamic_pressure_pa * 1.8;
+        excessive_aero.mach_number = baseline.flutter_mach * 1.25;
+
+        AircraftDamageState short_step{};
+        AircraftDamageState long_step{};
+        accumulate_aircraft_structural_envelope_damage(baseline, excessive_aero, 0.1, short_step);
+        accumulate_aircraft_structural_envelope_damage(baseline, excessive_aero, 0.2, long_step);
+
+        CHECK(long_step.flutter_exposure == doctest::Approx(2.0 * short_step.flutter_exposure));
+        CHECK(long_step.structural_overstress ==
+              doctest::Approx(2.0 * short_step.structural_overstress));
+        CHECK(long_step.structural_integrity < short_step.structural_integrity);
+
+        AircraftDamageState pre_damaged{};
+        pre_damaged.structural_integrity = 0.98;
+        accumulate_aircraft_structural_envelope_damage(baseline, excessive_aero, 0.1, pre_damaged);
+        CHECK(pre_damaged.flutter_exposure > short_step.flutter_exposure);
+        CHECK(pre_damaged.structural_overstress > short_step.structural_overstress);
+        CHECK(pre_damaged.structural_integrity >= 0.0);
+    }
+
     TEST_CASE("functional component failure does not trigger structural breakup") {
         ComponentDamageState damage{};
         set_component_damage(damage, "center_fuselage_fuel_cell", 0.10, "fuel_leak");
