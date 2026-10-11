@@ -3,6 +3,7 @@
 
 #include "components/command/common/comm_message.h"
 #include "components/combat/health.h"
+#include "components/combat/common/damage_common.h"
 #include "components/combat/scoring.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "components/domains/naval/command/mission_command_naval.h"
@@ -1427,6 +1428,54 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         const auto invalid_wire = document.dump();
         CHECK_FALSE(Bridge::restore_world(target, {invalid_wire.begin(), invalid_wire.end()}));
         CHECK(Bridge::serialize_world(target) == before);
+    }
+
+    TEST_CASE("ComponentDamageState codec preserves topology and migrates v2 default") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        SimulationKernel source;
+        SimulationKernel target;
+        SimulationKernel legacy_target;
+        source.reset(51);
+        target.reset(52);
+        legacy_target.reset(53);
+        const auto aircraft =
+            source.spawn_unit(Side::Blue, "Aircraft", 0, 0, 3000, 0, 0, 0, 150, 0, 0);
+        REQUIRE(aircraft.is_valid());
+        {
+            auto lease = source.acquire_world_lease();
+            ComponentDamageState damage;
+            damage.structural_topology_profile = std::string(kTgP7SplitSurfaceTopologyProfile);
+            lease.world().entity(aircraft.id()).set_name("TopologyAircraft").set(damage);
+        }
+
+        auto document = json::parse(Bridge::serialize_world(source));
+        auto &encoded = document["results"][0]["components"]["ComponentDamageState"];
+        REQUIRE(encoded["schema"] == "component-damage-state.v3");
+        CHECK(encoded["structural_topology_profile"] == kTgP7SplitSurfaceTopologyProfile);
+        const auto wire = document.dump();
+        REQUIRE(Bridge::restore_world(target, {wire.begin(), wire.end()}));
+        {
+            auto lease = target.acquire_world_lease();
+            const auto entity = lease.world().lookup("TopologyAircraft");
+            REQUIRE(entity.is_valid());
+            REQUIRE(entity.get<ComponentDamageState>() != nullptr);
+            CHECK(entity.get<ComponentDamageState>()->structural_topology_profile ==
+                  kTgP7SplitSurfaceTopologyProfile);
+        }
+
+        auto legacy_document = document;
+        auto &legacy_encoded = legacy_document["results"][0]["components"]["ComponentDamageState"];
+        legacy_encoded["schema"] = "component-damage-state.v2";
+        legacy_encoded.erase("structural_topology_profile");
+        const auto legacy_wire = legacy_document.dump();
+        REQUIRE(Bridge::restore_world(legacy_target, {legacy_wire.begin(), legacy_wire.end()}));
+        auto lease = legacy_target.acquire_world_lease();
+        const auto entity = lease.world().lookup("TopologyAircraft");
+        REQUIRE(entity.is_valid());
+        REQUIRE(entity.get<ComponentDamageState>() != nullptr);
+        CHECK(entity.get<ComponentDamageState>()->structural_topology_profile ==
+              kDefaultStructuralTopologyProfile);
     }
 
     TEST_CASE("generation-4 ground stance imports commits and recovers after journal reopen") {

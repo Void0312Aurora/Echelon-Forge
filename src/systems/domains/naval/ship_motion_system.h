@@ -14,6 +14,7 @@
 #include "components/combat/common/damage_common.h"
 #include "components/domains/naval/platform/ship_maneuvering.h"
 #include "components/domains/naval/platform/ship_platform.h"
+#include "components/physics/physics_input_policy.h"
 #include "components/physics/forces.h"
 #include "core/interfaces/environment_model.h"
 #include "core/interfaces/stable_entity_identity.h"
@@ -114,7 +115,7 @@ inline void register_ship_motion_system(flecs::world &ecs) {
                 auto ship = it.field<const ShipPlatform>(3);
                 const EnvironmentModelRef *env_ref = it.world().get<EnvironmentModelRef>();
 
-                const double dt = it.delta_time() > 0.0 ? it.delta_time() : 1.0 / 60.0;
+                const double dt = physics_runtime::resolve_entity_dt(it.delta_time());
                 const ecs_world_info_t *info = ecs_get_world_info(it.world().c_ptr());
                 const double current_time =
                     info ? static_cast<double>(info->world_time_total) : 0.0;

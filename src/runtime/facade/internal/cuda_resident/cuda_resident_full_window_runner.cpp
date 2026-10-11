@@ -116,10 +116,12 @@ RunResult Runner::run(const ReplayTrace &trace) {
     std::vector<std::uint64_t> entity_ids;
     try {
         const auto setup = backend_->setup({
-            .kind = runtime::backend::SetupKind::Batch,
-            .seeds = trace.seeds,
-            .spawn_requests = trace.spawns,
-            .time_steps = trace.time_steps,
+            .operation =
+                runtime::backend::BatchSetup{
+                    .seeds = trace.seeds,
+                    .spawn_requests = trace.spawns,
+                    .time_steps = trace.time_steps,
+                },
         });
         if (setup.entity_ids.size() != trace.seeds.size()) {
             throw std::runtime_error("full-window setup returned invalid entity cardinality");

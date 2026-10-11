@@ -31,6 +31,21 @@ struct DeviceInteractionBroadphaseCache {
 
 DeviceInteractionBroadphaseCache g_cache{};
 
+template <typename T>
+bool replace_device_buffer(T *&slot, std::size_t requested_capacity, std::size_t byte_count,
+                           std::size_t &advertised_capacity) {
+    T *replacement = nullptr;
+    if (cudaMalloc(&replacement, byte_count) != cudaSuccess) {
+        return false;
+    }
+    if (slot != nullptr) {
+        cudaFree(slot);
+    }
+    slot = replacement;
+    advertised_capacity = requested_capacity;
+    return true;
+}
+
 __host__ __device__ inline int cell_coord(double value, double cell_size) {
     return static_cast<int>(floor(value / cell_size));
 }
@@ -151,71 +166,57 @@ bool ensure_cache_capacity(std::size_t entity_count, std::size_t query_count,
                            std::size_t bucket_count, std::size_t bucket_item_count,
                            std::size_t output_word_count) {
     if (entity_count > g_cache.entity_capacity) {
-        if (g_cache.d_entities != nullptr) {
-            cudaFree(g_cache.d_entities);
-            g_cache.d_entities = nullptr;
-        }
-        if (cudaMalloc(&g_cache.d_entities, entity_count * sizeof(gpu::InteractionEntityPacked)) !=
-            cudaSuccess) {
+        if (!replace_device_buffer(g_cache.d_entities, entity_count,
+                                   entity_count * sizeof(gpu::InteractionEntityPacked),
+                                   g_cache.entity_capacity)) {
             return false;
         }
-        g_cache.entity_capacity = entity_count;
     }
     if (query_count > g_cache.query_capacity) {
-        if (g_cache.d_queries != nullptr) {
-            cudaFree(g_cache.d_queries);
-            g_cache.d_queries = nullptr;
-        }
-        if (g_cache.d_query_overflow != nullptr) {
-            cudaFree(g_cache.d_query_overflow);
-            g_cache.d_query_overflow = nullptr;
-        }
-        if (cudaMalloc(&g_cache.d_queries, query_count * sizeof(gpu::InteractionQueryPacked)) !=
+        gpu::InteractionQueryPacked *replacement_queries = nullptr;
+        int *replacement_overflow = nullptr;
+        if (cudaMalloc(&replacement_queries, query_count * sizeof(gpu::InteractionQueryPacked)) !=
             cudaSuccess) {
             return false;
         }
-        if (cudaMalloc(&g_cache.d_query_overflow, query_count * sizeof(int)) != cudaSuccess) {
+        if (cudaMalloc(&replacement_overflow, query_count * sizeof(int)) != cudaSuccess) {
+            cudaFree(replacement_queries);
             return false;
         }
+        cudaFree(g_cache.d_queries);
+        cudaFree(g_cache.d_query_overflow);
+        g_cache.d_queries = replacement_queries;
+        g_cache.d_query_overflow = replacement_overflow;
         g_cache.query_capacity = query_count;
     }
     if (bucket_count > g_cache.bucket_capacity) {
-        if (g_cache.d_bucket_counts != nullptr) {
-            cudaFree(g_cache.d_bucket_counts);
-            g_cache.d_bucket_counts = nullptr;
-        }
-        if (g_cache.d_bucket_overflow != nullptr) {
-            cudaFree(g_cache.d_bucket_overflow);
-            g_cache.d_bucket_overflow = nullptr;
-        }
-        if (cudaMalloc(&g_cache.d_bucket_counts, bucket_count * sizeof(int)) != cudaSuccess) {
+        int *replacement_counts = nullptr;
+        int *replacement_overflow = nullptr;
+        if (cudaMalloc(&replacement_counts, bucket_count * sizeof(int)) != cudaSuccess) {
             return false;
         }
-        if (cudaMalloc(&g_cache.d_bucket_overflow, bucket_count * sizeof(int)) != cudaSuccess) {
+        if (cudaMalloc(&replacement_overflow, bucket_count * sizeof(int)) != cudaSuccess) {
+            cudaFree(replacement_counts);
             return false;
         }
+        cudaFree(g_cache.d_bucket_counts);
+        cudaFree(g_cache.d_bucket_overflow);
+        g_cache.d_bucket_counts = replacement_counts;
+        g_cache.d_bucket_overflow = replacement_overflow;
         g_cache.bucket_capacity = bucket_count;
     }
     if (bucket_item_count > g_cache.bucket_item_capacity) {
-        if (g_cache.d_bucket_items != nullptr) {
-            cudaFree(g_cache.d_bucket_items);
-            g_cache.d_bucket_items = nullptr;
-        }
-        if (cudaMalloc(&g_cache.d_bucket_items, bucket_item_count * sizeof(int)) != cudaSuccess) {
+        if (!replace_device_buffer(g_cache.d_bucket_items, bucket_item_count,
+                                   bucket_item_count * sizeof(int), g_cache.bucket_item_capacity)) {
             return false;
         }
-        g_cache.bucket_item_capacity = bucket_item_count;
     }
     if (output_word_count > g_cache.output_word_capacity) {
-        if (g_cache.d_output != nullptr) {
-            cudaFree(g_cache.d_output);
-            g_cache.d_output = nullptr;
-        }
-        if (cudaMalloc(&g_cache.d_output, output_word_count * sizeof(std::uint32_t)) !=
-            cudaSuccess) {
+        if (!replace_device_buffer(g_cache.d_output, output_word_count,
+                                   output_word_count * sizeof(std::uint32_t),
+                                   g_cache.output_word_capacity)) {
             return false;
         }
-        g_cache.output_word_capacity = output_word_count;
     }
     return true;
 }

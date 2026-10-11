@@ -9,6 +9,7 @@
 #include "components/physics/performance.h"
 #include "core/interfaces/control_model.h"
 #include "core/interfaces/environment_model.h"
+#include "components/physics/physics_input_policy.h"
 
 inline void register_control_system(flecs::world &ecs) {
     ecs.system<Velocity, Transform, const MissionCommandControlState, const FlightModel>(
@@ -23,7 +24,7 @@ inline void register_control_system(flecs::world &ecs) {
 
                 const ControlModelRef *model_ref = it.world().get<ControlModelRef>();
                 const EnvironmentModelRef *env_ref = it.world().get<EnvironmentModelRef>();
-                double dt = it.delta_time();
+                const double dt = physics_runtime::resolve_integrator_dt(it.delta_time());
 
                 for (auto i : it) {
                     if (!model_ref || !model_ref->model) {
