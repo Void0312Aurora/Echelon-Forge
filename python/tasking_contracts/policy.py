@@ -147,7 +147,11 @@ def admit_policy(
             diagnostics.append(f"policy.field_source_unauthorized:observation.required.{field.name}")
     for field in policy.observation.optional:
         available = field_catalogue.get(field.name)
-        if available is not None and available.source_layer not in binding.allowed_source_layers:
+        if available is None:
+            continue
+        if available.schema != field.schema or available.shape != field.shape or available.unit != field.unit:
+            diagnostics.append(f"policy.field_semantics_mismatch:observation.optional.{field.name}")
+        if available.source_layer not in binding.allowed_source_layers:
             diagnostics.append(f"policy.field_source_unauthorized:observation.optional.{field.name}")
     action_version = action_versions.get(policy.action.interface_ref)
     if action_version is None:
@@ -158,9 +162,12 @@ def admit_policy(
         )
         if version_error:
             diagnostics.append(version_error)
-    dimension = action_dimensions.get(policy.action.interface_ref)
-    if dimension is not None and dimension != policy.action.dimension:
-        diagnostics.append(f"policy.action_dimension_mismatch:action.dimension:{policy.action.dimension}!={dimension}")
+    if action_version is not None:
+        dimension = action_dimensions.get(policy.action.interface_ref)
+        if dimension is None:
+            diagnostics.append(f"policy.action_dimension_missing:action.dimension.{policy.action.interface_ref}")
+        elif dimension != policy.action.dimension:
+            diagnostics.append(f"policy.action_dimension_mismatch:action.dimension:{policy.action.dimension}!={dimension}")
     if policy.action.interface_ref not in binding.allowed_action_interfaces:
         diagnostics.append(f"policy.action_interface_unauthorized:action.interface_ref.{policy.action.interface_ref}")
     if policy.action.authority_scope not in binding.allowed_authority_scopes:

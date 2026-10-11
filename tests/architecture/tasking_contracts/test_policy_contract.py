@@ -66,6 +66,34 @@ def test_missing_field_shape_and_action_dimension_fail_closed() -> None:
     assert any(item.startswith("policy.action_dimension_mismatch") for item in result.diagnostics)
 
 
+def test_present_optional_field_uses_the_same_typed_checks() -> None:
+    policy = PolicyDescriptor(
+        "p", "1", (),
+        ObservationContract(
+            "view", 1, 0,
+            optional=(FieldSpec("temperature", "Scalar", (), "kelvin"),),
+        ),
+        ActionContract("PilotActionAssignment", 1, 0, 4, "platform_control"),
+    )
+    result = admit_policy(
+        policy, _binding(),
+        field_catalogue={"temperature": FieldSpec("temperature", "Vector3", (3,), "meter")},
+        observation_version=(1, 0), action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+    )
+    assert result.admitted is False
+    assert "policy.field_semantics_mismatch:observation.optional.temperature" in result.diagnostics
+
+
+def test_registered_action_interface_without_dimension_evidence_is_rejected() -> None:
+    result = admit_policy(
+        _policy(), _binding(), field_catalogue=_catalogue(), observation_version=(1, 1),
+        action_versions={"PilotActionAssignment": (1, 0)}, action_dimensions={},
+    )
+    assert result.admitted is False
+    assert "policy.action_dimension_missing:action.dimension.PilotActionAssignment" in result.diagnostics
+
+
 def test_major_version_and_unauthorized_truth_source_are_rejected() -> None:
     policy = PolicyDescriptor(
         "p", "1", (),
