@@ -89,6 +89,11 @@ def _build_actions(*, steps: int, n_envs: int, action_dim: int, seed: int) -> li
     return actions
 
 
+def _effective_action_seed(*, experiment_seed: int, n_envs: int) -> int:
+    """Return the action stream seed shared by every thread-count cell."""
+    return int(experiment_seed) + int(n_envs) * 1000
+
+
 def _run_case(
     *,
     scenario_path: str,
@@ -144,6 +149,7 @@ def _run_case(
         "n_envs": int(n_envs),
         "configured_worker_threads": int(configured_threads),
         "effective_worker_threads": effective_threads,
+        "effective_action_seed": int(seed),
         "steps_per_repeat": int(steps),
         "repeats": int(max(1, repeats)),
         "warmup_steps": int(max(0, warmup_steps)),
@@ -194,7 +200,7 @@ def main() -> int:
                     steps=int(args.steps),
                     repeats=int(args.repeats),
                     warmup_steps=int(args.warmup_steps),
-                    seed=int(args.seed) + n_envs * 1000 + configured_threads,
+                    seed=_effective_action_seed(experiment_seed=int(args.seed), n_envs=n_envs),
                     env_kwargs=env_kwargs,
                 )
             )
