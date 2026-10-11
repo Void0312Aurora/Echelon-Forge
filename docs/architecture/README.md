@@ -26,6 +26,18 @@ and reviews now live in this owner; legacy plan packets are archive provenance.
   maintained default CPU-exact Cordis/owner/native authority chain, single
   construction truth, compatibility rules, evidence gates, and held residuals.
 
+## Proposed RFC Decisions
+
+- [Typed mechanism ports](standards/typed_mechanism_ports_adr.md) (#229).
+- [Platform blueprints](standards/platform_blueprint_assembly_adr.md) (#236).
+- [Force packages](standards/force_package_composition_adr.md) (#237).
+- [Policy observation/action contracts](standards/policy_observation_action_contract_adr.md) (#238).
+- [Resolved experiment input lock](standards/resolved_experiment_input_lock_adr.md) (#239).
+- [Simulation failure domains](standards/simulation_failure_domain_adr.md) (#251).
+
+These decisions remain proposed. The [qualification implementation and remaining gates](work/issues/rfc_qualified_composition_implementation.md)
+records executable evidence and the owner review/production boundaries.
+
 ## Reference
 
 - [Truth-leak inventory](reference/t8_g4_truth_leak_inventory.md): current
