@@ -502,9 +502,7 @@ bool uses_world_target_tracker(const Missile &missile) {
 Vec3 raw_detection_target_position_world(const Detection &det, const Transform &transform) {
     const Vec3 los_world =
         missile_guidance::world_los_from_relative_angles(det.bearing, det.elevation, transform);
-    const double range_m = std::max(0.0, det.range);
-    return {transform.x + los_world.x * range_m, transform.y + los_world.y * range_m,
-            transform.z + los_world.z * range_m};
+    return missile_guidance::world_position_from_los_range(los_world, det.range, transform);
 }
 
 template <typename TrackerOutput>
