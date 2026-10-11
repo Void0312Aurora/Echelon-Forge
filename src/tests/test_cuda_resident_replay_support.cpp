@@ -80,10 +80,12 @@ ReplayLaneResult run_cuda_resident(const ReplayTrace &trace) {
     CudaResidentBackend backend;
     backend.configure({.world_count = trace.seeds.size()});
     const auto setup = backend.setup({
-        .kind = runtime::backend::SetupKind::Batch,
-        .seeds = trace.seeds,
-        .spawn_requests = trace.spawns,
-        .time_steps = trace.time_steps,
+        .operation =
+            runtime::backend::BatchSetup{
+                .seeds = trace.seeds,
+                .spawn_requests = trace.spawns,
+                .time_steps = trace.time_steps,
+            },
     });
     if (setup.entity_ids.size() != trace.seeds.size()) {
         throw std::runtime_error("RB8 CUDA setup cardinality mismatch");

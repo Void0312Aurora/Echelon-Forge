@@ -7,7 +7,7 @@
 #include "core/engine/simulation_kernel_command_surface.h"
 #include "core/engine/world_batch_setup_helper.h"
 #include "core/engine/world_batch_visual_binding_compatibility_helper.h"
-#include "gpu/gpu_interaction_broadphase_runtime.h"
+#include "core/interfaces/world_batch_gpu_compatibility.h"
 #include "runtime/contracts/composition/resolved_execution_plan.v1.generated.h"
 
 #include <bit>
@@ -76,12 +76,13 @@ double entity_bounding_radius_m(flecs::entity entity, UnitType fallback_type) {
     return default_bounding_radius_m(fallback_type);
 }
 
-gpu::InteractionBroadphaseConfig
-make_interaction_broadphase_config(std::size_t max_entities_per_world, double range_hint_m) {
-    gpu::InteractionBroadphaseConfig config{};
+WorldBatchInteractionConfig make_interaction_broadphase_config(std::size_t max_entities_per_world,
+                                                               double range_hint_m,
+                                                               double max_entity_radius_m) {
+    WorldBatchInteractionConfig config{};
     config.entities_per_world = static_cast<int>(std::max<std::size_t>(1, max_entities_per_world));
     config.cell_size_m = std::clamp(range_hint_m, 1000.0, 10000.0);
-    config.max_entity_radius_m = 250.0;
+    config.max_entity_radius_m = std::max(0.0, max_entity_radius_m);
 
     std::size_t bucket_count = 256;
     const std::size_t target = std::max<std::size_t>(512, max_entities_per_world * 8);
@@ -93,12 +94,11 @@ make_interaction_broadphase_config(std::size_t max_entities_per_world, double ra
     return config;
 }
 
-std::vector<std::vector<uint64_t>>
-decode_broadphase_candidate_ids(const std::vector<std::uint32_t> &words,
-                                const std::vector<gpu::InteractionQueryPacked> &queries,
-                                const std::vector<std::vector<uint64_t>> &ids_by_world,
-                                int entities_per_world) {
-    const std::size_t words_per_query = gpu::interaction_broadphase_word_count(entities_per_world);
+std::vector<std::vector<uint64_t>> decode_broadphase_candidate_ids(
+    const std::vector<std::uint32_t> &words, const std::vector<WorldBatchInteractionQuery> &queries,
+    const std::vector<std::vector<uint64_t>> &ids_by_world, int entities_per_world) {
+    const std::size_t words_per_query =
+        world_batch_interaction_broadphase_word_count(entities_per_world);
     std::vector<std::vector<uint64_t>> out(queries.size());
     if (queries.empty() || words.empty()) {
         return out;
@@ -129,14 +129,13 @@ decode_broadphase_candidate_ids(const std::vector<std::uint32_t> &words,
 }
 
 std::vector<std::vector<uint64_t>>
-run_interaction_broadphase_candidate_ids(const std::vector<gpu::InteractionEntityPacked> &entities,
-                                         const std::vector<gpu::InteractionQueryPacked> &queries,
+run_interaction_broadphase_candidate_ids(const std::vector<WorldBatchInteractionEntity> &entities,
+                                         const std::vector<WorldBatchInteractionQuery> &queries,
                                          const std::vector<std::vector<uint64_t>> &ids_by_world,
-                                         const gpu::InteractionBroadphaseConfig &config,
-                                         bool use_gpu) {
+                                         const WorldBatchInteractionConfig &config, bool use_gpu) {
     auto words =
-        use_gpu ? gpu::build_interaction_broadphase_experiment_batch(entities, queries, config)
-                : gpu::build_interaction_broadphase_reference_cpu_batch(entities, queries, config);
+        use_gpu ? world_batch_interaction_broadphase_experiment_batch(entities, queries, config)
+                : world_batch_interaction_broadphase_reference_cpu_batch(entities, queries, config);
     return decode_broadphase_candidate_ids(words, queries, ids_by_world, config.entities_per_world);
 }
 
@@ -598,19 +597,6 @@ WorldBatchRuntime::apply_launch_requests_batch(const std::vector<LaunchRequest> 
     return events;
 }
 
-void WorldBatchRuntime::set_mission_commands_batch(
-    const std::vector<WorldMissionCommandAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        SimulationKernelCommandSurface commands(world);
-        for (const size_t item_index : grouped[world_index]) {
-            const auto &item = assignments[item_index];
-            commands.set_mission_command(item.entity_id, item.command);
-        }
-    });
-}
-
 void WorldBatchRuntime::set_mission_commands_maintained_batch(
     const std::vector<WorldMissionCommandMaintainedAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
@@ -641,19 +627,6 @@ void WorldBatchRuntime::set_task_orders_maintained_batch(
     });
 }
 
-void WorldBatchRuntime::set_leader_intents_batch(
-    const std::vector<WorldLeaderIntentAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        SimulationKernelCommandSurface commands(world);
-        for (const size_t item_index : grouped[world_index]) {
-            const auto &item = assignments[item_index];
-            commands.set_leader_intent(item.entity_id, item.intent);
-        }
-    });
-}
-
 void WorldBatchRuntime::set_leader_intents_maintained_batch(
     const std::vector<WorldLeaderIntentMaintainedAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
@@ -665,19 +638,6 @@ void WorldBatchRuntime::set_leader_intents_maintained_batch(
             commands.set_leader_intent(
                 item.entity_id, leader_intent_compatibility_shell_from_maintained_batch_contract(
                                     item.leader_intent));
-        }
-    });
-}
-
-void WorldBatchRuntime::set_pilot_reports_batch(
-    const std::vector<WorldPilotReportAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        SimulationKernelCommandSurface commands(world);
-        for (const size_t item_index : grouped[world_index]) {
-            const auto &item = assignments[item_index];
-            commands.set_pilot_report(item.entity_id, item.report);
         }
     });
 }
@@ -834,12 +794,13 @@ WorldBatchRuntime::get_pilot_reports_maintained_batch(
 std::vector<std::vector<uint64_t>>
 WorldBatchRuntime::get_sensor_candidate_ids_batch(const std::vector<WorldEntityRef> &refs,
                                                   bool use_gpu) const {
-    std::vector<gpu::InteractionEntityPacked> entities;
+    std::vector<WorldBatchInteractionEntity> entities;
     std::vector<std::vector<uint64_t>> ids_by_world(worlds_.size());
-    std::vector<gpu::InteractionQueryPacked> queries;
+    std::vector<WorldBatchInteractionQuery> queries;
     queries.reserve(refs.size());
 
     double range_hint_m = 5000.0;
+    double max_entity_radius_m = 0.0;
     std::size_t max_entities_per_world = 0;
     for (std::size_t world_index = 0; world_index < worlds_.size(); ++world_index) {
         const auto &world = checked_world(world_index);
@@ -847,13 +808,14 @@ WorldBatchRuntime::get_sensor_candidate_ids_batch(const std::vector<WorldEntityR
         auto query = world_lease.world().query<const KeyEntity, const Transform>();
         int local_index = 0;
         query.each([&](flecs::entity entity, const KeyEntity &key, const Transform &transform) {
-            gpu::InteractionEntityPacked packed{};
+            WorldBatchInteractionEntity packed{};
             packed.world_index = static_cast<int>(world_index);
             packed.local_index = local_index++;
             packed.x = transform.x;
             packed.y = transform.y;
             packed.z = transform.z;
             packed.bounding_radius_m = entity_bounding_radius_m(entity, key.type);
+            max_entity_radius_m = std::max(max_entity_radius_m, packed.bounding_radius_m);
             entities.push_back(packed);
             ids_by_world[world_index].push_back(entity.id());
         });
@@ -861,7 +823,7 @@ WorldBatchRuntime::get_sensor_candidate_ids_batch(const std::vector<WorldEntityR
     }
 
     for (const auto &ref : refs) {
-        gpu::InteractionQueryPacked query{};
+        WorldBatchInteractionQuery query{};
         query.world_index = static_cast<int>(ref.world_index);
         const auto &world = checked_world(static_cast<size_t>(ref.world_index));
         auto world_lease = world.acquire_world_lease();
@@ -880,7 +842,8 @@ WorldBatchRuntime::get_sensor_candidate_ids_batch(const std::vector<WorldEntityR
         queries.push_back(query);
     }
 
-    const auto config = make_interaction_broadphase_config(max_entities_per_world, range_hint_m);
+    const auto config = make_interaction_broadphase_config(max_entities_per_world, range_hint_m,
+                                                           max_entity_radius_m);
     auto out =
         run_interaction_broadphase_candidate_ids(entities, queries, ids_by_world, config, use_gpu);
     for (std::size_t idx = 0; idx < refs.size(); ++idx) {
@@ -894,12 +857,13 @@ WorldBatchRuntime::get_sensor_candidate_ids_batch(const std::vector<WorldEntityR
 std::vector<std::vector<uint64_t>>
 WorldBatchRuntime::get_visual_candidate_ids_batch(const std::vector<WorldEntityRef> &refs,
                                                   double range_m, bool use_gpu) const {
-    std::vector<gpu::InteractionEntityPacked> entities;
+    std::vector<WorldBatchInteractionEntity> entities;
     std::vector<std::vector<uint64_t>> ids_by_world(worlds_.size());
-    std::vector<gpu::InteractionQueryPacked> queries;
+    std::vector<WorldBatchInteractionQuery> queries;
     queries.reserve(refs.size());
 
     const double range_hint_m = std::max(1000.0, range_m);
+    double max_entity_radius_m = 0.0;
     std::size_t max_entities_per_world = 0;
     for (std::size_t world_index = 0; world_index < worlds_.size(); ++world_index) {
         const auto &world = checked_world(world_index);
@@ -907,13 +871,14 @@ WorldBatchRuntime::get_visual_candidate_ids_batch(const std::vector<WorldEntityR
         auto query = world_lease.world().query<const KeyEntity, const Transform>();
         int local_index = 0;
         query.each([&](flecs::entity entity, const KeyEntity &key, const Transform &transform) {
-            gpu::InteractionEntityPacked packed{};
+            WorldBatchInteractionEntity packed{};
             packed.world_index = static_cast<int>(world_index);
             packed.local_index = local_index++;
             packed.x = transform.x;
             packed.y = transform.y;
             packed.z = transform.z;
             packed.bounding_radius_m = entity_bounding_radius_m(entity, key.type);
+            max_entity_radius_m = std::max(max_entity_radius_m, packed.bounding_radius_m);
             entities.push_back(packed);
             ids_by_world[world_index].push_back(entity.id());
         });
@@ -921,7 +886,7 @@ WorldBatchRuntime::get_visual_candidate_ids_batch(const std::vector<WorldEntityR
     }
 
     for (const auto &ref : refs) {
-        gpu::InteractionQueryPacked query{};
+        WorldBatchInteractionQuery query{};
         query.world_index = static_cast<int>(ref.world_index);
         const auto &world = checked_world(static_cast<size_t>(ref.world_index));
         auto world_lease = world.acquire_world_lease();
@@ -937,7 +902,8 @@ WorldBatchRuntime::get_visual_candidate_ids_batch(const std::vector<WorldEntityR
         queries.push_back(query);
     }
 
-    const auto config = make_interaction_broadphase_config(max_entities_per_world, range_hint_m);
+    const auto config = make_interaction_broadphase_config(max_entities_per_world, range_hint_m,
+                                                           max_entity_radius_m);
     auto out =
         run_interaction_broadphase_candidate_ids(entities, queries, ids_by_world, config, use_gpu);
     for (std::size_t idx = 0; idx < refs.size(); ++idx) {
@@ -951,9 +917,9 @@ WorldBatchRuntime::get_visual_candidate_ids_batch(const std::vector<WorldEntityR
 std::vector<std::vector<uint64_t>>
 WorldBatchRuntime::get_comm_candidate_ids_batch(const std::vector<WorldEntityRef> &refs,
                                                 bool use_gpu) const {
-    std::vector<gpu::InteractionEntityPacked> entities;
+    std::vector<WorldBatchInteractionEntity> entities;
     std::vector<std::vector<uint64_t>> ids_by_world(worlds_.size());
-    std::vector<gpu::InteractionQueryPacked> queries;
+    std::vector<WorldBatchInteractionQuery> queries;
     queries.reserve(refs.size());
 
     double range_hint_m = 10000.0;
@@ -967,7 +933,7 @@ WorldBatchRuntime::get_comm_candidate_ids_batch(const std::vector<WorldEntityRef
             if (!link.active) {
                 return;
             }
-            gpu::InteractionEntityPacked packed{};
+            WorldBatchInteractionEntity packed{};
             packed.world_index = static_cast<int>(world_index);
             packed.local_index = local_index++;
             packed.x = transform.x;
@@ -982,7 +948,7 @@ WorldBatchRuntime::get_comm_candidate_ids_batch(const std::vector<WorldEntityRef
     }
 
     for (const auto &ref : refs) {
-        gpu::InteractionQueryPacked query{};
+        WorldBatchInteractionQuery query{};
         query.world_index = static_cast<int>(ref.world_index);
         const auto &world = checked_world(static_cast<size_t>(ref.world_index));
         auto world_lease = world.acquire_world_lease();
@@ -1000,7 +966,8 @@ WorldBatchRuntime::get_comm_candidate_ids_batch(const std::vector<WorldEntityRef
         queries.push_back(query);
     }
 
-    const auto config = make_interaction_broadphase_config(max_entities_per_world, range_hint_m);
+    const auto config =
+        make_interaction_broadphase_config(max_entities_per_world, range_hint_m, 0.0);
     auto out =
         run_interaction_broadphase_candidate_ids(entities, queries, ids_by_world, config, use_gpu);
     for (std::size_t idx = 0; idx < refs.size(); ++idx) {

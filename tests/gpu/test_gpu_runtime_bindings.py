@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gc
+import math
 import unittest
 
 import numpy as np
@@ -422,6 +423,24 @@ class GpuRuntimeBindingTests(unittest.TestCase):
       self.assertAlmostEqual(float(reference.heading_hold_bonus), float(got.heading_hold_bonus), places=6)
       self.assertAlmostEqual(float(reference.speed_reward), float(got.speed_reward), places=6)
 
+  def test_flight_shaping_extreme_finite_power_is_rejected_before_float_pack(self) -> None:
+    inputs = ef_py.FlightShapingRuntimeInputs()
+    inputs.airborne = True
+    inputs.curr_alt_baro_m = 1.0e6
+    inputs.altitude_error_weight = 1.0
+    inputs.altitude_error_power = 8.0
+    inputs.altitude_error_norm_m = 1.0
+    inputs.altitude_error_clip = 0.0
+
+    reference = ef_py.compute_flight_shaping_terms(inputs)
+    cpu = ef_py.compute_flight_shaping_batch([inputs], False)[0]
+    gpu = ef_py.compute_flight_shaping_batch([inputs], True)[0]
+
+    for product in (reference, cpu, gpu):
+      self.assertFalse(bool(product.valid))
+      self.assertTrue(np.isfinite(float(product.altitude_error_penalty)))
+      self.assertEqual(float(product.altitude_error_penalty), 0.0)
+
   def test_interaction_broadphase_binding_matches_reference_superset(self) -> None:
     config = ef_py.InteractionBroadphaseConfig()
     config.cell_size_m = 5000.0
@@ -456,6 +475,69 @@ class GpuRuntimeBindingTests(unittest.TestCase):
     )
     self.assertEqual(reference.shape, experiment.shape)
     self.assertTrue(np.all((reference.astype(np.uint32) & ~experiment.astype(np.uint32)) == 0))
+
+  def test_interaction_broadphase_rejects_nonfinite_and_invalid_config(self) -> None:
+    config = ef_py.InteractionBroadphaseConfig()
+    for field, value in (
+      ("cell_size_m", math.nan),
+      ("cell_size_m", math.inf),
+      ("cell_size_m", -math.inf),
+      ("cell_size_m", 0.0),
+      ("cell_size_m", -1.0),
+      ("max_entity_radius_m", math.nan),
+      ("max_entity_radius_m", math.inf),
+      ("max_entity_radius_m", -math.inf),
+      ("max_entity_radius_m", -1.0),
+    ):
+      setattr(config, field, value)
+      for use_gpu in (False, True):
+        with self.assertRaises(ValueError):
+          ef_py.build_interaction_broadphase_batch_numpy([], [], config, use_gpu)
+
+    config.cell_size_m = 1.0
+    config.max_entity_radius_m = 0.0
+    result = np.asarray(ef_py.build_interaction_broadphase_batch_numpy([], [], config, False))
+    self.assertEqual(result.shape, (0, 32))
+
+  def test_interaction_broadphase_rejects_signed_cuda_index_overflow(self) -> None:
+    config = ef_py.InteractionBroadphaseConfig()
+    config.cell_size_m = 1.0
+    config.max_entity_radius_m = 0.0
+    config.entities_per_world = 1
+    config.hash_bucket_count = 46341
+    config.bucket_capacity = 46341
+    # 46341**2 is larger than INT_MAX. The validator must reject this before
+    # any CUDA bucket allocation, so an empty workload is sufficient.
+    for use_gpu in (False, True):
+      with self.assertRaises(ValueError):
+        ef_py.build_interaction_broadphase_batch_numpy([], [], config, use_gpu)
+
+  def test_interaction_broadphase_preserves_candidates_for_radius_above_250m(self) -> None:
+    config = ef_py.InteractionBroadphaseConfig()
+    config.cell_size_m = 1000.0
+    config.max_entity_radius_m = 250.1
+    config.entities_per_world = 1
+    config.hash_bucket_count = 256
+    config.bucket_capacity = 16
+
+    entity = ef_py.InteractionEntityPacked()
+    entity.world_index = 0
+    entity.local_index = 0
+    entity.x = 1000.01
+    entity.bounding_radius_m = 250.1
+
+    query = ef_py.InteractionQueryPacked()
+    query.world_index = 0
+    query.x = 749.99
+
+    reference = np.asarray(
+      ef_py.build_interaction_broadphase_batch_numpy([entity], [query], config, False)
+    )
+    experiment = np.asarray(
+      ef_py.build_interaction_broadphase_batch_numpy([entity], [query], config, True)
+    )
+    self.assertEqual(int(reference[0, 0] & 1), 1)
+    self.assertEqual(int(experiment[0, 0] & 1), 1)
 
   def test_execution_observation_export_dlpack_matches_host(self) -> None:
     if torch is None:

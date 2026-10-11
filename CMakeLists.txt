@@ -225,6 +225,7 @@ set(EF_CORE_ENGINE_SOURCES
     src/core/engine/simulation_kernel_weapon_api.cpp
     src/core/engine/simulation_kernel_damage_debug_api.cpp
     src/core/engine/exact_stage_inventory.cpp
+    src/core/engine/world_batch_gpu_compatibility.cpp
     src/core/engine/world_batch_runtime.cpp
     src/core/engine/default_executable_composition_graph.cpp
     src/core/engine/system_contribution_registry.cpp
@@ -363,10 +364,13 @@ add_library(ef_runtime_host_candidate STATIC
     src/runtime/host/runtime_host_candidate.cpp
     src/runtime/host/runtime_state_transfer_candidate.h
     src/runtime/host/runtime_state_transfer_candidate.cpp
+    src/runtime/crypto/sha256.h
 )
 target_include_directories(ef_runtime_host_candidate
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 target_compile_features(ef_runtime_host_candidate PUBLIC cxx_std_20)
 target_link_libraries(ef_runtime_host_candidate PUBLIC ef_runtime_contracts)
@@ -727,7 +731,9 @@ if (EF_PRODUCTION_FACADE_ONLY)
         ${EF_CORE_GEOMETRY_SOURCES}
         src/runtime/compatibility/runtime_facade_visual_observation.cpp
         src/gpu/gpu_visual_runtime.cpp
+        src/gpu/gpu_world_batch_visual_binding_compatibility.cpp
         src/gpu/gpu_execution_observation_runtime.cpp
+        src/gpu/gpu_interaction_broadphase_runtime.cpp
     )
 endif()
 
@@ -774,6 +780,7 @@ endif()
 # --- Experimental GPU Scaffolding ---
 set(EF_GPU_MAINTAINED_HELPER_SOURCES
     src/gpu/gpu_visual_runtime.cpp
+    src/gpu/gpu_world_batch_visual_binding_compatibility.cpp
     src/gpu/gpu_execution_observation_runtime.cpp
     src/gpu/gpu_flight_shaping_runtime.cpp
     src/gpu/gpu_interaction_broadphase_runtime.cpp
@@ -1063,6 +1070,8 @@ set(EF_TEST_SOURCES
     src/tests/test_geodesy.cpp
     src/tests/test_ground_contact_solver.cpp
     src/tests/test_ground_movement.cpp
+    src/tests/test_sha256.cpp
+    src/tests/test_ground_damage_system.cpp
     src/tests/test_timestep_contract.cpp
     src/tests/test_ship_maneuvering.cpp
     src/tests/test_world_cv_alpha_beta_tracker.cpp
