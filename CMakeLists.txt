@@ -1069,6 +1069,7 @@ set(EF_TEST_SOURCES
     src/tests/test_aero_physics_common.cpp
     src/tests/test_geodesy.cpp
     src/tests/test_ground_contact_solver.cpp
+    src/tests/test_ground_movement.cpp
     src/tests/test_sha256.cpp
     src/tests/test_ground_damage_system.cpp
     src/tests/test_timestep_contract.cpp
