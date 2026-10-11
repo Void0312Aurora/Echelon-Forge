@@ -20,6 +20,11 @@ from python.experiment.definition import Experiment, ExperimentRegistry
 SCHEMA_VERSION = "echelon_forge.resolved_experiment.v1"
 _LOCK_STATES = frozenset({"static_candidate", "completed", "failed", "unknown"})
 _TERMINAL_COMPARABLE_STATE = "completed"
+_REQUIRED_NATIVE_IDENTITY_FIELDS = (
+    "resolved_manifest_sha256",
+    "executable_graph_sha256",
+    "realized_topology_digest",
+)
 
 
 class InputLockError(ValueError):
@@ -208,11 +213,18 @@ def compare_resolved_input_locks(
     for axis in ("scenario", "config", "dependencies", "force_package", "mechanism", "policy", "effective_seed_set", "evaluation_protocol"):
         if left_data["input_lock"][axis] != right_data["input_lock"][axis] and axis not in intentional_axes:
             differences.append(axis)
-    if left_data["native_runtime"].get("realized_topology_digest") != right_data["native_runtime"].get("realized_topology_digest"):
-        differences.append("realized_topology_digest")
+    left_native = left_data["native_runtime"]
+    right_native = right_data["native_runtime"]
+    for field in _REQUIRED_NATIVE_IDENTITY_FIELDS:
+        left_value = left_native.get(field)
+        right_value = right_native.get(field)
+        if not isinstance(left_value, str) or not left_value.strip() or not isinstance(right_value, str) or not right_value.strip():
+            differences.append(field)
+        elif left_value != right_value:
+            differences.append(field)
     if differences:
-        return ComparisonResult(False, tuple(sorted(set(differences))), "unexplained truth-affecting input differences")
-    return ComparisonResult(True, (), "same resolved inputs and realized topology")
+        return ComparisonResult(False, tuple(sorted(set(differences))), "missing or mismatched truth-affecting native identity")
+    return ComparisonResult(True, (), "same resolved inputs and complete realized native identity")
 
 
 __all__ = [

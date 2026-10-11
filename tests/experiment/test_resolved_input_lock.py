@@ -36,6 +36,14 @@ def _experiment(seeds: SeedSpec | None = None) -> Experiment:
     )
 
 
+def _native(topology: str = "topo-a") -> dict[str, str]:
+    return {
+        "resolved_manifest_sha256": "manifest-1",
+        "executable_graph_sha256": "graph-1",
+        "realized_topology_digest": topology,
+    }
+
+
 def test_lock_is_canonical_under_scenario_json_key_order(tmp_path) -> None:
     path = tmp_path / "scenarios/test/test_free_fall.json"
     path.parent.mkdir(parents=True)
@@ -97,11 +105,11 @@ def test_failed_or_unknown_runs_are_not_comparable() -> None:
 def test_completed_locks_require_same_realized_topology() -> None:
     left = build_resolved_input_lock(
         _experiment(), _registry(), status="completed",
-        native_runtime={"realized_topology_digest": "topo-a"},
+        native_runtime=_native("topo-a"),
     )
     right = build_resolved_input_lock(
         _experiment(), _registry(), status="completed",
-        native_runtime={"realized_topology_digest": "topo-b"},
+        native_runtime=_native("topo-b"),
     )
     result = compare_resolved_input_locks(left, right)
     assert result.comparable is False
@@ -112,12 +120,38 @@ def test_policy_only_axis_can_be_declared_intentional() -> None:
     left = build_resolved_input_lock(
         _experiment(), _registry(), status="completed",
         policy={"id": "policy-a"},
-        native_runtime={"realized_topology_digest": "topo-a"},
+        native_runtime=_native("topo-a"),
     )
     right = build_resolved_input_lock(
         _experiment(), _registry(), status="completed",
         policy={"id": "policy-b"},
-        native_runtime={"realized_topology_digest": "topo-a"},
+        native_runtime=_native("topo-a"),
     )
     result = compare_resolved_input_locks(left, right, intentional_axes=frozenset({"policy"}))
     assert result.comparable is True
+
+
+def test_completed_comparison_requires_complete_native_identity() -> None:
+    left = build_resolved_input_lock(
+        _experiment(), _registry(), status="completed",
+        native_runtime={"realized_topology_digest": "topo-a"},
+    )
+    right = build_resolved_input_lock(
+        _experiment(), _registry(), status="completed",
+        native_runtime=_native("topo-a"),
+    )
+    result = compare_resolved_input_locks(left, right)
+    assert result.comparable is False
+    assert result.differences == ("executable_graph_sha256", "resolved_manifest_sha256")
+
+
+def test_completed_comparison_checks_manifest_and_executable_identity() -> None:
+    left_native = _native()
+    right_native = _native()
+    right_native["resolved_manifest_sha256"] = "manifest-2"
+    right_native["executable_graph_sha256"] = "graph-2"
+    left = build_resolved_input_lock(_experiment(), _registry(), status="completed", native_runtime=left_native)
+    right = build_resolved_input_lock(_experiment(), _registry(), status="completed", native_runtime=right_native)
+    result = compare_resolved_input_locks(left, right)
+    assert result.comparable is False
+    assert result.differences == ("executable_graph_sha256", "resolved_manifest_sha256")
