@@ -26,6 +26,13 @@ from python.content.platform_blueprint import (  # noqa: E402
     lower_to_legacy_unit_definition,
     resolve_platform_assembly,
 )
+from python.content.platform_blueprint_adapter import (  # noqa: E402
+    to_expanded_typed_platform_request,
+)
+from python.content.capability_bundles import SpawnPlacement  # noqa: E402
+from python.content.capability_bundles.bindings_adapter import (  # noqa: E402
+    to_typed_platform_spawn_request,
+)
 from python.experiment.air_combat_matrix import MATRIX_ENTRIES, REGISTRY  # noqa: E402
 from python.experiment.resolved_input_lock import (  # noqa: E402
     InputLockError,
@@ -144,9 +151,9 @@ def _legacy_projection(relative_path):
     return legacy, plan, projection, modules
 
 
-def _snapshot(facade, entity_id):
+def _snapshot(facade, entity_id, world_index=0):
     ref = ef_py.WorldEntityRef()
-    ref.world_index = 0
+    ref.world_index = world_index
     ref.entity_id = entity_id
     observation = facade.get_agent_observations_batch([ref])[0]
     return {
@@ -154,6 +161,102 @@ def _snapshot(facade, entity_id):
         for name in dir(observation)
         if not name.startswith("_") and not callable(getattr(observation, name))
     }
+
+
+def _f16_native_typed_request():
+    legacy, _, projection, original_modules = _legacy_projection(
+        "aircraft/units/f16c_block50.json"
+    )
+    capability_by_field = {
+        "engine_ref": "mobility",
+        "sensor_ref": "sensing",
+        "ew_suite_ref": "communication",
+        "rcs_profile_ref": "survivability",
+        "default_loadout.1": "launching",
+        "default_loadout.2": "launching",
+        "default_loadout.8": "launching",
+        "default_loadout.9": "launching",
+    }
+    modules = {
+        field: replace(module, capabilities=frozenset({capability_by_field[field]}))
+        for field, module in original_modules.items()
+    }
+    blueprint = PlatformBlueprint(
+        "qualification." + legacy["name"],
+        "1",
+        legacy["type"],
+        slots=tuple((field, modules[field].kind) for field in modules),
+        required_capabilities=frozenset(capability_by_field.values()),
+    )
+    plan = resolve_platform_assembly(
+        assembly_id=legacy["name"] + "@native-typed",
+        blueprint=blueprint,
+        selections=tuple(ModuleSelection(field, field) for field in modules),
+        modules=modules,
+    )
+    expanded = to_expanded_typed_platform_request(
+        plan=plan,
+        blueprint=blueprint,
+        modules=modules,
+        source_type_name=legacy["name"],
+        request_id="platform-blueprint:f16c:native-typed",
+        placement=SpawnPlacement(
+            world_index=1,
+            side="blue",
+            entity_name="BlueprintF16",
+            x=100000.0,
+            y=100000.0,
+            z=1200.0,
+            heading=90.0,
+            vy=180.0,
+        ),
+    )
+    assert projection.blueprint_ref == plan.blueprint_ref
+    return to_typed_platform_spawn_request(ef_py, expanded)
+
+
+def test_platform_assembly_projects_to_native_typed_spawn_and_preserves_observations():
+    typed = _f16_native_typed_request()
+    assert typed.resolved_spawn_plan.source_request_kind == "typed_platform_request"
+    assert typed.resolved_spawn_plan.materialization_strategy == "resolved_spawn_plan_bridge"
+    assert not bool(typed.type_name_projection_preserved)
+    assert not bool(typed.capability_bundle.type_name_projection_preserved)
+    assert not bool(typed.resolved_spawn_plan.type_name_projection_preserved)
+    assert len(typed.capability_bundle.capabilities) == 8
+
+    facade = ef_py.RuntimeFacade(2)
+    assert facade.load_database(str(DATABASE))
+    setup = ef_py.BatchWorldSetupRequest()
+    setup.seeds = [123, 123]
+    setup.time_steps = [0.05, 0.05]
+    reference = ef_py.WorldSpawnRequest()
+    reference.world_index = 0
+    reference.side = ef_py.Side.Blue
+    reference.type_name = "F-16C_Block50"
+    reference.entity_name = "ReferenceF16"
+    reference.x = 100000.0
+    reference.y = 100000.0
+    reference.z = 1200.0
+    reference.heading = 90.0
+    reference.vy = 180.0
+    setup.spawn_requests = [reference]
+    setup.typed_platform_spawn_requests = [typed]
+
+    result = facade.apply_world_setup(setup)
+    assert len(result.entity_ids) == 1
+    typed_result = result.typed_platform_spawn_results[0]
+    assert bool(typed_result.admitted)
+    assert bool(typed_result.materialized)
+    assert typed_result.setup_surface == "maintained_typed_setup"
+    assert typed_result.rejection_reason == ""
+    assert "platform_blueprint.native_typed_plan_adapter" in list(typed_result.evidence_refs)
+
+    reference_id = int(result.entity_ids[0])
+    typed_id = int(typed_result.entity_id)
+    assert _snapshot(facade, reference_id, 0) == _snapshot(facade, typed_id, 1)
+    for _ in range(4):
+        facade.step_batch()
+    assert _snapshot(facade, reference_id, 0) == _snapshot(facade, typed_id, 1)
 
 
 @pytest.mark.parametrize(

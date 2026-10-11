@@ -201,6 +201,32 @@ validate_typed_platform_spawn_request_common(const TypedPlatformSpawnRequest &re
         return result;
     }
 
+    const auto capability_equal = [](const platform::Capability &left,
+                                     const platform::Capability &right) {
+        return left.capability_id == right.capability_id && left.family == right.family &&
+               left.capability_type == right.capability_type &&
+               left.implementation_ref == right.implementation_ref &&
+               left.requires_capability_ids == right.requires_capability_ids &&
+               left.evidence_refs == right.evidence_refs && left.required == right.required &&
+               left.supported == right.supported &&
+               left.unsupported_reason == right.unsupported_reason;
+    };
+    const bool capabilities_match =
+        request.resolved_spawn_plan.resolved_capabilities.size() ==
+            request.capability_bundle.capabilities.size() &&
+        std::equal(request.resolved_spawn_plan.resolved_capabilities.begin(),
+                   request.resolved_spawn_plan.resolved_capabilities.end(),
+                   request.capability_bundle.capabilities.begin(), capability_equal);
+    if (request.capability_bundle.source_type_name != request.source_type_name ||
+        request.resolved_spawn_plan.source_type_name != request.source_type_name ||
+        request.resolved_spawn_plan.capability_bundle_id !=
+            request.capability_bundle.bundle_id ||
+        !capabilities_match) {
+        return reject_typed_platform_spawn_request(
+            kTypedPlatformSpawnRejectionInvalidResolvedPlan,
+            "resolved_spawn_plan must preserve source and capability bundle identity");
+    }
+
     if (request.facade_evidence_refs.empty() ||
         platform::contains_blank_value(request.facade_evidence_refs)) {
         return reject_typed_platform_spawn_request(
