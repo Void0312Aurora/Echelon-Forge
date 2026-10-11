@@ -513,40 +513,45 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_layout(
     const WorldGeodeticAnchorAssignment &geodetic_anchor) {
     ensure_batch_healthy();
     world_batch_setup::validate_time_steps(worlds_.size(), time_steps);
-    auto &world = checked_world(world_index);
-    world_batch_setup::apply_setup_time_step(world, world_index, time_steps);
-    world.set_terrain_type(terrain_type.empty() ? WorldTerrainAssignment{}.terrain_type
-                                                : terrain_type);
-    world.set_wind(wind_speed_mps, wind_dir_from_deg, wind_shear_mps_per_km);
-    world.set_sun_direction(sun_azimuth_deg, sun_elevation_deg);
-    world.set_geodetic_anchor(geodetic_anchor.latitude_deg, geodetic_anchor.longitude_deg,
-                              geodetic_anchor.height_m);
-    if (maritime_configured) {
-        world.set_maritime_state(sea_state, wave_heading_deg, wave_period_s);
-    } else {
-        world.clear_maritime_state();
-    }
-    world_batch_setup::replace_zones(world, zones, [&]() {
-        std::vector<std::size_t> grouped;
-        grouped.reserve(zones.size());
-        for (std::size_t item_index = 0; item_index < zones.size(); ++item_index) {
-            if (static_cast<std::size_t>(zones[item_index].world_index) == world_index) {
-                grouped.push_back(item_index);
+    try {
+        auto &world = checked_world(world_index);
+        world_batch_setup::apply_setup_time_step(world, world_index, time_steps);
+        world.set_terrain_type(terrain_type.empty() ? WorldTerrainAssignment{}.terrain_type
+                                                    : terrain_type);
+        world.set_wind(wind_speed_mps, wind_dir_from_deg, wind_shear_mps_per_km);
+        world.set_sun_direction(sun_azimuth_deg, sun_elevation_deg);
+        world.set_geodetic_anchor(geodetic_anchor.latitude_deg, geodetic_anchor.longitude_deg,
+                                  geodetic_anchor.height_m);
+        if (maritime_configured) {
+            world.set_maritime_state(sea_state, wave_heading_deg, wave_period_s);
+        } else {
+            world.clear_maritime_state();
+        }
+        world_batch_setup::replace_zones(world, zones, [&]() {
+            std::vector<std::size_t> grouped;
+            grouped.reserve(zones.size());
+            for (std::size_t item_index = 0; item_index < zones.size(); ++item_index) {
+                if (static_cast<std::size_t>(zones[item_index].world_index) == world_index) {
+                    grouped.push_back(item_index);
+                }
             }
-        }
-        return grouped;
-    }());
-    world.reset(seed);
+            return grouped;
+        }());
+        world.reset(seed);
 
-    std::vector<uint64_t> out;
-    out.reserve(requests.size());
-    for (const auto &request : requests) {
-        if (static_cast<std::size_t>(request.world_index) != world_index) {
-            continue;
+        std::vector<uint64_t> out;
+        out.reserve(requests.size());
+        for (const auto &request : requests) {
+            if (static_cast<std::size_t>(request.world_index) != world_index) {
+                continue;
+            }
+            out.push_back(spawn_from_request(world, request));
         }
-        out.push_back(spawn_from_request(world, request));
+        return out;
+    } catch (...) {
+        record_batch_failure(std::current_exception());
+        throw;
     }
-    return out;
 }
 
 double WorldBatchRuntime::world_time_step(std::size_t world_index) const {

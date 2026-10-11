@@ -152,6 +152,23 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(entity.is_alive());
     }
 
+    TEST_CASE("layout failure after timestep mutation fail-closes the batch") {
+        WorldBatchRuntime runtime(1);
+        runtime.apply_world_setup_batch({11}, {}, {}, {}, {}, {0.2});
+
+        CHECK_THROWS_AS(runtime.apply_world_layout(0, 17, "not-a-terrain", 0.0, 0.0, 0.0, false,
+                                                   0.0, 0.0, 8.0, {}, {}, {0.1}),
+                        std::invalid_argument);
+        CHECK_FALSE(runtime.batch_healthy());
+        CHECK(runtime.batch_failure_reason().find("Unknown terrain_type") != std::string::npos);
+        CHECK(runtime.world_raw_quarantine(0).get_time_step() == 0.1);
+        CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
+
+        runtime.reset_batch({23});
+        CHECK(runtime.batch_healthy());
+        CHECK_NOTHROW(runtime.step_batch());
+    }
+
     TEST_CASE("batch setup applies maritime overrides and clears absent worlds") {
         WorldBatchRuntime runtime(2);
         const std::vector<WorldMaritimeAssignment> assignments{{0, true, 3.0, 45.0, 7.0},
