@@ -97,7 +97,9 @@ class FakeBackend final : public IWorldBatchBackend {
 
     runtime::backend::SetupResult setup(const runtime::backend::SetupRequest &request) override {
         record(Operation::setup);
-        world_count_ = request.seeds.get().size();
+        const auto *batch = std::get_if<runtime::backend::BatchSetup>(&request.operation);
+        if (batch == nullptr) throw std::invalid_argument("fake backend requires batch setup");
+        world_count_ = batch->seeds.get().size();
         runtime::backend::SetupResult result{};
         for (std::size_t world = 0; world < world_count_; ++world) {
             result.entity_ids.push_back(1000 + world);
@@ -176,10 +178,12 @@ struct FailureCase {
 runtime::backend::SetupResult setup_cuda(runtime::cuda_resident::CudaResidentBackend &backend,
                                          const replay::ReplayTrace &trace) {
     return backend.setup({
-        .kind = runtime::backend::SetupKind::Batch,
-        .seeds = trace.seeds,
-        .spawn_requests = trace.spawns,
-        .time_steps = trace.time_steps,
+        .operation =
+            runtime::backend::BatchSetup{
+                .seeds = trace.seeds,
+                .spawn_requests = trace.spawns,
+                .time_steps = trace.time_steps,
+            },
     });
 }
 

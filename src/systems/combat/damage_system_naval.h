@@ -11,6 +11,7 @@
 #include "components/domains/naval/combat/damage_naval.h"
 #include "components/domains/naval/combat/weapon_naval.h"
 #include "components/domains/naval/platform/ship_platform.h"
+#include "components/physics/physics_input_policy.h"
 
 // Naval damage-response tick (DM-N1).
 //
@@ -70,7 +71,7 @@ inline void register_naval_damage_system(flecs::world &ecs) {
             // DM-N1 is currently a ship-only response surface. Resolving once
             // per iteration keeps the response independent of stage ordering
             // against the motion systems.
-            const double dt_s = it.delta_time() > 0.0 ? it.delta_time() : 1.0 / 60.0;
+            const double dt_s = physics_runtime::resolve_entity_dt(it.delta_time());
             while (it.next()) {
                 auto health = it.field<Health>(0);
                 auto damage_field = it.field<PlatformDamageState>(1);

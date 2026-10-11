@@ -1,4 +1,5 @@
 #include "core/engine/world_batch_runtime.h"
+#include "core/engine/parallel_for_index.h"
 
 #include "components/systems/data_link.h"
 #include "components/systems/sensor.h"
@@ -9,72 +10,14 @@
 #include "core/interfaces/world_batch_gpu_compatibility.h"
 #include "runtime/contracts/composition/resolved_execution_plan.v1.generated.h"
 
-#include <algorithm>
 #include <bit>
-#include <atomic>
 #include <cmath>
-#include <exception>
-#include <mutex>
 #include <stdexcept>
-#include <thread>
 
 namespace {
 
-size_t hardware_thread_count() noexcept {
-    const unsigned int hc = std::thread::hardware_concurrency();
-    return hc == 0U ? 1U : static_cast<size_t>(hc);
-}
-
-template <typename Fn>
-void parallel_for_index(size_t task_count, size_t requested_threads, Fn &&fn) {
-    if (task_count == 0) {
-        return;
-    }
-    const size_t thread_count =
-        std::min(task_count, requested_threads == 0 ? hardware_thread_count()
-                                                    : std::max<size_t>(1, requested_threads));
-    if (thread_count <= 1) {
-        for (size_t i = 0; i < task_count; ++i) {
-            fn(i);
-        }
-        return;
-    }
-
-    const size_t chunk_size = (task_count + thread_count - 1) / thread_count;
-    std::vector<std::thread> workers;
-    workers.reserve(thread_count - 1);
-
-    std::exception_ptr first_exception;
-    std::mutex exception_mutex;
-
-    auto run_range = [&](size_t begin, size_t end) {
-        for (size_t i = begin; i < end; ++i) {
-            try {
-                fn(i);
-            } catch (...) {
-                std::lock_guard<std::mutex> lock(exception_mutex);
-                if (first_exception == nullptr) {
-                    first_exception = std::current_exception();
-                }
-                break;
-            }
-        }
-    };
-
-    size_t begin = 0;
-    for (size_t worker_idx = 1; worker_idx < thread_count; ++worker_idx) {
-        const size_t end = std::min(task_count, begin + chunk_size);
-        workers.emplace_back(run_range, begin, end);
-        begin = end;
-    }
-    run_range(begin, task_count);
-    for (auto &worker : workers) {
-        worker.join();
-    }
-    if (first_exception != nullptr) {
-        std::rethrow_exception(first_exception);
-    }
-}
+using runtime::detail::hardware_thread_count;
+using runtime::detail::parallel_for_index;
 
 template <typename Item>
 std::vector<std::vector<size_t>> group_item_indices_by_world(size_t world_count,
@@ -653,19 +596,6 @@ WorldBatchRuntime::apply_launch_requests_batch(const std::vector<LaunchRequest> 
     return events;
 }
 
-void WorldBatchRuntime::set_mission_commands_batch(
-    const std::vector<WorldMissionCommandAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        SimulationKernelCommandSurface commands(world);
-        for (const size_t item_index : grouped[world_index]) {
-            const auto &item = assignments[item_index];
-            commands.set_mission_command(item.entity_id, item.command);
-        }
-    });
-}
-
 void WorldBatchRuntime::set_mission_commands_maintained_batch(
     const std::vector<WorldMissionCommandMaintainedAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
@@ -696,19 +626,6 @@ void WorldBatchRuntime::set_task_orders_maintained_batch(
     });
 }
 
-void WorldBatchRuntime::set_leader_intents_batch(
-    const std::vector<WorldLeaderIntentAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        SimulationKernelCommandSurface commands(world);
-        for (const size_t item_index : grouped[world_index]) {
-            const auto &item = assignments[item_index];
-            commands.set_leader_intent(item.entity_id, item.intent);
-        }
-    });
-}
-
 void WorldBatchRuntime::set_leader_intents_maintained_batch(
     const std::vector<WorldLeaderIntentMaintainedAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
@@ -720,19 +637,6 @@ void WorldBatchRuntime::set_leader_intents_maintained_batch(
             commands.set_leader_intent(
                 item.entity_id, leader_intent_compatibility_shell_from_maintained_batch_contract(
                                     item.leader_intent));
-        }
-    });
-}
-
-void WorldBatchRuntime::set_pilot_reports_batch(
-    const std::vector<WorldPilotReportAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        SimulationKernelCommandSurface commands(world);
-        for (const size_t item_index : grouped[world_index]) {
-            const auto &item = assignments[item_index];
-            commands.set_pilot_report(item.entity_id, item.report);
         }
     });
 }

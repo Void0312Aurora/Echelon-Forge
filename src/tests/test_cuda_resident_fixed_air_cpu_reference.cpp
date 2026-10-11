@@ -36,10 +36,12 @@ TEST_CASE("CUDA-resident CPU reference preserves fixed-air kinematics and reset 
     }
     const std::vector<double> time_steps = {0.05, 0.125};
     const runtime::backend::SetupRequest request{
-        .kind = runtime::backend::SetupKind::Batch,
-        .seeds = seeds,
-        .spawn_requests = spawns,
-        .time_steps = time_steps,
+        .operation =
+            runtime::backend::BatchSetup{
+                .seeds = seeds,
+                .spawn_requests = spawns,
+                .time_steps = time_steps,
+            },
     };
 
     const runtime::backend::SetupResult first = backend.setup(request);
