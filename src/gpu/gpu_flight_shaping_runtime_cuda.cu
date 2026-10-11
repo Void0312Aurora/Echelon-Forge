@@ -22,6 +22,21 @@ struct DeviceFlightShapingCache {
 
 DeviceFlightShapingCache g_cache{};
 
+template <typename T>
+bool replace_device_buffer(T *&slot, std::size_t requested_capacity, std::size_t byte_count,
+                           std::size_t &advertised_capacity) {
+    T *replacement = nullptr;
+    if (cudaMalloc(&replacement, byte_count) != cudaSuccess) {
+        return false;
+    }
+    if (slot != nullptr) {
+        cudaFree(slot);
+    }
+    slot = replacement;
+    advertised_capacity = requested_capacity;
+    return true;
+}
+
 __host__ __device__ inline double clamp_value(double value, double lo, double hi) {
     return fmin(fmax(value, lo), hi);
 }
@@ -47,7 +62,6 @@ __host__ __device__ inline bool packable_flight_shaping_value(double value) {
     constexpr double kFloatMax = 3.4028234663852886e38;
     return isfinite(value) && fabs(value) <= kFloatMax;
 }
-
 __global__ void compute_flight_shaping_kernel(const FlightShapingRuntimeInputs *inputs, int count,
                                               float *out) {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -434,25 +448,17 @@ __global__ void compute_flight_shaping_kernel(const FlightShapingRuntimeInputs *
 
 bool ensure_cache_capacity(std::size_t input_count, std::size_t output_count) {
     if (input_count > g_cache.input_capacity) {
-        if (g_cache.d_inputs != nullptr) {
-            cudaFree(g_cache.d_inputs);
-            g_cache.d_inputs = nullptr;
-        }
-        if (cudaMalloc(&g_cache.d_inputs, input_count * sizeof(FlightShapingRuntimeInputs)) !=
-            cudaSuccess) {
+        if (!replace_device_buffer(g_cache.d_inputs, input_count,
+                                   input_count * sizeof(FlightShapingRuntimeInputs),
+                                   g_cache.input_capacity)) {
             return false;
         }
-        g_cache.input_capacity = input_count;
     }
     if (output_count > g_cache.output_capacity) {
-        if (g_cache.d_output != nullptr) {
-            cudaFree(g_cache.d_output);
-            g_cache.d_output = nullptr;
-        }
-        if (cudaMalloc(&g_cache.d_output, output_count * sizeof(float)) != cudaSuccess) {
+        if (!replace_device_buffer(g_cache.d_output, output_count, output_count * sizeof(float),
+                                   g_cache.output_capacity)) {
             return false;
         }
-        g_cache.output_capacity = output_count;
     }
     return true;
 }

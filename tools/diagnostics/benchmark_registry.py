@@ -47,9 +47,19 @@ BENCHMARK_FAMILIES: dict[str, BenchmarkFamily] = {
         description="WorldBatchVecEnv training-adapter benchmark.",
         module_path="tools.diagnostics.benchmarks.world_batch_vec_env",
     ),
+    "world_batch_thread_matrix": BenchmarkFamily(
+        name="world_batch_thread_matrix",
+        description="WorldBatch transient-thread worker-count matrix benchmark.",
+        module_path="tools.diagnostics.benchmarks.world_batch_thread_matrix",
+    ),
     "policy_observation_bridge": BenchmarkFamily(
         name="policy_observation_bridge",
         description="Policy-observation bridge benchmark.",
         module_path="tools.diagnostics.benchmarks.policy_observation_bridge",
+    ),
+    "interaction_broadphase": BenchmarkFamily(
+        name="interaction_broadphase",
+        description="GPU interaction broadphase grid versus CPU reference matrix.",
+        module_path="tools.diagnostics.benchmarks.interaction_broadphase",
     ),
 }
