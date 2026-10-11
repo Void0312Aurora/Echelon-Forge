@@ -2,6 +2,7 @@
 #include "components/domains/naval/platform/submarine_platform.h"
 #include "core/interfaces/environment_model.h"
 #include "systems/domains/naval/submarine_motion_system.h"
+#include "systems/system_contribution_registry.h"
 
 #include <doctest/doctest.h>
 #include <flecs.h>
@@ -43,6 +44,7 @@ struct SubmarineRig {
     flecs::entity unit;
 
     explicit SubmarineRig(double initial_depth_m) {
+        runtime::systems::register_default_component_contributions(world);
         register_submarine_motion_system(world);
         world.set<EnvironmentModelRef>({&environment});
         SubmarinePlatform platform{};
