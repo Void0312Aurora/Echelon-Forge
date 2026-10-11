@@ -1066,6 +1066,7 @@ set(EF_TEST_SOURCES
     src/tests/test_geodesy.cpp
     src/tests/test_ground_contact_solver.cpp
     src/tests/test_sha256.cpp
+    src/tests/test_ground_damage_system.cpp
     src/tests/test_timestep_contract.cpp
     src/tests/test_ship_maneuvering.cpp
     src/tests/test_world_cv_alpha_beta_tracker.cpp

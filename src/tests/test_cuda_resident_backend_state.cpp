@@ -41,10 +41,12 @@ struct FixedAirFixtureInputs {
 
     runtime::backend::SetupRequest request() const {
         return {
-            .kind = runtime::backend::SetupKind::Batch,
-            .seeds = seeds,
-            .spawn_requests = spawns,
-            .time_steps = time_steps,
+            .operation =
+                runtime::backend::BatchSetup{
+                    .seeds = seeds,
+                    .spawn_requests = spawns,
+                    .time_steps = time_steps,
+                },
         };
     }
 };
@@ -297,7 +299,8 @@ TEST_CASE("fixed-air boundary rejects undeclared setup input advance and export 
     terrain[0].world_index = 0;
     terrain[0].terrain_type = "flat";
     runtime::backend::SetupRequest unsupported_setup = fixture.request();
-    unsupported_setup.terrain_assignments = terrain;
+    std::get<runtime::backend::BatchSetup>(unsupported_setup.operation).terrain_assignments =
+        terrain;
     CHECK_THROWS_AS(backend.setup(unsupported_setup), std::invalid_argument);
 
     FixedAirFixtureInputs outside_flight_dynamics_envelope;

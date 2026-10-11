@@ -61,18 +61,12 @@ void bind_runtime_engine(nb::module_ &m) {
              nb::arg("assignments"))
         .def("apply_launch_requests_batch", &WorldBatchRuntime::apply_launch_requests_batch,
              nb::arg("requests"))
-        .def("set_mission_commands_batch", &WorldBatchRuntime::set_mission_commands_batch,
-             nb::arg("assignments"))
         .def("set_mission_commands_maintained_batch",
              &WorldBatchRuntime::set_mission_commands_maintained_batch, nb::arg("assignments"))
         .def("set_task_orders_maintained_batch",
              &WorldBatchRuntime::set_task_orders_maintained_batch, nb::arg("assignments"))
-        .def("set_leader_intents_batch", &WorldBatchRuntime::set_leader_intents_batch,
-             nb::arg("assignments"))
         .def("set_leader_intents_maintained_batch",
              &WorldBatchRuntime::set_leader_intents_maintained_batch, nb::arg("assignments"))
-        .def("set_pilot_reports_batch", &WorldBatchRuntime::set_pilot_reports_batch,
-             nb::arg("assignments"))
         .def("set_pilot_reports_maintained_batch",
              &WorldBatchRuntime::set_pilot_reports_maintained_batch, nb::arg("assignments"))
         .def("get_agent_observations_batch", &WorldBatchRuntime::get_agent_observations_batch,

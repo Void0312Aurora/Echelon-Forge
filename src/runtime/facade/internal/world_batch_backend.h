@@ -5,6 +5,7 @@
 #include <array>
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "runtime/facade/runtime_facade_types.h"
@@ -65,15 +66,7 @@ struct ResetRequest {
     VectorBatchView<std::uint32_t> seeds;
 };
 
-enum class SetupKind : std::uint8_t {
-    Batch,
-    Layout,
-    WorldSpawn,
-    TypedPlatformSpawn,
-};
-
-struct SetupRequest {
-    SetupKind kind = SetupKind::Batch;
+struct BatchSetup {
     VectorBatchView<std::uint32_t> seeds;
     VectorBatchView<WorldTerrainAssignment> terrain_assignments;
     VectorBatchView<WorldWindAssignment> wind_assignments;
@@ -83,7 +76,9 @@ struct SetupRequest {
     VectorBatchView<WorldSunAssignment> sun_assignments;
     VectorBatchView<WorldGeodeticAnchorAssignment> geodetic_anchor_assignments;
     VectorBatchView<WorldMaritimeAssignment> maritime_assignments;
+};
 
+struct LayoutSetup {
     std::size_t world_index = 0;
     std::uint32_t seed = 0;
     const std::string *terrain_type = nullptr;
@@ -99,9 +94,24 @@ struct SetupRequest {
     double anchor_latitude_deg = geodesy::kDefaultGeodeticAnchor.latitude_deg;
     double anchor_longitude_deg = geodesy::kDefaultGeodeticAnchor.longitude_deg;
     double anchor_height_m = geodesy::kDefaultGeodeticAnchor.height_m;
+    VectorBatchView<WorldZoneDefinition> zones;
+    VectorBatchView<WorldSpawnRequest> spawn_requests;
+    VectorBatchView<double> time_steps;
+};
 
-    const WorldSpawnRequest *world_spawn_request = nullptr;
-    const TypedPlatformSpawnRequest *typed_platform_spawn_request = nullptr;
+struct WorldSpawnSetup {
+    const WorldSpawnRequest *request = nullptr;
+};
+
+struct TypedPlatformSpawnSetup {
+    const TypedPlatformSpawnRequest *request = nullptr;
+};
+
+using SetupOperation =
+    std::variant<BatchSetup, LayoutSetup, WorldSpawnSetup, TypedPlatformSpawnSetup>;
+
+struct SetupRequest {
+    SetupOperation operation = BatchSetup{};
 };
 
 struct SetupResult {
