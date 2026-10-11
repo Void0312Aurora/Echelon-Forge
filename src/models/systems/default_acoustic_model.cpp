@@ -47,10 +47,15 @@ double platform_self_noise_bias_db(const flecs::entity &entity, double speed_mps
     return std::max(0.0, speed_mps - 5.0) * 0.6;
 }
 
-double target_source_level_db(const flecs::entity &target, double speed_mps, const Sonar &sonar) {
-    double source_level =
-        sonar.source_level_reference_db +
-        std::max(0.0, speed_mps) * std::max(0.0, sonar.source_level_speed_factor_db);
+double target_source_level_db(const flecs::entity &target, double speed_mps) {
+    // This bounded MVP fallback belongs to the emitting platform, not the observing receiver.
+    // A future admitted AcousticSignature component can replace these platform defaults without
+    // changing the receiver contract.  Keeping the fallback here makes the ownership explicit
+    // and prevents a receiver-only sonar edit from rewriting a target's emission.
+    constexpr double kFallbackReferenceDb = 118.0;
+    constexpr double kFallbackSpeedFactorDbPerMps = 1.6;
+    double source_level = kFallbackReferenceDb +
+                          std::max(0.0, speed_mps) * kFallbackSpeedFactorDbPerMps;
     if (const SubmarinePlatform *sub = target.get<SubmarinePlatform>()) {
         source_level += sub->acoustic_stealth_bias_db + 10.0;
     } else if (target.get<ShipPlatform>() != nullptr) {
@@ -149,7 +154,7 @@ class DefaultAcousticModel : public IAcousticModel {
                                             target_velocity->vz * target_velocity->vz)
                                 : 0.0;
 
-            double snr_db = target_source_level_db(target, target_speed_mps, sonar);
+            double snr_db = target_source_level_db(target, target_speed_mps);
             snr_db -= transmission_loss_db(range_m, sonar);
             snr_db += sonar.directivity_gain_db;
             snr_db -= ((sonar.ambient_noise_db + maritime_noise_bias_db) - 50.0);
