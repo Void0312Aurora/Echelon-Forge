@@ -481,6 +481,19 @@ class GpuRuntimeBindingTests(unittest.TestCase):
     result = np.asarray(ef_py.build_interaction_broadphase_batch_numpy([], [], config, False))
     self.assertEqual(result.shape, (0, 32))
 
+  def test_interaction_broadphase_rejects_signed_cuda_index_overflow(self) -> None:
+    config = ef_py.InteractionBroadphaseConfig()
+    config.cell_size_m = 1.0
+    config.max_entity_radius_m = 0.0
+    config.entities_per_world = 1
+    config.hash_bucket_count = 46341
+    config.bucket_capacity = 46341
+    # 46341**2 is larger than INT_MAX. The validator must reject this before
+    # any CUDA bucket allocation, so an empty workload is sufficient.
+    for use_gpu in (False, True):
+      with self.assertRaises(ValueError):
+        ef_py.build_interaction_broadphase_batch_numpy([], [], config, use_gpu)
+
   def test_execution_observation_export_dlpack_matches_host(self) -> None:
     if torch is None:
       self.skipTest("torch is not available")

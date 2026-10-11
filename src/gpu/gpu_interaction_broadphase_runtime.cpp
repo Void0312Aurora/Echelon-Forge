@@ -52,6 +52,15 @@ void validate_interaction_broadphase_config(const InteractionBroadphaseConfig &c
     if (bucket_count > std::numeric_limits<std::size_t>::max() / bucket_capacity) {
         throw std::invalid_argument("interaction broadphase bucket allocation overflows size_t");
     }
+    // CUDA kernels address the flat bucket array with signed int arithmetic:
+    // bucket * bucket_capacity + slot. Keep the validated allocation within
+    // that indexing domain even on hosts where size_t can represent more.
+    constexpr auto kMaxKernelBucketSlots =
+        static_cast<std::size_t>(std::numeric_limits<int>::max());
+    if (bucket_count > kMaxKernelBucketSlots / bucket_capacity) {
+        throw std::invalid_argument(
+            "interaction broadphase bucket slots exceed CUDA int indexing range");
+    }
 }
 
 std::size_t interaction_broadphase_word_count(int entities_per_world) {
