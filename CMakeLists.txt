@@ -1079,6 +1079,7 @@ set(EF_TEST_SOURCES
     src/tests/test_kalman_seeker.cpp
     src/tests/test_structural_failure_system.cpp
     src/tests/test_control_surface_damage_coupling.cpp
+    src/tests/test_force_system.cpp
     src/tests/test_world_batch_backend_contract.cpp
     # Only the CUDA-resident suites without a second home stay here.  The
     # lifecycle, state, device-consumer, performance and replay translation
