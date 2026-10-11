@@ -5,6 +5,7 @@
 #include "components/systems/sonar.h"
 #include "content/unit_definition_loader.h"
 #include "core/interfaces/acoustic_model.h"
+#include "systems/system_contribution_registry.h"
 
 #include <doctest/doctest.h>
 
@@ -18,6 +19,7 @@ namespace {
 
 std::size_t run_scan(int mode) {
     flecs::world world;
+    runtime::systems::register_default_component_contributions(world);
     world.set<StableIdentityState>({3, 42});
     auto owner = world.entity()
                      .set<KeyEntity>({UnitType::Ship})
