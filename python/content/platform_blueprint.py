@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
@@ -94,7 +95,11 @@ class ResolvedPlatformSpawnPlan:
 
 def _check_override(value: Any, expected: str) -> bool:
     if expected == "float":
-        return isinstance(value, (int, float)) and not isinstance(value, bool)
+        return (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+        )
     if expected == "int":
         return isinstance(value, int) and not isinstance(value, bool)
     if expected == "string":
@@ -165,7 +170,13 @@ def resolve_platform_assembly(
         "capabilities": capabilities,
     }
     digest = hashlib.sha256(
-        json.dumps(identity_payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        json.dumps(
+            identity_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        ).encode("utf-8")
     ).hexdigest()
     return ResolvedPlatformSpawnPlan(
         schema_version=SCHEMA_VERSION,

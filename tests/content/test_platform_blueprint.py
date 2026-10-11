@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from python.content.platform_blueprint import (
@@ -105,4 +107,13 @@ def test_duplicate_slot_and_bad_override_type_fail_closed(blueprint, modules) ->
         resolve_platform_assembly(
             assembly_id="bad.v1", blueprint=blueprint, selections=_selections(), modules=modules,
             parameter_overrides={"fuel_fraction": "0.8"},
+        )
+
+
+@pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
+def test_non_finite_numeric_override_fails_closed(blueprint, modules, value) -> None:
+    with pytest.raises(PlatformAssemblyError, match="override_type_mismatch"):
+        resolve_platform_assembly(
+            assembly_id="bad.v1", blueprint=blueprint, selections=_selections(), modules=modules,
+            parameter_overrides={"fuel_fraction": value},
         )
