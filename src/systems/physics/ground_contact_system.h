@@ -320,7 +320,7 @@ inline void register_ground_contact_system(flecs::world &ecs) {
                             // Stress rate: (v - 40) / 60 * severity -> ~1.0/s at 100 m/s on
                             // SoftDirt
                             gear->stress_rate = severity * (v_h - 40.0) / 60.0;
-                            gear->stress += gear->stress_rate * it.delta_time();
+                            gear->stress += gear->stress_rate * dt;
 
                             // Increase friction to simulate digging in
                             mu_rolling *= (1.0 + 4.0 * gear->stress); // Up to 5x at collapse
