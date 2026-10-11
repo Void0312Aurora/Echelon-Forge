@@ -109,6 +109,12 @@ class DefaultAcousticModel : public IAcousticModel {
   public:
     void scan(flecs::world world, flecs::entity owner, const Transform &owner_transform,
               const Sonar &sonar, ContactList &out_contacts, double current_time) override {
+        // The passive model has no active-ping propagation, echo return, or
+        // active-mode detection threshold.  Fail closed until an active model
+        // is admitted instead of silently treating an Active sonar as passive.
+        if (sonar.mode != static_cast<int>(SonarMode::Passive)) {
+            return;
+        }
         const Alliance *owner_alliance = owner.get<Alliance>();
         const Velocity *owner_velocity = owner.get<Velocity>();
         const EnvironmentModelRef *env_ref = world.get<EnvironmentModelRef>();
