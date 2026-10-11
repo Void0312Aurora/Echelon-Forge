@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import pytest
+
 from python.mechanisms.ports import (
     GraphEdge,
+    MechanismGraphError,
     MechanismSpec,
     PortSpec,
     compile_mechanism_graph,
@@ -26,19 +29,44 @@ def _tracker() -> MechanismSpec:
 def test_valid_graph_is_deterministic_and_recursive_composition_preserves_external_ports() -> None:
     graph = compile_mechanism_graph(
         "perception",
-        {"sensor": _sensor(), "tracker": _tracker()},
-        (GraphEdge("sensor", "measurements", "tracker", "measurements"),),
+        {"tracker": _tracker()},
+        (),
+        external_inputs=frozenset({"tracker.measurements"}),
     )
     assert graph.valid
     composite = compose_graph_as_mechanism(
         graph,
         mechanism_id="community.perception",
         version="1",
-        inputs=(PortSpec("environment", "EnvironmentSnapshot.v1", None, "enu"),),
+        inputs=(PortSpec("measurements", "Measurement3D.v1", "meter", "enu"),),
         outputs=(PortSpec("tracks", "TrackCollection.v1", None, "enu"),),
+        input_bindings={"measurements": "tracker.measurements"},
+        output_bindings={"tracks": "tracker.tracks"},
     )
     assert composite.implementation_ref.startswith("composite:")
-    assert composite.inputs[0].schema == "EnvironmentSnapshot.v1"
+    assert composite.inputs[0].schema == "Measurement3D.v1"
+
+
+def test_composite_rejects_unbound_or_fabricated_boundary_ports() -> None:
+    graph = compile_mechanism_graph(
+        "perception", {"tracker": _tracker()}, (), external_inputs=frozenset({"tracker.measurements"})
+    )
+    with pytest.raises(MechanismGraphError, match="declared graph external input"):
+        compose_graph_as_mechanism(
+            graph, mechanism_id="bad", version="1",
+            inputs=(PortSpec("environment", "EnvironmentSnapshot.v1"),),
+            outputs=(PortSpec("health", "HealthState.v1"),),
+            input_bindings={"environment": "tracker.missing"},
+            output_bindings={"health": "tracker.tracks"},
+        )
+    with pytest.raises(MechanismGraphError, match="type mismatch"):
+        compose_graph_as_mechanism(
+            graph, mechanism_id="bad", version="1",
+            inputs=(PortSpec("measurements", "Measurement3D.v1", "meter", "enu"),),
+            outputs=(PortSpec("health", "HealthState.v1"),),
+            input_bindings={"measurements": "tracker.measurements"},
+            output_bindings={"health": "tracker.tracks"},
+        )
 
 
 def test_incompatible_schema_unit_and_frame_are_rejected_before_publication() -> None:

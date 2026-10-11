@@ -100,6 +100,7 @@ class CompiledMechanismGraph:
     edges: tuple[GraphEdge, ...]
     diagnostics: tuple[GraphDiagnostic, ...]
     identity_digest: str
+    external_inputs: frozenset[str] = frozenset()
     schema_version: str = SCHEMA_VERSION
 
     @property
@@ -126,6 +127,7 @@ class CompiledMechanismGraph:
                 for node_id, spec in self.nodes
             ],
             "edges": [edge.__dict__ for edge in self.edges],
+            "external_inputs": sorted(self.external_inputs),
             "diagnostics": [diagnostic.__dict__ for diagnostic in self.diagnostics],
             "identity_digest": self.identity_digest,
         }
@@ -146,7 +148,13 @@ def _port_dict(port: PortSpec) -> dict[str, Any]:
     }
 
 
-def _identity_payload(graph_id: str, nodes: Mapping[str, MechanismSpec], edges: Sequence[GraphEdge]) -> dict[str, Any]:
+def _identity_payload(
+    graph_id: str,
+    nodes: Mapping[str, MechanismSpec],
+    edges: Sequence[GraphEdge],
+    *,
+    external_inputs: frozenset[str],
+) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
         "graph_id": graph_id,
@@ -165,6 +173,7 @@ def _identity_payload(graph_id: str, nodes: Mapping[str, MechanismSpec], edges: 
             for node_id, spec in sorted(nodes.items())
         },
         "edges": [edge.__dict__ for edge in sorted(edges, key=lambda item: (item.source_node, item.source_port, item.target_node, item.target_port, item.delayed))],
+        "external_inputs": sorted(external_inputs),
     }
 
 
@@ -187,6 +196,15 @@ def compile_mechanism_graph(
     if not nodes:
         raise MechanismGraphError("at least one mechanism node is required")
     diagnostics: list[GraphDiagnostic] = []
+    normalized_external_inputs = frozenset(external_inputs)
+    for external_ref in sorted(normalized_external_inputs):
+        if not isinstance(external_ref, str) or external_ref.count(".") != 1:
+            diagnostics.append(GraphDiagnostic("mechanism.external_input_unknown", "external_inputs", str(external_ref)))
+            continue
+        node_id, port_name = external_ref.split(".", 1)
+        node = nodes.get(node_id)
+        if node is None or node.port(port_name, output=False) is None:
+            diagnostics.append(GraphDiagnostic("mechanism.external_input_unknown", "external_inputs", external_ref))
     incoming: dict[tuple[str, str], list[GraphEdge]] = {}
     adjacency: dict[str, list[str]] = {node_id: [] for node_id in nodes}
     for edge_index, edge in enumerate(edges):
@@ -246,13 +264,14 @@ def compile_mechanism_graph(
     for node_id in nodes:
         visit(node_id, ())
 
-    payload = _identity_payload(graph_id, nodes, edges)
+    payload = _identity_payload(graph_id, nodes, edges, external_inputs=normalized_external_inputs)
     return CompiledMechanismGraph(
         graph_id=graph_id,
         nodes=tuple(sorted(nodes.items())),
         edges=tuple(edges),
         diagnostics=tuple(diagnostics),
         identity_digest=_digest(payload),
+        external_inputs=normalized_external_inputs,
     )
 
 
@@ -263,6 +282,8 @@ def compose_graph_as_mechanism(
     version: str,
     inputs: tuple[PortSpec, ...],
     outputs: tuple[PortSpec, ...],
+    input_bindings: Mapping[str, str] | None = None,
+    output_bindings: Mapping[str, str] | None = None,
 ) -> MechanismSpec:
     """Export a valid graph as a reusable, non-executing composite node."""
 
@@ -270,6 +291,60 @@ def compose_graph_as_mechanism(
         raise MechanismGraphError("cannot compose an invalid mechanism graph")
     if not mechanism_id.strip() or not version.strip():
         raise MechanismGraphError("composite mechanism identity is required")
+    input_bindings = dict(input_bindings or {})
+    output_bindings = dict(output_bindings or {})
+    input_names = {port.name for port in inputs}
+    output_names = {port.name for port in outputs}
+    if set(input_bindings) != input_names:
+        raise MechanismGraphError("composite input bindings must cover every declared public input")
+    if set(output_bindings) != output_names:
+        raise MechanismGraphError("composite output bindings must cover every declared public output")
+
+    def resolve(ref: str, *, output: bool, kind: str) -> PortSpec:
+        if not isinstance(ref, str) or ref.count(".") != 1:
+            raise MechanismGraphError(f"composite {kind} binding must be a node.port reference")
+        node_id, port_name = ref.split(".", 1)
+        spec = dict(graph.nodes).get(node_id)
+        if spec is None:
+            raise MechanismGraphError(f"composite {kind} binding references unknown node: {ref}")
+        port = spec.port(port_name, output=output)
+        if port is None:
+            raise MechanismGraphError(f"composite {kind} binding references unknown port: {ref}")
+        return port
+
+    def compatible(public: PortSpec, internal: PortSpec) -> bool:
+        return (
+            public.schema == internal.schema
+            and public.unit == internal.unit
+            and public.frame == internal.frame
+            and public.visibility == internal.visibility
+        )
+
+    for public in inputs:
+        internal_ref = input_bindings[public.name]
+        if internal_ref not in graph.external_inputs:
+            raise MechanismGraphError(
+                f"composite input {public.name!r} is not bound to a declared graph external input: {internal_ref}"
+            )
+        internal = resolve(internal_ref, output=False, kind="input")
+        if not compatible(public, internal):
+            raise MechanismGraphError(f"composite input type mismatch: {public.name} -> {internal_ref}")
+    for public in outputs:
+        internal_ref = output_bindings[public.name]
+        internal = resolve(internal_ref, output=True, kind="output")
+        if not compatible(public, internal):
+            raise MechanismGraphError(f"composite output type mismatch: {public.name} -> {internal_ref}")
+    composite_identity = _digest(
+        {
+            "graph": graph.identity_digest,
+            "mechanism_id": mechanism_id,
+            "version": version,
+            "inputs": [_port_dict(port) for port in inputs],
+            "outputs": [_port_dict(port) for port in outputs],
+            "input_bindings": sorted(input_bindings.items()),
+            "output_bindings": sorted(output_bindings.items()),
+        }
+    )
     return MechanismSpec(
         mechanism_id=mechanism_id,
         version=version,
@@ -278,7 +353,7 @@ def compose_graph_as_mechanism(
         stateful=any(spec.stateful for _, spec in graph.nodes),
         clock="window",
         delay_windows=0,
-        implementation_ref=f"composite:{graph.identity_digest}",
+        implementation_ref=f"composite:{composite_identity}",
     )
 
 
