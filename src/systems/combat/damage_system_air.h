@@ -21,7 +21,7 @@ namespace {
 inline void accumulate_aircraft_structural_envelope_damage(const AircraftDamageBaseline &baseline,
                                                            const AeroState &aero, double dt_s,
                                                            AircraftDamageState &aircraft) {
-    if (dt_s <= 0.0 || aircraft.structural_integrity >= 0.985) {
+    if (dt_s <= 0.0) {
         return;
     }
 
@@ -32,17 +32,28 @@ inline void accumulate_aircraft_structural_envelope_damage(const AircraftDamageB
     const double q_ratio = std::max(0.0, aero.dynamic_pressure) / flutter_q;
     const double q_excess = std::max(0.0, q_ratio - damage_bias);
     const double mach_excess = std::max(0.0, (aero.mach_number / flutter_mach) - damage_bias);
+    const double mach_ratio = std::max(0.0, aero.mach_number) / flutter_mach;
+    // The onset terms model bounded exposure while an initially intact airframe
+    // is outside its authored q/Mach envelope. The coefficients are deliberately
+    // small synthetic defaults; platform-specific calibration remains separate.
+    const double intact_envelope_excess =
+        std::clamp(std::max(q_ratio - 1.0, mach_ratio - 1.0), 0.0, 1.0);
+    const double intact_flutter_onset_rate = 0.010 * intact_envelope_excess;
+    const double intact_overstress_onset_rate =
+        0.006 * std::clamp(std::max(q_ratio - 1.20, mach_ratio - 1.10), 0.0, 1.0);
     const double high_energy_gate =
         std::clamp((std::max(q_ratio, aero.mach_number / flutter_mach) - 0.90) / 0.25, 0.0, 1.0);
     const double stall_exposure = std::clamp((aero.stall_progress - 0.35) / 0.65, 0.0, 1.0) *
                                   high_energy_gate * std::max(0.0, prior_damage - 0.10);
 
     const double flutter_rate =
+        intact_flutter_onset_rate +
         ((0.035 * q_excess) + (0.025 * mach_excess) + (0.015 * stall_exposure)) * prior_damage;
     const double overstress_rate =
+        intact_overstress_onset_rate +
         ((0.020 * std::max(0.0, q_ratio - 1.20)) +
          (0.018 * std::max(0.0, aero.mach_number - (flutter_mach + 0.10)))) *
-        prior_damage;
+            prior_damage;
 
     if (flutter_rate <= 0.0 && overstress_rate <= 0.0) {
         return;

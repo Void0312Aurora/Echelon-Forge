@@ -1539,6 +1539,8 @@ class DefaultUnitFactory : public IUnitFactory {
             }
             e.set<SystemHealth>(initial_health);
             ComponentDamageState component_damage;
+            component_damage.structural_topology_profile =
+                def.damage_model.structural_topology_profile;
             for (const auto &hb : def.damage_model.hitboxes) {
                 for (const auto &component : hb.components) {
                     const std::string component_key = damage_component_key(component);

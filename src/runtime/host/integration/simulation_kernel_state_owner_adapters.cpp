@@ -587,7 +587,8 @@ nlohmann::json encode_component_damage(const ComponentDamageState &damage) {
         });
     }
     return {
-        {"schema", "component-damage-state.v2"},
+        {"schema", "component-damage-state.v3"},
+        {"structural_topology_profile", damage.structural_topology_profile},
         {"component_integrity", encode_double_map(damage.component_integrity)},
         {"component_redundancy_group", damage.component_redundancy_group},
         {"component_system", damage.component_system},
@@ -604,13 +605,37 @@ nlohmann::json encode_component_damage(const ComponentDamageState &damage) {
 }
 
 bool decode_component_damage(const nlohmann::json &encoded, ComponentDamageState *damage) {
-    if (damage == nullptr || !encoded.is_object() ||
-        encoded.value("schema", "") != "component-damage-state.v2" ||
-        encoded.size() != encode_component_damage(ComponentDamageState{}).size()) {
+    if (damage == nullptr || !encoded.is_object()) {
+        return false;
+    }
+    const auto schema = encoded.value("schema", "");
+    const bool is_v2 = schema == "component-damage-state.v2";
+    const bool is_v3 = schema == "component-damage-state.v3";
+    if ((!is_v2 && !is_v3) ||
+        encoded.size() != (is_v3 ? encode_component_damage(ComponentDamageState{}).size()
+                                 : encode_component_damage(ComponentDamageState{}).size() - 1) ||
+        (is_v3 ? !only_object_keys(
+                     encoded, {"schema", "structural_topology_profile", "component_integrity",
+                               "component_redundancy_group", "component_system",
+                               "component_redundancy_weight", "component_failure_mode_severity",
+                               "component_primary_failure_mode", "redundancy_group_availability",
+                               "redundancy_group_member_count", "redundancy_group_failed_count",
+                               "pending_dependency_effects", "has_fire_suppression_components"})
+               : !only_object_keys(
+                     encoded, {"schema", "component_integrity", "component_redundancy_group",
+                               "component_system", "component_redundancy_weight",
+                               "component_failure_mode_severity", "component_primary_failure_mode",
+                               "redundancy_group_availability", "redundancy_group_member_count",
+                               "redundancy_group_failed_count", "pending_dependency_effects",
+                               "has_fire_suppression_components"}))) {
         return false;
     }
     ComponentDamageState candidate;
     try {
+        if (is_v3) {
+            candidate.structural_topology_profile =
+                encoded.at("structural_topology_profile").get<std::string>();
+        }
         if (!decode_double_map(encoded.at("component_integrity"), &candidate.component_integrity) ||
             !decode_double_map(encoded.at("component_redundancy_weight"),
                                &candidate.component_redundancy_weight) ||
