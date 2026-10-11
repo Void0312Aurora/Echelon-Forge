@@ -647,6 +647,7 @@ void bind_gpu(nb::module_ &m) {
         [](const std::vector<gpu::InteractionEntityPacked> &entities,
            const std::vector<gpu::InteractionQueryPacked> &queries,
            const gpu::InteractionBroadphaseConfig &config, bool use_gpu) {
+            gpu::validate_interaction_broadphase_config(config);
             const auto query_count = queries.size();
             const auto words_per_query =
                 gpu::interaction_broadphase_word_count(config.entities_per_world);
