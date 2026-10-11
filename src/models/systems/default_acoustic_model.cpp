@@ -54,8 +54,8 @@ double target_source_level_db(const flecs::entity &target, double speed_mps) {
     // and prevents a receiver-only sonar edit from rewriting a target's emission.
     constexpr double kFallbackReferenceDb = 118.0;
     constexpr double kFallbackSpeedFactorDbPerMps = 1.6;
-    double source_level = kFallbackReferenceDb +
-                          std::max(0.0, speed_mps) * kFallbackSpeedFactorDbPerMps;
+    double source_level =
+        kFallbackReferenceDb + std::max(0.0, speed_mps) * kFallbackSpeedFactorDbPerMps;
     if (const SubmarinePlatform *sub = target.get<SubmarinePlatform>()) {
         source_level += sub->acoustic_stealth_bias_db + 10.0;
     } else if (target.get<ShipPlatform>() != nullptr) {
