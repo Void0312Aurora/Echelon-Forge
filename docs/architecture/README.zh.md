@@ -23,6 +23,18 @@ packet 只作为归档 provenance。
 - [Runtime composition 基线](standards/runtime_composition_baseline.zh.md)：维护中的默认
   CPU-exact Cordis/owner/native 权威链、单一构造真值、兼容规则、证据 gate 与 held 残余。
 
+## 待审议 RFC 决策
+
+- [类型化机制端口](standards/typed_mechanism_ports_adr.zh.md)（#229）。
+- [平台蓝图](standards/platform_blueprint_assembly_adr.zh.md)（#236）。
+- [兵力包](standards/force_package_composition_adr.zh.md)（#237）。
+- [Policy 观测与动作契约](standards/policy_observation_action_contract_adr.zh.md)（#238）。
+- [实验解析输入锁](standards/resolved_experiment_input_lock_adr.zh.md)（#239）。
+- [仿真失败域](standards/simulation_failure_domain_adr.zh.md)（#251）。
+
+这些决策仍为 proposed。[原型实现与剩余验收门槛](work/issues/rfc_qualified_composition_implementation.md)
+记录可执行证据、owner 审议和生产接入边界。
+
 ## Reference
 
 - [Truth-leak 清单](reference/t8_g4_truth_leak_inventory.zh.md)：当前 declared/open

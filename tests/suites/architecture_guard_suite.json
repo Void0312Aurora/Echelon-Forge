@@ -154,6 +154,18 @@
     "tests/architecture/structural_boundaries/test_stochastic_draw_guard.py",
     "tests/architecture/structural_boundaries/test_weapon_release_structure.py",
     "tests/architecture/tasking_contracts/test_scenario_loader_runtime_contract.py",
-    "tests/architecture/tasking_contracts/test_tasking_contracts_boundary.py"
+    "tests/architecture/tasking_contracts/test_tasking_contracts_boundary.py",
+    "tests/architecture/composition/test_rfc_qualified_composition.py",
+    "tests/architecture/governance/test_force_package_composition_adr.py",
+    "tests/architecture/governance/test_platform_blueprint_assembly_adr.py",
+    "tests/architecture/governance/test_policy_observation_action_contract_adr.py",
+    "tests/architecture/governance/test_resolved_experiment_input_lock_adr.py",
+    "tests/architecture/governance/test_simulation_failure_domain_adr.py",
+    "tests/architecture/governance/test_typed_mechanism_ports_adr.py",
+    "tests/architecture/mechanisms/test_ports.py",
+    "tests/architecture/tasking_contracts/test_failure_domains.py",
+    "tests/architecture/tasking_contracts/test_policy_contract.py",
+    "tests/architecture/mechanisms/test_air_perception_qualification.py",
+    "tests/architecture/composition/test_native_failure_qualification.py"
   ]
 }
