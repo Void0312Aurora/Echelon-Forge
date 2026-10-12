@@ -35,7 +35,7 @@ newer composition diagnostics and resize operation received the same failure gua
 | #237 | Relationships survive compilation and hashing with instance-scoped endpoints; reused packages expand independently; nested role capability requirements are checked; frame/anchor/provenance references survive in package-instance evidence. A qualification adapter now binds one compiled package to an existing CSG group by explicit entity-name and assembly-type maps, records CSG schema, scenario, geometry and embarked-inventory digests, and delegates the complete qualified snapshot to the existing loader. | Recursive, full named/mirror CSG, loader and negative fixtures. Both full S0 fixtures bind all seven surface hulls per group; native loader positions and 241 replay frames match. In-memory coordinate, inventory, geometry and runtime-metadata drift is rejected before loading. CSG still owns coordinate expansion, geodesy, embarked inventory and native scenario materialization. It does not install task authority or replace the CSG compiler. |
 | #238 | Field provenance/frame checks, explicit optional defaults with preserved field order, action bounds/timing checks, deterministic policy selection and a legacy-kind compatibility gate. | Basic mission fields come from the mission packet owner, action dimensions from the existing native action adapter, and action bounds from the existing Gym space. Two models created through DecisionModelRegistry retain reset/decide/close and generate identical native PilotAction values. The learned registration uses a deterministic stand-in, not a trained checkpoint. |
 | #239 | Deeply immutable canonical input identity, semantic freshness checks on compiled scenario snapshots, ScenarioCompiler dependency projection, separate observed native manifest/graph/topology identity, and a join to the existing RunReceipt validator. | One existing Air matrix entry produces a static candidate with explicit effective seeds. Source changes and in-memory semantic snapshot changes reject. Receipt/comparability fixtures are synthetic owner-contract vectors; they are not durable production run records. A string `status=completed` alone cannot establish comparability. |
-| #251 | Exact completion coverage and conservative aggregate-fault projection; local #210 native failure fence, guarded exports and explicit reset recovery. Python/facade reuse that owner implementation. | Native 3/4-world serial/parallel mixed-advancement and post-timestep setup faults, invalid recovery input, blocked retry/export and successful reset. No per-world commit, rollback, cancellation or process isolation is established. |
+| #251 | Exact completion coverage and conservative aggregate-fault projection; local #210 native failure fence, guarded exports and explicit reset recovery. Python/facade reuse that owner implementation. Actual 3/4-world launch-failure injection now remains private to native test access. | Native 3/4-world serial/parallel mixed-advancement, post-timestep setup faults and first/later worker-launch failures, invalid recovery input, blocked retry/export and successful reset. No per-world commit, rollback, cancellation, native generation ID or process isolation is established. |
 
 ## Single-owner integration map
 
@@ -133,7 +133,7 @@ tests and native composition-evidence tests. The architecture suite manifest
 registers the qualification tests. See the final execution result for counts;
 this document does not infer other-host or full-repository parity.
 
-Latest local results: **125 focused Python tests passed** and **31 native tests /
+Prior checkpoint local results: **125 focused Python tests passed** and **31 native tests /
 842 assertions passed**; **9 suite-manifest tests passed**. Ruff passed on all
 25 changed Python surfaces, whitespace checks passed, and **17 touched documents /
 116 local links had zero link issues**. The primary checkout retained its original HEAD and
@@ -216,7 +216,8 @@ while rejected plans retain their specific rejection reason.
 The current continuation passed the new **92-test typed-platform/input-lock
 regression subset**, plus **229 scenario tests with 23 subtests** after the
 compiler and CSG changes. Ruff, whitespace checks and focused existing native
-tests remain required gates. The prior continuation passed **67 content/composition/binding/rollback and
+tests remain required gates. The current native rerun passed **32 cases / 938 assertions**;
+the prior continuation passed **67 content/composition/binding/rollback and
 manifest tests**, **35 platform-spawn architecture tests**, and Ruff on all
 changed Python files. After rebuilding both native targets, the selected native
 suites passed **31 cases / 842 assertions**. The prior four standalone MSVC
