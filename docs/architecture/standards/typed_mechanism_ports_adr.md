@@ -99,7 +99,10 @@ The prototype checks complete recursive input closure, capabilities, information
 layers, clock compatibility and multiple producers. A qualification adapter now
 consumes an owner-provided `StageNodeManifest` snapshot, requires one-to-one
 node bindings and rejects adapter/diagnostic-only stages before checking the
-explicit native-system mapping against exported realized order. Immutable
+explicit native-system mapping against exported realized order. The native
+`WorldBatchRuntime` also exposes a read-only copy of the maintained manifest
+registry for qualification diagnostics; it does not install or mutate scheduler
+nodes. Immutable
 parameters, backend reference and clock policy participate in graph/composite
 identity. Strict stage admission additionally requires the owner contract fields
 and rejects duplicate state-shard writers; the default qualification mode remains
