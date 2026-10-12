@@ -15,6 +15,7 @@
 #include "core/engine/world_batch_visual_binding_compatibility_types.h"
 #include "core/interfaces/observation.h"
 #include "runtime/contracts/world_batch_contracts.h"
+#include "runtime/contracts/platform_capability_contracts.h"
 
 struct WorldEntityKinematics {
     double x = 0.0;
@@ -57,6 +58,9 @@ class WorldBatchRuntime {
     // operations reject retries until reset_batch completes successfully.
     [[nodiscard]] bool batch_healthy() const noexcept { return batch_healthy_; }
     [[nodiscard]] std::string batch_failure_reason() const;
+    [[nodiscard]] runtime::platform_capabilities::ResolvedPlatformSpawnPlan
+    resolve_factory_platform_spawn_plan(std::size_t world_index,
+                                        const std::string &type_name) const;
 
     std::uint64_t spawn_unit_from_world_spawn_request(const WorldSpawnRequest &request);
     std::uint64_t spawn_typed_platform_unit(const TypedPlatformSpawnRequest &request);

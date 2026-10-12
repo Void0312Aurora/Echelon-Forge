@@ -58,6 +58,23 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(observations.front().z == doctest::Approx(1000.0 - 0.5 * gravity * dt * dt));
     }
 
+    TEST_CASE("factory plan query uses the native owner without mutation") {
+        WorldBatchRuntime runtime(1);
+
+        const auto aircraft = runtime.resolve_factory_platform_spawn_plan(0, "Aircraft");
+        CHECK(aircraft.admitted);
+        CHECK(aircraft.source_type_name == "Aircraft");
+        CHECK(aircraft.type_name_projection_preserved);
+        CHECK(runtime::platform_capabilities::validate_resolved_platform_spawn_plan(aircraft)
+                  .valid);
+
+        const auto missing = runtime.resolve_factory_platform_spawn_plan(0, "Missing_Type");
+        CHECK_FALSE(missing.admitted);
+        CHECK(missing.rejection_reason == "resolved_platform_spawn_plan_type_name_not_found");
+        CHECK(runtime.batch_healthy());
+    }
+    }
+
     TEST_CASE("batch worker launch failure fences exports and failed recovery until reset") {
         for (const std::size_t world_count : {std::size_t{3}, std::size_t{4}}) {
             for (const std::size_t failed_launch : {std::size_t{0}, std::size_t{1}}) {

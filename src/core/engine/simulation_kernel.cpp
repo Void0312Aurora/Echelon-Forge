@@ -561,6 +561,25 @@ std::string SimulationKernel::resolved_composition_sha256() const {
     return composition_ ? composition_->resolved_manifest_sha256() : std::string{};
 }
 
+runtime::platform_capabilities::ResolvedPlatformSpawnPlan
+SimulationKernel::resolve_platform_spawn_plan_for_type_name(const std::string &type_name) const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("resolve_platform_spawn_plan_for_type_name");
+    IUnitFactory *factory = unit_factory();
+    if (factory == nullptr) {
+        runtime::platform_capabilities::ResolvedPlatformSpawnPlan plan{};
+        plan.source_request_kind = std::string(
+            runtime::platform_capabilities::kPlatformSpawnRequestKindTypeNameProjection);
+        plan.source_type_name = type_name;
+        plan.type_name_projection_preserved = true;
+        plan.admitted = false;
+        plan.rejection_reason = "resolved_platform_spawn_plan_unit_factory_unavailable";
+        plan.diagnostics_reason = plan.rejection_reason;
+        return plan;
+    }
+    return factory->resolve_platform_spawn_plan_for_type_name(type_name);
+}
+
 std::uint64_t SimulationKernel::world_composition_generation() const noexcept {
     auto composition_lock = acquire_composition_operation();
     return composition_ ? composition_->world_generation() : 0;

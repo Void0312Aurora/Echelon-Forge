@@ -21,6 +21,9 @@ void bind_runtime_engine(nb::module_ &m) {
         .def("effective_worker_threads", &WorldBatchRuntime::effective_worker_threads)
         .def("batch_healthy", &WorldBatchRuntime::batch_healthy)
         .def("batch_failure_reason", &WorldBatchRuntime::batch_failure_reason)
+        .def("resolve_factory_platform_spawn_plan",
+             &WorldBatchRuntime::resolve_factory_platform_spawn_plan,
+             nb::arg("world_index"), nb::arg("type_name"))
         .def("world_raw_quarantine",
              nb::overload_cast<size_t>(&WorldBatchRuntime::world_raw_quarantine),
              nb::rv_policy::reference_internal, nb::arg("index"))

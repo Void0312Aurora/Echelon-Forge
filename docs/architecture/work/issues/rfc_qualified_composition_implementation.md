@@ -180,10 +180,12 @@ merge into main, accept the proposed ADRs or close RFC issues.
 3. **#236 native typed plan seam.** The bounded adapter and native identity
    checks now cover slot cardinality, module digest/native-reference identity,
    maintained capability families, an Air parity path and an optional comparison
-   against a factory-resolved source type/capability-semantics snapshot. Owner
-   review is still required for the canonical capability-key mapping, explicit
-   unit contracts, hardpoint/loadout semantics and broader physical
-   compatibility before any production consumer is enabled.
+   against a factory-resolved source type/capability-semantics snapshot. The
+   native `DefaultUnitFactory` now exposes that resolved plan through a read-only
+   `WorldBatchRuntime` query, preserving the factory as the only materialization
+   owner. Owner review is still required for the canonical capability-key
+   mapping, explicit unit contracts, hardpoint/loadout semantics and broader
+   physical compatibility before any production consumer is enabled.
 4. **#237 CSG migration proof.** Consume compiled organization through the
    existing CSG/scenario placement adapter; compare generated entities, anchored
    geometry, embarked inventory and native results. Keep separate membership,
@@ -243,6 +245,16 @@ existing F-16 native type and does not compare arbitrary authoring fields with
 the factory's internally derived capability bundle. Units and broader physical
 compatibility remain owner-review gates.
 
+The native factory projection continuation rebuilt `ef_py` and `ef_test` in the
+isolated `build-rfc-native` tree. The `world_batch_runtime` suite passed **21
+cases / 468 assertions**. The Python binding, composition and platform-adapter
+regression subset passed **35 tests**. The new query is read-only: it returns
+the factory's resolved plan for a type name, preserves the source type
+projection, rejects unknown types with the native reason, and leaves the batch
+healthy. This exposes the owner result for diagnostics; it does not yet make
+authored blueprint capability keys or hardpoint/loadout fields equivalent to
+that result.
+
 The #237 CSG adapter now has **14 force-package/adapter tests**, including two
 full S0 fixture runs. It requires an explicit compiled-scenario input and
 explicit organization-to-entity and assembly-to-native-type bindings; it does
@@ -254,9 +266,11 @@ The physical compatibility slice for #236 is bounded and fail-closed. A
 blueprint may declare finite mass and power budgets plus slot mount classes;
 constrained assemblies require those module fields, use deterministic sorted
 `math.fsum` totals, and bind the physical tuple into plan identity. Legacy
-unconstrained modules remain valid with unknown physical values. Hardpoint,
-loadout, factory-derived capability-plan comparison and broader unit contracts
-remain open owner gates.
+unconstrained modules remain valid with unknown physical values. The native
+factory projection seam is now covered by native and Python binding tests, but
+the adapter is not yet wired to a canonical owner capability-key mapping.
+Hardpoint, loadout, factory-derived capability-plan comparison and broader unit
+contracts remain open owner gates.
 
 The qualification modules, catalogue helpers, tests and proposed documents remain
 opt-in. Configuration formats, native scheduling, production profiles and
