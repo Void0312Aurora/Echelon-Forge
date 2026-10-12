@@ -35,6 +35,8 @@ native 3/4-world 串并行证明覆盖不同 world 的推进差异、时间步�
 导出/重试保护、无效恢复输入及显式 reset；Python 和 maintained facade 复用同一 native
 fence。全部 world 未知时结果为 `failed`，要求显式 reset/recreate，不推断 per-world commit。
 机制子故障证明单独观察到内部状态改变、外部 packet 尚未发布。这些本地变更不代表上游
-#210 关闭；运行中的 native system 异常、runtime generation ID 和受限 fatal/阻塞控制仍待验证。
+#210 关闭；native batch 另注入 worker 启动失败，验证已启动 worker 汇合、导出封锁、失败
+恢复封锁和显式 reset 的 fail-closed 行为。运行中的 native system 异常、runtime generation
+ID 和受限 fatal/阻塞控制仍待验证。
 
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。

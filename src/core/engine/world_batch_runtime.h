@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "components/physics/instruments.h"
@@ -151,6 +152,9 @@ class WorldBatchRuntime {
                                                       int downsample, bool use_gpu = false) const;
 
   private:
+    friend class WorldBatchRuntimeTestAccess;
+    void execute_for_index(size_t task_count, size_t requested_threads,
+                           std::function<void(size_t)> fn) const;
     void parallel_for_index(size_t task_count, size_t requested_threads,
                             std::function<void(size_t)> fn) const;
     void ensure_batch_healthy() const;
@@ -165,4 +169,6 @@ class WorldBatchRuntime {
     size_t worker_threads_ = 1;
     mutable bool batch_healthy_ = true;
     mutable std::exception_ptr batch_failure_;
+    // Private native test seam; production uses the existing jthread launcher.
+    std::function<std::jthread(std::function<void()>)> worker_thread_factory_;
 };
