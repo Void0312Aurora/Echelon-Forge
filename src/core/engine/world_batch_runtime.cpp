@@ -13,6 +13,7 @@
 #include <bit>
 #include <cmath>
 #include <exception>
+#include <limits>
 #include <stdexcept>
 
 namespace {
@@ -400,10 +401,14 @@ WorldBatchRuntime::export_recent_engagement_events(size_t world_index) const {
 void WorldBatchRuntime::reset_batch(const std::vector<uint32_t> &seeds) {
     world_batch_setup::validate_reset_seeds(worlds_.size(), seeds);
     try {
+        if (batch_generation_ == std::numeric_limits<std::uint64_t>::max()) {
+            throw std::overflow_error("WorldBatchRuntime batch generation exhausted");
+        }
         execute_for_index(
             worlds_.size(), worker_threads_, [&](size_t i) {
                 worlds_[i]->reset(world_batch_setup::resolve_reset_seed(i, worlds_.size(), seeds));
             });
+        ++batch_generation_;
         batch_healthy_ = true;
         batch_failure_ = nullptr;
     } catch (...) {

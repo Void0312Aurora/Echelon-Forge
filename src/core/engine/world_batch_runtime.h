@@ -59,6 +59,9 @@ class WorldBatchRuntime {
     // operations reject retries until reset_batch completes successfully.
     [[nodiscard]] bool batch_healthy() const noexcept { return batch_healthy_; }
     [[nodiscard]] std::string batch_failure_reason() const;
+    // Native-owned batch generation. A failed batch retains its generation;
+    // successful reset_batch creates the next generation.
+    [[nodiscard]] std::uint64_t batch_generation() const noexcept { return batch_generation_; }
     [[nodiscard]] runtime::platform_capabilities::ResolvedPlatformSpawnPlan
     resolve_factory_platform_spawn_plan(std::size_t world_index,
                                         const std::string &type_name) const;
@@ -176,6 +179,7 @@ class WorldBatchRuntime {
     size_t worker_threads_ = 1;
     mutable bool batch_healthy_ = true;
     mutable std::exception_ptr batch_failure_;
+    std::uint64_t batch_generation_ = 1;
     // Private native test seam; static storage avoids changing object layout.
     static std::function<std::jthread(std::function<void()>)> worker_thread_factory_for_test_;
 };

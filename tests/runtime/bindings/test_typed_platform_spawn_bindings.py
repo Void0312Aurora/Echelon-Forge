@@ -216,6 +216,8 @@ def test_legacy_world_spawn_request_type_name_path_remains_python_mainline_surfa
 
 def test_world_batch_exposes_native_factory_resolved_plan_read_only() -> None:
   runtime = ef_py.WorldBatchRuntime(1)
+  initial_generation = runtime.batch_generation()
+  assert initial_generation > 0
   plan = runtime.resolve_factory_platform_spawn_plan(0, "Aircraft")
 
   assert plan.admitted
@@ -228,6 +230,8 @@ def test_world_batch_exposes_native_factory_resolved_plan_read_only() -> None:
   assert not missing.admitted
   assert missing.rejection_reason == "resolved_platform_spawn_plan_type_name_not_found"
   assert runtime.batch_healthy()
+  runtime.reset_batch([31])
+  assert runtime.batch_generation() == initial_generation + 1
 
 
 def test_world_batch_exposes_maintained_native_stage_manifest_snapshot() -> None:

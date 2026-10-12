@@ -79,6 +79,7 @@ TEST_SUITE("world_batch_runtime") {
                 CHECK(launch_count.load() == failed_launch + 1);
                 CHECK(finished_count.load() == failed_launch);
                 CHECK_FALSE(batch.batch_healthy());
+                const auto failed_generation = batch.batch_generation();
                 CHECK(batch.batch_failure_reason() == "injected batch worker launch failure");
                 CHECK((clock(0) > 0.0) == (failed_launch == 1));
                 for (std::size_t index = 1; index < world_count; ++index) {
@@ -100,6 +101,7 @@ TEST_SUITE("world_batch_runtime") {
                 WorldBatchRuntimeTestAccess::set_worker_thread_factory(batch, {});
                 REQUIRE_NOTHROW(batch.reset_batch({31}));
                 CHECK(batch.batch_healthy());
+                CHECK(batch.batch_generation() == failed_generation + 1);
                 CHECK(batch.batch_failure_reason().empty());
                 for (std::size_t index = 0; index < world_count; ++index) {
                     CHECK(clock(index) == 0.0);
@@ -138,6 +140,7 @@ TEST_SUITE("world_batch_runtime") {
             CHECK(runtime.batch_healthy());
             CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
             CHECK_FALSE(runtime.batch_healthy());
+            const auto failed_generation = runtime.batch_generation();
             CHECK(runtime.batch_failure_reason().find("exact-stage trace frame") !=
                   std::string::npos);
 
@@ -147,6 +150,7 @@ TEST_SUITE("world_batch_runtime") {
             runtime.world_raw_quarantine(1).end_exact_stage_trace_frame();
             CHECK_NOTHROW(runtime.reset_batch({11, 17}));
             CHECK(runtime.batch_healthy());
+            CHECK(runtime.batch_generation() == failed_generation + 1);
             CHECK(runtime.batch_failure_reason().empty());
             CHECK_NOTHROW(runtime.step_batch());
         }
