@@ -53,7 +53,8 @@ manifest machinery 产出的 artifact 不会自动变成可执行机制。
 受限 Air seeker 证明复用现有 native 视线转换、距离/世界坐标投影和有状态 CV 跟踪器，区分
 窗口发布与每秒数值语义。固定测量时刻下，四种步长到达同一 4 秒终点，结果满足记录的容差。
 测试路径在 tracker 更新后、外部 packet 发布前注入异常，并复用 #251 投影为未知状态；
-该证据不证明回滚，也未把用户编写的图安装进 native 调度。native schema vocabulary 的选择和
-owner 发布仍是独立 gate。
+该证据不证明回滚。当前 Air 资格路径在编译时强制六个 schema 的显式 vocabulary，这是针对三个
+既有 native 实现的受限 owner 映射，不是全仓库 packet vocabulary。snapshot 发布 seam 仅用于诊断，
+不会把用户编写的图安装进 native 调度；跨域 schema 选择和 authored graph 接纳仍是独立 gate。
 
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。
