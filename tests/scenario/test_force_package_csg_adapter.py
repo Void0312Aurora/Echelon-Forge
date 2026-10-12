@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from pathlib import Path
+from copy import deepcopy
 
 import pytest
+
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
+
+ensure_repo_imports()
 
 from python.scenario.force_package import (
     AssemblyReference,
@@ -11,8 +15,13 @@ from python.scenario.force_package import (
     ForcePackageError,
     PackageMember,
 )
-from python.scenario.force_package_csg_adapter import qualify_force_package_against_csg
+from python.scenario.force_package_csg_adapter import (
+    load_qualified_csg_scenario,
+    qualify_force_package_against_csg,
+)
 from python.scenario.compiler import ScenarioCompiler
+from python.scenario.runtime.csg_replay import _csg_replay_unit_frame, capture_csg_replay
+from python.simulation import create_scenario_runtime_adapter
 
 
 OOB_REF = "docs/domains/naval/reviews/csg_order_of_battle_20260928/csg_order_of_battle_ford_20260928.md"
@@ -63,7 +72,30 @@ def _package() -> tuple[ForcePackage, dict[str, AssemblyReference]]:
 
 
 def _compiled_scenario():
-    return ScenarioCompiler.compile_data(_scenario(), source_path=str(Path.cwd() / "README.md"))
+    return ScenarioCompiler.compile_data(_scenario())
+
+
+def _full_package(group):
+    gid, side = group["group_id"], group["side"]
+    members = tuple(
+        PackageMember(name, "assembly", row["type"], row["role"], side)
+        for row in group["ships"]
+        for name in row["entity_names"]
+    )
+    package = ForcePackage(
+        f"qualification.{gid}", "1", side, members,
+        reference_frame="geodetic", anchor_ref=gid, provenance_ref=group["oob_ref"],
+    )
+    assemblies = {
+        member.ref: AssemblyReference(member.ref, side, frozenset({"mobility"}))
+        for member in members
+    }
+    role_capabilities = {member.role: frozenset({"mobility"}) for member in members}
+    bindings = {
+        f"{package.package_id}/{member.member_id}": member.member_id
+        for member in members
+    }
+    return package, assemblies, role_capabilities, bindings, {member.ref: member.ref for member in members}
 
 
 def test_force_package_projection_matches_existing_csg_entity_identity_and_geometry() -> None:
@@ -84,6 +116,35 @@ def test_force_package_projection_matches_existing_csg_entity_identity_and_geome
     assert result.csg_schema == "csg.group_composition.v2"
     assert len(result.geometry_digest) == 64
     assert "scenario.csg.group_composition.v2" in result.evidence_refs
+
+
+@pytest.mark.parametrize("stem", ["csg_s0_ford_vs_fujian_named_v1", "csg_s0_ford_mirror_v1"])
+def test_full_csg_qualification_preserves_native_geometry_inventory_and_replay(stem) -> None:
+    scenario_path = resolve_repo_path("scenarios", "naval", "csg", f"{stem}.json")
+    scenario = ScenarioCompiler.compile_path(scenario_path)
+    snapshot = scenario.instantiate()
+    results = []
+    for group in snapshot["meta"]["csg"]["groups"]:
+        package, assemblies, role_capabilities, bindings, type_names = _full_package(group)
+        results.append(qualify_force_package_against_csg(
+            package=package, packages={}, assemblies=assemblies, role_capabilities=role_capabilities,
+            scenario=scenario, group_id=group["group_id"], entity_bindings=bindings,
+            assembly_type_names=type_names,
+        ))
+        assert len(results[-1].entity_bindings) == 7
+    reference = capture_csg_replay(scenario_path, seed=3)
+    adapter = create_scenario_runtime_adapter(1)
+    assert adapter.load_database(resolve_repo_path("examples", "config", "database"))
+    loader = adapter.make_scenario_loader(0)
+    assert load_qualified_csg_scenario(loader, scenario=scenario, qualifications=results, seed=3) is None
+    assert {key: loader.scenario_data[key] for key in snapshot} == snapshot
+    assert loader._compiled_runtime_metadata.meta_config["csg"] == snapshot["meta"]["csg"]
+    for frame in reference["frames"]:
+        if frame["tick"]:
+            loader.sim.step()
+        assert _csg_replay_unit_frame(loader.sim, loader) == frame["units"]
+    assert len(reference["frames"]) == 241
+    assert scenario.instantiate() == snapshot
 
 
 @pytest.mark.parametrize(
@@ -110,3 +171,64 @@ def test_force_package_projection_rejects_identity_drift(mutator, expected) -> N
             entity_bindings={"qualification.csg/BLUE_CSG12__cvn78": "BLUE_CSG12__cvn78"},
             assembly_type_names={SHIP_TYPE: SHIP_TYPE},
         )
+
+
+def _minimal_qualification(scenario):
+    package, assemblies = _package()
+    return qualify_force_package_against_csg(
+        package=package, packages={}, assemblies=assemblies,
+        role_capabilities={"carrier": frozenset({"mobility"})}, scenario=scenario,
+        group_id="BLUE_CSG12", entity_bindings={"qualification.csg/BLUE_CSG12__cvn78": "BLUE_CSG12__cvn78"},
+        assembly_type_names={SHIP_TYPE: SHIP_TYPE},
+    )
+
+
+class _RecordingLoader:
+    def __init__(self):
+        self.calls = []
+
+    def load_compiled_scenario(self, scenario, seed=42):
+        self.calls.append((scenario, seed))
+
+
+@pytest.mark.parametrize("target", ["position", "inventory", "geometry", "runtime_metadata"])
+def test_csg_snapshot_drift_rejects_before_loader_mutation(target) -> None:
+    scenario = _compiled_scenario()
+    qualification = _minimal_qualification(scenario)
+    loader = _RecordingLoader()
+    if target == "position":
+        scenario.merged_scenario_data["entities"][0]["pos"][0] += 100.0
+    elif target == "inventory":
+        scenario.merged_scenario_data["meta"]["csg"]["groups"][0]["embarked_inventory"].append({"count": 1})
+    elif target == "geometry":
+        scenario.merged_scenario_data["meta"]["csg"]["geometry"]["anchor"]["latitude_deg"] = 0.0
+    else:
+        scenario.runtime_metadata.meta_config["csg"]["groups"][0]["side"] = "Red"
+    with pytest.raises(ForcePackageError, match="csg_scenario_stale|csg_runtime_metadata_mismatch"):
+        load_qualified_csg_scenario(loader, scenario=scenario, qualifications=[qualification])
+    assert loader.calls == []
+
+
+def test_csg_load_requires_complete_qualification_and_same_snapshot() -> None:
+    scenario = _compiled_scenario()
+    qualification = _minimal_qualification(scenario)
+    loader = _RecordingLoader()
+    for results in ([], [qualification, qualification]):
+        with pytest.raises(ForcePackageError, match="qualification_scope_mismatch"):
+            load_qualified_csg_scenario(loader, scenario=scenario, qualifications=results)
+    with pytest.raises(ForcePackageError, match="qualification_snapshot_mismatch"):
+        load_qualified_csg_scenario(loader, scenario=scenario, qualifications=[replace(qualification, scenario_digest="0" * 64)])
+    assert loader.calls == []
+
+
+def test_csg_group_metadata_conflicts_reject_before_qualification() -> None:
+    original = _compiled_scenario().instantiate()
+    for mutator, expected in (
+        (lambda data: data["meta"]["csg"]["groups"][0]["ships"][0]["entity_names"].clear(), "group_entity_metadata_mismatch"),
+        (lambda data: data["meta"]["csg"]["groups"][0]["embarked_inventory"].append({"count": 1, "embarked_on": "missing"}), "inventory_host_unknown"),
+    ):
+        data = deepcopy(original)
+        mutator(data)
+        scenario = ScenarioCompiler.compile_data(data)
+        with pytest.raises(ForcePackageError, match=expected):
+            _minimal_qualification(scenario)

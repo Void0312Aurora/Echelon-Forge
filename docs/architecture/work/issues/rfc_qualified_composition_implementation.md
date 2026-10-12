@@ -31,10 +31,10 @@ newer composition diagnostics and resize operation received the same failure gua
 | RFC | Implemented in this checkpoint | Evidence and limits |
 | --- | --- | --- |
 | #229 | Complete recursive boundaries; capability/clock/backend inheritance; incompatible information layers, clocks and multiple producers reject. Immutable parameters, backend references and clock policies participate in identity. Two native Air seeker primitive adapters and one stateful CV tracker share a qualification configuration. | Native LOS conversion and world-position reconstruction feed the actual CV tracker. Four timesteps reach the same four-second horizon under a fixed measurement schedule. A child exception after native state mutation but before outer publication reuses #251's unknown-state projection. The live topology order checker still detects a reversed `ClearForces`/`FlightControl` mapping. These are bounded proofs, not installation of an authored execution graph. |
-| #236 | Numeric bounds, blueprint constraints, module digests and native reference selections participate in plan identity. An explicit immutable legacy projection returns existing UnitDefinition JSON and rejects missing fields or changed module bindings before loading. The opt-in `platform_blueprint_adapter` now projects a resolved plan to the maintained typed request shape and rejects slot/cardinality, module identity and native capability-family drift before DTO publication. The native validator rejects source, bundle and resolved-capability drift. | F-16 and Ground infantry are lowered, loaded and spawned through existing native owners. All public observation fields match at setup and after four steps. A separate F-16 assembly reaches `RuntimeFacade` through the maintained typed setup and matches `WorldSpawnRequest` at setup and after four steps. Generalized factory-plan comparison, explicit unit contracts and all physical compatibility constraints remain open. |
-| #237 | Relationships survive compilation and hashing with instance-scoped endpoints; reused packages expand independently; nested role capability requirements are checked; frame/anchor/provenance references survive in package-instance evidence. A qualification adapter now binds one compiled package to an existing CSG group by explicit entity-name and assembly-type maps, and records CSG schema, scenario, geometry and embarked-inventory digests. | Recursive, CSG adapter and negative fixtures. The adapter rejects binding/side/role/frame drift; CSG still owns coordinate expansion, geodesy, embarked inventory and native scenario materialization. It does not install task authority or replace the CSG compiler. |
+| #236 | Numeric bounds, blueprint constraints, module digests and native reference selections participate in plan identity. Bounded mass, power-budget and slot-mount compatibility checks now fail closed before publication. An explicit immutable legacy projection returns existing UnitDefinition JSON and rejects missing fields or changed module bindings before loading. The opt-in `platform_blueprint_adapter` now projects a resolved plan to the maintained typed request shape and rejects slot/cardinality, module identity and native capability-family drift before DTO publication. The native validator rejects source, bundle and resolved-capability drift. | F-16 and Ground infantry are lowered, loaded and spawned through existing native owners. All public observation fields match at setup and after four steps. A separate F-16 assembly reaches `RuntimeFacade` through the maintained typed setup and matches `WorldSpawnRequest` at setup and after four steps. Full factory-plan comparison, hardpoint/loadout semantics and broader unit compatibility remain open. |
+| #237 | Relationships survive compilation and hashing with instance-scoped endpoints; reused packages expand independently; nested role capability requirements are checked; frame/anchor/provenance references survive in package-instance evidence. A qualification adapter now binds one compiled package to an existing CSG group by explicit entity-name and assembly-type maps, records CSG schema, scenario, geometry and embarked-inventory digests, and delegates the complete qualified snapshot to the existing loader. | Recursive, full named/mirror CSG, loader and negative fixtures. Both full S0 fixtures bind all seven surface hulls per group; native loader positions and 241 replay frames match. In-memory coordinate, inventory, geometry and runtime-metadata drift is rejected before loading. CSG still owns coordinate expansion, geodesy, embarked inventory and native scenario materialization. It does not install task authority or replace the CSG compiler. |
 | #238 | Field provenance/frame checks, explicit optional defaults with preserved field order, action bounds/timing checks, deterministic policy selection and a legacy-kind compatibility gate. | Basic mission fields come from the mission packet owner, action dimensions from the existing native action adapter, and action bounds from the existing Gym space. Two models created through DecisionModelRegistry retain reset/decide/close and generate identical native PilotAction values. The learned registration uses a deterministic stand-in, not a trained checkpoint. |
-| #239 | Deeply immutable canonical input identity, ScenarioCompiler dependency projection, separate observed native manifest/graph/topology identity, and a join to the existing RunReceipt validator. | One existing Air matrix entry produces a static candidate with explicit effective seeds. Stale scenario snapshots reject. Receipt/comparability fixtures are synthetic owner-contract vectors; they are not durable production run records. A string `status=completed` alone cannot establish comparability. |
+| #239 | Deeply immutable canonical input identity, semantic freshness checks on compiled scenario snapshots, ScenarioCompiler dependency projection, separate observed native manifest/graph/topology identity, and a join to the existing RunReceipt validator. | One existing Air matrix entry produces a static candidate with explicit effective seeds. Source changes and in-memory semantic snapshot changes reject. Receipt/comparability fixtures are synthetic owner-contract vectors; they are not durable production run records. A string `status=completed` alone cannot establish comparability. |
 | #251 | Exact completion coverage and conservative aggregate-fault projection; local #210 native failure fence, guarded exports and explicit reset recovery. Python/facade reuse that owner implementation. | Native 3/4-world serial/parallel mixed-advancement and post-timestep setup faults, invalid recovery input, blocked retry/export and successful reset. No per-world commit, rollback, cancellation or process isolation is established. |
 
 ## Single-owner integration map
@@ -211,7 +211,10 @@ lowering/loader path. Native request validation now checks source identity,
 bundle identity and capability records by unique capability ID before admission,
 while rejected plans retain their specific rejection reason.
 
-The current continuation passed **67 content/composition/binding/rollback and
+The current continuation passed the new **92-test typed-platform/input-lock
+regression subset**, plus **229 scenario tests with 23 subtests** after the
+compiler and CSG changes. Ruff, whitespace checks and focused existing native
+tests remain required gates. The prior continuation passed **67 content/composition/binding/rollback and
 manifest tests**, **35 platform-spawn architecture tests**, and Ruff on all
 changed Python files. After rebuilding both native targets, the selected native
 suites passed **31 cases / 842 assertions**. The prior four standalone MSVC
@@ -224,10 +227,20 @@ existing F-16 native type and does not compare arbitrary authoring fields with
 the factory's internally derived capability bundle. Units and broader physical
 compatibility remain owner-review gates.
 
-The #237 CSG adapter adds **18 force-package/adapter tests**. It requires an
-explicit compiled-scenario input and explicit organization-to-entity and
-assembly-to-native-type bindings; it does not infer those mappings from the
-CSG domain schema.
+The #237 CSG adapter now has **14 force-package/adapter tests**, including two
+full S0 fixture runs. It requires an explicit compiled-scenario input and
+explicit organization-to-entity and assembly-to-native-type bindings; it does
+not infer those mappings from the CSG domain schema. `load_qualified_csg_scenario`
+only delegates a fresh, fully qualified snapshot to `ScenarioLoader`; it does
+not synthesize entities or grant command authority.
+
+The physical compatibility slice for #236 is bounded and fail-closed. A
+blueprint may declare finite mass and power budgets plus slot mount classes;
+constrained assemblies require those module fields, use deterministic sorted
+`math.fsum` totals, and bind the physical tuple into plan identity. Legacy
+unconstrained modules remain valid with unknown physical values. Hardpoint,
+loadout, factory-derived capability-plan comparison and broader unit contracts
+remain open owner gates.
 
 The qualification modules, catalogue helpers, tests and proposed documents remain
 opt-in. Configuration formats, native scheduling, production profiles and
