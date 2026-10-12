@@ -39,8 +39,10 @@ Last verified: `2026-10-12`
 
 方案比较以英文规范页的 Option comparison 为准。
 
-原型已补齐递归输入闭包、能力与时钟继承、信息层和多生产者校验，并对显式 native system
-映射检查已实现顺序。不可变参数、backend 引用与 clock policy 参与图和组合身份。
+原型已补齐递归输入闭包、能力与时钟继承、信息层和多生产者校验。资格适配器现在消费
+owner 提供的 `StageNodeManifest` 快照，要求节点一一绑定，并在检查显式 native system
+映射顺序前拒绝 adapter/diagnostic-only stage。不可变参数、backend 引用与 clock policy
+参与图和组合身份。
 
 这仍是静态机制图契约试点。qualification/shadow 编译和生产接纳是分开的 gate；通过现有
 manifest machinery 产出的 artifact 不会自动变成可执行机制。
