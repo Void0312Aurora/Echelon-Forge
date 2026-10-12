@@ -94,7 +94,7 @@ test('Cordis producer derives the frozen owner-admitted profile projection', () 
   assert.deepEqual(projection, fixture('default_runtime_profile_projection.v1.json'));
   assert.equal(
     projection.projection_sha256,
-    'a18710e47cdb5d40f8502f066bc15c54b1edbd522050820024a60cc8422d8741',
+    '5b38579606d9095849b57aa21fa6def4059e69ee18c9c2408178fc9a73c84df0',
   );
 });
 

@@ -258,13 +258,18 @@ void register_platform_state_reflection(flecs::world &ecs) {
         .member<double>("self_noise_per_speed_db")
         .member<int>("crew");
     ecs.component<SubmarineBathymetryPolicy>()
-        .member<bool>("enabled")
-        .member<double>("min_keel_clearance_m")
-        .member<double>("hull_reference_to_keel_m")
-        .member<std::string>("horizontal_frame")
-        .member<std::string>("vertical_datum")
+        .member<bool>("enabled", 1, offsetof(SubmarineBathymetryPolicy, enabled))
+        .member<double>("min_keel_clearance_m", 1,
+                        offsetof(SubmarineBathymetryPolicy, min_keel_clearance_m))
+        .member<double>("hull_reference_to_keel_m", 1,
+                        offsetof(SubmarineBathymetryPolicy, hull_reference_to_keel_m))
+        .member<std::string>("horizontal_frame", 1,
+                             offsetof(SubmarineBathymetryPolicy, horizontal_frame))
+        .member<std::string>("vertical_datum", 1,
+                             offsetof(SubmarineBathymetryPolicy, vertical_datum))
         .member<std::uint8_t>("last_status", 1, offsetof(SubmarineBathymetryPolicy, last_status))
-        .member<double>("last_requested_depth_m")
+        .member<double>("last_requested_depth_m", 1,
+                        offsetof(SubmarineBathymetryPolicy, last_requested_depth_m))
         .member<double>("last_allowed_depth_m", 1,
                         offsetof(SubmarineBathymetryPolicy, last_allowed_depth_m))
         .member<std::uint8_t>("last_availability", 1,

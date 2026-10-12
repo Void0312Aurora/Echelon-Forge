@@ -72,10 +72,16 @@ source, surface elevation, and step-time metadata. The default environment
 returns `Unavailable`; it does not synthesize an ocean floor. Naval motion
 consumes this seam only when an entity opts into `SubmarineBathymetryPolicy`.
 Missing, dry, out-of-coverage, invalid-datum, inconsistent-frame, or
-time-ambiguous observations reject the complete step, while entities without
+time-ambiguous observations hold depth and horizontal movement, while entities without
 the policy preserve the legacy open-water profile. A valid observation is
 defined over the full proposed horizontal step, so a provider must account for
 a rising seabed within that segment before returning `Valid`.
+Heading can still evolve within the existing turn limit during a held step.
+This initial slice is native-only opt-in: no content-loader or Agent observation
+surface enables or exposes the environmental truth. The policy is admitted in
+the component graph and reflected for state transfer; the resulting composition
+identity and provenance are regenerated. The synthetic fixtures are test data,
+not an admitted ocean atlas.
 
 ### Ground-coupling findings on `origin/work/army-mechanisms`
 

@@ -1360,6 +1360,7 @@ DEFAULT_COMPONENTS = (
   "MassProperties",
   "ShipPlatform",
   "SubmarinePlatform",
+  "SubmarineBathymetryPolicy",
   "Propulsion",
   "AeroTuning",
   "EngineTuning",

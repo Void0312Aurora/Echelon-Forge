@@ -62,5 +62,21 @@ time-invariant-for-step declaration. `Unavailable`, `Dry`, `OutOfCoverage`,
 observable policy status. An entity without the policy retains the legacy
 open-water kinematic behavior.
 
+`SubmarineBathymetryPolicy` is an admitted, reflected optional component. This
+initial test slice attaches it through the native world lease; content loading
+and Agent observations do not enable or expose it. Its addition changes the
+sealed composition identity and is carried through the compatibility manifest,
+resolved plan, Cordis provenance, and host/batch evidence. The policy and its
+last status/source survive native state transfer. The default environment
+returns `Unavailable`; no atlas or ocean-depth data is fabricated.
+
+Clearance and hull-reference offset must both be finite and nonnegative.
+Water too shallow to contain the hull even at surface zero rejects horizontal
+movement. A segment already incompatible with the current depth also rejects
+the horizontal sweep and permits only rate-limited vertical movement toward
+the allowed depth. Unknown metadata holds depth and horizontal movement;
+heading may still evolve within the existing turn limit. A conservative segment
+minimum can reject trajectories that a future continuous solver could admit.
+
 This slice limits commands and trajectories only. It does not model seabed
 contact, collision response, damage, or hydrodynamics.

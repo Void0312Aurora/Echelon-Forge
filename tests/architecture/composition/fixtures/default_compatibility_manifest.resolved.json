@@ -424,6 +424,11 @@
         "registration_id": "flecs.component.structural_breakup_state"
       },
       {
+        "component_id": "SubmarineBathymetryPolicy",
+        "plugin_id": "builtin.core_runtime",
+        "registration_id": "flecs.component.submarine_bathymetry_policy"
+      },
+      {
         "component_id": "SubmarinePlatform",
         "plugin_id": "builtin.core_runtime",
         "registration_id": "flecs.component.submarine_platform"
@@ -1673,8 +1678,8 @@
     "builtin.weapon_release.damage_bridge",
     "builtin.weapon_release.service"
   ],
-  "requested_manifest_sha256": "f53d527676ee9b0c58e82adb5038f5baec6231005e6423773f5a5acf22ce82d2",
-  "resolved_manifest_sha256": "696a70f3667b934e80d5525e7204a21b8c8e4ce4b6c67bfe54aac98f058e9728",
+  "requested_manifest_sha256": "013e3ed1f8581211bcb2ec122186747788edfaf74653967b0b58a38dc212c2e6",
+  "resolved_manifest_sha256": "9e36da474461b910422dfc4197a0b07454d79b600c4271fbf86b47e5eeda2835",
   "resolver_contract_version": "echelon_forge.simulation_composition_resolver.v1",
   "schema_version": "echelon_forge.resolved_simulation_composition.v1",
   "system_registration_order": [

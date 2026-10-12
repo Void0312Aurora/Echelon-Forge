@@ -8,6 +8,7 @@
 #include <flecs.h>
 
 #include <cmath>
+#include <algorithm>
 #include <limits>
 #include <string>
 
@@ -19,6 +20,7 @@ struct BathymetryTestEnvironment final : IEnvironmentModel {
     double last_from_y = 0.0;
     double last_to_x = 0.0;
     double last_to_y = 0.0;
+    bool interior_shoal = false;
 
     AtmosphericData get_atmosphere_at(double, double, double) override {
         return {1.225, 340.0, 101325.0, 288.15, {0.0, 0.0, 0.0}};
@@ -43,7 +45,14 @@ struct BathymetryTestEnvironment final : IEnvironmentModel {
         last_from_y = from_y;
         last_to_x = to_x;
         last_to_y = to_y;
-        return observation;
+        auto result = observation;
+        // Analytic fixture: water is 200 m deep at both step endpoints,
+        // but has a 40 m shoal throughout 2 <= y <= 3. This is an exact
+        // segment minimum, not endpoint-only sampling.
+        if (interior_shoal && std::min(from_y, to_y) <= 3.0 && std::max(from_y, to_y) >= 2.0) {
+            result.minimum_water_depth_m = 40.0;
+        }
+        return result;
     }
 };
 
@@ -219,4 +228,106 @@ TEST_CASE("dry and time-inconsistent observations are not treated as deep water"
     CHECK(time_varying.unit.get<Transform>()->y == doctest::Approx(0.0));
     CHECK(time_varying.unit.get<SubmarineBathymetryPolicy>()->last_status ==
           SubmarineDepthConstraintStatus::UnknownBathymetry);
+}
+
+TEST_CASE("interior shoal rejects a sweep whose deep endpoints would appear safe") {
+    SubmarineRig rig(50.0);
+    set_valid_observation(rig.environment, 200.0);
+    rig.environment.interior_shoal = true;
+    rig.environment.observation.source = "analytic_shoal.v1";
+    rig.step();
+    CHECK(rig.environment.last_from_y == doctest::Approx(0.0));
+    CHECK(rig.environment.last_to_y == doctest::Approx(5.0));
+    CHECK(rig.unit.get<Transform>()->y == doctest::Approx(0.0));
+    CHECK(rig.unit.get<Transform>()->z == doctest::Approx(-40.0));
+    CHECK(rig.unit.get<Velocity>()->vy == doctest::Approx(0.0));
+    const auto *policy = rig.unit.get<SubmarineBathymetryPolicy>();
+    REQUIRE(policy != nullptr);
+    CHECK(policy->last_allowed_depth_m == doctest::Approx(27.0));
+    CHECK(policy->last_status == SubmarineDepthConstraintStatus::RejectedTrajectory);
+    CHECK(policy->last_source == "analytic_shoal.v1");
+}
+
+TEST_CASE("bathymetry rejects unavailable or inconsistent numeric and reference metadata") {
+    for (int failure = 0; failure < 9; ++failure) {
+        INFO("negative fixture ", failure);
+        SubmarineRig rig(20.0);
+        set_valid_observation(rig.environment, 200.0);
+        auto &observation = rig.environment.observation;
+        switch (failure) {
+        case 0:
+            observation.availability = IEnvironmentModel::BathymetryAvailability::Unavailable;
+            break;
+        case 1:
+            observation.availability = IEnvironmentModel::BathymetryAvailability::InvalidDatum;
+            break;
+        case 2:
+            observation.vertical_datum = "other_datum";
+            break;
+        case 3:
+            observation.horizontal_frame = "other_frame";
+            break;
+        case 4:
+            observation.water_surface_elevation_m = 1.0;
+            break;
+        case 5:
+            observation.water_surface_elevation_m = std::numeric_limits<double>::quiet_NaN();
+            break;
+        case 6:
+            observation.minimum_water_depth_m = std::numeric_limits<double>::quiet_NaN();
+            break;
+        case 7:
+            observation.minimum_water_depth_m = -1.0;
+            break;
+        case 8:
+            observation.source.clear();
+            break;
+        }
+        rig.step();
+        CHECK(rig.unit.get<Transform>()->y == doctest::Approx(0.0));
+        CHECK(rig.unit.get<Transform>()->z == doctest::Approx(-20.0));
+        CHECK(rig.unit.get<Velocity>()->vz == doctest::Approx(0.0));
+        CHECK(rig.unit.get<SubmarineBathymetryPolicy>()->last_status ==
+              SubmarineDepthConstraintStatus::UnknownBathymetry);
+    }
+}
+
+TEST_CASE("deep water constant-depth transit preserves speed and bounded heading evolution") {
+    SubmarineRig rig(30.0);
+    set_valid_observation(rig.environment, 200.0);
+    auto *command = rig.unit.get_mut<NavalCommandIntent>();
+    command->cmd_depth_m = 30.0;
+    command->cmd_heading_deg = 90.0;
+    for (int step = 1; step <= 5; ++step) {
+        rig.step();
+        const auto *position = rig.unit.get<Transform>();
+        const auto *velocity = rig.unit.get<Velocity>();
+        CHECK(position->z == doctest::Approx(-30.0));
+        CHECK(position->heading == doctest::Approx(1.5 * step));
+        CHECK(std::hypot(velocity->vx, velocity->vy) == doctest::Approx(5.0));
+        CHECK(velocity->vz == doctest::Approx(0.0));
+        CHECK(rig.unit.get<SubmarineBathymetryPolicy>()->last_status ==
+              SubmarineDepthConstraintStatus::Allowed);
+    }
+}
+
+TEST_CASE("absent and disabled bathymetry policies preserve the legacy open-water trace") {
+    SubmarineRig absent(20.0);
+    SubmarineRig disabled(20.0);
+    absent.unit.remove<SubmarineBathymetryPolicy>();
+    disabled.unit.get_mut<SubmarineBathymetryPolicy>()->enabled = false;
+    for (int step = 1; step <= 3; ++step) {
+        absent.step();
+        disabled.step();
+        const auto *legacy = absent.unit.get<Transform>();
+        const auto *opt_out = disabled.unit.get<Transform>();
+        CHECK(legacy->y == doctest::Approx(5.0 * step));
+        CHECK(legacy->z == doctest::Approx(-20.0 - 10.0 * step));
+        CHECK(opt_out->x == legacy->x);
+        CHECK(opt_out->y == legacy->y);
+        CHECK(opt_out->z == legacy->z);
+        CHECK(opt_out->heading == legacy->heading);
+        CHECK(disabled.unit.get<SubmarineBathymetryPolicy>()->last_status ==
+              SubmarineDepthConstraintStatus::Disabled);
+    }
 }
