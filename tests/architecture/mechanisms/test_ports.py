@@ -99,6 +99,42 @@ def test_incompatible_schema_unit_and_frame_are_rejected_before_publication() ->
     }
 
 
+def test_owner_schema_vocabulary_rejects_unknown_port_schema() -> None:
+    graph = compile_mechanism_graph(
+        "owned-schema",
+        {"sensor": _sensor()},
+        (),
+        known_schemas=frozenset({"TrackCollection.v1"}),
+    )
+    assert not graph.valid
+    assert [(item.code, item.path) for item in graph.diagnostics] == [
+        ("mechanism.schema_unknown", "nodes.sensor.outputs.measurements")
+    ]
+
+
+def test_freshness_is_part_of_edge_and_composite_compatibility() -> None:
+    producer = MechanismSpec(
+        "producer",
+        "1",
+        outputs=(PortSpec("out", "Track.v1", freshness="per_window"),),
+    )
+    consumer = MechanismSpec(
+        "consumer",
+        "1",
+        inputs=(PortSpec("in", "Track.v1", freshness="per_tick"),),
+    )
+    graph = compile_mechanism_graph(
+        "freshness",
+        {"p": producer, "c": consumer},
+        (GraphEdge("p", "out", "c", "in"),),
+    )
+    assert not graph.valid
+    assert "mechanism.freshness_incompatible" in {item.code for item in graph.diagnostics}
+
+    with pytest.raises(ValueError, match="freshness"):
+        PortSpec("invalid", "Track.v1", freshness="")
+
+
 def test_unknown_required_input_and_truth_boundary_fail_closed() -> None:
     source = MechanismSpec(
         "source", "1", outputs=(PortSpec("truth", "TrackCollection.v1", None, "enu", "truth"),)
@@ -285,3 +321,43 @@ def test_stage_manifest_binding_rejects_projection_and_missing_owner_evidence() 
             node_stage_bindings={},
             stage_manifests={},
         )
+
+
+def test_strict_stage_manifest_admission_rejects_shard_conflicts() -> None:
+    graph = compile_mechanism_graph(
+        "native-qualification",
+        {
+            "a": replace(_sensor(), implementation_ref="native.a"),
+            "b": replace(_tracker(), implementation_ref="native.b"),
+        },
+        (),
+        external_inputs=frozenset({"b.measurements"}),
+    )
+    common = {
+        "semantic_stage": ["P8"],
+        "owner_module": "native.owner",
+        "input_packets": ["InputPacket"],
+        "output_packets": ["OutputPacket"],
+        "read_state_shards": ["state"],
+        "read_snapshot_policy": "committed",
+        "write_commit_policy": "window_commit",
+        "clock_domain": "window",
+        "latency_policy": "same_window",
+        "sync_policy": "host_owned",
+        "required_barriers": ["window_commit"],
+        "diagnostic_trace_obligations": ["trace_id"],
+        "facade_visibility": "internal",
+        "native_system": "NativeSystem",
+        "write_state_shards": ["shared"],
+    }
+    manifests = {
+        "stage.a": {**common, "node_id": "stage.a"},
+        "stage.b": {**common, "node_id": "stage.b"},
+    }
+    diagnostics = validate_stage_manifest_bindings(
+        graph,
+        node_stage_bindings={"a": "stage.a", "b": "stage.b"},
+        stage_manifests=manifests,
+        require_native_contract=True,
+    )
+    assert "mechanism.native_stage_write_shard_conflict" in {item.code for item in diagnostics}

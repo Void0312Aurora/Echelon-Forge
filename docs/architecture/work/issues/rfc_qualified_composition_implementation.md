@@ -170,10 +170,13 @@ merge into main, accept the proposed ADRs or close RFC issues.
 1. **Owner review of the six proposed designs.** Choose the admission schema,
    version rules and capability vocabulary before enabling production consumers.
 2. **#229 native admission mapping.** The bounded adapter/numerical/child-fault
-   proof is now present. Unknown schemas, shard conflicts and freshness still need
-   owner-supplied vocabulary and enforced native admission, beyond exact nominal
-   port matching. Compile reviewed descriptors into existing native contracts and
-   qualify their publication/realized scheduling without a second dispatcher.
+   proof is now present. The qualification compiler now accepts an owner-supplied
+   schema vocabulary, rejects unknown port schemas, carries freshness through edge
+   and composite identity checks, and has a strict StageNodeManifest admission
+   mode for required native contract fields and duplicate state-shard writers.
+   Native owner publication, the canonical vocabulary, and compilation of an
+   authored graph into executable native contracts remain open; no second
+   dispatcher is introduced.
 3. **#236 native typed plan seam.** The bounded adapter and native identity
    checks now cover slot cardinality, module digest/native-reference identity,
    maintained capability families, an Air parity path and an optional comparison
