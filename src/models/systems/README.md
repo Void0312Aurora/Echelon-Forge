@@ -45,6 +45,21 @@ admitted signature provider and its calibration evidence replace the proxy.
 - Python binding or facade.
 - Full ground sensing, terrain-control, or fires runtime.
 
+## Default acoustic provider capability
+
+The content loader parses Passive and Active sonar declarations, including inline
+and mounted modules. Parsing does not establish that a provider supports the mode.
+The default acoustic provider supports Passive only: `IAcousticModel::scan` returns
+`UnsupportedMode` for Active and `Completed` for a supported scan, including one
+with zero detections. `SonarSystem` accepts new contacts only on `Completed`, stores
+the outcome in `Sonar::last_scan_status`, and logs
+`runtime.acoustic.unsupported_mode` when a module enters an unsupported outcome.
+`last_scan_time_s` records the last attempt, so consumers must also consult status.
+Both inline and mounted status are preserved in state transfer; an older snapshot
+without status defaults to `NotScanned` rather than asserting successful completion.
+A future acoustic provider can implement Active through the same typed interface;
+this change supplies no active-ping propagation or echo model.
+
 ## Migration Notes
 
 The directory name is similar to `systems/systems`; new files must express the model type with specific business names to avoid generalized expansion.
