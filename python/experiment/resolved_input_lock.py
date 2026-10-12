@@ -291,6 +291,10 @@ def join_run_receipt(
             raise InputLockError("input_lock.receipt_binding_fields_invalid")
         if dict(supplied_binding) != receipt_binding:
             raise InputLockError("input_lock.receipt_binding_mismatch")
+    for field in _RECEIPT_BINDING_FIELDS:
+        supplied_value = native_runtime.get(field)
+        if supplied_value is not None and supplied_value != receipt_binding[field]:
+            raise InputLockError(f"input_lock.native_receipt_binding_mismatch:{field}")
     data = candidate.as_dict()
     complete = payload["terminal_state"] == "completed" and outcome.result is BatchResult.COMPLETED
     data["status"] = "completed" if complete else "unknown"

@@ -211,9 +211,9 @@ merge into main, accept the proposed ADRs or close RFC issues.
    publication evidence. The qualification join now preserves receipt/run/
    attempt/host/generation identity, backend system-graph digest, native
    validator evidence digest and durable acknowledgement, and rejects a
-   supplied native binding that disagrees. The current proof still uses a
-   synthetic receipt vector and does not establish signatures or durable
-   availability from a live host.
+   supplied nested or top-level native receipt binding that disagrees. The
+   current proof still uses a synthetic receipt vector and does not establish
+   signatures or durable availability from a live host.
 7. **#251 remaining fault gates.** The existing #210 lineage is locally ported and
    verified against this branch's interface baseline; upstream main still lacks it.
    Preserve its owner during review and
