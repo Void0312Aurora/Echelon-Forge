@@ -57,7 +57,8 @@ do not prove numerical calibration or timestep invariance.
 ## Compatibility and recursion
 
 Connections require compatible schema versions, units, frames, freshness and
-visibility. Explicit conversion or estimation nodes are required when a
+visibility. When an owner supplies a schema vocabulary, unknown port schemas
+are rejected before publication. Explicit conversion or estimation nodes are required when a
 connection would otherwise fabricate information. Instantaneous same-window
 cycles are rejected; delayed/stateful feedback must declare its delay and state
 owner. A composite exports a typed public port set and state/effect contract,
@@ -100,7 +101,9 @@ consumes an owner-provided `StageNodeManifest` snapshot, requires one-to-one
 node bindings and rejects adapter/diagnostic-only stages before checking the
 explicit native-system mapping against exported realized order. Immutable
 parameters, backend reference and clock policy participate in graph/composite
-identity.
+identity. Strict stage admission additionally requires the owner contract fields
+and rejects duplicate state-shard writers; the default qualification mode remains
+compatible with the smaller evidence fixtures.
 
 This remains a static mechanism-graph contract pilot. Qualification/shadow
 compilation and production admission are separate gates; an artifact emitted
@@ -112,7 +115,7 @@ window publication from numerical rates per second. A fixed measurement schedule
 and four timesteps reach the same four-second horizon within the documented
 tolerance. A test-lane child exception after tracker mutation but before outer
 packet publication projects an unknown outcome through #251; it proves no rollback.
-This does not install authored graphs into native scheduling. Unknown-schema
-admission, shard ownership and freshness enforcement remain open.
+This does not install authored graphs into native scheduling. Native schema
+vocabulary selection and owner publication remain separate gates.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.

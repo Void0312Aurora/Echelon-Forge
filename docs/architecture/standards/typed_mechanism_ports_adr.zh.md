@@ -24,7 +24,8 @@ Last verified: `2026-10-12`
 
 ## 约束
 
-连接必须检查 schema 版本、单位、坐标系、新鲜度和可见性；需要转换或估计时必须显式插入节点，
+连接必须检查 schema 版本、单位、坐标系、新鲜度和可见性；owner 提供 schema vocabulary 时，未知
+schema 必须在发布前拒绝；需要转换或估计时必须显式插入节点，
 不得凭空制造信息。禁止同一窗口内的瞬时环；延迟或有状态反馈必须声明延迟和状态所有者。组合
 节点导出类型化公共端口及状态/效果契约后，才能作为父图中的节点重新验证。
 
@@ -39,10 +40,11 @@ Last verified: `2026-10-12`
 
 方案比较以英文规范页的 Option comparison 为准。
 
-原型已补齐递归输入闭包、能力与时钟继承、信息层和多生产者校验。资格适配器现在消费
+原型已补齐递归输入闭包、能力与时钟继承、信息层、多生产者和 freshness 校验。资格适配器现在消费
 owner 提供的 `StageNodeManifest` 快照，要求节点一一绑定，并在检查显式 native system
 映射顺序前拒绝 adapter/diagnostic-only stage。不可变参数、backend 引用与 clock policy
-参与图和组合身份。
+参与图和组合身份。严格 stage admission 还要求 owner 契约字段并拒绝重复 state-shard writer；
+默认资格模式仍兼容较小的证据 fixture。
 
 这仍是静态机制图契约试点。qualification/shadow 编译和生产接纳是分开的 gate；通过现有
 manifest machinery 产出的 artifact 不会自动变成可执行机制。
@@ -50,7 +52,7 @@ manifest machinery 产出的 artifact 不会自动变成可执行机制。
 受限 Air seeker 证明复用现有 native 视线转换、距离/世界坐标投影和有状态 CV 跟踪器，区分
 窗口发布与每秒数值语义。固定测量时刻下，四种步长到达同一 4 秒终点，结果满足记录的容差。
 测试路径在 tracker 更新后、外部 packet 发布前注入异常，并复用 #251 投影为未知状态；
-该证据不证明回滚，也未把用户编写的图安装进 native 调度。未知 schema 准入、状态分片权属
-和 freshness 强制约束仍待验收。
+该证据不证明回滚，也未把用户编写的图安装进 native 调度。native schema vocabulary 的选择和
+owner 发布仍是独立 gate。
 
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。

@@ -25,6 +25,7 @@ class PortSpec:
     frame: str | None = None
     visibility: str = "belief"
     required: bool = True
+    freshness: str | None = None
 
     def __post_init__(self) -> None:
         for field_name in ("name", "schema", "visibility"):
@@ -35,6 +36,10 @@ class PortSpec:
             raise ValueError("unit must be a non-empty string when supplied")
         if self.frame is not None and (not isinstance(self.frame, str) or not self.frame.strip()):
             raise ValueError("frame must be a non-empty string when supplied")
+        if self.freshness is not None and (
+            not isinstance(self.freshness, str) or not self.freshness.strip()
+        ):
+            raise ValueError("freshness must be a non-empty string when supplied")
         if type(self.required) is not bool:
             raise TypeError("required must be a bool")
         if self.visibility not in {"belief", "truth", "agent_observation", "effect"}:
@@ -166,6 +171,7 @@ def _port_dict(port: PortSpec) -> dict[str, Any]:
         "frame": port.frame,
         "visibility": port.visibility,
         "required": port.required,
+        "freshness": port.freshness,
     }
 
 
@@ -226,6 +232,7 @@ def compile_mechanism_graph(
     edges: Sequence[GraphEdge],
     *,
     external_inputs: frozenset[str] = frozenset(),
+    known_schemas: frozenset[str] | None = None,
 ) -> CompiledMechanismGraph:
     """Validate a graph and return a non-published qualification artifact."""
 
@@ -235,6 +242,18 @@ def compile_mechanism_graph(
         raise MechanismGraphError("at least one mechanism node is required")
     diagnostics: list[GraphDiagnostic] = []
     normalized_external_inputs = frozenset(external_inputs)
+    if known_schemas is not None:
+        for node_id, spec in nodes.items():
+            for side, ports in (("inputs", spec.inputs), ("outputs", spec.outputs)):
+                for port in ports:
+                    if port.schema not in known_schemas:
+                        diagnostics.append(
+                            GraphDiagnostic(
+                                "mechanism.schema_unknown",
+                                f"nodes.{node_id}.{side}.{port.name}",
+                                f"schema is not present in the owner vocabulary: {port.schema}",
+                            )
+                        )
     for external_ref in sorted(normalized_external_inputs):
         if not isinstance(external_ref, str) or external_ref.count(".") != 1:
             diagnostics.append(
@@ -299,6 +318,16 @@ def compile_mechanism_graph(
                     "mechanism.frame_incompatible",
                     path,
                     f"{source_port.frame!r} -> {target_port.frame!r}",
+                )
+            )
+        if source_port.freshness != target_port.freshness and (
+            source_port.freshness is not None or target_port.freshness is not None
+        ):
+            diagnostics.append(
+                GraphDiagnostic(
+                    "mechanism.freshness_incompatible",
+                    path,
+                    f"{source_port.freshness!r} -> {target_port.freshness!r}",
                 )
             )
         if source_port.visibility == "truth" and target_port.visibility == "agent_observation":
@@ -442,6 +471,7 @@ def compose_graph_as_mechanism(
             and public.unit == internal.unit
             and public.frame == internal.frame
             and public.visibility == internal.visibility
+            and public.freshness == internal.freshness
         )
 
     for public in inputs:
@@ -539,6 +569,7 @@ def validate_stage_manifest_bindings(
     node_stage_bindings: Mapping[str, str],
     stage_manifests: Mapping[str, Mapping[str, Any]],
     pipeline_order: Sequence[str] = (),
+    require_native_contract: bool = False,
 ) -> tuple[GraphDiagnostic, ...]:
     """Qualify a graph against an owner-provided native stage snapshot.
 
@@ -556,6 +587,31 @@ def validate_stage_manifest_bindings(
 
     diagnostics: list[GraphDiagnostic] = []
     node_systems: dict[str, str] = {}
+    write_shard_owners: dict[str, str] = {}
+    required_native_fields = (
+        "input_packets",
+        "output_packets",
+        "read_state_shards",
+        "write_state_shards",
+        "read_snapshot_policy",
+        "write_commit_policy",
+        "clock_domain",
+        "latency_policy",
+        "sync_policy",
+        "required_barriers",
+        "diagnostic_trace_obligations",
+        "facade_visibility",
+        "native_system",
+    )
+    required_nonempty_sequences = frozenset(
+        {
+            "input_packets",
+            "output_packets",
+            "read_state_shards",
+            "required_barriers",
+            "diagnostic_trace_obligations",
+        }
+    )
     for node_id, spec in graph.nodes:
         stage_id = node_stage_bindings[node_id]
         manifest = stage_manifests.get(stage_id)
@@ -573,6 +629,27 @@ def validate_stage_manifest_bindings(
             diagnostics.append(
                 GraphDiagnostic("mechanism.native_stage_manifest_incomplete", path, stage_id)
             )
+        if require_native_contract:
+            missing = [
+                field_name
+                for field_name in required_native_fields
+                if field_name not in manifest
+                or manifest[field_name] is None
+                or (isinstance(manifest[field_name], str) and not manifest[field_name].strip())
+                or (
+                    field_name in required_nonempty_sequences
+                    and isinstance(manifest[field_name], (list, tuple))
+                    and not manifest[field_name]
+                )
+            ]
+            if missing:
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.native_stage_contract_incomplete",
+                        path,
+                        "missing owner fields: " + ", ".join(missing),
+                    )
+                )
         if manifest.get("facade_visibility") in {"adapter_projection", "diagnostics_only"}:
             diagnostics.append(
                 GraphDiagnostic("mechanism.native_stage_not_scheduler_truth", path, stage_id)
@@ -584,6 +661,30 @@ def validate_stage_manifest_bindings(
             )
         else:
             node_systems[node_id] = native_system
+        write_shards = manifest.get("write_state_shards", ())
+        if not isinstance(write_shards, (list, tuple)) or any(
+            not isinstance(shard, str) or not shard.strip() for shard in write_shards
+        ):
+            diagnostics.append(
+                GraphDiagnostic(
+                    "mechanism.native_stage_write_shards_invalid",
+                    path,
+                    "write_state_shards must be a sequence of non-empty strings",
+                )
+            )
+        else:
+            for shard in write_shards:
+                previous = write_shard_owners.get(shard)
+                if previous is not None and previous != node_id:
+                    diagnostics.append(
+                        GraphDiagnostic(
+                            "mechanism.native_stage_write_shard_conflict",
+                            path,
+                            f"state shard {shard!r} is written by both {previous} and {node_id}",
+                        )
+                    )
+                else:
+                    write_shard_owners[shard] = node_id
         if spec.implementation_ref.startswith("qualification."):
             diagnostics.append(
                 GraphDiagnostic(
