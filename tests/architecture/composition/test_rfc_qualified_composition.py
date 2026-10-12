@@ -170,7 +170,7 @@ def _f16_native_typed_request():
     capability_by_field = {
         "engine_ref": "mobility",
         "sensor_ref": "sensing",
-        "ew_suite_ref": "communication",
+        "ew_suite_ref": "survivability",
         "rcs_profile_ref": "survivability",
         "default_loadout.1": "launching",
         "default_loadout.2": "launching",
@@ -198,6 +198,7 @@ def _f16_native_typed_request():
         plan=plan,
         blueprint=blueprint,
         modules=modules,
+        projection=projection,
         source_type_name=legacy["name"],
         request_id="platform-blueprint:f16c:native-typed",
         placement=SpawnPlacement(
@@ -306,6 +307,54 @@ def test_native_projection_rejects_changed_module_parameters_before_loading():
     modules[key] = replace(modules[key], content_digest="0" * 64)
     with pytest.raises(PlatformAssemblyError, match="native_module_identity_mismatch"):
         lower_to_legacy_unit_definition(plan, projection, modules=modules)
+
+
+def test_bounded_fuel_override_reaches_existing_loader_and_native_observations(tmp_path):
+    legacy, original_plan, projection, modules = _legacy_projection("aircraft/units/f16c_block50.json")
+    blueprint = PlatformBlueprint(
+        "qualification." + legacy["name"], "1", legacy["type"],
+        slots=tuple((slot, module.kind) for slot, module in modules.items()),
+        override_types=(("max_fuel_kg", "float"),),
+        override_ranges=(("max_fuel_kg", 100.0, 3175.0),),
+    )
+    plan = resolve_platform_assembly(
+        assembly_id=original_plan.assembly_id + ".reduced-fuel",
+        blueprint=blueprint,
+        modules=modules,
+        selections=tuple(ModuleSelection(slot, slot) for slot in modules),
+        parameter_overrides={"max_fuel_kg": 1500.0},
+    )
+    projection = replace(projection, override_paths=(("max_fuel_kg", "airframe.max_fuel_kg"),))
+    lowered = lower_to_legacy_unit_definition(plan, projection, modules=modules)
+    assert legacy["airframe"]["max_fuel_kg"] == 3175.0
+    assert lowered["airframe"]["max_fuel_kg"] == 1500.0
+    path = tmp_path / "reduced-fuel.json"
+    path.write_text(json.dumps({"units": [lowered]}), encoding="utf-8")
+    facades = [ef_py.RuntimeFacade(1), ef_py.RuntimeFacade(1)]
+    ids = []
+    for index, facade in enumerate(facades):
+        assert facade.load_database(str(DATABASE))
+        if index:
+            assert facade.load_unit_definitions(str(path))
+        setup = ef_py.BatchWorldSetupRequest()
+        setup.seeds = [123]
+        setup.time_steps = [0.05]
+        spawn = ef_py.WorldSpawnRequest()
+        spawn.type_name = legacy["name"]
+        spawn.entity_name = "FuelOverrideProof"
+        spawn.side = ef_py.Side.Blue
+        spawn.x = spawn.y = 100000.0
+        spawn.z = 1200.0
+        spawn.vy = 180.0
+        setup.spawn_requests = [spawn]
+        ids.append(int(facade.apply_world_setup(setup).entity_ids[0]))
+    # The existing public observation DTO does not expose fuel mass. The
+    # snapshot is initially equal, but the existing dynamics owner makes the
+    # different mass observable through motion after advancing the world.
+    assert _snapshot(facades[0], ids[0]) == _snapshot(facades[1], ids[1])
+    for facade in facades:
+        facade.step_batch()
+    assert _snapshot(facades[0], ids[0]) != _snapshot(facades[1], ids[1])
 
 
 def test_existing_air_experiment_uses_compiler_owned_dependency_closure():
