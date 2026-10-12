@@ -248,10 +248,11 @@ existing F-16 native type and does not compare arbitrary authoring fields with
 the factory's internally derived capability bundle. Units and broader physical
 compatibility remain owner-review gates.
 
-The native factory projection continuation rebuilt `ef_py` and `ef_test` in the
-isolated `build-rfc-native` tree. The `world_batch_runtime` suite passed **21
-cases / 468 assertions**. The Python binding, composition and platform-adapter
-regression subset passed **35 tests**. The new query is read-only: it returns
+The native factory/stage-owner continuation rebuilt `ef_py` and `ef_test` in
+the isolated `build-rfc-native` tree. The `world_batch_runtime` suite passed
+**22 cases / 474 assertions**. The combined Python binding, mechanism,
+composition and platform-adapter regression subset passed **58 tests**. The
+factory query is read-only: it returns
 the factory's resolved plan for a type name, preserves the source type
 projection, rejects unknown types with the native reason, and leaves the batch
 healthy. This exposes the owner result for diagnostics; it does not yet make
