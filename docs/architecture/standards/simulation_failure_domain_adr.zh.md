@@ -34,13 +34,13 @@ RunReceipt/evidence 和 #239 投影继续作为证据权威。
 | `failed/untrusted` | 已记录 preflight 安全失败、worker 故障或修改后不确定性；不暗示 rollback | 诊断和显式 reset/recreate；禁止修改性重试或同步成功导出 | 成功 reset/recreate，重新初始化完整 expected world 范围 |
 | reset 后 `healthy` | 新 generation 已完成初始化 | 新 generation 的正常操作 | reset 结果及 native 状态/setup 证据；不证明发生了 rollback |
 
-本分支可以在受测 native 路径证明注入的 worker 启动和任务故障会进入第二行，
-但尚未证明 native 签发的 generation ID、可靠的 per-world 提交发布、取消，或对
+本分支可以在受测 native 路径证明注入的 worker 启动和任务故障会进入第二行；native
+owner 现在提供仅在成功 reset 后递增的 batch generation ID，但尚未证明可靠的 per-world 提交发布、取消，或对
 `abort`、进程退出、死锁和非终止的隔离。
 
 Python 资格 adapter 现在先读取 native owner 的 `batch_healthy()` 和
 `batch_failure_reason()`，再投影全部未知结果；健康 runtime 会被拒绝，adapter 不会创建
-generation ID，也不会伪造 reset 结果。
+generation ID，也不会伪造 reset 结果；native generation identity 仍由 owner 提供。
 
 ## 方案比较与实现检查点
 

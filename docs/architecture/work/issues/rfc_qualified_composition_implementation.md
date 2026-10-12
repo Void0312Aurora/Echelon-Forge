@@ -258,7 +258,7 @@ compatibility remain owner-review gates.
 
 The native factory/stage-owner continuation rebuilt `ef_py` and `ef_test` in
 the isolated `build-rfc-native` tree. The `world_batch_runtime` suite passed
-**22 cases / 474 assertions**. The combined Python binding, mechanism,
+**22 cases / 480 assertions**. The combined Python binding, mechanism,
 composition and platform-adapter regression subset passed **58 tests**. The
 factory query is read-only: it returns
 the factory's resolved plan for a type name, preserves the source type

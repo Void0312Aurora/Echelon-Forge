@@ -102,12 +102,14 @@ commit status. The mechanism child
 fault proof separately observes state mutation without outer packet publication.
 The Python qualification adapter now reads `batch_healthy()` and
 `batch_failure_reason()` from the native owner before projecting that
-all-unknown outcome; it rejects a healthy runtime and never invents a generation
-ID or reset result.
+all-unknown outcome; it rejects a healthy runtime and never invents a reset
+result. The native owner also exposes a batch generation ID that changes only
+after successful reset; the Python projection does not synthesize or reinterpret
+that identity.
 The native batch proof also injects a worker-launch failure and checks that joined
 workers, guarded exports, failed recovery and explicit reset remain fail-closed.
 These local changes are not an upstream #210 closure. An exception inside a running
-native system, runtime generation IDs and bounded fatal/nontermination controls
-remain separate qualification gates.
+native system and bounded fatal/nontermination controls remain separate
+qualification gates.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.
