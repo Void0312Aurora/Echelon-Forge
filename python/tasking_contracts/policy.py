@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 SCHEMA_VERSION = "echelon_forge.policy_contract.v1"
 
@@ -117,6 +117,94 @@ class PolicyAdmission:
             "policy_id": self.policy_id,
             "diagnostics": list(self.diagnostics),
         }
+
+
+class PolicyRuntimeBinding:
+    """Bind one admitted Policy to an existing decision-model lifecycle.
+
+    The wrapper owns contract checks and observation provenance only. The
+    wrapped model remains the owner of reset/decision/close behavior and its
+    action DTO; no second runtime or action interface is introduced.
+    """
+
+    def __init__(
+        self,
+        policy: PolicyDescriptor,
+        admission: PolicyAdmission,
+        model: Any,
+        *,
+        bounds: Sequence[tuple[float, float]],
+        timing: str,
+        optional_defaults: Mapping[str, Any] | None = None,
+        observation_projector: Callable[[tuple[Any, ...], tuple[str, ...]], Any] | None = None,
+        action_values: Callable[[Any], Sequence[float]] | None = None,
+    ) -> None:
+        if not admission.admitted or admission.policy_id != policy.policy_id:
+            raise ValueError("policy.runtime_binding_not_admitted")
+        if not all(callable(getattr(model, name, None)) for name in ("reset", "decide", "close")):
+            raise TypeError("policy runtime model must implement reset/decide/close")
+        if timing != policy.action.timing:
+            raise ValueError("policy.action_timing_mismatch:action.timing")
+        if len(bounds) != policy.action.dimension:
+            raise ValueError("policy.action_dimension_mismatch:action.bounds")
+        self.policy = policy
+        self.admission = admission
+        self.model = model
+        self.bounds = tuple(bounds)
+        self.timing = timing
+        self.optional_defaults = dict(optional_defaults or {})
+        self._observation_projector = observation_projector or (lambda values, _sources: values)
+        self._action_values = action_values or self._default_action_values
+
+    @property
+    def model_kind(self) -> str | None:
+        value = getattr(self.model, "model_kind", getattr(self.model, "_decision_model_kind", None))
+        return None if value is None else str(value)
+
+    @staticmethod
+    def _default_action_values(action: Any) -> Sequence[float]:
+        if isinstance(action, (str, bytes)) or not isinstance(action, Sequence):
+            raise TypeError("policy action extractor is required for non-sequence owner actions")
+        return action
+
+    def reset(self, *, context: Any) -> None:
+        self.model.reset(context=context)
+
+    def decide(self, *, observation: Any, context: Any, dt: float) -> Any:
+        if not isinstance(observation, Mapping):
+            raise TypeError("policy runtime observation must be a field mapping")
+        projected, sources = project_policy_observation(
+            self.policy,
+            self.admission,
+            observation,
+            optional_defaults=self.optional_defaults,
+        )
+        owner_observation = self._observation_projector(projected, sources)
+        model_context = dict(context) if isinstance(context, Mapping) else {}
+        model_context.update(
+            {
+                "policy_id": self.policy.policy_id,
+                "policy_version": self.policy.version,
+                "observation_provenance": sources,
+            }
+        )
+        action = self.model.decide(
+            observation=owner_observation,
+            context=model_context,
+            dt=dt,
+        )
+        errors = validate_policy_action(
+            self.policy,
+            self._action_values(action),
+            bounds=self.bounds,
+            timing=self.timing,
+        )
+        if errors:
+            raise ValueError(";".join(errors))
+        return action
+
+    def close(self) -> None:
+        self.model.close()
 
 
 def _version_diagnostic(
@@ -322,6 +410,7 @@ __all__ = [
     "ObservationContract",
     "PolicyAdmission",
     "PolicyDescriptor",
+    "PolicyRuntimeBinding",
     "SCHEMA_VERSION",
     "admit_policy",
     "select_policy",

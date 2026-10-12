@@ -10,11 +10,35 @@ from python.tasking_contracts.policy import (
     FieldSpec,
     ObservationContract,
     PolicyDescriptor,
+    PolicyRuntimeBinding,
     admit_policy,
     select_policy,
     validate_policy_action,
     project_policy_observation,
 )
+from python.tasking_contracts.common.decision_runtime import (
+    DecisionRuntimeAgent,
+    DecisionRuntimeAgentSpec,
+)
+
+
+class _BoundModel:
+    model_kind = "scripted"
+
+    def __init__(self, action=(0.0, 0.5, 0.0, -0.5)):
+        self.action = action
+        self.observations = []
+        self.closed = False
+
+    def reset(self, *, context):
+        self.reset_context = context
+
+    def decide(self, *, observation, context, dt):
+        self.observations.append((observation, context, dt))
+        return self.action
+
+    def close(self):
+        self.closed = True
 
 
 def _policy(
@@ -241,3 +265,71 @@ def test_optional_minor_projection_has_explicit_default_and_stable_order() -> No
     )
     assert values == ((1, 2, 3), 273.15)
     assert sources == ("agent_observation:ownship.velocity", "explicit_default:temperature")
+
+
+def test_admitted_policy_binds_existing_model_lifecycle_and_action_owner() -> None:
+    policy = _policy()
+    admission = admit_policy(
+        policy,
+        _binding(),
+        field_catalogue=_catalogue(),
+        observation_version=(1, 1),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+    )
+    model = _BoundModel()
+    binding = PolicyRuntimeBinding(
+        policy,
+        admission,
+        model,
+        bounds=((-1, 1),) * 4,
+        timing="window",
+    )
+    runtime = DecisionRuntimeAgent(
+        DecisionRuntimeAgentSpec(
+            agent_id="a1",
+            model_id=policy.policy_id,
+            domain="air",
+            role_id="autopilot",
+            model_kind="scripted",
+        ),
+        binding,
+    )
+    runtime.reset(context={"episode": "e1"})
+    step = runtime.step(
+        observation={"ownship.velocity": [1.0, 2.0, 3.0]},
+        clock_s=0.1,
+        observation_version="air_observation@1.1",
+    )
+    action = step.action
+    assert action == model.action
+    assert model.observations[0][0] == ((1.0, 2.0, 3.0),)
+    assert model.observations[0][1]["policy_id"] == policy.policy_id
+    runtime.close()
+    assert model.closed
+
+
+def test_policy_runtime_binding_rejects_owner_action_before_projection() -> None:
+    policy = _policy()
+    admission = admit_policy(
+        policy,
+        _binding(),
+        field_catalogue=_catalogue(),
+        observation_version=(1, 1),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+    )
+    binding = PolicyRuntimeBinding(
+        policy,
+        admission,
+        _BoundModel(action=(0.0, 2.0, 0.0, 0.0)),
+        bounds=((-1, 1),) * 4,
+        timing="window",
+    )
+    binding.reset(context={})
+    with pytest.raises(ValueError, match=r"policy.action_out_of_bounds:action.values\[1\]"):
+        binding.decide(
+            observation={"ownship.velocity": [1.0, 2.0, 3.0]},
+            context={},
+            dt=0.0,
+        )
