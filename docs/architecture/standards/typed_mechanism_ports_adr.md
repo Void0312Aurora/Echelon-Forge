@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/typed_mechanism_ports_adr.md`
 Owner: `architecture/mechanism-contracts`
-Last verified: `2026-10-11`
+Last verified: `2026-10-12`
 
 **Status:** proposed qualification design; no production activation.
 
@@ -25,6 +25,13 @@ canonical, qualification-only graph artifact that is then admitted through the
 existing composition requested/resolved artifacts and native execution graph.
 The native runtime remains the sole execution authority.
 
+The lowering path has three explicit owners. The authoring node and edge IDs
+are canonicalized by this frontend; the existing composition requested/resolved
+artifacts carry the qualification identity; `StageNodeManifest` and native
+system contributions decide the admitted shards, barriers and realized Flecs
+systems. One authored node may lower to several native systems, and a composite
+identity never grants execution rights by itself.
+
 ## Contract layers
 
 1. **Port schema:** stable mechanism/port IDs, schema major/minor, physical
@@ -39,6 +46,13 @@ The native runtime remains the sole execution authority.
 4. **Failure boundary:** child failure reports committed effects and unknown
    state through the existing failure-domain taxonomy. A valid static graph
    does not imply successful dynamic execution or atomic rollback.
+
+The minimum semantic table is: physical unit and frame are checked at the port
+edge; per-second values are integrated by the owning stateful model while
+per-tick values are explicitly marked; sampling/freshness is part of the port
+contract; state writes become visible only at the owning publication/commit
+barrier; delayed feedback names its delay window and state owner. These checks
+do not prove numerical calibration or timestep invariance.
 
 ## Compatibility and recursion
 
@@ -83,7 +97,11 @@ failure-domain ownership.
 The prototype checks complete recursive input closure, capabilities, information
 layers, clock compatibility and multiple producers. An explicit native-system
 mapping is checked against exported realized order. Immutable parameters, backend
-reference and clock policy participate in graph/composite identity.
+ reference and clock policy participate in graph/composite identity.
+
+This remains a static mechanism-graph contract pilot. Qualification/shadow
+compilation and production admission are separate gates; an artifact emitted
+through the existing manifest machinery is not automatically executable.
 
 The bounded Air seeker proof uses the maintained native relative-angle-to-LOS,
 LOS/range-to-world-position and stateful CV tracker implementations. It distinguishes

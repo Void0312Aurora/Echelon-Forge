@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/typed_mechanism_ports_adr.md`
 Owner: `architecture/mechanism-contracts`
-Last verified: `2026-10-11`
+Last verified: `2026-10-12`
 
 **状态：** 待评审的资格验证设计；不启用生产路径。
 
@@ -31,12 +31,19 @@ Last verified: `2026-10-11`
 首个证明应放在资格验证路径，包含兼容连接、单位/坐标系或 schema 冲突、禁止环、子机制故障和
 递归组合；不得改变 `builtin.default_compatibility` 或 facade/Cordis 的既有行为。
 
+最小语义表为：端口边检查物理单位和坐标系；每秒值由有状态 owner 模型积分，每 tick 值必须显式
+标记；采样/新鲜度属于端口契约；状态写入只在 owner 的 publication/commit barrier 后可见；延迟
+反馈必须声明延迟窗口和状态 owner。这些检查不证明数值标定或 timestep 不变性。
+
 ## 方案比较与实现检查点
 
 方案比较以英文规范页的 Option comparison 为准。
 
 原型已补齐递归输入闭包、能力与时钟继承、信息层和多生产者校验，并对显式 native system
 映射检查已实现顺序。不可变参数、backend 引用与 clock policy 参与图和组合身份。
+
+这仍是静态机制图契约试点。qualification/shadow 编译和生产接纳是分开的 gate；通过现有
+manifest machinery 产出的 artifact 不会自动变成可执行机制。
 
 受限 Air seeker 证明复用现有 native 视线转换、距离/世界坐标投影和有状态 CV 跟踪器，区分
 窗口发布与每秒数值语义。固定测量时刻下，四种步长到达同一 4 秒终点，结果满足记录的容差。
