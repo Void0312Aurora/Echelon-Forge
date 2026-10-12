@@ -176,18 +176,21 @@ merge into main, accept the proposed ADRs or close RFC issues.
    qualify their publication/realized scheduling without a second dispatcher.
 3. **#236 native typed plan seam.** The bounded adapter and native identity
    checks now cover slot cardinality, module digest/native-reference identity,
-   maintained capability families and an Air parity path. Owner review is still
-   required for explicit unit contracts, direct comparison with the
-   factory-resolved capability plan and broader physical compatibility before
-   any production consumer is enabled.
+   maintained capability families, an Air parity path and an optional comparison
+   against a factory-resolved source type/capability-semantics snapshot. Owner
+   review is still required for the canonical capability-key mapping, explicit
+   unit contracts, hardpoint/loadout semantics and broader physical
+   compatibility before any production consumer is enabled.
 4. **#237 CSG migration proof.** Consume compiled organization through the
    existing CSG/scenario placement adapter; compare generated entities, anchored
    geometry, embarked inventory and native results. Keep separate membership,
    command and communication graphs.
-5. **#238 owner-controlled binding.** Carry field/default/action contract
-   identities into the actual agent binding and experiment evidence; qualify
-   the full selected observation view and a real external model/checkpoint.
-   Preserve existing legacy runtime/report consumers until migration is accepted.
+5. **#238 owner-controlled binding.** The admitted binding now wraps the
+   existing `DecisionRuntimeAgent`, carries policy/version and observation
+   provenance into the model context, and validates produced actions before
+   returning them. Qualify the full selected observation view, native action
+   endpoint and a real external model/checkpoint. Preserve existing legacy
+   runtime/report consumers until migration is accepted.
 6. **#239 host evidence join.** Have the existing host bind the input-lock
    digest into its actual RunReceipt inputs, verify durable completion and join
    publication evidence. The qualification join now preserves receipt/run/
