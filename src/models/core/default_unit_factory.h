@@ -16,6 +16,7 @@
 #include "components/command/command_link_qos.h"
 #include "components/command/default_factory_spawn_command_projection.h"
 #include "components/basic/common.h"
+#include "components/basic/tags.h"
 #include "core/interfaces/stable_entity_identity.h"
 #include "components/combat/health.h"
 #include "components/physics/performance.h"
