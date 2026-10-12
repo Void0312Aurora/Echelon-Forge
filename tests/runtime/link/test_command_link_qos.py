@@ -227,12 +227,30 @@ class MissionCommandLinkQosTests(unittest.TestCase):
 
     pending_before_delivery = kernel.debug_get_pending_movement_command(entity_id)
     self.assertTrue(bool(pending_before_delivery["active"]))
+    for snapshot in (pending, pending_before_delivery):
+      self.assertTrue(bool(snapshot["current_control_state_present"]))
+      self.assertAlmostEqual(float(snapshot["current_control_target_heading_deg"]), 0.0, places=6)
+      self.assertAlmostEqual(float(snapshot["current_control_target_speed_mps"]), 240.0, places=6)
+      self.assertAlmostEqual(float(snapshot["current_control_target_altitude_m"]), 1500.0, places=6)
 
     kernel.step()
     kernel_baseline.step()
 
     pending_after_delivery = kernel.debug_get_pending_movement_command(entity_id)
     self.assertFalse(bool(pending_after_delivery["active"]))
+    self.assertTrue(bool(pending_after_delivery["current_control_state_present"]))
+    self.assertAlmostEqual(
+      float(pending_after_delivery["current_control_target_heading_deg"]), 180.0, places=6
+    )
+    self.assertAlmostEqual(
+      float(pending_after_delivery["current_control_target_speed_mps"]), 220.0, places=6
+    )
+    self.assertAlmostEqual(
+      float(pending_after_delivery["current_control_target_altitude_m"]), 1500.0, places=6
+    )
+    baseline_control = kernel_baseline.debug_get_pending_movement_command(baseline_entity_id)
+    self.assertAlmostEqual(float(baseline_control["current_control_target_heading_deg"]), 0.0, places=6)
+    self.assertAlmostEqual(float(baseline_control["current_control_target_speed_mps"]), 240.0, places=6)
 
     for _ in range(37):
       kernel.step()
