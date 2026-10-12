@@ -169,6 +169,6 @@ class WorldBatchRuntime {
     size_t worker_threads_ = 1;
     mutable bool batch_healthy_ = true;
     mutable std::exception_ptr batch_failure_;
-    // Private native test seam; production uses the existing jthread launcher.
-    std::function<std::jthread(std::function<void()>)> worker_thread_factory_;
+    // Private native test seam; static storage avoids changing object layout.
+    static std::function<std::jthread(std::function<void()>)> worker_thread_factory_for_test_;
 };

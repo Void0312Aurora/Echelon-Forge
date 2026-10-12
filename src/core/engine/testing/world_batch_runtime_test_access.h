@@ -11,6 +11,7 @@ class WorldBatchRuntimeTestAccess {
     static void set_worker_thread_factory(
         WorldBatchRuntime &runtime,
         std::function<std::jthread(std::function<void()>)> factory) {
-        runtime.worker_thread_factory_ = std::move(factory);
+        (void)runtime;
+        WorldBatchRuntime::worker_thread_factory_for_test_ = std::move(factory);
     }
 };
