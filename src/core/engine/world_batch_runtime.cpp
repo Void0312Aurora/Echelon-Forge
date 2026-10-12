@@ -276,6 +276,16 @@ WorldBatchRuntime::resolve_factory_platform_spawn_plan(std::size_t world_index,
     return checked_world(world_index).resolve_platform_spawn_plan_for_type_name(type_name);
 }
 
+std::vector<runtime::scheduler::StageNodeManifest>
+WorldBatchRuntime::maintained_stage_node_manifests() const {
+    ensure_batch_healthy();
+    std::vector<runtime::scheduler::StageNodeManifest> manifests;
+    for (const auto *manifest : runtime::scheduler::enumerate_maintained_stage_node_manifests()) {
+        manifests.push_back(*manifest);
+    }
+    return manifests;
+}
+
 void WorldBatchRuntime::parallel_for_index(size_t task_count, size_t requested_threads,
                                            std::function<void(size_t)> fn) const {
     ensure_batch_healthy();

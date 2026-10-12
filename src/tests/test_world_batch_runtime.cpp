@@ -36,6 +36,24 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(runtime.batch_healthy());
     }
 
+    TEST_CASE("maintained stage manifest query returns the native owner snapshot") {
+        WorldBatchRuntime runtime(1);
+
+        const auto manifests = runtime.maintained_stage_node_manifests();
+        REQUIRE(manifests.size() >= 3);
+        CHECK(std::none_of(manifests.begin(), manifests.end(), [](const auto &manifest) {
+            return manifest.facade_visibility == runtime::scheduler::kFacadeVisibilityAdapterProjection ||
+                   manifest.facade_visibility == runtime::scheduler::kFacadeVisibilityDiagnosticsOnly;
+        }));
+        const auto it = std::find_if(manifests.begin(), manifests.end(), [](const auto &manifest) {
+            return manifest.node_id == "fire_control_launch.v1";
+        });
+        REQUIRE(it != manifests.end());
+        CHECK(it->owner_module == "src/core/engine/simulation_kernel_weapon_api.cpp");
+        CHECK(runtime::scheduler::validate_stage_node_manifest_registry(manifests).valid);
+        CHECK(runtime.batch_healthy());
+    }
+
     TEST_CASE("batch worker launch failure fences exports and failed recovery until reset") {
         for (const std::size_t world_count : {std::size_t{3}, std::size_t{4}}) {
             for (const std::size_t failed_launch : {std::size_t{0}, std::size_t{1}}) {

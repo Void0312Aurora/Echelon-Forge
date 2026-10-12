@@ -42,7 +42,8 @@ schema 必须在发布前拒绝；需要转换或估计时必须显式插入节�
 
 原型已补齐递归输入闭包、能力与时钟继承、信息层、多生产者和 freshness 校验。资格适配器现在消费
 owner 提供的 `StageNodeManifest` 快照，要求节点一一绑定，并在检查显式 native system
-映射顺序前拒绝 adapter/diagnostic-only stage。不可变参数、backend 引用与 clock policy
+映射顺序前拒绝 adapter/diagnostic-only stage。native `WorldBatchRuntime` 还以只读副本
+暴露维护中的 manifest registry 供资格诊断使用，不会安装或修改 scheduler node。不可变参数、backend 引用与 clock policy
 参与图和组合身份。严格 stage admission 还要求 owner 契约字段并拒绝重复 state-shard writer；
 默认资格模式仍兼容较小的证据 fixture。
 

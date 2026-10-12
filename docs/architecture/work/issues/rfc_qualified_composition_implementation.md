@@ -174,9 +174,10 @@ merge into main, accept the proposed ADRs or close RFC issues.
    schema vocabulary, rejects unknown port schemas, carries freshness through edge
    and composite identity checks, and has a strict StageNodeManifest admission
    mode for required native contract fields and duplicate state-shard writers.
-   Native owner publication, the canonical vocabulary, and compilation of an
-   authored graph into executable native contracts remain open; no second
-   dispatcher is introduced.
+   The native owner now exposes a read-only maintained `StageNodeManifest`
+   snapshot through `WorldBatchRuntime` for qualification diagnostics. The
+   canonical schema vocabulary and compilation of an authored graph into
+   executable native contracts remain open; no second dispatcher is introduced.
 3. **#236 native typed plan seam.** The bounded adapter and native identity
    checks now cover slot cardinality, module digest/native-reference identity,
    maintained capability families, an Air parity path and an optional comparison
@@ -254,6 +255,13 @@ projection, rejects unknown types with the native reason, and leaves the batch
 healthy. This exposes the owner result for diagnostics; it does not yet make
 authored blueprint capability keys or hardpoint/loadout fields equivalent to
 that result.
+
+The same native continuation exposes the maintained scheduler manifest registry
+as a read-only `WorldBatchRuntime` snapshot. Native validation confirms the
+returned copy contains the three maintained scheduler stages and excludes the
+adapter and diagnostics-only projections; the Python binding sees the same
+owner fields. This is an owner-publication diagnostic seam, not a canonical
+schema vocabulary or authored-graph admission path.
 
 The #237 CSG adapter now has **14 force-package/adapter tests**, including two
 full S0 fixture runs. It requires an explicit compiled-scenario input and

@@ -11,6 +11,32 @@
 #include "runtime/facade/runtime_facade.h"
 
 void bind_runtime_engine(nb::module_ &m) {
+    nb::class_<runtime::scheduler::StageNodeManifest> stage_node_manifest_class(
+        m, "StageNodeManifest");
+    stage_node_manifest_class.def(nb::init<>())
+        .def_rw("node_id", &runtime::scheduler::StageNodeManifest::node_id)
+        .def_rw("semantic_stage", &runtime::scheduler::StageNodeManifest::semantic_stage)
+        .def_rw("owner_module", &runtime::scheduler::StageNodeManifest::owner_module)
+        .def_rw("input_packets", &runtime::scheduler::StageNodeManifest::input_packets)
+        .def_rw("output_packets", &runtime::scheduler::StageNodeManifest::output_packets)
+        .def_rw("read_state_shards", &runtime::scheduler::StageNodeManifest::read_state_shards)
+        .def_rw("write_state_shards", &runtime::scheduler::StageNodeManifest::write_state_shards)
+        .def_rw("read_snapshot_policy", &runtime::scheduler::StageNodeManifest::read_snapshot_policy)
+        .def_rw("write_commit_policy", &runtime::scheduler::StageNodeManifest::write_commit_policy)
+        .def_rw("clock_domain", &runtime::scheduler::StageNodeManifest::clock_domain)
+        .def_rw("latency_policy", &runtime::scheduler::StageNodeManifest::latency_policy)
+        .def_rw("sync_policy", &runtime::scheduler::StageNodeManifest::sync_policy)
+        .def_rw("allowed_same_window_edges",
+                &runtime::scheduler::StageNodeManifest::allowed_same_window_edges)
+        .def_rw("required_barriers", &runtime::scheduler::StageNodeManifest::required_barriers)
+        .def_rw("event_families_emitted",
+                &runtime::scheduler::StageNodeManifest::event_families_emitted)
+        .def_rw("diagnostic_trace_obligations",
+                &runtime::scheduler::StageNodeManifest::diagnostic_trace_obligations)
+        .def_rw("facade_visibility", &runtime::scheduler::StageNodeManifest::facade_visibility)
+        .def_rw("adapter_projection_allowed",
+                &runtime::scheduler::StageNodeManifest::adapter_projection_allowed);
+
     nb::class_<WorldBatchRuntime>(m, "WorldBatchRuntime")
         .def(nb::init<size_t>(), nb::arg("world_count") = 0)
         .def("world_count", &WorldBatchRuntime::world_count)
@@ -24,6 +50,8 @@ void bind_runtime_engine(nb::module_ &m) {
         .def("resolve_factory_platform_spawn_plan",
              &WorldBatchRuntime::resolve_factory_platform_spawn_plan,
              nb::arg("world_index"), nb::arg("type_name"))
+        .def("maintained_stage_node_manifests",
+             &WorldBatchRuntime::maintained_stage_node_manifests)
         .def("world_raw_quarantine",
              nb::overload_cast<size_t>(&WorldBatchRuntime::world_raw_quarantine),
              nb::rv_policy::reference_internal, nb::arg("index"))

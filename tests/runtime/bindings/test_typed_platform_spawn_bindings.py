@@ -228,3 +228,19 @@ def test_world_batch_exposes_native_factory_resolved_plan_read_only() -> None:
   assert not missing.admitted
   assert missing.rejection_reason == "resolved_platform_spawn_plan_type_name_not_found"
   assert runtime.batch_healthy()
+
+
+def test_world_batch_exposes_maintained_native_stage_manifest_snapshot() -> None:
+  runtime = ef_py.WorldBatchRuntime(1)
+  manifests = runtime.maintained_stage_node_manifests()
+
+  assert len(manifests) >= 3
+  assert all(
+    manifest.facade_visibility not in {"adapter_projection", "diagnostics_only"}
+    for manifest in manifests
+  )
+  launch = next(manifest for manifest in manifests if manifest.node_id == "fire_control_launch.v1")
+  assert launch.owner_module == "src/core/engine/simulation_kernel_weapon_api.cpp"
+  assert launch.input_packets
+  assert launch.required_barriers
+  assert runtime.batch_healthy()

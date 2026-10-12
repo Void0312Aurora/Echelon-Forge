@@ -14,6 +14,7 @@
 #include "core/engine/simulation_kernel.h"
 #include "core/engine/world_batch_visual_binding_compatibility_types.h"
 #include "core/interfaces/observation.h"
+#include "runtime/contracts/stage_node_manifest_registry.h"
 #include "runtime/contracts/world_batch_contracts.h"
 #include "runtime/contracts/platform_capability_contracts.h"
 
@@ -61,6 +62,8 @@ class WorldBatchRuntime {
     [[nodiscard]] runtime::platform_capabilities::ResolvedPlatformSpawnPlan
     resolve_factory_platform_spawn_plan(std::size_t world_index,
                                         const std::string &type_name) const;
+    [[nodiscard]] std::vector<runtime::scheduler::StageNodeManifest>
+    maintained_stage_node_manifests() const;
 
     std::uint64_t spawn_unit_from_world_spawn_request(const WorldSpawnRequest &request);
     std::uint64_t spawn_typed_platform_unit(const TypedPlatformSpawnRequest &request);
