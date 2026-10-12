@@ -277,3 +277,46 @@ def test_receipt_input_binding_mismatch_is_rejected() -> None:
         join_run_receipt(
             candidate, receipt=_receipt(different), native_runtime=_native(), outcome=outcome
         )
+
+
+def test_host_receipt_binding_is_preserved_and_checked() -> None:
+    candidate = build_resolved_input_lock(_experiment(), _registry())
+    receipt = _receipt(candidate)
+    payload = receipt["payload"]
+    native = _native()
+    native["receipt_binding"] = {
+        "receipt_id": payload["receipt_id"],
+        "run_id": payload["run_id"],
+        "attempt_id": payload["attempt_id"],
+        "host_boot_id": payload["host_boot_id"],
+        "writer_generation": payload["writer_generation"],
+        "backend_system_graph_sha256": payload["backend"]["system_graph_sha256"],
+        "native_validation_evidence_sha256": payload["results"]["native_validation"][
+            "evidence_sha256"
+        ],
+        "durable_ack": payload["completion"]["durable_ack"],
+    }
+    outcome = build_batch_outcome(
+        batch_generation_ref="g1",
+        operation_ref="op1",
+        operation="step",
+        worlds=(
+            WorldOutcome(0, WorldState.COMPLETED, True),
+            WorldOutcome(1, WorldState.COMPLETED, True),
+        ),
+        expected_world_indices=frozenset({0, 1}),
+    )
+    joined = join_run_receipt(
+        candidate, receipt=receipt, native_runtime=native, outcome=outcome
+    )
+    assert joined.as_dict()["completion_evidence"]["receipt_binding"] == native[
+        "receipt_binding"
+    ]
+
+    mismatched = dict(native)
+    mismatched["receipt_binding"] = dict(native["receipt_binding"])
+    mismatched["receipt_binding"]["run_id"] = "other-run"
+    with pytest.raises(InputLockError, match="receipt_binding_mismatch"):
+        join_run_receipt(
+            candidate, receipt=receipt, native_runtime=mismatched, outcome=outcome
+        )

@@ -43,6 +43,6 @@ realized scheduler identity 和 RunReceipt/status。experiment 层不重算或�
 
 方案比较以英文规范页的 Option comparison 为准。
 
-输入身份已深冻结，并与后续 native 证据分开；场景依赖复用 ScenarioCompiler，并在文件依赖时间戳之外校验已编译语义快照。已实现 topology 与声明 graph 身份分开。可比性要求绑定的已校验 RunReceipt 和完整 outcome；目前 receipt 使用合成契约夹具，真实 host 发布和持久性仍待验收。
+输入身份已深冻结，并与后续 native 证据分开；场景依赖复用 ScenarioCompiler，并在文件依赖时间戳之外校验已编译语义快照。已实现 topology 与声明 graph 身份分开。evidence join 会保留 host receipt identity、backend system-graph digest、native validator evidence digest 和 durable acknowledgement；native adapter 提供同一绑定时，冲突会 fail closed。可比性要求绑定的已校验 RunReceipt 和完整 outcome；目前 receipt 使用合成契约夹具，真实 host 发布和持久性仍待验收。
 
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。

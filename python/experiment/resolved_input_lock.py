@@ -27,6 +27,16 @@ _REQUIRED_NATIVE_IDENTITY_FIELDS = (
     "executable_graph_sha256",
     "realized_topology_digest",
 )
+_RECEIPT_BINDING_FIELDS = (
+    "receipt_id",
+    "run_id",
+    "attempt_id",
+    "host_boot_id",
+    "writer_generation",
+    "backend_system_graph_sha256",
+    "native_validation_evidence_sha256",
+    "durable_ack",
+)
 
 
 class InputLockError(ValueError):
@@ -261,6 +271,26 @@ def join_run_receipt(
         raise InputLockError("input_lock.receipt_input_binding_mismatch")
     if len(payload["execution_scope"]["world_ids"]) != len(outcome.expected_world_indices):
         raise InputLockError("input_lock.receipt_world_scope_mismatch")
+    receipt_binding = {
+        "receipt_id": payload["receipt_id"],
+        "run_id": payload["run_id"],
+        "attempt_id": payload["attempt_id"],
+        "host_boot_id": payload["host_boot_id"],
+        "writer_generation": payload["writer_generation"],
+        "backend_system_graph_sha256": payload["backend"]["system_graph_sha256"],
+        "native_validation_evidence_sha256": payload["results"]["native_validation"][
+            "evidence_sha256"
+        ],
+        "durable_ack": payload["completion"]["durable_ack"],
+    }
+    supplied_binding = native_runtime.get("receipt_binding")
+    if supplied_binding is not None:
+        if not isinstance(supplied_binding, Mapping):
+            raise InputLockError("input_lock.receipt_binding_invalid")
+        if set(supplied_binding) != set(_RECEIPT_BINDING_FIELDS):
+            raise InputLockError("input_lock.receipt_binding_fields_invalid")
+        if dict(supplied_binding) != receipt_binding:
+            raise InputLockError("input_lock.receipt_binding_mismatch")
     data = candidate.as_dict()
     complete = payload["terminal_state"] == "completed" and outcome.result is BatchResult.COMPLETED
     data["status"] = "completed" if complete else "unknown"
@@ -270,6 +300,7 @@ def join_run_receipt(
         "receipt_sha256": validated["payload_sha256"],
         "terminal_state": payload["terminal_state"],
         "outcome": outcome.as_dict(),
+        "receipt_binding": receipt_binding,
     }
     return ResolvedInputLock(data, candidate.digest)
 
