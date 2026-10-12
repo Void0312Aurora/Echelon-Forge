@@ -8,14 +8,16 @@ Last verified: `2026-10-12`
 
 ## Scope and source
 
-This is a local qualification integration on `main@de19c3dbd69e9feb330b1291e84a210c53bfd09f`.
+This is a local qualification integration on the branch point
+`main@de19c3dbd69e9feb330b1291e84a210c53bfd09f` (the current upstream `main` has
+advanced independently).
 It carries the proposed ADRs and prototypes from PRs #256–#261 into an isolated
 worktree. It does not mark the RFCs accepted or enable a production profile.
 The continuation also ports the existing #210 owner repair from PR #230,
-`7989800d284484c76ccd0aed77cca32300fb2dda`, onto current main interfaces.
+`7989800d284484c76ccd0aed77cca32300fb2dda`, onto the branch-point interfaces.
 Only its failure guards, recovery behavior, bindings and tests were carried;
-obsolete command setters and older broadphase code were excluded. Current main's
-newer composition diagnostics and resize operation received the same failure guard.
+obsolete command setters and older broadphase code were excluded. The branch-point
+composition diagnostics and resize operation received the same failure guard.
 
 | RFC | Source PR | Source head |
 | --- | --- | --- |
@@ -35,7 +37,7 @@ newer composition diagnostics and resize operation received the same failure gua
 | #237 | Relationships survive compilation and hashing with instance-scoped endpoints; reused packages expand independently; nested role capability requirements are checked; frame/anchor/provenance references survive in package-instance evidence. A qualification adapter now binds one compiled package to an existing CSG group by explicit entity-name and assembly-type maps, records CSG schema, scenario, geometry and embarked-inventory digests, and delegates the complete qualified snapshot to the existing loader. | Recursive, full named/mirror CSG, loader and negative fixtures. Both full S0 fixtures bind all seven surface hulls per group; native loader positions and 241 replay frames match. In-memory coordinate, inventory, geometry and runtime-metadata drift is rejected before loading. CSG still owns coordinate expansion, geodesy, embarked inventory and native scenario materialization. It does not install task authority or replace the CSG compiler. |
 | #238 | Field provenance/frame checks, explicit optional defaults with preserved field order, action bounds/timing checks, deterministic policy selection and a legacy-kind compatibility gate. | Basic mission fields come from the mission packet owner, action dimensions from the existing native action adapter, and action bounds from the existing Gym space. Two models created through DecisionModelRegistry retain reset/decide/close and generate identical native PilotAction values. The learned registration uses a deterministic stand-in, not a trained checkpoint. |
 | #239 | Deeply immutable canonical input identity, semantic freshness checks on compiled scenario snapshots, ScenarioCompiler dependency projection, separate observed native manifest/graph/topology identity, and a join to the existing RunReceipt validator. | One existing Air matrix entry produces a static candidate with explicit effective seeds. Source changes and in-memory semantic snapshot changes reject. Receipt/comparability fixtures are synthetic owner-contract vectors; they are not durable production run records. A string `status=completed` alone cannot establish comparability. |
-| #251 | Exact completion coverage and conservative aggregate-fault projection; local #210 native failure fence, guarded exports and explicit reset recovery. Python/facade reuse that owner implementation. Actual 3/4-world launch-failure injection now remains private to native test access. | Native 3/4-world serial/parallel mixed-advancement, post-timestep setup faults and first/later worker-launch failures, invalid recovery input, blocked retry/export and successful reset. No per-world commit, rollback, cancellation, native generation ID or process isolation is established. |
+| #251 | Exact completion coverage and conservative aggregate-fault projection; local #210 native failure fence, guarded exports and explicit reset recovery. Python/facade reuse that owner implementation. Actual 3/4-world launch-failure injection now remains private to native test access. | Native 3/4-world serial/parallel mixed-advancement, post-timestep setup faults and first/later worker-launch failures, invalid recovery input, blocked retry/export and successful reset. The state matrix distinguishes `healthy`, `failed/untrusted` and reset-created `healthy`; no per-world commit, rollback, cancellation, native generation ID or process isolation is established. Upstream `main` has not received this local #210 port. |
 
 ## Single-owner integration map
 
@@ -191,7 +193,8 @@ merge into main, accept the proposed ADRs or close RFC issues.
    publication evidence. The current proof validates a schema, not signatures
    or durable availability.
 7. **#251 remaining fault gates.** The existing #210 lineage is locally ported and
-   verified; upstream main still lacks it. Preserve its owner during review and
+   verified against this branch's interface baseline; upstream main still lacks it.
+   Preserve its owner during review and
    delivery. The native `WorldBatchRuntime` proof now injects a worker-launch
    failure through a private test accessor, verifies joined workers,
    failed-generation export fencing, failed recovery fencing and explicit reset
