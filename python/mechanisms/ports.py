@@ -117,6 +117,67 @@ class GraphDiagnostic:
 
 
 @dataclass(frozen=True)
+class SchemaVocabularyEntry:
+    """One owner-declared schema and the native contract that owns it."""
+
+    schema: str
+    owner_ref: str
+
+    def __post_init__(self) -> None:
+        for field_name in ("schema", "owner_ref"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+
+
+@dataclass(frozen=True)
+class MechanismSchemaVocabulary:
+    """Immutable owner vocabulary used to qualify mechanism port schemas.
+
+    This is a qualification artifact.  It identifies the native owner of each
+    schema, but it does not publish a dispatcher or create an executable
+    contract on its own.
+    """
+
+    vocabulary_id: str
+    version: str
+    entries: tuple[SchemaVocabularyEntry, ...]
+
+    def __post_init__(self) -> None:
+        for field_name in ("vocabulary_id", "version"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+        entries = tuple(self.entries)
+        if not entries:
+            raise ValueError("entries must not be empty")
+        if any(not isinstance(entry, SchemaVocabularyEntry) for entry in entries):
+            raise TypeError("entries must contain SchemaVocabularyEntry values")
+        schemas = [entry.schema for entry in entries]
+        if len(set(schemas)) != len(schemas):
+            raise ValueError("schema vocabulary entries must use unique schema names")
+        object.__setattr__(self, "entries", entries)
+
+    @property
+    def schema_names(self) -> frozenset[str]:
+        return frozenset(entry.schema for entry in self.entries)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "vocabulary_id": self.vocabulary_id,
+            "version": self.version,
+            "entries": [
+                {"schema": entry.schema, "owner_ref": entry.owner_ref}
+                for entry in sorted(self.entries, key=lambda item: item.schema)
+            ],
+        }
+
+    @property
+    def identity_digest(self) -> str:
+        return _digest(self.as_dict())
+
+
+@dataclass(frozen=True)
 class CompiledMechanismGraph:
     graph_id: str
     nodes: tuple[tuple[str, MechanismSpec], ...]
@@ -125,6 +186,9 @@ class CompiledMechanismGraph:
     identity_digest: str
     external_inputs: frozenset[str] = frozenset()
     schema_version: str = SCHEMA_VERSION
+    schema_vocabulary_ref: str | None = None
+    schema_vocabulary_version: str | None = None
+    schema_vocabulary_digest: str | None = None
 
     @property
     def valid(self) -> bool:
@@ -154,6 +218,15 @@ class CompiledMechanismGraph:
             ],
             "edges": [edge.__dict__ for edge in self.edges],
             "external_inputs": sorted(self.external_inputs),
+            "schema_vocabulary": (
+                None
+                if self.schema_vocabulary_ref is None
+                else {
+                    "vocabulary_id": self.schema_vocabulary_ref,
+                    "version": self.schema_vocabulary_version,
+                    "identity_digest": self.schema_vocabulary_digest,
+                }
+            ),
             "diagnostics": [diagnostic.__dict__ for diagnostic in self.diagnostics],
             "identity_digest": self.identity_digest,
         }
@@ -181,8 +254,9 @@ def _identity_payload(
     edges: Sequence[GraphEdge],
     *,
     external_inputs: frozenset[str],
+    schema_vocabulary: MechanismSchemaVocabulary | None = None,
 ) -> dict[str, Any]:
-    return {
+    payload = {
         "schema_version": SCHEMA_VERSION,
         "graph_id": graph_id,
         "nodes": {
@@ -217,6 +291,13 @@ def _identity_payload(
         ],
         "external_inputs": sorted(external_inputs),
     }
+    if schema_vocabulary is not None:
+        payload["schema_vocabulary"] = {
+            "vocabulary_id": schema_vocabulary.vocabulary_id,
+            "version": schema_vocabulary.version,
+            "identity_digest": schema_vocabulary.identity_digest,
+        }
+    return payload
 
 
 def _digest(payload: Mapping[str, Any]) -> str:
@@ -233,6 +314,7 @@ def compile_mechanism_graph(
     *,
     external_inputs: frozenset[str] = frozenset(),
     known_schemas: frozenset[str] | None = None,
+    schema_vocabulary: MechanismSchemaVocabulary | None = None,
 ) -> CompiledMechanismGraph:
     """Validate a graph and return a non-published qualification artifact."""
 
@@ -240,13 +322,18 @@ def compile_mechanism_graph(
         raise MechanismGraphError("graph_id is required")
     if not nodes:
         raise MechanismGraphError("at least one mechanism node is required")
+    if known_schemas is not None and schema_vocabulary is not None:
+        raise MechanismGraphError("known_schemas and schema_vocabulary are mutually exclusive")
     diagnostics: list[GraphDiagnostic] = []
     normalized_external_inputs = frozenset(external_inputs)
-    if known_schemas is not None:
+    effective_schemas = (
+        schema_vocabulary.schema_names if schema_vocabulary is not None else known_schemas
+    )
+    if effective_schemas is not None:
         for node_id, spec in nodes.items():
             for side, ports in (("inputs", spec.inputs), ("outputs", spec.outputs)):
                 for port in ports:
-                    if port.schema not in known_schemas:
+                    if port.schema not in effective_schemas:
                         diagnostics.append(
                             GraphDiagnostic(
                                 "mechanism.schema_unknown",
@@ -409,7 +496,13 @@ def compile_mechanism_graph(
     for node_id in nodes:
         visit(node_id, ())
 
-    payload = _identity_payload(graph_id, nodes, edges, external_inputs=normalized_external_inputs)
+    payload = _identity_payload(
+        graph_id,
+        nodes,
+        edges,
+        external_inputs=normalized_external_inputs,
+        schema_vocabulary=schema_vocabulary,
+    )
     return CompiledMechanismGraph(
         graph_id=graph_id,
         nodes=tuple(sorted(nodes.items())),
@@ -417,6 +510,9 @@ def compile_mechanism_graph(
         diagnostics=tuple(diagnostics),
         identity_digest=_digest(payload),
         external_inputs=normalized_external_inputs,
+        schema_vocabulary_ref=(schema_vocabulary.vocabulary_id if schema_vocabulary else None),
+        schema_vocabulary_version=(schema_vocabulary.version if schema_vocabulary else None),
+        schema_vocabulary_digest=(schema_vocabulary.identity_digest if schema_vocabulary else None),
     )
 
 
