@@ -212,3 +212,19 @@ def test_legacy_world_spawn_request_type_name_path_remains_python_mainline_surfa
   assert legacy_spawn.type_name == "DDG-51_Flight_I_USS_Arleigh_Burke"
   assert not hasattr(legacy_spawn, "source_type_name")
   assert not hasattr(legacy_spawn, "resolved_spawn_plan")
+
+
+def test_world_batch_exposes_native_factory_resolved_plan_read_only() -> None:
+  runtime = ef_py.WorldBatchRuntime(1)
+  plan = runtime.resolve_factory_platform_spawn_plan(0, "Aircraft")
+
+  assert plan.admitted
+  assert plan.source_type_name == "Aircraft"
+  assert plan.type_name_projection_preserved
+  assert plan.materialization_strategy == "factory_projection_materialization"
+  assert list(plan.resolved_capabilities)
+
+  missing = runtime.resolve_factory_platform_spawn_plan(0, "Missing_Type")
+  assert not missing.admitted
+  assert missing.rejection_reason == "resolved_platform_spawn_plan_type_name_not_found"
+  assert runtime.batch_healthy()

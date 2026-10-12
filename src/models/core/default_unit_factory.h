@@ -605,7 +605,7 @@ class DefaultUnitFactory : public IUnitFactory {
     }
 
     [[nodiscard]] ResolvedPlatformSpawnPlan
-    resolve_platform_spawn_plan_for_type_name(std::string_view type_name) const {
+    resolve_platform_spawn_plan_for_type_name(std::string_view type_name) const override {
         using namespace runtime::platform_capabilities;
         using namespace default_unit_factory_detail;
 
