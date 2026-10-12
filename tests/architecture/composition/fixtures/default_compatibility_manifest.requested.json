@@ -423,6 +423,11 @@
       "registration_id": "flecs.component.structural_breakup_state"
     },
     {
+      "component_id": "SubmarineBathymetryPolicy",
+      "plugin_id": "builtin.core_runtime",
+      "registration_id": "flecs.component.submarine_bathymetry_policy"
+    },
+    {
       "component_id": "SubmarinePlatform",
       "plugin_id": "builtin.core_runtime",
       "registration_id": "flecs.component.submarine_platform"

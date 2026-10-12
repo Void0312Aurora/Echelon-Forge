@@ -1067,6 +1067,7 @@ set(EF_TEST_SOURCES
     src/tests/test_components_basic.cpp
     src/tests/test_content_compile_passes.cpp
     src/tests/test_aero_physics_common.cpp
+    src/tests/test_submarine_bathymetry.cpp
     src/tests/test_acoustic_active_mode.cpp
     src/tests/test_geodesy.cpp
     src/tests/test_ground_contact_solver.cpp
