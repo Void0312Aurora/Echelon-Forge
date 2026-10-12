@@ -203,15 +203,23 @@ merge into main, accept the proposed ADRs or close RFC issues.
 The continuation added `python/content/platform_blueprint_adapter.py`, a
 content-side bridge that emits the existing expanded typed-request tree without
 importing `ef_py`. The existing bindings adapter then constructs the native DTO.
-The bridge derives deterministic bundle and plan identities from the resolved
-assembly digest and carries module evidence into the capability records. Native
-request validation now checks source identity, bundle identity and exact
-resolved-capability fields before admission.
+The bridge revalidates schema/family/plan identity, reuses the maintained
+capability-family vocabulary, and binds a full legacy `UnitDefinition` snapshot
+digest into the request identity. A plan whose lowering would change that
+snapshot is rejected; parameterized variants remain on the existing legacy
+lowering/loader path. Native request validation now checks source identity,
+bundle identity and capability records by unique capability ID before admission,
+while rejected plans retain their specific rejection reason.
 
-The continuation passed **23 content/composition tests**, **20 binding and
-typed-request tests**, Ruff on all changed Python files, and the existing native
-lane remained **31/31 tests with 842/842 assertions** after rebuilding `ef_py`
-and `ef_test`. The Air proof is still a qualification fixture: it uses an
+The current continuation passed **66 content/composition/binding/rollback and
+manifest tests**, **35 platform-spawn architecture tests**, and Ruff on all
+changed Python files. After rebuilding both native targets, the selected native
+suites passed **31 cases / 842 assertions**. The prior four standalone MSVC
+factory-header failures were repaired by including the owning `SimObject` tag
+header directly. A bounded F-16 fuel override is lowered to legacy JSON, loaded
+by the existing native loader and produces a motion difference after one step;
+initial public observations omit fuel mass. The typed Air proof remains a
+qualification fixture: it uses an
 existing F-16 native type and does not compare arbitrary authoring fields with
 the factory's internally derived capability bundle. Units and broader physical
 compatibility remain owner-review gates.
