@@ -698,8 +698,8 @@ Sonar make_default_sonar_definition() {
     return sonar;
 }
 
-void parse_sonar_json_fields(const nlohmann::json &s, Sonar *out_sonar) {
-    if (!out_sonar || !s.is_object()) return;
+bool parse_sonar_json_fields(const nlohmann::json &s, Sonar *out_sonar, std::string *error) {
+    if (!out_sonar || !s.is_object()) return true;
     Sonar sonar = *out_sonar;
     sonar.max_range_m = s.value("max_range_m", sonar.max_range_m);
     sonar.scan_period_s = s.value("scan_period_s", sonar.scan_period_s);
@@ -730,9 +730,25 @@ void parse_sonar_json_fields(const nlohmann::json &s, Sonar *out_sonar) {
     sonar.confirm_window_n = s.value("confirm_window_n", sonar.confirm_window_n);
     sonar.passive_only = s.value("passive_only", sonar.passive_only);
     sonar.bearing_only = s.value("bearing_only", sonar.bearing_only);
-    const std::string mode_str = s.value("mode", sonar.passive_only ? "Passive" : "Active");
+    std::string mode_str = sonar.passive_only ? "Passive" : "Active";
+    if (s.contains("mode")) {
+        if (!s["mode"].is_string()) {
+            if (error) {
+                *error = "sonar.mode must be either 'Passive' or 'Active'";
+            }
+            return false;
+        }
+        mode_str = s["mode"].get<std::string>();
+    }
+    if (mode_str != "Passive" && mode_str != "Active") {
+        if (error) {
+            *error = "sonar.mode must be either 'Passive' or 'Active'";
+        }
+        return false;
+    }
     sonar.mode = static_cast<int>(mode_str == "Active" ? SonarMode::Active : SonarMode::Passive);
     *out_sonar = sonar;
+    return true;
 }
 
 bool parse_unit_type(const std::string &value, UnitType *out_type) {
@@ -986,7 +1002,8 @@ void parse_health_json_fields(const nlohmann::json &entry, UnitDefinition &def) 
     }
 }
 
-void parse_sensor_and_sonar_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
+bool parse_sensor_and_sonar_json_fields(const nlohmann::json &entry, UnitDefinition &def,
+                                        std::string *error) {
     def.has_sensor = false;
     def.sensor = make_unit_definition_default_sensor();
     def.mounted_sensors.mounts.clear();
@@ -1029,7 +1046,7 @@ void parse_sensor_and_sonar_json_fields(const nlohmann::json &entry, UnitDefinit
 
     if (entry.contains("sonar") && entry["sonar"].is_object()) {
         def.has_sonar = true;
-        parse_sonar_json_fields(entry["sonar"], &def.sonar);
+        if (!parse_sonar_json_fields(entry["sonar"], &def.sonar, error)) return false;
     }
     if (entry.contains("mounted_sonars") && entry["mounted_sonars"].is_array()) {
         for (const auto &mount_json : entry["mounted_sonars"]) {
@@ -1038,11 +1055,14 @@ void parse_sensor_and_sonar_json_fields(const nlohmann::json &entry, UnitDefinit
             mount.label = mount_json.value("label", "");
             mount.sonar = make_default_sonar_definition();
             if (mount_json.contains("sonar") && mount_json["sonar"].is_object()) {
-                parse_sonar_json_fields(mount_json["sonar"], &mount.sonar);
+                if (!parse_sonar_json_fields(mount_json["sonar"], &mount.sonar, error)) {
+                    return false;
+                }
             }
             def.mounted_sonars.mounts.push_back(mount);
         }
     }
+    return true;
 }
 
 void parse_flight_model_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
@@ -1995,7 +2015,9 @@ bool parse_unit_json(
     parse_engine_json_fields(entry, def);
     parse_hardpoints_and_loadout_json_fields(entry, def);
     parse_health_json_fields(entry, def);
-    parse_sensor_and_sonar_json_fields(entry, def);
+    if (!parse_sensor_and_sonar_json_fields(entry, def, error)) {
+        return false;
+    }
 
     def.has_flight_model = entry.value("has_flight_model", false);
     parse_flight_model_json_fields(entry, def);

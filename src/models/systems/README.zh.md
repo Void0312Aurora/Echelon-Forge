@@ -12,12 +12,45 @@
 - sensor、acoustic/sonar、track、data-link 等平台系统的可替换计算模型。
 - 只依赖 `core/interfaces` 和 component 数据的纯 C++ 逻辑。
 
+## Passive 声学源强代理
+
+`default_acoustic_model.cpp` 对没有已接纳 acoustic signature 的目标使用
+`passive_target_source_proxy.v1`：118 dB 参考值加每 m/s 1.6 dB，并叠加潜艇
+stealth bias + 10 dB、舰船 + 16 dB、飞机 + 18 dB 的平台偏置（当前扫描仅接纳
+舰船/潜艇目标，所以飞机 helper 分支不生效）。这是用于确定性
+运行时的工程代理，不是经过校准的频率相关特征、实测部署距离或源数据替代品。
+接收方遗留的 `Sonar::source_level_*` 字段不再选择目标发射源强。
+
+维护中的 C++ 归属基线是 `src/tests/test_acoustic_model.cpp` 中的
+`passive target source level is invariant to receiver source settings` 和
+`passive target source level follows target speed` 两个用例；历史上使用接收方
+源强字段生成的 detection、SNR、概率或距离报告，必须按该代理版本重新计算后再
+比较。具体包括 `tests/runtime/naval/test_naval_asw_helo_runtime.py` 中的接触和
+海况噪声用例：它们过去消费 `DDG-51_Flight_I_ASW_Helo_MVP` 接收方的
+118 dB / 每 m/s 1.7 dB 设置，现在目标速度项使用代理的 1.6 系数。使用
+Virginia passive 模块（0 / 0 源强字段），或曾将 DDG Active 的 235 dB 字段
+当作 passive 目标发射源强的历史 CSG trace，同样需要重算。
+在有已接纳且具备校准证据的 signature provider 替换代理前，不作运行部署
+能力声明。
+
 ## 禁止
 
 - Flecs system tick。
 - component 定义。
 - Python binding 或 facade。
 - full ground sensing、terrain-control 或 fires runtime。
+
+## 默认 acoustic provider 的能力
+
+内容加载器解析 Passive、Active 声呐声明，包括 inline 和 mounted 模块；解析成功
+不代表 provider 支持该模式。默认 acoustic provider 仅支持 Passive：
+`IAcousticModel::scan` 对 Active 返回 `UnsupportedMode`，对受支持的扫描返回
+`Completed`，包括零检测结果。`SonarSystem` 仅在 `Completed` 时接收新接触，
+将结果保存到 `Sonar::last_scan_status`，并在模块进入不支持状态时输出
+`runtime.acoustic.unsupported_mode` 诊断。`last_scan_time_s` 表示最近一次尝试，
+消费者必须同时读取状态。inline 和 mounted 状态均参与迁移；缺少该字段的旧快照
+默认恢复为 `NotScanned`，不会推断历史扫描成功。未来 provider 可以通过同一接口
+实现 Active；本次变更不提供主动声呐传播或回波模型。
 
 ## 迁移备注
 

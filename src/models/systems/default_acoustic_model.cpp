@@ -47,10 +47,17 @@ double platform_self_noise_bias_db(const flecs::entity &entity, double speed_mps
     return std::max(0.0, speed_mps - 5.0) * 0.6;
 }
 
-double target_source_level_db(const flecs::entity &target, double speed_mps, const Sonar &sonar) {
+double target_source_level_db(const flecs::entity &target, double speed_mps) {
+    // This bounded MVP fallback belongs to the emitting platform, not the observing receiver.
+    // A future admitted AcousticSignature component can replace these platform defaults without
+    // changing the receiver contract.  Keeping the fallback here makes the ownership explicit
+    // and prevents a receiver-only sonar edit from rewriting a target's emission.
+    // Engineering proxy passive_target_source_proxy.v1. These values are not
+    // calibrated frequency-dependent signatures or a deployment baseline.
+    constexpr double kFallbackReferenceDb = 118.0;
+    constexpr double kFallbackSpeedFactorDbPerMps = 1.6;
     double source_level =
-        sonar.source_level_reference_db +
-        std::max(0.0, speed_mps) * std::max(0.0, sonar.source_level_speed_factor_db);
+        kFallbackReferenceDb + std::max(0.0, speed_mps) * kFallbackSpeedFactorDbPerMps;
     if (const SubmarinePlatform *sub = target.get<SubmarinePlatform>()) {
         source_level += sub->acoustic_stealth_bias_db + 10.0;
     } else if (target.get<ShipPlatform>() != nullptr) {
@@ -107,8 +114,15 @@ double maritime_ambient_noise_bias_db(const EnvironmentModelRef *env_ref,
 
 class DefaultAcousticModel : public IAcousticModel {
   public:
-    void scan(flecs::world world, flecs::entity owner, const Transform &owner_transform,
-              const Sonar &sonar, ContactList &out_contacts, double current_time) override {
+    AcousticScanStatus scan(flecs::world world, flecs::entity owner,
+                            const Transform &owner_transform, const Sonar &sonar,
+                            ContactList &out_contacts, double current_time) override {
+        // The passive model has no active-ping propagation, echo return, or
+        // active-mode detection threshold.  Fail closed until an active model
+        // is admitted instead of silently treating an Active sonar as passive.
+        if (sonar.mode != static_cast<int>(SonarMode::Passive)) {
+            return AcousticScanStatus::UnsupportedMode;
+        }
         const Alliance *owner_alliance = owner.get<Alliance>();
         const Velocity *owner_velocity = owner.get<Velocity>();
         const EnvironmentModelRef *env_ref = world.get<EnvironmentModelRef>();
@@ -149,7 +163,7 @@ class DefaultAcousticModel : public IAcousticModel {
                                             target_velocity->vz * target_velocity->vz)
                                 : 0.0;
 
-            double snr_db = target_source_level_db(target, target_speed_mps, sonar);
+            double snr_db = target_source_level_db(target, target_speed_mps);
             snr_db -= transmission_loss_db(range_m, sonar);
             snr_db += sonar.directivity_gain_db;
             snr_db -= ((sonar.ambient_noise_db + maritime_noise_bias_db) - 50.0);
@@ -212,6 +226,7 @@ class DefaultAcousticModel : public IAcousticModel {
             detection.timestamp = current_time;
             out_contacts.contacts.push_back(detection);
         });
+        return AcousticScanStatus::Completed;
     }
 };
 

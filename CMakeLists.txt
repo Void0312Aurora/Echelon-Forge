@@ -1068,6 +1068,7 @@ set(EF_TEST_SOURCES
     src/tests/test_content_compile_passes.cpp
     src/tests/test_aero_physics_common.cpp
     src/tests/test_submarine_bathymetry.cpp
+    src/tests/test_acoustic_active_mode.cpp
     src/tests/test_geodesy.cpp
     src/tests/test_ground_contact_solver.cpp
     src/tests/test_ground_movement.cpp
@@ -1080,6 +1081,8 @@ set(EF_TEST_SOURCES
     src/tests/test_kalman_seeker.cpp
     src/tests/test_structural_failure_system.cpp
     src/tests/test_control_surface_damage_coupling.cpp
+    src/tests/test_acoustic_model.cpp
+    src/tests/test_force_system.cpp
     src/tests/test_world_batch_backend_contract.cpp
     # Only the CUDA-resident suites without a second home stay here.  The
     # lifecycle, state, device-consumer, performance and replay translation

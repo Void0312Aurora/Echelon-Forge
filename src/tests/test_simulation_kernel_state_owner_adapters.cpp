@@ -13,6 +13,7 @@
 #include "components/physics/forces.h"
 #include "components/physics/instruments.h"
 #include "components/systems/track_management.h"
+#include "components/systems/sonar.h"
 #include "components/systems/ew.h"
 #include "content/unit_definition.h"
 #include "core/engine/simulation_kernel.h"
@@ -1498,6 +1499,68 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         const auto invalid_wire = document.dump();
         CHECK_FALSE(Bridge::restore_world(target, {invalid_wire.begin(), invalid_wire.end()}));
         CHECK(Bridge::serialize_world(target) == before);
+    }
+
+    TEST_CASE("sonar scan outcomes survive inline and mounted state transfer") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        SimulationKernel source;
+        SimulationKernel target;
+        SimulationKernel legacy_target;
+        source.reset(51);
+        target.reset(52);
+        legacy_target.reset(53);
+        const auto aircraft =
+            source.spawn_unit(Side::Blue, "Aircraft", 0, 0, 3000, 0, 0, 0, 150, 0, 0);
+        REQUIRE(aircraft.is_valid());
+        Sonar inline_sonar{};
+        inline_sonar.mode = static_cast<int>(SonarMode::Active);
+        inline_sonar.last_scan_status = static_cast<int>(AcousticScanStatus::UnsupportedMode);
+        inline_sonar.last_scan_time_s = 4.5;
+        Sonar mounted_sonar{};
+        mounted_sonar.last_scan_status = static_cast<int>(AcousticScanStatus::Completed);
+        mounted_sonar.last_scan_time_s = 5.0;
+        {
+            auto lease = source.acquire_world_lease();
+            lease.world()
+                .entity(aircraft.id())
+                .set_name("SonarStateUnit")
+                .set(inline_sonar)
+                .set<MountedSonars>({{{mounted_sonar, "PassiveMount"}}});
+        }
+        auto document = json::parse(Bridge::serialize_world(source));
+        auto &components = document["results"][0]["components"];
+        CHECK(components["Sonar"]["last_scan_status"] == inline_sonar.last_scan_status);
+        CHECK(components["MountedSonars"]["mounts"][0]["sonar"]["last_scan_status"] ==
+              mounted_sonar.last_scan_status);
+        const auto wire = document.dump();
+        REQUIRE(Bridge::restore_world(target, {wire.begin(), wire.end()}));
+        {
+            auto lease = target.acquire_world_lease();
+            const auto entity = lease.world().lookup("SonarStateUnit");
+            REQUIRE(entity.is_valid());
+            REQUIRE(entity.get<Sonar>() != nullptr);
+            REQUIRE(entity.get<MountedSonars>() != nullptr);
+            CHECK(entity.get<Sonar>()->last_scan_status == inline_sonar.last_scan_status);
+            CHECK(entity.get<Sonar>()->last_scan_time_s == inline_sonar.last_scan_time_s);
+            const auto &mounted = entity.get<MountedSonars>()->mounts;
+            REQUIRE(mounted.size() == 1);
+            CHECK(mounted.front().sonar.last_scan_status == mounted_sonar.last_scan_status);
+            CHECK(mounted.front().sonar.last_scan_time_s == mounted_sonar.last_scan_time_s);
+        }
+        // Historical attempts did not encode whether their provider completed.
+        // Preserve the attempt time, but never invent a successful scan outcome.
+        components["Sonar"].erase("last_scan_status");
+        components["MountedSonars"]["mounts"][0]["sonar"].erase("last_scan_status");
+        const auto legacy_wire = document.dump();
+        REQUIRE(Bridge::restore_world(legacy_target, {legacy_wire.begin(), legacy_wire.end()}));
+        auto lease = legacy_target.acquire_world_lease();
+        const auto entity = lease.world().lookup("SonarStateUnit");
+        REQUIRE(entity.is_valid());
+        CHECK(entity.get<Sonar>()->last_scan_status ==
+              static_cast<int>(AcousticScanStatus::NotScanned));
+        CHECK(entity.get<MountedSonars>()->mounts.front().sonar.last_scan_status ==
+              static_cast<int>(AcousticScanStatus::NotScanned));
     }
 
     TEST_CASE("ComponentDamageState codec preserves topology and migrates v2 default") {
