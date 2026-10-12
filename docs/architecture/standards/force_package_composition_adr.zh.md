@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/force_package_composition_adr.md`
 Owner: `architecture/joint-contracts`
-Last verified: `2026-10-11`
+Last verified: `2026-10-12`
 
 **状态：** 待评审的资格验证设计；现有 scenario expansion 与 Joint/tasking 契约仍是权威。
 
@@ -28,6 +28,6 @@ schema/identity、native Joint/tasking admission 和领域 owner 审查。
 
 方案比较以英文规范页的 Option comparison 为准。
 
-编译结果及身份计算已保留实例作用域内的关系，校验嵌套角色能力，并保留 frame、anchor 与 provenance 引用。CSG 位置及 native 一致性、命令和库存迁移仍待验收；关系记录本身不会授予指挥权限。
+编译结果及身份计算已保留实例作用域内的关系，校验嵌套角色能力，并保留 frame、anchor 与 provenance 引用。新增的资格适配器要求显式提供 entity 与 assembly 映射，将一个已编译 package 与现有 CSG group 的 schema、scenario、geometry、inventory 摘要绑定；CSG 位置、geodesy 和 native materialization 仍由原 owner 负责。命令和库存迁移仍待验收；关系记录本身不会授予指挥权限。
 
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。
