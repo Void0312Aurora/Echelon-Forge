@@ -200,6 +200,8 @@ def compile_force_package(
                     errors.append(
                         f"force.side_conflict:members.{'.'.join(member_path)}:child_side={child.side}"
                     )
+                if child.reference_frame != package.reference_frame or child.anchor_ref != package.anchor_ref:
+                    errors.append(f"force.frame_anchor_conflict:members.{'.'.join(member_path)}")
                 required = role_capabilities.get(member.role)
                 if required is None:
                     errors.append(f"force.role_unknown:members.{'.'.join(member_path)}")
