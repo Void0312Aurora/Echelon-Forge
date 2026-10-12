@@ -34,6 +34,6 @@ mutation 前拒绝；稳定 ID 只由逻辑 ID、版本、解析引用和类型�
 
 方案比较以英文规范页的 Option comparison 为准。
 
-原型记录模块参数 digest 和 native ref，校验有限数值及边界，并显式映射到现有 UnitDefinition 字段。新增质量、功耗预算和槽位安装类别检查，在发布前拒绝不兼容组装。typed bridge 将完整 legacy 定义 digest 纳入 ID；如果 lowering 会改变该快照则拒绝；现在还可在 DTO 发布前将共享的 source-definition 与 resolved-capability identity 和 native factory 已解析的 plan 比对。F-16 与地面步兵已验证初始化及四步后的公开观察一致性；另有 F-16 证明通过现有 typed request 路径生成，并在四步后保持观察一致。hardpoint/loadout 语义和更广泛单位兼容性仍待验收。
+原型记录模块参数 digest 和 native ref，校验有限数值及边界，并显式映射到现有 UnitDefinition 字段。新增质量、功耗预算和槽位安装类别检查，在发布前拒绝不兼容组装。typed bridge 将完整 legacy 定义 digest 纳入 ID；如果 lowering 会改变该快照则拒绝；现在还可在 DTO 发布前将共享的 source type 与 capability semantics 和 native factory 已解析的 plan 比对。F-16 与地面步兵已验证初始化及四步后的公开观察一致性；另有 F-16 证明通过现有 typed request 路径生成，并在四步后保持观察一致。hardpoint/loadout 语义和更广泛单位兼容性仍待验收。
 
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。
