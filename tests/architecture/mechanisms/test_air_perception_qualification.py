@@ -12,6 +12,7 @@ import subprocess
 import pytest
 
 from python.mechanisms.air_perception import (
+    AIR_PERCEPTION_SCHEMA_VOCABULARY,
     NATIVE_IMPLEMENTATIONS,
     air_perception_composite,
     air_perception_qualification_graph,
@@ -39,6 +40,11 @@ def test_native_slice_is_recursive_and_identity_binds_parameters_backend_and_pol
     config = _config()
     graph = air_perception_qualification_graph(config)
     assert graph.valid
+    assert {
+        port.schema
+        for _, spec in graph.nodes
+        for port in (*spec.inputs, *spec.outputs)
+    } <= AIR_PERCEPTION_SCHEMA_VOCABULARY
     assert [
         dict(graph.nodes)[name].implementation_ref for name in ("los", "projection", "tracker")
     ] == list(NATIVE_IMPLEMENTATIONS)

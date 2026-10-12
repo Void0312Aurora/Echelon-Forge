@@ -24,6 +24,16 @@ NATIVE_IMPLEMENTATIONS = (
     "missile_guidance::world_position_from_los_range",
     "missile_guidance::update_world_cv_alpha_beta_tracker",
 )
+AIR_PERCEPTION_SCHEMA_VOCABULARY = frozenset(
+    {
+        "RelativeAnglesWithObserverHeading.v1",
+        "WorldDirection3.v1",
+        "RangeWithObserverPosition.v1",
+        "Position3.v1",
+        "CurrentAndMeasurementTime.v1",
+        "WorldCvTrack.v1",
+    }
+)
 _PARAMETER_NAMES = frozenset({"alpha", "beta", "minimum_velocity_baseline_s", "maximum_speed_mps"})
 
 
@@ -103,6 +113,7 @@ def air_perception_qualification_graph(config: Mapping[str, Any]) -> CompiledMec
             GraphEdge("projection", "position", "tracker", "position"),
         ),
         external_inputs=frozenset({"los.angles", "projection.range_observer", "tracker.epochs"}),
+        known_schemas=AIR_PERCEPTION_SCHEMA_VOCABULARY,
     )
 
 

@@ -118,7 +118,11 @@ window publication from numerical rates per second. A fixed measurement schedule
 and four timesteps reach the same four-second horizon within the documented
 tolerance. A test-lane child exception after tracker mutation but before outer
 packet publication projects an unknown outcome through #251; it proves no rollback.
-This does not install authored graphs into native scheduling. Native schema
-vocabulary selection and owner publication remain separate gates.
+The selected Air lane now enforces an explicit six-schema qualification
+vocabulary while compiling; this is a bounded owner mapping for the three
+maintained native implementations, not a repository-wide packet vocabulary.
+The snapshot publication seam is diagnostic only and does not install authored
+graphs into native scheduling. Cross-domain schema selection and authored-graph
+admission remain separate gates.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.

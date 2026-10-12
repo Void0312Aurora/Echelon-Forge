@@ -176,8 +176,10 @@ merge into main, accept the proposed ADRs or close RFC issues.
    mode for required native contract fields and duplicate state-shard writers.
    The native owner now exposes a read-only maintained `StageNodeManifest`
    snapshot through `WorldBatchRuntime` for qualification diagnostics. The
-   canonical schema vocabulary and compilation of an authored graph into
-   executable native contracts remain open; no second dispatcher is introduced.
+   The bounded Air lane now enforces an explicit six-schema vocabulary tied to
+   its three maintained native implementations. Repository-wide canonical
+   schema vocabulary and compilation of an authored graph into executable
+   native contracts remain open; no second dispatcher is introduced.
 3. **#236 native typed plan seam.** The bounded adapter and native identity
    checks now cover slot cardinality, module digest/native-reference identity,
    maintained capability families, an Air parity path and an optional comparison
