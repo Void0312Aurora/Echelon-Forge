@@ -298,12 +298,16 @@ TEST_SUITE("simulation_kernel_smoke") {
         CHECK(pos_a[2] == doctest::Approx(pos_b[2]));
     }
 
-    TEST_CASE("default_profile_matches_pre_p2b_short_trace_baseline") {
+    TEST_CASE("default_profile_matches_air_relative_damping_short_trace_baseline") {
         // Bounded P2-B behavior gate. The trace is intentionally small and
         // fixed: reset(12345), spawn one Aircraft at the established smoke
         // coordinates, advance ten default steps, and compare position. The
-        // expected values were captured from pre-migration commit a618b423
-        // with the same MSVC toolchain and are not a general replay framework.
+        // Original pre-migration baseline: a618b423. Updated after #268 at
+        // ea0e64da8 with MSVC 19.44: the default wind (10 m/s plus 4 m/s/km
+        // shear) now consistently affects angular-rate damping. Restoring
+        // only ground-speed normalization reproduced the original baseline
+        // exactly. Keep the original tolerance; this is not a general replay
+        // framework.
         SimulationKernel kernel;
         kernel.reset(12345);
         const auto entity = kernel.spawn_unit(Side::Blue, "Aircraft", 100.0, 200.0, 3000.0, 45.0,
@@ -316,9 +320,9 @@ TEST_SUITE("simulation_kernel_smoke") {
 
         const auto position = kernel.get_unit_position(entity.id());
         REQUIRE(position.size() == 3);
-        CHECK(position[0] == doctest::Approx(124.98344579568997).epsilon(1e-12));
-        CHECK(position[1] == doctest::Approx(200.00005491125401).epsilon(1e-12));
-        CHECK(position[2] == doctest::Approx(2999.861936582312).epsilon(1e-12));
+        CHECK(position[0] == doctest::Approx(124.98344624888934).epsilon(1e-12));
+        CHECK(position[1] == doctest::Approx(200.00005407179353).epsilon(1e-12));
+        CHECK(position[2] == doctest::Approx(2999.8619647395867).epsilon(1e-12));
     }
 
     TEST_CASE("reset_with_different_seeds_both_work") {
