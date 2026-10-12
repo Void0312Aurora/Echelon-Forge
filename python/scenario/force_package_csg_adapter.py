@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Mapping, Protocol, Sequence
 
 from python.scenario.compiler import CompiledScenario
 
@@ -36,6 +36,10 @@ class CsgForcePackageQualification:
     evidence_refs: tuple[str, ...]
 
 
+class _CompiledScenarioLoader(Protocol):
+    def load_compiled_scenario(self, compiled_scenario: CompiledScenario, seed: int = 42) -> Any: ...
+
+
 def _digest(value: Any) -> str:
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()
@@ -46,7 +50,7 @@ def _csg_entities(compiled_scenario: CompiledScenario, group_id: str) -> dict[st
     entities = compiled_scenario.merged_scenario_data.get("entities", [])
     result: dict[str, dict[str, Any]] = {}
     for entity in entities:
-        if not isinstance(entity, dict) or entity.get("csg_member", {}).get("group_id") != group_id:
+        if not isinstance(entity, dict) or not isinstance(entity.get("csg_member"), dict) or entity["csg_member"].get("group_id") != group_id:
             continue
         name = str(entity.get("name", "")).strip()
         if not name or name in result:
@@ -83,18 +87,43 @@ def qualify_force_package_against_csg(
     )
     if not scenario.is_fresh():
         raise ForcePackageError("force.csg_scenario_stale")
-    csg_meta = scenario.merged_scenario_data.get("meta", {}).get("csg", {})
+    meta = scenario.merged_scenario_data.get("meta", {})
+    csg_meta = meta.get("csg", {}) if isinstance(meta, dict) else {}
     if not isinstance(csg_meta, dict) or csg_meta.get("schema") != "csg.group_composition.v2":
         raise ForcePackageError("force.csg_schema_not_maintained")
-    groups = [group for group in csg_meta.get("groups", []) if group.get("group_id") == group_id]
+    if scenario.runtime_metadata.meta_config.get("csg") != csg_meta:
+        raise ForcePackageError("force.csg_runtime_metadata_mismatch")
+    groups = [group for group in csg_meta.get("groups", []) if isinstance(group, dict) and group.get("group_id") == group_id]
     if len(groups) != 1:
         raise ForcePackageError(f"force.csg_group_unknown_or_duplicate:groups.{group_id}")
     group = groups[0]
+    if group.get("side") != package.side:
+        raise ForcePackageError("force.csg_group_side_mismatch")
+    guide = group.get("guide")
+    ships = group.get("ships")
+    inventory = group.get("embarked_inventory")
+    if not isinstance(guide, dict) or not isinstance(ships, list) or not isinstance(inventory, list):
+        raise ForcePackageError("force.csg_group_metadata_incomplete")
+    declared_entity_names = {
+        name
+        for row in ships
+        if isinstance(row, dict)
+        for name in row.get("entity_names", [])
+        if isinstance(name, str) and name.strip()
+    }
     frame = "geodetic" if "geo" in group["guide"] else "local_enu"
     for instance in compiled.package_instances:
         if instance.reference_frame != frame or instance.anchor_ref != group_id:
             raise ForcePackageError(f"force.csg_frame_anchor_mismatch:packages.{instance.instance_id}")
     csg_entities = _csg_entities(scenario, group_id)
+    if set(csg_entities) != declared_entity_names:
+        raise ForcePackageError("force.csg_group_entity_metadata_mismatch")
+    ship_member_ids = {row.get("member_id") for row in ships if isinstance(row, dict)}
+    for row in inventory:
+        if not isinstance(row, dict) or row.get("embarked_on") not in ship_member_ids:
+            raise ForcePackageError("force.csg_inventory_host_unknown")
+        if not isinstance(row.get("count"), int) or isinstance(row["count"], bool) or row["count"] < 0:
+            raise ForcePackageError("force.csg_inventory_count_invalid")
     if set(entity_bindings) != {entity.entity_id for entity in compiled.entities}:
         raise ForcePackageError("force.csg_binding_scope_mismatch:entity_bindings")
     if len(set(entity_bindings.values())) != len(entity_bindings):
@@ -104,7 +133,9 @@ def qualify_force_package_against_csg(
     for generic in compiled.entities:
         name = entity_bindings[generic.entity_id]
         csg_entity = csg_entities[name]
-        member = csg_entity["csg_member"]
+        member = csg_entity.get("csg_member")
+        if not isinstance(member, dict) or not isinstance(csg_entity.get("pos"), list) or len(csg_entity["pos"]) != 3:
+            raise ForcePackageError(f"force.csg_entity_metadata_incomplete:{name}")
         if generic.member_ref not in assembly_type_names:
             raise ForcePackageError(f"force.csg_assembly_type_unknown:members.{generic.entity_id}")
         if (
@@ -135,4 +166,45 @@ def qualify_force_package_against_csg(
     )
 
 
-__all__ = ["CsgForcePackageQualification", "qualify_force_package_against_csg"]
+def load_qualified_csg_scenario(
+    loader: _CompiledScenarioLoader,
+    *,
+    scenario: CompiledScenario,
+    qualifications: Sequence[CsgForcePackageQualification],
+    seed: int = 42,
+) -> Any:
+    """Validate the qualified snapshot, then delegate to the maintained loader.
+
+    Every CSG group must have a qualification result. No positions, entities,
+    inventories or relationship authority are synthesized by this bridge.
+    """
+    if not scenario.is_fresh():
+        raise ForcePackageError("force.csg_scenario_stale")
+    meta = scenario.merged_scenario_data.get("meta", {})
+    csg_meta = meta.get("csg", {}) if isinstance(meta, dict) else {}
+    if not isinstance(csg_meta, dict):
+        raise ForcePackageError("force.csg_schema_not_maintained")
+    if csg_meta.get("schema") != "csg.group_composition.v2":
+        raise ForcePackageError("force.csg_schema_not_maintained")
+    if scenario.runtime_metadata.meta_config.get("csg") != csg_meta:
+        raise ForcePackageError("force.csg_runtime_metadata_mismatch")
+    groups = {group["group_id"]: group for group in csg_meta["groups"]}
+    qualified_ids = [qualification.group_id for qualification in qualifications]
+    if not qualified_ids or len(set(qualified_ids)) != len(qualified_ids) or set(qualified_ids) != set(groups):
+        raise ForcePackageError("force.csg_qualification_scope_mismatch")
+    scenario_digest = _digest(scenario.merged_scenario_data)
+    geometry_digest = _digest(csg_meta["geometry"])
+    for qualification in qualifications:
+        group = groups[qualification.group_id]
+        if (
+            qualification.csg_schema != csg_meta["schema"]
+            or qualification.scenario_digest != scenario_digest
+            or qualification.geometry_digest != geometry_digest
+            or qualification.embarked_inventory_digest != _digest(group["embarked_inventory"])
+            or {name for _, name in qualification.entity_bindings} != set(_csg_entities(scenario, qualification.group_id))
+        ):
+            raise ForcePackageError("force.csg_qualification_snapshot_mismatch")
+    return loader.load_compiled_scenario(scenario, seed=seed)
+
+
+__all__ = ["CsgForcePackageQualification", "qualify_force_package_against_csg", "load_qualified_csg_scenario"]
