@@ -177,4 +177,46 @@ TEST_CASE("bathymetry metadata and hull reference are required") {
     CHECK(missing_keel.unit.get<Transform>()->y == doctest::Approx(0.0));
     CHECK(missing_keel.unit.get<SubmarineBathymetryPolicy>()->last_status ==
           SubmarineDepthConstraintStatus::InvalidPolicy);
+
+    SubmarineRig invalid_clearance(20.0);
+    set_valid_observation(invalid_clearance.environment, 80.0);
+    invalid_clearance.unit.get_mut<SubmarineBathymetryPolicy>()->min_keel_clearance_m =
+        std::numeric_limits<double>::quiet_NaN();
+    invalid_clearance.step();
+    CHECK(invalid_clearance.unit.get<Transform>()->x == doctest::Approx(0.0));
+    CHECK(invalid_clearance.unit.get<Transform>()->y == doctest::Approx(0.0));
+    CHECK(invalid_clearance.unit.get<SubmarineBathymetryPolicy>()->last_status ==
+          SubmarineDepthConstraintStatus::InvalidPolicy);
+}
+
+TEST_CASE("valid metadata still rejects a hull that cannot fit in the water column") {
+    SubmarineRig rig(0.0);
+    set_valid_observation(rig.environment, 4.0);
+    rig.step();
+    CHECK(rig.unit.get<Transform>()->x == doctest::Approx(0.0));
+    CHECK(rig.unit.get<Transform>()->y == doctest::Approx(0.0));
+    CHECK(rig.unit.get<Transform>()->z == doctest::Approx(0.0));
+    CHECK(rig.unit.get<SubmarineBathymetryPolicy>()->last_status ==
+          SubmarineDepthConstraintStatus::RejectedTrajectory);
+}
+
+TEST_CASE("dry and time-inconsistent observations are not treated as deep water") {
+    SubmarineRig dry(20.0);
+    dry.environment.observation.availability = IEnvironmentModel::BathymetryAvailability::Dry;
+    dry.environment.observation.horizontal_frame = "local_xy";
+    dry.environment.observation.vertical_datum = "MSL";
+    dry.environment.observation.source = "synthetic_fixture";
+    dry.environment.observation.time_invariant_for_step = true;
+    dry.step();
+    CHECK(dry.unit.get<Transform>()->y == doctest::Approx(0.0));
+    CHECK(dry.unit.get<SubmarineBathymetryPolicy>()->last_status ==
+          SubmarineDepthConstraintStatus::UnknownBathymetry);
+
+    SubmarineRig time_varying(20.0);
+    set_valid_observation(time_varying.environment, 200.0);
+    time_varying.environment.observation.time_invariant_for_step = false;
+    time_varying.step();
+    CHECK(time_varying.unit.get<Transform>()->y == doctest::Approx(0.0));
+    CHECK(time_varying.unit.get<SubmarineBathymetryPolicy>()->last_status ==
+          SubmarineDepthConstraintStatus::UnknownBathymetry);
 }

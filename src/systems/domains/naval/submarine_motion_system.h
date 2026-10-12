@@ -103,7 +103,15 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                                     ? environment_ref->model->get_bathymetry_along_segment(
                                           transform[i].x, transform[i].y, proposed_x, proposed_y)
                                     : IEnvironmentModel::BathymetrySegmentObservation{};
+                            const bool valid_policy =
+                                std::isfinite(bathymetry_policy->min_keel_clearance_m) &&
+                                bathymetry_policy->min_keel_clearance_m >= 0.0 &&
+                                std::isfinite(bathymetry_policy->hull_reference_to_keel_m) &&
+                                bathymetry_policy->hull_reference_to_keel_m >= 0.0 &&
+                                !bathymetry_policy->horizontal_frame.empty() &&
+                                !bathymetry_policy->vertical_datum.empty();
                             const bool valid_observation =
+                                valid_policy &&
                                 observation.availability ==
                                     IEnvironmentModel::BathymetryAvailability::Valid &&
                                 std::isfinite(observation.minimum_water_depth_m) &&
@@ -129,10 +137,8 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                                 constrained_target_depth_m = current_depth_m;
                                 bathymetry_policy->last_allowed_depth_m = current_depth_m;
                                 bathymetry_policy->last_status =
-                                    std::isfinite(bathymetry_policy->hull_reference_to_keel_m) &&
-                                            bathymetry_policy->hull_reference_to_keel_m >= 0.0
-                                        ? SubmarineDepthConstraintStatus::UnknownBathymetry
-                                        : SubmarineDepthConstraintStatus::InvalidPolicy;
+                                    valid_policy ? SubmarineDepthConstraintStatus::UnknownBathymetry
+                                                 : SubmarineDepthConstraintStatus::InvalidPolicy;
                                 allow_horizontal_step = false;
                             } else {
                                 const double available_center_depth_m =
@@ -145,8 +151,10 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                                 constrained_target_depth_m =
                                     std::min(target_depth_m, allowed_depth_m);
                                 bathymetry_policy->last_allowed_depth_m = allowed_depth_m;
+                                const bool hull_fits = available_center_depth_m >= 0.0;
                                 bathymetry_policy->last_status =
-                                    current_depth_m > allowed_depth_m
+                                    !hull_fits ? SubmarineDepthConstraintStatus::RejectedTrajectory
+                                    : current_depth_m > allowed_depth_m
                                         ? SubmarineDepthConstraintStatus::RejectedTrajectory
                                     : target_depth_m > allowed_depth_m
                                         ? SubmarineDepthConstraintStatus::LimitedBySeabed
@@ -154,7 +162,8 @@ inline void register_submarine_motion_system(flecs::world &ecs) {
                                 // Never sweep horizontally while the current
                                 // hull reference is already outside the
                                 // admitted clearance envelope.
-                                allow_horizontal_step = current_depth_m <= allowed_depth_m;
+                                allow_horizontal_step =
+                                    hull_fits && current_depth_m <= allowed_depth_m;
                             }
                         }
                     }
