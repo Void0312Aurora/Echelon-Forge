@@ -58,11 +58,14 @@ do not prove numerical calibration or timestep invariance.
 
 Connections require compatible schema versions, units, frames, freshness and
 visibility. When an owner supplies a schema vocabulary, unknown port schemas
-are rejected before publication. Explicit conversion or estimation nodes are required when a
-connection would otherwise fabricate information. Instantaneous same-window
-cycles are rejected; delayed/stateful feedback must declare its delay and state
-owner. A composite exports a typed public port set and state/effect contract,
-so it can be validated as a node in a parent graph.
+are rejected before publication. The vocabulary is an immutable, versioned
+qualification artifact: each schema entry names its owner reference, and the
+vocabulary digest participates in the graph identity. Explicit conversion or
+estimation nodes are required when a connection would otherwise fabricate
+information. Instantaneous same-window cycles are rejected; delayed/stateful
+feedback must declare its delay and state owner. A composite exports a typed
+public port set and state/effect contract, so it can be validated as a node in
+a parent graph.
 
 The first proof should use two primitive adapters and one stateful adapter in a
 qualification lane. It must include one compatible edge, one unit/frame or
@@ -118,9 +121,11 @@ window publication from numerical rates per second. A fixed measurement schedule
 and four timesteps reach the same four-second horizon within the documented
 tolerance. A test-lane child exception after tracker mutation but before outer
 packet publication projects an unknown outcome through #251; it proves no rollback.
-The selected Air lane now enforces an explicit six-schema qualification
-vocabulary while compiling; this is a bounded owner mapping for the three
-maintained native implementations, not a repository-wide packet vocabulary.
+The selected Air lane now enforces an explicit, versioned six-schema
+qualification vocabulary while compiling; every entry names one of the three
+maintained native implementations and the resulting vocabulary digest is
+bound into the graph identity. This is a bounded owner mapping, not a
+repository-wide packet vocabulary.
 The snapshot publication seam is diagnostic only and does not install authored
 graphs into native scheduling. Cross-domain schema selection and authored-graph
 admission remain separate gates.

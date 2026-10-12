@@ -6,8 +6,10 @@ from dataclasses import replace
 from python.mechanisms.ports import (
     GraphEdge,
     MechanismGraphError,
+    MechanismSchemaVocabulary,
     MechanismSpec,
     PortSpec,
+    SchemaVocabularyEntry,
     compile_mechanism_graph,
     compose_graph_as_mechanism,
     validate_stage_manifest_bindings,
@@ -110,6 +112,62 @@ def test_owner_schema_vocabulary_rejects_unknown_port_schema() -> None:
     assert [(item.code, item.path) for item in graph.diagnostics] == [
         ("mechanism.schema_unknown", "nodes.sensor.outputs.measurements")
     ]
+
+
+def test_versioned_owner_schema_vocabulary_is_bound_to_graph_identity() -> None:
+    vocabulary = MechanismSchemaVocabulary(
+        vocabulary_id="test.owner.schemas",
+        version="1",
+        entries=(SchemaVocabularyEntry("Measurement3D.v1", "native.sensor"),),
+    )
+    graph = compile_mechanism_graph(
+        "owned-schema",
+        {"sensor": _sensor()},
+        (),
+        schema_vocabulary=vocabulary,
+    )
+    assert graph.valid
+    assert graph.schema_vocabulary_ref == "test.owner.schemas"
+    assert graph.schema_vocabulary_version == "1"
+    assert graph.schema_vocabulary_digest == vocabulary.identity_digest
+    assert graph.as_dict()["schema_vocabulary"]["identity_digest"] == vocabulary.identity_digest
+
+    changed = replace(
+        vocabulary,
+        entries=(SchemaVocabularyEntry("Measurement3D.v1", "native.sensor.v2"),),
+    )
+    changed_graph = compile_mechanism_graph(
+        "owned-schema",
+        {"sensor": _sensor()},
+        (),
+        schema_vocabulary=changed,
+    )
+    assert changed_graph.valid
+    assert changed_graph.identity_digest != graph.identity_digest
+
+
+def test_schema_vocabulary_rejects_duplicate_entries_and_mixed_api() -> None:
+    with pytest.raises(ValueError, match="unique schema names"):
+        MechanismSchemaVocabulary(
+            vocabulary_id="duplicate",
+            version="1",
+            entries=(
+                SchemaVocabularyEntry("Measurement3D.v1", "native.sensor"),
+                SchemaVocabularyEntry("Measurement3D.v1", "native.sensor.v2"),
+            ),
+        )
+    with pytest.raises(MechanismGraphError, match="mutually exclusive"):
+        compile_mechanism_graph(
+            "mixed-schema-api",
+            {"sensor": _sensor()},
+            (),
+            known_schemas=frozenset({"Measurement3D.v1"}),
+            schema_vocabulary=MechanismSchemaVocabulary(
+                vocabulary_id="test.owner.schemas",
+                version="1",
+                entries=(SchemaVocabularyEntry("Measurement3D.v1", "native.sensor"),),
+            ),
+        )
 
 
 def test_freshness_is_part_of_edge_and_composite_compatibility() -> None:
