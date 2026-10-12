@@ -72,6 +72,8 @@ and explicit reset. Python and the maintained facade consume the same native
 fence. All-unknown aggregate evidence reports `failed` with explicit reset/recreate
 required; it does not claim known per-world commit status. The mechanism child
 fault proof separately observes state mutation without outer packet publication.
+The native batch proof also injects a worker-launch failure and checks that joined
+workers, guarded exports, failed recovery and explicit reset remain fail-closed.
 These local changes are not an upstream #210 closure. An exception inside a running
 native system, runtime generation IDs and bounded fatal/nontermination controls
 remain separate qualification gates.

@@ -34,6 +34,20 @@ worker-launch failures do poison it. Read-only batch exports use the same guard 
 maintained callers cannot consume a failed generation as a successful synchronized
 step.
 
+The native qualification test injects first/later worker-launch failures through
+a private test accessor on actual 3/4-world batches. It verifies that already
+started workers are joined before the exception reaches the caller, exports and
+retry are fenced, a recovery launch failure keeps the fence, and a successful
+reset restores operation. Clock observations remain diagnostics; the aggregate
+Python projection still reports unknown per-world commit status.
+
+The native qualification test injects first/later worker-launch failures through
+a private test accessor on actual 3/4-world batches. It verifies that already
+started workers are joined before the exception reaches the caller, exports and
+retry are fenced, a recovery launch failure keeps the fence, and a successful
+reset restores operation. Clock observations remain diagnostics; the aggregate
+Python projection still reports unknown per-world commit status.
+
 This local integration ports PR #230's #210 owner implementation from
 `7989800d284484c76ccd0aed77cca32300fb2dda` to current main. It preserves current
 maintained command interfaces and broadphase types. The newer composition

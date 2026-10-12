@@ -192,11 +192,13 @@ merge into main, accept the proposed ADRs or close RFC issues.
    or durable availability.
 7. **#251 remaining fault gates.** The existing #210 lineage is locally ported and
    verified; upstream main still lacks it. Preserve its owner during review and
-   delivery. The completed setup/worker proofs do not cover an exception inside a
-   running native system, native-issued generation IDs, worker-launch failure
-   observed through a full batch instance, or bounded fatal/nontermination controls.
-   Add those probes through existing test owners and subprocess/supervisor paths;
-   no transparent retry or per-world commit claim follows from current evidence.
+   delivery. The native `WorldBatchRuntime` proof now injects a worker-launch
+   failure through a private test accessor, verifies joined workers,
+   failed-generation export fencing, failed recovery fencing and explicit reset
+   recovery. The remaining gaps are an exception inside a running native system,
+   native-issued generation IDs and bounded fatal/nontermination controls. Add those probes through
+   existing test owners and subprocess/supervisor paths; no transparent retry or
+   per-world commit claim follows from current evidence.
 
 ## 2026-10-12 native typed-plan continuation
 
