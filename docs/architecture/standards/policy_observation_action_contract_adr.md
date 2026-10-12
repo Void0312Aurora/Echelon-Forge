@@ -55,9 +55,10 @@ the same field contract, tests positive optional-field projection and all
 negative admission cases, and records contract identities as evidence. An
 admitted `PolicyRuntimeBinding` now wraps the existing `DecisionModel`
 reset/decide/close lifecycle, preserves observation provenance and validates
-the produced action before returning it to the existing runtime. Python or
-third-party code is not auto-admitted by a descriptor; a real external
-checkpoint or native action endpoint migration remains open.
+the produced action before returning it to the existing runtime. The current
+maintained outputs remain authoritative; Python or third-party code is not
+auto-admitted by a descriptor, and a real external checkpoint or native action
+endpoint migration remains open.
 
 Mechanism ports (#229), platform/force composition (#236/#237), and RuntimeFacade
 capability presence (#224) remain separate owners; this ADR only defines the
