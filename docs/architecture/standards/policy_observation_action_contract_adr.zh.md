@@ -32,13 +32,15 @@ truth、未支持动作族和时序冲突必须在 policy binding 或 runtime si
 tensor 顺序和 provenance。legacy `model_kind` 通过分阶段显式 bridge 迁移，确定性的 `policy_id`
 选择和 category 匹配属于可选 descriptor；现有 registry kind 检查及 report 字段在单独迁移决策
 前仍是权威。新增的 `PolicyRuntimeBinding` 包裹现有 `DecisionModel` 的 reset/decide/close
-生命周期，保留 observation provenance，并在动作返回现有 runtime 前校验；真实外部 checkpoint
-或 native action endpoint 迁移仍待验收。
+生命周期，保留 observation provenance，并在动作返回现有 runtime 前校验。owner 签发的
+`PolicyCheckpoint` 元数据契约现在可以在 binding 前绑定 artifact digest 以及 policy、observation、
+action 身份，但此层不加载模型字节；真实外部 checkpoint 的 owner 加载或 native action endpoint
+迁移仍待验收。
 
 ## 方案比较与实现检查点
 
 方案比较以英文规范页的 Option comparison 为准。
 
-试点复用 mission_obs_taxonomy 的 basic 任务字段和现有 Air action 维度、边界，校验来源、frame、时序、显式可选默认值、确定性选择及 legacy kind。binding 通过现有 `DecisionRuntimeAgent` 运行，模型仍拥有 reset/decide/close 和 domain action DTO；完整 observation view、checkpoint 准入与 native action endpoint 迁移仍待验收。
+试点复用 mission_obs_taxonomy 的 basic 任务字段和现有 Air action 维度、边界，校验来源、frame、时序、显式可选默认值、确定性选择及 legacy kind。binding 通过现有 `DecisionRuntimeAgent` 运行，模型仍拥有 reset/decide/close 和 domain action DTO。checkpoint 元数据准入已有覆盖；完整 observation view、owner checkpoint 加载与 native action endpoint 迁移仍待验收。
 
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。

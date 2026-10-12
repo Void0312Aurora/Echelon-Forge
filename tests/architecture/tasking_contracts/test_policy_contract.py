@@ -9,6 +9,7 @@ from python.tasking_contracts.policy import (
     AgentBinding,
     FieldSpec,
     ObservationContract,
+    PolicyCheckpoint,
     PolicyDescriptor,
     PolicyRuntimeBinding,
     admit_policy,
@@ -72,6 +73,22 @@ def _catalogue() -> dict[str, FieldSpec]:
     return {"ownship.velocity": FieldSpec("ownship.velocity", "Vector3", (3,), "meter_per_second")}
 
 
+def _checkpoint(policy: PolicyDescriptor) -> PolicyCheckpoint:
+    return PolicyCheckpoint(
+        checkpoint_ref="artifact://air/policy-v1",
+        artifact_sha256="a" * 64,
+        policy_id=policy.policy_id,
+        policy_version=policy.version,
+        observation_view_ref=policy.observation.view_ref,
+        observation_major=policy.observation.major,
+        observation_minor=policy.observation.minor,
+        action_interface_ref=policy.action.interface_ref,
+        action_major=policy.action.major,
+        action_minor=policy.action.minor,
+        owner_ref="owner://policy-registry",
+    )
+
+
 def test_scripted_and_learned_categories_share_contract_admission() -> None:
     kwargs = dict(
         binding=_binding(),
@@ -82,6 +99,66 @@ def test_scripted_and_learned_categories_share_contract_admission() -> None:
     )
     assert admit_policy(_policy(category="scripted"), **kwargs).admitted
     assert admit_policy(_policy(category="learned"), **kwargs).admitted
+
+
+def test_external_checkpoint_requires_owner_identity_and_contract_match() -> None:
+    base = _policy(category="learned")
+    checkpoint = _checkpoint(base)
+    policy = replace(base, checkpoint=checkpoint)
+    kwargs = dict(
+        binding=_binding(),
+        field_catalogue=_catalogue(),
+        observation_version=(1, 2),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+    )
+    missing = admit_policy(policy, **kwargs)
+    assert not missing.admitted
+    assert missing.diagnostics[0] == "policy.checkpoint_missing"
+
+    admitted = admit_policy(policy, checkpoint=checkpoint, **kwargs)
+    assert admitted.admitted and admitted.checkpoint == checkpoint
+    assert admitted.as_dict()["checkpoint"]["artifact_sha256"] == "a" * 64
+
+    changed = admit_policy(
+        policy,
+        checkpoint=replace(checkpoint, artifact_sha256="b" * 64),
+        **kwargs,
+    )
+    assert not changed.admitted
+    assert "policy.checkpoint_identity_mismatch" in changed.diagnostics
+
+
+def test_external_checkpoint_provenance_reaches_existing_model_context() -> None:
+    base = _policy(category="learned")
+    checkpoint = _checkpoint(base)
+    policy = replace(base, checkpoint=checkpoint)
+    admission = admit_policy(
+        policy,
+        _binding(),
+        field_catalogue=_catalogue(),
+        observation_version=(1, 1),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+        checkpoint=checkpoint,
+    )
+    model = _BoundModel()
+    binding = PolicyRuntimeBinding(
+        policy,
+        admission,
+        model,
+        bounds=((-1, 1),) * 4,
+        timing="window",
+    )
+    binding.reset(context={})
+    binding.decide(
+        observation={"ownship.velocity": [1.0, 2.0, 3.0]},
+        context={},
+        dt=0.0,
+    )
+    assert model.observations[0][1]["policy_checkpoint_ref"] == checkpoint.checkpoint_ref
+    assert model.observations[0][1]["policy_checkpoint_sha256"] == checkpoint.artifact_sha256
+    assert model.observations[0][1]["policy_checkpoint_owner"] == checkpoint.owner_ref
 
 
 def test_unknown_category_does_not_grant_authority() -> None:
