@@ -999,7 +999,8 @@ void register_sensor_and_queue_reflection(flecs::world &ecs) {
         .member<int>("confirm_window_n")
         .member<int>("mode")
         .member<bool>("passive_only")
-        .member<bool>("bearing_only");
+        .member<bool>("bearing_only")
+        .member<int>("last_scan_status", 1, offsetof(Sonar, last_scan_status));
     ecs.component<SonarMount>().member<Sonar>("sonar").member<std::string>("label");
     ecs.component<std::vector<SonarMount>>().opaque(vector_support<SonarMount>);
     ecs.component<MountedSonars>().member<std::vector<SonarMount>>("mounts");

@@ -107,13 +107,14 @@ double maritime_ambient_noise_bias_db(const EnvironmentModelRef *env_ref,
 
 class DefaultAcousticModel : public IAcousticModel {
   public:
-    void scan(flecs::world world, flecs::entity owner, const Transform &owner_transform,
-              const Sonar &sonar, ContactList &out_contacts, double current_time) override {
+    AcousticScanStatus scan(flecs::world world, flecs::entity owner,
+                            const Transform &owner_transform, const Sonar &sonar,
+                            ContactList &out_contacts, double current_time) override {
         // The passive model has no active-ping propagation, echo return, or
         // active-mode detection threshold.  Fail closed until an active model
         // is admitted instead of silently treating an Active sonar as passive.
         if (sonar.mode != static_cast<int>(SonarMode::Passive)) {
-            return;
+            return AcousticScanStatus::UnsupportedMode;
         }
         const Alliance *owner_alliance = owner.get<Alliance>();
         const Velocity *owner_velocity = owner.get<Velocity>();
@@ -218,6 +219,7 @@ class DefaultAcousticModel : public IAcousticModel {
             detection.timestamp = current_time;
             out_contacts.contacts.push_back(detection);
         });
+        return AcousticScanStatus::Completed;
     }
 };
 
