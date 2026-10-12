@@ -15,6 +15,7 @@ from python.content.platform_blueprint import (
 )
 from python.content.platform_blueprint_adapter import (
     to_expanded_typed_platform_request,
+    validate_factory_resolved_capability_plan,
 )
 
 
@@ -196,6 +197,30 @@ def test_native_typed_projection_revalidates_plan_identity_and_source_binding() 
             request_id="fixture:request",
             placement=SpawnPlacement(entity_name="Fixture"),
         )
+
+
+def test_typed_plan_can_be_compared_with_factory_resolved_capability_identity() -> None:
+    blueprint, modules, plan = _fixture()
+    expanded = _expand(blueprint, modules, plan)
+    factory_plan = {
+        "source_type_name": expanded.source_type_name,
+        "resolved_platform_definition_ref": expanded.resolved_spawn_plan.resolved_platform_definition_ref,
+        "resolved_capabilities": [
+            {
+                "capability_id": cap.capability_id,
+                "family": cap.family,
+                "capability_type": cap.capability_type,
+                "implementation_ref": cap.implementation_ref,
+                "required": cap.required,
+                "supported": cap.supported,
+            }
+            for cap in expanded.resolved_spawn_plan.resolved_capabilities
+        ],
+    }
+    validate_factory_resolved_capability_plan(expanded.resolved_spawn_plan, factory_plan)
+    factory_plan["resolved_capabilities"][0]["family"] = "survivability"
+    with pytest.raises(PlatformAssemblyError, match="capability_semantics_mismatch"):
+        validate_factory_resolved_capability_plan(expanded.resolved_spawn_plan, factory_plan)
 
 
 @pytest.mark.parametrize("changes,reason", [
