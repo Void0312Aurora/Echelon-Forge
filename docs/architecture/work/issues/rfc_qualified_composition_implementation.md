@@ -188,9 +188,12 @@ merge into main, accept the proposed ADRs or close RFC issues.
    against a factory-resolved source type/capability-semantics snapshot. The
    native `DefaultUnitFactory` now exposes that resolved plan through a read-only
    `WorldBatchRuntime` query, preserving the factory as the only materialization
-   owner. Owner review is still required for the canonical capability-key
-   mapping, explicit unit contracts, hardpoint/loadout semantics and broader
-   physical compatibility before any production consumer is enabled.
+   owner. The qualification bridge now uses an explicit, versioned
+   authored-key to native-family mapping and includes its digest in the typed
+   request identity; a supplied factory plan still decides admission. Owner
+   review is still required for the mapping's production contract, explicit
+   unit contracts, hardpoint/loadout semantics and broader physical
+   compatibility before any production consumer is enabled.
 4. **#237 CSG migration proof.** Consume compiled organization through the
    existing CSG/scenario placement adapter; compare generated entities, anchored
    geometry, embarked inventory and native results. Keep separate membership,
@@ -283,9 +286,11 @@ unconstrained modules remain valid with unknown physical values. The native
 factory projection seam is now covered by native and Python binding tests, but
 the adapter comparison now fails closed unless the supplied native plan is
 admitted and its capability family, type, implementation reference and
-required/supported flags match. The adapter is still not wired to a canonical
-owner capability-key mapping. Hardpoint, loadout and broader unit contracts
-remain open owner gates.
+required/supported flags match. The bridge binds a versioned canonical
+authored-key to native-family mapping, records its digest in the typed request
+identity and rejects unknown keys before DTO publication. This remains a
+qualification mapping until the native owner reviews its production contract.
+Hardpoint, loadout and broader unit contracts remain open owner gates.
 
 The qualification modules, catalogue helpers, tests and proposed documents remain
 opt-in. Configuration formats, native scheduling, production profiles and

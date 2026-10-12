@@ -16,6 +16,8 @@ Standard library only; no ``ef_py`` import.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, field
 from typing import Any, List, Mapping, Optional, Sequence, Tuple
 
@@ -31,6 +33,86 @@ PLATFORM_CAPABILITY_FAMILY_VOCABULARY: Tuple[str, ...] = (
     "survivability",
     "command",
     "doctrine",
+)
+
+
+@dataclass(frozen=True)
+class PlatformCapabilityKeyVocabularyEntry:
+    """One authored capability key and its native family owner."""
+
+    key: str
+    native_family: str
+    owner_ref: str
+
+    def __post_init__(self) -> None:
+        for field_name in ("key", "native_family", "owner_ref"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+        if self.native_family not in PLATFORM_CAPABILITY_FAMILY_VOCABULARY:
+            raise ValueError(f"native_family is not maintained: {self.native_family!r}")
+
+
+@dataclass(frozen=True)
+class PlatformCapabilityKeyVocabulary:
+    """Versioned qualification mapping from authored keys to native families."""
+
+    vocabulary_id: str
+    version: str
+    entries: Tuple[PlatformCapabilityKeyVocabularyEntry, ...]
+
+    def __post_init__(self) -> None:
+        for field_name in ("vocabulary_id", "version"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+        entries = tuple(self.entries)
+        if not entries:
+            raise ValueError("entries must not be empty")
+        if any(not isinstance(entry, PlatformCapabilityKeyVocabularyEntry) for entry in entries):
+            raise TypeError("entries must contain PlatformCapabilityKeyVocabularyEntry values")
+        keys = [entry.key for entry in entries]
+        if len(set(keys)) != len(keys):
+            raise ValueError("capability vocabulary keys must be unique")
+        object.__setattr__(self, "entries", entries)
+
+    @property
+    def key_map(self) -> Mapping[str, PlatformCapabilityKeyVocabularyEntry]:
+        return {entry.key: entry for entry in self.entries}
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "vocabulary_id": self.vocabulary_id,
+            "version": self.version,
+            "entries": [
+                {
+                    "key": entry.key,
+                    "native_family": entry.native_family,
+                    "owner_ref": entry.owner_ref,
+                }
+                for entry in sorted(self.entries, key=lambda item: item.key)
+            ],
+        }
+
+    @property
+    def identity_digest(self) -> str:
+        encoded = json.dumps(
+            self.as_dict(), sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        ).encode("utf-8")
+        return hashlib.sha256(encoded).hexdigest()
+
+
+PLATFORM_CAPABILITY_KEY_VOCABULARY = PlatformCapabilityKeyVocabulary(
+    vocabulary_id="echelon_forge.platform_capability_keys",
+    version="1",
+    entries=tuple(
+        PlatformCapabilityKeyVocabularyEntry(
+            key=family,
+            native_family=family,
+            owner_ref="runtime::platform_capabilities::platform_capability_family_vocabulary",
+        )
+        for family in PLATFORM_CAPABILITY_FAMILY_VOCABULARY
+    ),
 )
 
 # Content-level rejection reasons (new in this contract).

@@ -31,7 +31,11 @@ from python.content.platform_blueprint import (
     lower_to_legacy_unit_definition,
     resolve_platform_assembly,
 )
-from python.content.capability_bundles.schema import PLATFORM_CAPABILITY_FAMILY_VOCABULARY
+from python.content.capability_bundles.schema import (
+    PLATFORM_CAPABILITY_FAMILY_VOCABULARY,
+    PLATFORM_CAPABILITY_KEY_VOCABULARY,
+    PlatformCapabilityKeyVocabulary,
+)
 from python.experiment.composition import thaw_json_value
 
 
@@ -52,6 +56,19 @@ def _capability_identity(value: Any) -> tuple[Any, ...]:
         _field(value, "required"),
         _field(value, "supported"),
     )
+
+
+def _capability_key_entry(
+    vocabulary: PlatformCapabilityKeyVocabulary, key: str, slot: str
+) -> Any:
+    entry = vocabulary.key_map.get(key)
+    if entry is None:
+        raise PlatformAssemblyError(f"platform.native_capability_key_unknown:{slot}:{key}")
+    if entry.native_family not in _NATIVE_CAPABILITY_FAMILIES:
+        raise PlatformAssemblyError(
+            f"platform.native_capability_family_unsupported:{slot}:{entry.native_family}"
+        )
+    return entry
 
 
 def validate_factory_resolved_capability_plan(
@@ -122,6 +139,7 @@ def to_expanded_typed_platform_request(
     request_id: str,
     placement: SpawnPlacement,
     factory_plan: Any | None = None,
+    capability_vocabulary: PlatformCapabilityKeyVocabulary = PLATFORM_CAPABILITY_KEY_VOCABULARY,
 ) -> ExpandedTypedPlatformRequest:
     """Project one resolved assembly into the maintained typed request shape.
 
@@ -171,11 +189,8 @@ def to_expanded_typed_platform_request(
             raise PlatformAssemblyError(f"platform.native_module_reference_mismatch:{slot}")
 
         for family in sorted(module.capabilities):
-            if family not in _NATIVE_CAPABILITY_FAMILIES:
-                raise PlatformAssemblyError(
-                    f"platform.native_capability_family_unsupported:{slot}:{family}"
-                )
-            capability_id = f"{plan.assembly_id}:{slot}:{family}"
+            vocabulary_entry = _capability_key_entry(capability_vocabulary, family, slot)
+            capability_id = f"{plan.assembly_id}:{slot}:{vocabulary_entry.key}"
             if capability_id in seen_capability_ids:
                 raise PlatformAssemblyError(
                     f"platform.native_capability_id_duplicate:{capability_id}"
@@ -185,7 +200,7 @@ def to_expanded_typed_platform_request(
             capabilities.append(
                 ExpandedCapability(
                     capability_id=capability_id,
-                    family=family,
+                    family=vocabulary_entry.native_family,
                     capability_type=module.kind,
                     implementation_ref=module.native_ref,
                     evidence_refs=_evidence_refs(plan=plan, slot=slot, module=module),
@@ -217,7 +232,9 @@ def to_expanded_typed_platform_request(
         ).encode("utf-8")
     ).hexdigest()
     request_digest = hashlib.sha256(
-        f"{plan.identity_digest}:{definition_digest}".encode("utf-8")
+        f"{plan.identity_digest}:{definition_digest}:{capability_vocabulary.identity_digest}".encode(
+            "utf-8"
+        )
     ).hexdigest()
     capabilities_tuple = tuple(capabilities)
     bundle_id = f"platform.bundle.{request_digest}"
@@ -227,6 +244,9 @@ def to_expanded_typed_platform_request(
         f"platform.assembly:{plan.assembly_id}",
         f"platform.identity:{plan.identity_digest}",
         f"platform.definition:{source_type_name}:{definition_digest}",
+        "platform.capability_vocabulary:"
+        f"{capability_vocabulary.vocabulary_id}@{capability_vocabulary.version}:"
+        f"{capability_vocabulary.identity_digest}",
     )
     bundle = ExpandedCapabilityBundle(
         bundle_id=bundle_id,

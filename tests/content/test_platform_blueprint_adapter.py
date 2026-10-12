@@ -5,6 +5,11 @@ from dataclasses import replace
 import pytest
 
 from python.content.capability_bundles import SpawnPlacement
+from python.content.capability_bundles.schema import (
+    PLATFORM_CAPABILITY_KEY_VOCABULARY,
+    PlatformCapabilityKeyVocabulary,
+    PlatformCapabilityKeyVocabularyEntry,
+)
 from python.content.platform_blueprint import (
     LegacyUnitProjection,
     ModuleRecord,
@@ -150,8 +155,100 @@ def test_native_typed_projection_rejects_unmaintained_capability_family() -> Non
         modules=modules,
     )
 
-    with pytest.raises(PlatformAssemblyError, match="native_capability_family_unsupported"):
+    with pytest.raises(PlatformAssemblyError, match="native_capability_key_unknown"):
         _expand(blueprint, modules, plan)
+
+
+def test_native_typed_projection_binds_capability_key_vocabulary_identity() -> None:
+    blueprint, modules, plan = _fixture()
+    expanded = _expand(blueprint, modules, plan)
+    vocabulary_ref = (
+        f"platform.capability_vocabulary:{PLATFORM_CAPABILITY_KEY_VOCABULARY.vocabulary_id}@"
+        f"{PLATFORM_CAPABILITY_KEY_VOCABULARY.version}:"
+        f"{PLATFORM_CAPABILITY_KEY_VOCABULARY.identity_digest}"
+    )
+    assert vocabulary_ref in expanded.resolved_spawn_plan.evidence_refs
+
+    changed_vocabulary = PlatformCapabilityKeyVocabulary(
+        vocabulary_id=PLATFORM_CAPABILITY_KEY_VOCABULARY.vocabulary_id,
+        version=PLATFORM_CAPABILITY_KEY_VOCABULARY.version,
+        entries=tuple(
+            PlatformCapabilityKeyVocabularyEntry(
+                entry.key,
+                entry.native_family,
+                "reviewed.runtime.capability_family_vocabulary",
+            )
+            for entry in PLATFORM_CAPABILITY_KEY_VOCABULARY.entries
+        ),
+    )
+    changed = _expand(
+        blueprint,
+        modules,
+        plan,
+    )
+    changed_with_vocabulary = to_expanded_typed_platform_request(
+        plan=plan,
+        blueprint=blueprint,
+        modules=modules,
+        projection=_projection(plan),
+        source_type_name="FixturePlatform",
+        request_id="fixture:request",
+        placement=SpawnPlacement(entity_name="Fixture"),
+        capability_vocabulary=changed_vocabulary,
+    )
+    assert changed_with_vocabulary != changed
+    assert changed_with_vocabulary.resolved_spawn_plan.plan_id != expanded.resolved_spawn_plan.plan_id
+
+
+def test_native_typed_projection_rejects_capability_key_mapping_drift_against_factory() -> None:
+    blueprint, modules, plan = _fixture()
+    changed_entries = tuple(
+        PlatformCapabilityKeyVocabularyEntry(
+            entry.key,
+            "sensing" if entry.key == "mobility" else entry.native_family,
+            entry.owner_ref,
+        )
+        for entry in PLATFORM_CAPABILITY_KEY_VOCABULARY.entries
+    )
+    changed_vocabulary = PlatformCapabilityKeyVocabulary(
+        vocabulary_id="fixture.capability.keys",
+        version="2",
+        entries=changed_entries,
+    )
+    expanded = to_expanded_typed_platform_request(
+        plan=plan,
+        blueprint=blueprint,
+        modules=modules,
+        projection=_projection(plan),
+        source_type_name="FixturePlatform",
+        request_id="fixture:request",
+        placement=SpawnPlacement(entity_name="Fixture"),
+        capability_vocabulary=changed_vocabulary,
+    )
+    factory_plan = {
+        "source_type_name": expanded.source_type_name,
+        "admitted": True,
+        "resolved_capabilities": [
+            {
+                "family": "mobility",
+                "capability_type": cap.capability_type,
+                "implementation_ref": cap.implementation_ref,
+                "required": cap.required,
+                "supported": cap.supported,
+            }
+            if cap.capability_id.endswith(":propulsion:mobility")
+            else {
+                "family": cap.family,
+                "capability_type": cap.capability_type,
+                "implementation_ref": cap.implementation_ref,
+                "required": cap.required,
+                "supported": cap.supported,
+            }
+            for cap in expanded.resolved_spawn_plan.resolved_capabilities
+        ],
+    }
+    with pytest.raises(PlatformAssemblyError, match="capability_semantics_mismatch"):
+        validate_factory_resolved_capability_plan(expanded.resolved_spawn_plan, factory_plan)
 
 
 def test_native_typed_projection_rejects_parameter_overrides_until_definition_is_lowered() -> None:
