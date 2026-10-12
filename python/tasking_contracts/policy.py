@@ -9,9 +9,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
+import string
 from typing import Any, Callable, Mapping, Sequence
 
 SCHEMA_VERSION = "echelon_forge.policy_contract.v1"
+CHECKPOINT_SCHEMA_VERSION = "echelon_forge.policy_checkpoint_binding.v1"
 
 
 @dataclass(frozen=True)
@@ -74,6 +76,74 @@ class ActionContract:
 
 
 @dataclass(frozen=True)
+class PolicyCheckpoint:
+    """Owner-issued metadata for an external policy artifact.
+
+    This records compatibility and content identity only.  Loading the model
+    bytes and implementing the domain action endpoint remain owner operations.
+    """
+
+    checkpoint_ref: str
+    artifact_sha256: str
+    policy_id: str
+    policy_version: str
+    observation_view_ref: str
+    observation_major: int
+    observation_minor: int
+    action_interface_ref: str
+    action_major: int
+    action_minor: int
+    owner_ref: str
+    schema_version: str = CHECKPOINT_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "checkpoint_ref",
+            "policy_id",
+            "policy_version",
+            "observation_view_ref",
+            "action_interface_ref",
+            "owner_ref",
+        ):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+        if self.schema_version != CHECKPOINT_SCHEMA_VERSION:
+            raise ValueError("unsupported policy checkpoint schema version")
+        if not isinstance(self.artifact_sha256, str):
+            raise ValueError("artifact_sha256 must be a 64-character hexadecimal digest")
+        digest = self.artifact_sha256.lower()
+        if len(digest) != 64 or any(character not in string.hexdigits for character in digest):
+            raise ValueError("artifact_sha256 must be a 64-character hexadecimal digest")
+        object.__setattr__(self, "artifact_sha256", digest)
+        for field_name in (
+            "observation_major",
+            "observation_minor",
+            "action_major",
+            "action_minor",
+        ):
+            value = getattr(self, field_name)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError(f"{field_name} must be a non-negative integer")
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "checkpoint_ref": self.checkpoint_ref,
+            "artifact_sha256": self.artifact_sha256,
+            "policy_id": self.policy_id,
+            "policy_version": self.policy_version,
+            "observation_view_ref": self.observation_view_ref,
+            "observation_major": self.observation_major,
+            "observation_minor": self.observation_minor,
+            "action_interface_ref": self.action_interface_ref,
+            "action_major": self.action_major,
+            "action_minor": self.action_minor,
+            "owner_ref": self.owner_ref,
+        }
+
+
+@dataclass(frozen=True)
 class PolicyDescriptor:
     policy_id: str
     version: str
@@ -83,6 +153,7 @@ class PolicyDescriptor:
     stateful: bool = False
     decision_period_s: float | None = None
     legacy_model_kind: str | None = None
+    checkpoint: PolicyCheckpoint | None = None
 
     def __post_init__(self) -> None:
         if not self.policy_id.strip() or not self.version.strip():
@@ -93,6 +164,25 @@ class PolicyDescriptor:
             not math.isfinite(self.decision_period_s) or self.decision_period_s <= 0
         ):
             raise ValueError("decision_period_s must be positive")
+        if self.checkpoint is not None:
+            if not isinstance(self.checkpoint, PolicyCheckpoint):
+                raise TypeError("checkpoint must be a PolicyCheckpoint")
+            if self.checkpoint.policy_id != self.policy_id:
+                raise ValueError("checkpoint policy_id does not match policy")
+            if self.checkpoint.policy_version != self.version:
+                raise ValueError("checkpoint policy_version does not match policy")
+            if (
+                self.checkpoint.observation_view_ref != self.observation.view_ref
+                or self.checkpoint.observation_major != self.observation.major
+                or self.checkpoint.observation_minor != self.observation.minor
+            ):
+                raise ValueError("checkpoint observation contract does not match policy")
+            if (
+                self.checkpoint.action_interface_ref != self.action.interface_ref
+                or self.checkpoint.action_major != self.action.major
+                or self.checkpoint.action_minor != self.action.minor
+            ):
+                raise ValueError("checkpoint action contract does not match policy")
 
 
 @dataclass(frozen=True)
@@ -109,6 +199,7 @@ class PolicyAdmission:
     policy_id: str
     diagnostics: tuple[str, ...]
     schema_version: str = SCHEMA_VERSION
+    checkpoint: PolicyCheckpoint | None = None
 
     def as_dict(self) -> dict[str, object]:
         return {
@@ -116,6 +207,7 @@ class PolicyAdmission:
             "admitted": self.admitted,
             "policy_id": self.policy_id,
             "diagnostics": list(self.diagnostics),
+            "checkpoint": None if self.checkpoint is None else self.checkpoint.as_dict(),
         }
 
 
@@ -141,6 +233,8 @@ class PolicyRuntimeBinding:
     ) -> None:
         if not admission.admitted or admission.policy_id != policy.policy_id:
             raise ValueError("policy.runtime_binding_not_admitted")
+        if admission.checkpoint != policy.checkpoint:
+            raise ValueError("policy.runtime_binding_checkpoint_mismatch")
         if not all(callable(getattr(model, name, None)) for name in ("reset", "decide", "close")):
             raise TypeError("policy runtime model must implement reset/decide/close")
         if timing != policy.action.timing:
@@ -188,6 +282,14 @@ class PolicyRuntimeBinding:
                 "observation_provenance": sources,
             }
         )
+        if self.admission.checkpoint is not None:
+            model_context.update(
+                {
+                    "policy_checkpoint_ref": self.admission.checkpoint.checkpoint_ref,
+                    "policy_checkpoint_sha256": self.admission.checkpoint.artifact_sha256,
+                    "policy_checkpoint_owner": self.admission.checkpoint.owner_ref,
+                }
+            )
         action = self.model.decide(
             observation=owner_observation,
             context=model_context,
@@ -226,10 +328,18 @@ def admit_policy(
     action_versions: Mapping[str, tuple[int, int]],
     action_dimensions: Mapping[str, int],
     action_timings: Mapping[str, str] | None = None,
+    checkpoint: PolicyCheckpoint | None = None,
 ) -> PolicyAdmission:
     """Validate policy/Agent compatibility before any runtime side effect."""
 
     diagnostics: list[str] = []
+    if policy.checkpoint is None:
+        if checkpoint is not None:
+            diagnostics.append("policy.checkpoint_unexpected")
+    elif checkpoint is None:
+        diagnostics.append("policy.checkpoint_missing")
+    elif checkpoint != policy.checkpoint:
+        diagnostics.append("policy.checkpoint_identity_mismatch")
     version_error = _version_diagnostic(
         "observation",
         policy.observation.major,
@@ -306,7 +416,12 @@ def admit_policy(
         and action_timings.get(policy.action.interface_ref) != policy.action.timing
     ):
         diagnostics.append("policy.action_timing_mismatch:action.timing")
-    return PolicyAdmission(not diagnostics, policy.policy_id, tuple(diagnostics))
+    return PolicyAdmission(
+        not diagnostics,
+        policy.policy_id,
+        tuple(diagnostics),
+        checkpoint=checkpoint if checkpoint == policy.checkpoint else None,
+    )
 
 
 def validate_policy_action(
@@ -409,9 +524,11 @@ __all__ = [
     "FieldSpec",
     "ObservationContract",
     "PolicyAdmission",
+    "PolicyCheckpoint",
     "PolicyDescriptor",
     "PolicyRuntimeBinding",
     "SCHEMA_VERSION",
+    "CHECKPOINT_SCHEMA_VERSION",
     "admit_policy",
     "select_policy",
     "validate_policy_action",
