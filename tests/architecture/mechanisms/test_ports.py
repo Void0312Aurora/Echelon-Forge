@@ -10,6 +10,7 @@ from python.mechanisms.ports import (
     PortSpec,
     compile_mechanism_graph,
     compose_graph_as_mechanism,
+    validate_stage_manifest_bindings,
 )
 
 
@@ -218,3 +219,69 @@ def test_truth_cannot_be_relabelled_as_belief_by_an_edge() -> None:
         (GraphEdge("a", "measurements", "b", "measurements"),),
     )
     assert "mechanism.visibility_incompatible" in {d.code for d in graph.diagnostics}
+
+
+def test_stage_manifest_binding_consumes_owner_snapshot_and_checks_realized_order() -> None:
+    producer = replace(_sensor(), implementation_ref="native.sensor")
+    consumer = replace(_tracker(), implementation_ref="native.tracker")
+    graph = compile_mechanism_graph(
+        "native-qualification",
+        {"sensor": producer, "tracker": consumer},
+        (GraphEdge("sensor", "measurements", "tracker", "measurements"),),
+    )
+    manifests = {
+        "native.sensor.v1": {
+            "node_id": "native.sensor.v1",
+            "semantic_stage": ["P8 Sensor"],
+            "owner_module": "native.sensor",
+            "facade_visibility": "maintained_facade_surface",
+            "native_system": "SensorSystem",
+        },
+        "native.tracker.v1": {
+            "node_id": "native.tracker.v1",
+            "semantic_stage": ["P10 ObservationExport"],
+            "owner_module": "native.tracker",
+            "facade_visibility": "maintained_facade_surface",
+            "native_system": "TrackerSystem",
+        },
+    }
+    assert validate_stage_manifest_bindings(
+        graph,
+        node_stage_bindings={"sensor": "native.sensor.v1", "tracker": "native.tracker.v1"},
+        stage_manifests=manifests,
+        pipeline_order=("SensorSystem", "TrackerSystem"),
+    ) == ()
+    reversed_diagnostics = validate_stage_manifest_bindings(
+        graph,
+        node_stage_bindings={"sensor": "native.sensor.v1", "tracker": "native.tracker.v1"},
+        stage_manifests=manifests,
+        pipeline_order=("TrackerSystem", "SensorSystem"),
+    )
+    assert [item.code for item in reversed_diagnostics] == ["mechanism.realized_order_mismatch"]
+
+
+def test_stage_manifest_binding_rejects_projection_and_missing_owner_evidence() -> None:
+    graph = compile_mechanism_graph(
+        "native-qualification", {"tracker": replace(_tracker(), implementation_ref="native.tracker")}, (),
+        external_inputs=frozenset({"tracker.measurements"}),
+    )
+    diagnostics = validate_stage_manifest_bindings(
+        graph,
+        node_stage_bindings={"tracker": "projection"},
+        stage_manifests={
+            "projection": {
+                "node_id": "projection",
+                "semantic_stage": ["P10"],
+                "owner_module": "adapter",
+                "facade_visibility": "adapter_projection",
+                "native_system": "ProjectionSystem",
+            }
+        },
+    )
+    assert [item.code for item in diagnostics] == ["mechanism.native_stage_not_scheduler_truth"]
+    with pytest.raises(MechanismGraphError, match="cover every graph node"):
+        validate_stage_manifest_bindings(
+            graph,
+            node_stage_bindings={},
+            stage_manifests={},
+        )

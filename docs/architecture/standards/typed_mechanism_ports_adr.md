@@ -95,9 +95,12 @@ failure-domain ownership.
 | Independent execution graph/runtime | rejected because scheduling and world truth would have competing owners |
 
 The prototype checks complete recursive input closure, capabilities, information
-layers, clock compatibility and multiple producers. An explicit native-system
-mapping is checked against exported realized order. Immutable parameters, backend
- reference and clock policy participate in graph/composite identity.
+layers, clock compatibility and multiple producers. A qualification adapter now
+consumes an owner-provided `StageNodeManifest` snapshot, requires one-to-one
+node bindings and rejects adapter/diagnostic-only stages before checking the
+explicit native-system mapping against exported realized order. Immutable
+parameters, backend reference and clock policy participate in graph/composite
+identity.
 
 This remains a static mechanism-graph contract pilot. Qualification/shadow
 compilation and production admission are separate gates; an artifact emitted

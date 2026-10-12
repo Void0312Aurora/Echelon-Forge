@@ -533,6 +533,73 @@ def validate_realized_order(
     return tuple(diagnostics)
 
 
+def validate_stage_manifest_bindings(
+    graph: CompiledMechanismGraph,
+    *,
+    node_stage_bindings: Mapping[str, str],
+    stage_manifests: Mapping[str, Mapping[str, Any]],
+    pipeline_order: Sequence[str] = (),
+) -> tuple[GraphDiagnostic, ...]:
+    """Qualify a graph against an owner-provided native stage snapshot.
+
+    The snapshot is consumed as evidence. This adapter does not construct a
+    provider, install a scheduler node or infer a native manifest from Python.
+    """
+
+    if not graph.valid:
+        raise MechanismGraphError("cannot qualify an invalid mechanism graph")
+    expected_nodes = {node_id for node_id, _ in graph.nodes}
+    if set(node_stage_bindings) != expected_nodes:
+        raise MechanismGraphError("native stage bindings must cover every graph node exactly")
+    if len(set(node_stage_bindings.values())) != len(node_stage_bindings):
+        raise MechanismGraphError("native stage bindings must be one-to-one")
+
+    diagnostics: list[GraphDiagnostic] = []
+    node_systems: dict[str, str] = {}
+    for node_id, spec in graph.nodes:
+        stage_id = node_stage_bindings[node_id]
+        manifest = stage_manifests.get(stage_id)
+        path = f"nodes.{node_id}"
+        if manifest is None:
+            diagnostics.append(
+                GraphDiagnostic("mechanism.native_stage_manifest_missing", path, stage_id)
+            )
+            continue
+        if manifest.get("node_id") != stage_id:
+            diagnostics.append(
+                GraphDiagnostic("mechanism.native_stage_manifest_identity_mismatch", path, stage_id)
+            )
+        if not manifest.get("semantic_stage") or not manifest.get("owner_module"):
+            diagnostics.append(
+                GraphDiagnostic("mechanism.native_stage_manifest_incomplete", path, stage_id)
+            )
+        if manifest.get("facade_visibility") in {"adapter_projection", "diagnostics_only"}:
+            diagnostics.append(
+                GraphDiagnostic("mechanism.native_stage_not_scheduler_truth", path, stage_id)
+            )
+        native_system = manifest.get("native_system", stage_id)
+        if not isinstance(native_system, str) or not native_system.strip():
+            diagnostics.append(
+                GraphDiagnostic("mechanism.native_stage_system_missing", path, stage_id)
+            )
+        else:
+            node_systems[node_id] = native_system
+        if spec.implementation_ref.startswith("qualification."):
+            diagnostics.append(
+                GraphDiagnostic(
+                    "mechanism.native_implementation_qualification_only",
+                    path,
+                    spec.implementation_ref,
+                )
+            )
+
+    if pipeline_order and len(node_systems) == len(expected_nodes):
+        diagnostics.extend(
+            validate_realized_order(graph, node_systems=node_systems, pipeline_order=pipeline_order)
+        )
+    return tuple(diagnostics)
+
+
 __all__ = [
     "CompiledMechanismGraph",
     "GraphDiagnostic",
@@ -544,4 +611,5 @@ __all__ = [
     "compile_mechanism_graph",
     "compose_graph_as_mechanism",
     "validate_realized_order",
+    "validate_stage_manifest_bindings",
 ]
