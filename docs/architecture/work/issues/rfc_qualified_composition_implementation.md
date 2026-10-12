@@ -278,9 +278,11 @@ constrained assemblies require those module fields, use deterministic sorted
 `math.fsum` totals, and bind the physical tuple into plan identity. Legacy
 unconstrained modules remain valid with unknown physical values. The native
 factory projection seam is now covered by native and Python binding tests, but
-the adapter is not yet wired to a canonical owner capability-key mapping.
-Hardpoint, loadout, factory-derived capability-plan comparison and broader unit
-contracts remain open owner gates.
+the adapter comparison now fails closed unless the supplied native plan is
+admitted and its capability family, type, implementation reference and
+required/supported flags match. The adapter is still not wired to a canonical
+owner capability-key mapping. Hardpoint, loadout and broader unit contracts
+remain open owner gates.
 
 The qualification modules, catalogue helpers, tests and proposed documents remain
 opt-in. Configuration formats, native scheduling, production profiles and

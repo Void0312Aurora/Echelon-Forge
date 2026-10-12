@@ -204,6 +204,7 @@ def test_typed_plan_can_be_compared_with_factory_resolved_capability_identity() 
     expanded = _expand(blueprint, modules, plan)
     factory_plan = {
         "source_type_name": expanded.source_type_name,
+        "admitted": True,
         "resolved_platform_definition_ref": expanded.resolved_spawn_plan.resolved_platform_definition_ref,
         "resolved_capabilities": [
             {
@@ -220,6 +221,16 @@ def test_typed_plan_can_be_compared_with_factory_resolved_capability_identity() 
     validate_factory_resolved_capability_plan(expanded.resolved_spawn_plan, factory_plan)
     factory_plan["resolved_capabilities"][0]["family"] = "survivability"
     with pytest.raises(PlatformAssemblyError, match="capability_semantics_mismatch"):
+        validate_factory_resolved_capability_plan(expanded.resolved_spawn_plan, factory_plan)
+
+    factory_plan["resolved_capabilities"][0]["family"] = expanded.resolved_spawn_plan.resolved_capabilities[0].family
+    factory_plan["resolved_capabilities"][0]["implementation_ref"] = "other.native.owner"
+    with pytest.raises(PlatformAssemblyError, match="capability_semantics_mismatch"):
+        validate_factory_resolved_capability_plan(expanded.resolved_spawn_plan, factory_plan)
+
+    factory_plan["resolved_capabilities"][0]["implementation_ref"] = expanded.resolved_spawn_plan.resolved_capabilities[0].implementation_ref
+    factory_plan["admitted"] = False
+    with pytest.raises(PlatformAssemblyError, match="factory_plan_not_admitted"):
         validate_factory_resolved_capability_plan(expanded.resolved_spawn_plan, factory_plan)
 
 

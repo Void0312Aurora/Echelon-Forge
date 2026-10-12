@@ -47,6 +47,8 @@ def _field(value: Any, name: str) -> Any:
 def _capability_identity(value: Any) -> tuple[Any, ...]:
     return (
         _field(value, "family"),
+        _field(value, "capability_type"),
+        _field(value, "implementation_ref"),
         _field(value, "required"),
         _field(value, "supported"),
     )
@@ -68,6 +70,8 @@ def validate_factory_resolved_capability_plan(
         raise PlatformAssemblyError("platform.factory_plan_source_type_missing")
     if _field(factory_plan, "source_type_name") != expanded.source_type_name:
         raise PlatformAssemblyError("platform.factory_plan_source_type_name_mismatch")
+    if _field(factory_plan, "admitted") is not True:
+        raise PlatformAssemblyError("platform.factory_plan_not_admitted")
     factory_capabilities = _field(factory_plan, "resolved_capabilities")
     if not isinstance(factory_capabilities, (list, tuple)):
         raise PlatformAssemblyError("platform.factory_plan_capabilities_missing")
