@@ -211,7 +211,7 @@ lowering/loader path. Native request validation now checks source identity,
 bundle identity and capability records by unique capability ID before admission,
 while rejected plans retain their specific rejection reason.
 
-The current continuation passed **66 content/composition/binding/rollback and
+The current continuation passed **67 content/composition/binding/rollback and
 manifest tests**, **35 platform-spawn architecture tests**, and Ruff on all
 changed Python files. After rebuilding both native targets, the selected native
 suites passed **31 cases / 842 assertions**. The prior four standalone MSVC
