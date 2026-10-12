@@ -23,6 +23,9 @@ def blueprint() -> PlatformBlueprint:
         slots=(("propulsion", "engine"), ("primary_sensor", "sensor"), ("station_1", "weapon")),
         required_capabilities=frozenset({"mobility", "sensing", "launching"}),
         override_types=(("fuel_fraction", "float"),),
+        mass_limit_kg=1200.0,
+        power_budget_kw=20.0,
+        slot_mount_requirements=(("primary_sensor", "nose"),),
     )
 
 
@@ -30,13 +33,16 @@ def blueprint() -> PlatformBlueprint:
 def modules() -> dict[str, ModuleRecord]:
     return {
         "builtin.engine.f110": ModuleRecord(
-            "builtin.engine.f110", "engine", frozenset({"mobility"}), evidence_refs=("e:engine",)
+            "builtin.engine.f110", "engine", frozenset({"mobility"}), evidence_refs=("e:engine",),
+            mass_kg=700.0, power_draw_kw=0.0, mount_classes=frozenset({"engine_bay"})
         ),
         "builtin.radar.apg": ModuleRecord(
-            "builtin.radar.apg", "sensor", frozenset({"sensing"}), evidence_refs=("e:radar",)
+            "builtin.radar.apg", "sensor", frozenset({"sensing"}), evidence_refs=("e:radar",),
+            mass_kg=200.0, power_draw_kw=8.0, mount_classes=frozenset({"nose"})
         ),
         "builtin.aim120": ModuleRecord(
-            "builtin.aim120", "weapon", frozenset({"launching"}), evidence_refs=("e:missile",)
+            "builtin.aim120", "weapon", frozenset({"launching"}), evidence_refs=("e:missile",),
+            mass_kg=100.0, power_draw_kw=0.0, mount_classes=frozenset({"station"})
         ),
     }
 
@@ -125,6 +131,62 @@ def test_missing_capability_and_illegal_override_fail_before_publication(
         )
 
 
+def test_physical_compatibility_constraints_fail_closed_before_publication(blueprint, modules) -> None:
+    too_heavy = dict(modules)
+    too_heavy["builtin.aim120"] = replace(too_heavy["builtin.aim120"], mass_kg=400.0)
+    with pytest.raises(PlatformAssemblyError, match="mass_limit_exceeded"):
+        resolve_platform_assembly(
+            assembly_id="heavy.v1", blueprint=blueprint, selections=_selections(), modules=too_heavy
+        )
+
+    too_powerful = dict(modules)
+    too_powerful["builtin.radar.apg"] = replace(too_powerful["builtin.radar.apg"], power_draw_kw=30.0)
+    with pytest.raises(PlatformAssemblyError, match="power_budget_exceeded"):
+        resolve_platform_assembly(
+            assembly_id="power.v1", blueprint=blueprint, selections=_selections(), modules=too_powerful
+        )
+
+    wrong_mount = dict(modules)
+    wrong_mount["builtin.radar.apg"] = replace(wrong_mount["builtin.radar.apg"], mount_classes=frozenset({"wing"}))
+    with pytest.raises(PlatformAssemblyError, match="mount_class_mismatch"):
+        resolve_platform_assembly(
+            assembly_id="mount.v1", blueprint=blueprint, selections=_selections(), modules=wrong_mount
+        )
+
+
+@pytest.mark.parametrize("field", ["mass_kg", "power_draw_kw"])
+def test_constrained_blueprint_requires_physical_metadata(blueprint, modules, field) -> None:
+    incomplete = dict(modules)
+    incomplete["builtin.aim120"] = replace(incomplete["builtin.aim120"], **{field: None})
+    with pytest.raises(PlatformAssemblyError, match=f"physical_metadata_missing:modules.station_1:physical.{field}"):
+        resolve_platform_assembly(
+            assembly_id="incomplete.v1",
+            blueprint=blueprint,
+            selections=_selections(),
+            modules=incomplete,
+        )
+    unconstrained = replace(blueprint, mass_limit_kg=None, power_budget_kw=None)
+    assert resolve_platform_assembly(
+        assembly_id="legacy.v1", blueprint=unconstrained, selections=_selections(), modules=incomplete
+    )
+
+
+@pytest.mark.parametrize("value", [True, "1", -1.0, math.nan, math.inf, 10 ** 400])
+def test_physical_metadata_and_budget_reject_invalid_values(blueprint, modules, value) -> None:
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        replace(modules["builtin.aim120"], mass_kg=value)
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        replace(blueprint, power_budget_kw=value)
+
+
+def test_physical_sum_overflow_rejects_before_publication(blueprint, modules) -> None:
+    large = {ref: replace(module, mass_kg=1.0e308) for ref, module in modules.items()}
+    with pytest.raises(PlatformAssemblyError, match="mass_limit_exceeded"):
+        resolve_platform_assembly(
+            assembly_id="overflow.v1", blueprint=blueprint, selections=_selections(), modules=large
+        )
+
+
 def test_duplicate_slot_and_bad_override_type_fail_closed(blueprint, modules) -> None:
     with pytest.raises(PlatformAssemblyError, match="duplicate_slot"):
         resolve_platform_assembly(
@@ -178,3 +240,11 @@ def test_physical_override_bounds_and_module_content_are_bound_to_plan_identity(
         assembly_id="a", blueprint=bounded, selections=_selections(), modules=changed
     )
     assert left.identity_digest != right.identity_digest
+    changed_physical = dict(modules)
+    changed_physical["builtin.engine.f110"] = replace(
+        changed_physical["builtin.engine.f110"], mass_kg=701.0
+    )
+    physical = resolve_platform_assembly(
+        assembly_id="a", blueprint=bounded, selections=_selections(), modules=changed_physical
+    )
+    assert left.identity_digest != physical.identity_digest

@@ -309,6 +309,16 @@ def test_native_projection_rejects_changed_module_parameters_before_loading():
         lower_to_legacy_unit_definition(plan, projection, modules=modules)
 
 
+def test_native_projection_rejects_changed_or_missing_physical_parameters_before_loading():
+    _, plan, projection, modules = _legacy_projection("aircraft/units/f16c_block50.json")
+    with pytest.raises(PlatformAssemblyError, match="native_module_physical_projection_incomplete"):
+        lower_to_legacy_unit_definition(replace(plan, module_physical_parameters=()), projection, modules=modules)
+    key = next(iter(modules))
+    modules[key] = replace(modules[key], mass_kg=1.0)
+    with pytest.raises(PlatformAssemblyError, match="native_module_physical_mismatch"):
+        lower_to_legacy_unit_definition(plan, projection, modules=modules)
+
+
 def test_bounded_fuel_override_reaches_existing_loader_and_native_observations(tmp_path):
     legacy, original_plan, projection, modules = _legacy_projection("aircraft/units/f16c_block50.json")
     blueprint = PlatformBlueprint(

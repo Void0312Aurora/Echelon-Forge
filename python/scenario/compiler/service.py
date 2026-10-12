@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import atexit
+import hashlib
 import json
 import os
 from dataclasses import dataclass
@@ -54,6 +55,7 @@ class CompiledScenario:
     zone_count: int
     entity_count: int
     dependency_existence_paths: tuple[str, ...] = ()
+    semantic_digest: str = ""
 
     def instantiate(self) -> dict[str, Any]:
         return _clone_scenario_value(self.merged_scenario_data)
@@ -65,6 +67,12 @@ class CompiledScenario:
         return _clone_runtime_context_scenario_data(self.merged_scenario_data)
 
     def is_fresh(self) -> bool:
+        if self.semantic_digest:
+            try:
+                if _scenario_semantic_digest(self.merged_scenario_data) != self.semantic_digest:
+                    return False
+            except (TypeError, ValueError):
+                return False
         # Group OOB references are provenance prerequisites, not imported
         # semantic content. Revalidate existence without hashing their contents.
         if any(not Path(path).is_file() for path in self.dependency_existence_paths):
@@ -76,6 +84,12 @@ class CompiledScenario:
             except OSError:
                 return False
         return True
+
+
+def _scenario_semantic_digest(data: dict[str, Any]) -> str:
+    return hashlib.sha256(
+        json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")
+    ).hexdigest()
 
 
 def _expand_scenario_groups(
@@ -220,6 +234,7 @@ class ScenarioCompiler:
             zone_count=len(zones),
             entity_count=len(entities),
             dependency_existence_paths=tuple(dict.fromkeys(dependency_existence_paths)),
+            semantic_digest=_scenario_semantic_digest(merged),
         )
 
 
