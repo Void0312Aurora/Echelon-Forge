@@ -18,8 +18,10 @@ materialization remain authoritative.
 Add an opt-in authoring projection for reusable platform blueprints and
 assemblies. Compile it to the existing `UnitDefinition`,
 `CapabilityBundle` and `ResolvedPlatformSpawnPlan` contracts; the bounded
-`platform_blueprint_adapter` may project an admitted plan into the maintained
-`TypedPlatformSpawnRequest` shape. Do not replace the unit database or
+`platform_blueprint_adapter` may project a resolved qualification plan into the maintained
+`TypedPlatformSpawnRequest` shape only when it is bound to an unchanged legacy
+`UnitDefinition` snapshot. A plan that changes module bindings or overrides must
+first use the existing legacy lowering and loader path. Do not replace the unit database or
 `DefaultUnitFactory`. The native factory remains the only owner allowed to
 materialize ECS entities.
 
@@ -73,6 +75,6 @@ the existing provider/model contracts.
 | Explicit typed authoring projection to existing content | proposed bounded route; native factory still materializes entities |
 | Load research/template documents directly | rejected; draft evidence is not admitted executable content |
 
-The prototype records module parameter digests and native references, applies finite numeric bounds, and explicitly maps selections to existing UnitDefinition fields. F-16 and Ground infantry loader/factory observation parity is exercised at setup and after four steps. A separate F-16 proof projects the resolved assembly through the maintained typed request and preserves observation parity for four steps. Generalized factory-plan comparison, explicit unit contracts and all physical compatibility constraints remain open.
+The prototype records module parameter digests and native references, applies finite numeric bounds, and explicitly maps selections to existing UnitDefinition fields. The typed bridge binds the full legacy definition digest into its IDs and rejects a plan whose lowering would change that snapshot. F-16 and Ground infantry loader/factory observation parity is exercised at setup and after four steps. A separate F-16 proof projects the resolved assembly through the maintained typed request and preserves observation parity for four steps. Generalized factory-plan comparison, explicit unit contracts and all physical compatibility constraints remain open.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.

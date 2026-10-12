@@ -14,8 +14,9 @@ Last verified: `2026-10-12`
 
 采用可选的平台蓝图/组装 authoring 投影，并将其编译到现有 `UnitDefinition`、
 `CapabilityBundle` 与 `ResolvedPlatformSpawnPlan` 契约；受限的
-`platform_blueprint_adapter` 可以把已准入的计划投影为现有的
-`TypedPlatformSpawnRequest` 形状。不替换 unit database 或 `DefaultUnitFactory`。
+`platform_blueprint_adapter` 只有在绑定到未改变的 legacy `UnitDefinition` 快照时，
+才能把已解析的资格计划投影为现有的 `TypedPlatformSpawnRequest` 形状。会改变模块绑定或
+覆盖值的计划，必须先走既有 legacy lowering 和 loader 路径。不替换 unit database 或 `DefaultUnitFactory`。
 只有 native factory 可以 materialize ECS entity。
 
 逻辑产物分为研究/装备证据、版本化模块、带类型槽位约束的平台蓝图、显式模块选择和白名单
@@ -33,6 +34,6 @@ mutation 前拒绝；稳定 ID 只由逻辑 ID、版本、解析引用和类型�
 
 方案比较以英文规范页的 Option comparison 为准。
 
-原型记录模块参数 digest 和 native ref，校验有限数值及边界，并显式映射到现有 UnitDefinition 字段。F-16 与地面步兵已验证初始化及四步后的公开观察一致性；另有 F-16 证明通过现有 typed request 路径生成，并在四步后保持观察一致。通用 factory plan 比对、显式单位契约和完整物理约束仍待验收。
+原型记录模块参数 digest 和 native ref，校验有限数值及边界，并显式映射到现有 UnitDefinition 字段。typed bridge 将完整 legacy 定义 digest 纳入 ID；如果 lowering 会改变该快照则拒绝。F-16 与地面步兵已验证初始化及四步后的公开观察一致性；另有 F-16 证明通过现有 typed request 路径生成，并在四步后保持观察一致。通用 factory plan 比对、显式单位契约和完整物理约束仍待验收。
 
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。
