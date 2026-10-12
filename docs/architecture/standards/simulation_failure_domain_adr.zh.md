@@ -46,8 +46,9 @@ generation ID，也不会伪造 reset 结果。
 
 方案比较以英文规范页的 Option comparison 为准。
 
-completed 构造要求覆盖全部 expected worlds；skipped/unknown 不能冒充完成，aggregate fault
-保守投影为全部受影响 world 未知，不从时钟推断回滚。PR #230 中的 #210 owner 修复已局部
+公开 `BatchOperationOutcome` 构造在任何 `completed` 结果上都要求非空的 expected-world
+证据并精确覆盖全部 world index；默认空范围不能绕过这个不变量。skipped/unknown 不能冒充完成，
+aggregate fault 保守投影为全部受影响 world 未知，不从时钟推断回滚。PR #230 中的 #210 owner 修复已局部
 移植到当前 main 接口，并保护新增的组合证据导出；参见
 [WorldBatch 故障契约](world_batch_failure_contract.zh.md)。
 

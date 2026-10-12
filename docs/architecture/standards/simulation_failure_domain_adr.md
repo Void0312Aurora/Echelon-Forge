@@ -82,8 +82,10 @@ CUDA results are reported separately from admitted CPU/facade guarantees.
 | Per-world outcomes and quarantine | held until native publication evidence can reliably distinguish each world |
 | Transactional rollback of all effects | held; no current proof of atomic rollback |
 
-Completed constructors require exact expected-world coverage. Skipped/unknown
-outcomes cannot masquerade as completion, and aggregate faults project all affected
+The public `BatchOperationOutcome` constructor requires non-empty expected-world
+evidence and exact index coverage for every `completed` result; the default empty
+scope cannot be used to bypass that invariant. Skipped/unknown outcomes cannot
+masquerade as completion, and aggregate faults project all affected
 worlds as unknown without inferring rollback from clocks. The #210 owner repair
 from PR #230 has been ported locally onto the qualification branch's current
 interfaces, including the
