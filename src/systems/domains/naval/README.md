@@ -80,3 +80,11 @@ minimum can reject trajectories that a future continuous solver could admit.
 
 This slice limits commands and trajectories only. It does not model seabed
 contact, collision response, damage, or hydrodynamics.
+
+The native opt-in tests exercise two independently implemented synthetic
+bathymetry queries: a full-segment interior shoal and a linear seabed slope.
+They establish consumer interoperability, not availability of real bathymetry
+data. Before promoting this slice after integration with other native changes,
+recompute the state-transfer migration digest and run the default composition,
+host state-owner roundtrip, and host/batch parity gates on the combined commit.
+Per-PR green checks do not establish that combined evidence.

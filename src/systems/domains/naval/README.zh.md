@@ -37,3 +37,12 @@ contract/facade packet 暴露，而不是由这里持有为完整 N4 mission run
 ## 依赖方向
 
 本目录可以消费 `components/domains/naval/platform`、`components/command`、`components/basic` 和必要的 `core/interfaces`。它不应依赖 `runtime/facade`、`interfaces/python` 或训练/场景 glue。
+
+## Bathymetry 验证边界
+
+`SubmarineBathymetryPolicy` 默认关闭，默认环境返回 `Unavailable`。native opt-in
+测试覆盖两种独立实现的合成查询：整个步进段内的浅滩最小值，以及线性海底斜坡。
+这验证消费者对不同 provider 的兼容性，不代表真实水深数据已经可用。
+与其他 native 变更集成后，提升此切片前必须重新计算 state-transfer migration digest，
+并在合并后的同一提交上运行默认 composition、host state-owner roundtrip 和 host/batch
+parity 验证。单个 PR 的绿色检查不能代替该集成证据。

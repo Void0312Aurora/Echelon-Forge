@@ -56,6 +56,38 @@ struct BathymetryTestEnvironment final : IEnvironmentModel {
     }
 };
 
+// A second provider computes an exact minimum for a linear seabed instead of
+// replaying a pre-authored observation or the first provider's shoal rule.
+struct SlopedBathymetryEnvironment final : IEnvironmentModel {
+    AtmosphericData get_atmosphere_at(double, double, double) override { return {}; }
+    double get_terrain_elevation(double, double) override { return 0.0; }
+    bool check_line_of_sight(double, double, double, double, double, double) override {
+        return true;
+    }
+    double get_weather_attenuation(double, double, double, double, double, double, int) override {
+        return 0.0;
+    }
+    Vec3 get_sun_direction() override { return {0.0, 0.0, 1.0}; }
+    TerrainCell get_terrain_at(double, double) override {
+        return {0.0, SurfaceType::Water, 1.0, 0.0, 0.0, 0.0};
+    }
+    void clear_zones() override {}
+    void add_zone(const std::string &, double, double, double, double, double,
+                  SurfaceType) override {}
+    BathymetrySegmentObservation get_bathymetry_along_segment(double, double from_y, double,
+                                                              double to_y) override {
+        BathymetrySegmentObservation result{};
+        result.availability = BathymetryAvailability::Valid;
+        result.minimum_water_depth_m = 120.0 - 16.0 * std::max(from_y, to_y);
+        result.horizontal_frame = "local_xy";
+        result.vertical_datum = "MSL";
+        result.source = "synthetic_linear_slope.v1";
+        result.water_surface_elevation_m = 0.0;
+        result.time_invariant_for_step = true;
+        return result;
+    }
+};
+
 struct SubmarineRig {
     flecs::world world;
     BathymetryTestEnvironment environment;
@@ -144,6 +176,33 @@ TEST_CASE("rising seabed is represented by the segment minimum") {
     CHECK(rig.unit.get<Transform>()->z == doctest::Approx(-27.0));
     CHECK(rig.unit.get<SubmarineBathymetryPolicy>()->last_status ==
           SubmarineDepthConstraintStatus::LimitedBySeabed);
+}
+
+TEST_CASE("a second bathymetry provider constrains the whole linear slope segment") {
+    SlopedBathymetryEnvironment environment;
+    SUBCASE("currently safe hull can transit at the limited depth") {
+        SubmarineRig rig(20.0);
+        rig.world.set<EnvironmentModelRef>({&environment});
+        rig.step();
+        CHECK(rig.unit.get<Transform>()->y == doctest::Approx(5.0));
+        CHECK(rig.unit.get<Transform>()->z == doctest::Approx(-27.0));
+        const auto *policy = rig.unit.get<SubmarineBathymetryPolicy>();
+        CHECK(policy->last_allowed_depth_m == doctest::Approx(27.0));
+        CHECK(policy->last_status == SubmarineDepthConstraintStatus::LimitedBySeabed);
+        CHECK(policy->last_source == "synthetic_linear_slope.v1");
+    }
+    SUBCASE("a deep hull cannot sweep into the shallower endpoint") {
+        SubmarineRig rig(50.0);
+        rig.world.set<EnvironmentModelRef>({&environment});
+        rig.step();
+        CHECK(rig.unit.get<Transform>()->y == doctest::Approx(0.0));
+        CHECK(rig.unit.get<Transform>()->z == doctest::Approx(-40.0));
+        CHECK(rig.unit.get<Velocity>()->vy == doctest::Approx(0.0));
+        const auto *policy = rig.unit.get<SubmarineBathymetryPolicy>();
+        CHECK(policy->last_allowed_depth_m == doctest::Approx(27.0));
+        CHECK(policy->last_status == SubmarineDepthConstraintStatus::RejectedTrajectory);
+        CHECK(policy->last_source == "synthetic_linear_slope.v1");
+    }
 }
 
 TEST_CASE("unknown bathymetry holds depth and reports conservative status") {
