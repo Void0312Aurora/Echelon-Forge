@@ -8,19 +8,35 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/simulation_failure_domain_adr.md`
 Owner: `architecture/failure-contracts`
-Last verified: `2026-10-11`
+Last verified: `2026-10-12`
 
 **状态：** 待评审的契约设计；不授权新增 host、事务引擎或生产切换。
+上游 `main` 不被视为已经执行了完整契约；资格分支只携带本地 #210 owner
+实现和相应证据，不能把它报告为主线或生产保证。
 
 使用分层 outcome 词汇区分 admission、mechanism/stage、单 world、batch 与 host/process 故障。
 各层报告观察事实，native world/ECS truth 仍负责状态有效性；facade/Python 只能翻译，不得从
 exception 推断 rollback。
 
-当前 CPU/facade 最小策略是 fail-closed：preflight 拒绝不发布；mid-step 或 worker 故障产生明确
+目标 CPU/facade 策略是 fail-closed：preflight 拒绝不发布；mid-step 或 worker 故障产生明确
 generation fence，除非有可靠的 per-world 证据，否则状态为 unknown/untrusted；禁止透明重试，
-只能显式 reset/recreate。部分完成 batch 不得报告为同步成功；abort、死锁和阻塞 native code
+只能显式 reset/recreate。本资格分支在受测 `WorldBatchRuntime` 路径上验证了本地 #210 移植；
+上游生产路径仍须等待 owner 修复交付并按主线祖先重新验证。部分完成 batch 不得报告为同步成功；
+abort、死锁和阻塞 native code
 不属于同进程恢复能力，需在受限 subprocess 中验证。#209/#210 保留各自实现所有权，现有
 RunReceipt/evidence 和 #239 投影继续作为证据权威。
+
+## 当前状态和迁移矩阵
+
+| 状态 | 观察含义 | 允许操作 | 离开状态所需证据 |
+| --- | --- | --- | --- |
+| `healthy` | generation 没有故障 fence | 按 owner API 执行已准入 setup、step、只读导出和 reset | 成功操作或成功 reset 证据 |
+| `failed/untrusted` | 已记录 preflight 安全失败、worker 故障或修改后不确定性；不暗示 rollback | 诊断和显式 reset/recreate；禁止修改性重试或同步成功导出 | 成功 reset/recreate，重新初始化完整 expected world 范围 |
+| reset 后 `healthy` | 新 generation 已完成初始化 | 新 generation 的正常操作 | reset 结果及 native 状态/setup 证据；不证明发生了 rollback |
+
+本分支可以在受测 native 路径证明注入的 worker 启动和任务故障会进入第二行，
+但尚未证明 native 签发的 generation ID、可靠的 per-world 提交发布、取消，或对
+`abort`、进程退出、死锁和非终止的隔离。
 
 ## 方案比较与实现检查点
 
