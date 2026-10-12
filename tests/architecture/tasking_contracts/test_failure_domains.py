@@ -11,6 +11,7 @@ from python.tasking_contracts.failure_domains import (
     WorldState,
     admission_rejection,
     build_batch_outcome,
+    project_native_batch_fault,
     project_unresolved_batch_fault,
 )
 
@@ -156,3 +157,40 @@ def test_aggregate_fault_does_not_infer_unchanged_worlds_or_rollback() -> None:
         for world in result.worlds
     )
     assert result.recovery_admission is RecoveryAdmission.REQUIRE_EXPLICIT_RESET_OR_RECREATE
+
+
+def test_native_fault_projection_requires_observed_unhealthy_owner() -> None:
+    class FakeRuntime:
+        def batch_healthy(self) -> bool:
+            return False
+
+        def batch_failure_reason(self) -> str:
+            return "worker_exception"
+
+    result = project_native_batch_fault(
+        runtime=FakeRuntime(),
+        batch_generation_ref="native.g1",
+        operation_ref="step.1",
+        operation="step_batch",
+        expected_world_indices=frozenset({0, 1}),
+    )
+    assert result.result is BatchResult.FAILED
+    assert result.recovery_admission is RecoveryAdmission.REQUIRE_EXPLICIT_RESET_OR_RECREATE
+    assert result.as_dict()["diagnostics"] == [
+        "native.batch.failure",
+        "native.batch.failure_reason:worker_exception",
+    ]
+    assert all(world.step_committed is None for world in result.worlds)
+
+    class HealthyRuntime(FakeRuntime):
+        def batch_healthy(self) -> bool:
+            return True
+
+    with pytest.raises(ValueError, match="unhealthy runtime"):
+        project_native_batch_fault(
+            runtime=HealthyRuntime(),
+            batch_generation_ref="native.g1",
+            operation_ref="step.1",
+            operation="step_batch",
+            expected_world_indices=frozenset({0}),
+        )

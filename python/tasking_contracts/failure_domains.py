@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Protocol
 
 SCHEMA_VERSION = "echelon_forge.batch_operation_outcome.v1"
 
@@ -41,6 +41,18 @@ class RecoveryAdmission(str, Enum):
     CALLER_FIX_REQUIRED = "caller_fix_required"
     REQUIRE_EXPLICIT_RESET_OR_RECREATE = "require_explicit_reset_or_recreate"
     TERMINATE_GENERATION = "terminate_generation"
+
+
+class NativeBatchHealth(Protocol):
+    """Small read-only seam exposed by the native batch owner.
+
+    This deliberately omits reset and mutation methods. The projection may
+    observe the native fence, but it cannot clear it or invent recovery truth.
+    """
+
+    def batch_healthy(self) -> bool: ...
+
+    def batch_failure_reason(self) -> str: ...
 
 
 @dataclass(frozen=True)
@@ -294,10 +306,52 @@ def project_unresolved_batch_fault(
     )
 
 
+def project_native_batch_fault(
+    *,
+    runtime: NativeBatchHealth,
+    batch_generation_ref: str,
+    operation_ref: str,
+    operation: str,
+    expected_world_indices: frozenset[int],
+    error_code: str = "native.batch.failure",
+) -> BatchOperationOutcome:
+    """Project an observed native fence without manufacturing commit status.
+
+    The native owner remains authoritative for health and failure reason. This
+    adapter only copies that observation into the conservative all-unknown
+    outcome; it does not expose a generation ID, infer rollback, or perform a
+    reset. A healthy runtime is rejected so callers cannot create a failure
+    record detached from an observed native fault.
+    """
+
+    if runtime.batch_healthy():
+        raise ValueError("native batch fault projection requires an unhealthy runtime")
+    if not isinstance(error_code, str) or not error_code.strip():
+        raise ValueError("error_code must be a non-empty string")
+    reason = runtime.batch_failure_reason()
+    if not isinstance(reason, str) or not reason.strip():
+        raise ValueError("unhealthy native runtime must provide a failure reason")
+    if not expected_world_indices:
+        raise ValueError("expected_world_indices are required for a batch execution")
+    return build_batch_outcome(
+        batch_generation_ref=batch_generation_ref,
+        operation_ref=operation_ref,
+        operation=operation,
+        domain=FailureDomain.BATCH,
+        expected_world_indices=expected_world_indices,
+        worlds=tuple(
+            WorldOutcome(index, WorldState.UNKNOWN_AFTER_FAULT, None, error_code)
+            for index in sorted(expected_world_indices)
+        ),
+        diagnostics=(error_code, f"native.batch.failure_reason:{reason}"),
+    )
+
+
 __all__ = [
     "BatchOperationOutcome",
     "BatchResult",
     "FailureDomain",
+    "NativeBatchHealth",
     "RecoveryAdmission",
     "SCHEMA_VERSION",
     "WorldOutcome",
@@ -305,4 +359,5 @@ __all__ = [
     "admission_rejection",
     "build_batch_outcome",
     "project_unresolved_batch_fault",
+    "project_native_batch_fault",
 ]

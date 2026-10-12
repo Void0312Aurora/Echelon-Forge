@@ -38,6 +38,10 @@ RunReceipt/evidence 和 #239 投影继续作为证据权威。
 但尚未证明 native 签发的 generation ID、可靠的 per-world 提交发布、取消，或对
 `abort`、进程退出、死锁和非终止的隔离。
 
+Python 资格 adapter 现在先读取 native owner 的 `batch_healthy()` 和
+`batch_failure_reason()`，再投影全部未知结果；健康 runtime 会被拒绝，adapter 不会创建
+generation ID，也不会伪造 reset 结果。
+
 ## 方案比较与实现检查点
 
 方案比较以英文规范页的 Option comparison 为准。

@@ -98,6 +98,10 @@ already provides that projection. All-unknown aggregate evidence reports
 `failed` with explicit reset/recreate required; it does not claim known per-world
 commit status. The mechanism child
 fault proof separately observes state mutation without outer packet publication.
+The Python qualification adapter now reads `batch_healthy()` and
+`batch_failure_reason()` from the native owner before projecting that
+all-unknown outcome; it rejects a healthy runtime and never invents a generation
+ID or reset result.
 The native batch proof also injects a worker-launch failure and checks that joined
 workers, guarded exports, failed recovery and explicit reset remain fail-closed.
 These local changes are not an upstream #210 closure. An exception inside a running
