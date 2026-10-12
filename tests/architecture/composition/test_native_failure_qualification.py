@@ -10,7 +10,7 @@ from python.tasking_contracts.failure_domains import (
     BatchResult,
     RecoveryAdmission,
     WorldState,
-    project_unresolved_batch_fault,
+    project_native_batch_fault,
 )
 
 
@@ -33,7 +33,8 @@ def test_native_partial_setup_failure_is_fenced_and_projects_unknown(world_count
         runtime.step_batch()
     with pytest.raises(RuntimeError, match="failed-closed"):
         runtime.get_agent_observations_batch([])
-    outcome = project_unresolved_batch_fault(
+    outcome = project_native_batch_fault(
+        runtime=runtime,
         batch_generation_ref="qualification.native.failed",
         operation_ref="setup.1",
         operation="apply_world_setup_batch",
