@@ -214,14 +214,24 @@ validate_typed_platform_spawn_request_common(const TypedPlatformSpawnRequest &re
     const bool capabilities_match =
         request.resolved_spawn_plan.resolved_capabilities.size() ==
             request.capability_bundle.capabilities.size() &&
-        std::equal(request.resolved_spawn_plan.resolved_capabilities.begin(),
-                   request.resolved_spawn_plan.resolved_capabilities.end(),
-                   request.capability_bundle.capabilities.begin(), capability_equal);
+        platform::capability_ids_are_unique(request.resolved_spawn_plan.resolved_capabilities) &&
+        std::all_of(request.resolved_spawn_plan.resolved_capabilities.begin(),
+                    request.resolved_spawn_plan.resolved_capabilities.end(),
+                    [&](const platform::Capability &capability) {
+                        const auto match = std::find_if(
+                            request.capability_bundle.capabilities.begin(),
+                            request.capability_bundle.capabilities.end(),
+                            [&](const platform::Capability &candidate) {
+                                return candidate.capability_id == capability.capability_id;
+                            });
+                        return match != request.capability_bundle.capabilities.end() &&
+                               capability_equal(capability, *match);
+                    });
     if (request.capability_bundle.source_type_name != request.source_type_name ||
         request.resolved_spawn_plan.source_type_name != request.source_type_name ||
         request.resolved_spawn_plan.capability_bundle_id !=
             request.capability_bundle.bundle_id ||
-        !capabilities_match) {
+        (request.resolved_spawn_plan.admitted && !capabilities_match)) {
         return reject_typed_platform_spawn_request(
             kTypedPlatformSpawnRejectionInvalidResolvedPlan,
             "resolved_spawn_plan must preserve source and capability bundle identity");

@@ -9,6 +9,8 @@ and the existing ``DefaultUnitFactory`` remain authoritative.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Mapping
 
 from python.content.capability_bundles.registry import (
@@ -19,24 +21,21 @@ from python.content.capability_bundles.registry import (
     SpawnPlacement,
 )
 from python.content.platform_blueprint import (
+    LegacyUnitProjection,
     ModuleRecord,
     PlatformAssemblyError,
     PlatformBlueprint,
+    ModuleSelection,
     ResolvedPlatformSpawnPlan,
+    SCHEMA_VERSION,
+    lower_to_legacy_unit_definition,
+    resolve_platform_assembly,
 )
+from python.content.capability_bundles.schema import PLATFORM_CAPABILITY_FAMILY_VOCABULARY
+from python.experiment.composition import thaw_json_value
 
 
-_NATIVE_CAPABILITY_FAMILIES = frozenset(
-    {
-        "mobility",
-        "sensing",
-        "communication",
-        "launching",
-        "survivability",
-        "command",
-        "doctrine",
-    }
-)
+_NATIVE_CAPABILITY_FAMILIES = frozenset(PLATFORM_CAPABILITY_FAMILY_VOCABULARY)
 
 
 def _module_index(modules: Mapping[str, ModuleRecord]) -> dict[str, ModuleRecord]:
@@ -73,24 +72,33 @@ def to_expanded_typed_platform_request(
     plan: ResolvedPlatformSpawnPlan,
     blueprint: PlatformBlueprint,
     modules: Mapping[str, ModuleRecord],
+    projection: LegacyUnitProjection,
     source_type_name: str,
     request_id: str,
     placement: SpawnPlacement,
 ) -> ExpandedTypedPlatformRequest:
     """Project one resolved assembly into the maintained typed request shape.
 
-    The checks here are the last content-side checks before native publication:
-    slot cardinality, module digest/reference identity, and the native capability
-    family vocabulary.  The function does not load content or create entities.
+    Bind the canonical plan to one unchanged legacy definition snapshot. A plan
+    that changes that definition must first use legacy lowering and loading;
+    typed metadata alone cannot apply module or parameter changes. The caller
+    must load this exact source snapshot through the existing native loader.
+    These content declarations do not prove that a behavior model executes.
     """
 
     if not source_type_name.strip():
         raise PlatformAssemblyError("platform.native_source_type_name_required")
+    if projection.definition.get("name") != source_type_name:
+        raise PlatformAssemblyError("platform.native_source_definition_name_mismatch")
     if not request_id.strip():
         raise PlatformAssemblyError("platform.native_request_id_required")
     expected_blueprint_ref = f"{blueprint.blueprint_id}@{blueprint.version}"
     if plan.blueprint_ref != expected_blueprint_ref:
         raise PlatformAssemblyError("platform.blueprint_version_mismatch")
+    if plan.schema_version != SCHEMA_VERSION:
+        raise PlatformAssemblyError("platform.schema_version_mismatch")
+    if plan.platform_family != blueprint.platform_family:
+        raise PlatformAssemblyError("platform.platform_family_mismatch")
 
     expected_slots = dict(blueprint.slots)
     selected_slots = dict(plan.modules)
@@ -109,7 +117,7 @@ def to_expanded_typed_platform_request(
             raise PlatformAssemblyError(
                 f"platform.native_module_kind_mismatch:{slot}:{module.kind}!={expected_slots[slot]}"
             )
-        if not module.native_ref or not module.content_digest:
+        if not module.native_ref.strip() or not module.content_digest.strip():
             raise PlatformAssemblyError(f"platform.native_module_evidence_missing:{slot}:{module_ref}")
         if dict(plan.module_digests).get(slot) != module.content_digest:
             raise PlatformAssemblyError(f"platform.native_module_digest_mismatch:{slot}")
@@ -145,13 +153,34 @@ def to_expanded_typed_platform_request(
     if not capabilities:
         raise PlatformAssemblyError("platform.native_capabilities_required")
 
+    canonical_plan = resolve_platform_assembly(
+        assembly_id=plan.assembly_id,
+        blueprint=blueprint,
+        selections=tuple(ModuleSelection(slot, ref) for slot, ref in plan.modules),
+        modules=indexed_modules,
+        parameter_overrides=dict(plan.parameter_overrides),
+    )
+    if canonical_plan != plan:
+        raise PlatformAssemblyError("platform.native_plan_identity_mismatch")
+    lowered = lower_to_legacy_unit_definition(plan, projection, modules=modules)
+    if lowered != thaw_json_value(projection.definition):
+        raise PlatformAssemblyError("platform.native_definition_projection_mismatch")
+    definition_digest = hashlib.sha256(
+        json.dumps(
+            lowered, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
+        ).encode("utf-8")
+    ).hexdigest()
+    request_digest = hashlib.sha256(
+        f"{plan.identity_digest}:{definition_digest}".encode("utf-8")
+    ).hexdigest()
     capabilities_tuple = tuple(capabilities)
-    bundle_id = f"platform.bundle.{plan.identity_digest}"
-    plan_id = f"platform.spawn.{plan.identity_digest}"
+    bundle_id = f"platform.bundle.{request_digest}"
+    plan_id = f"platform.spawn.{request_digest}"
     plan_evidence = (
         f"platform.blueprint:{plan.blueprint_ref}",
         f"platform.assembly:{plan.assembly_id}",
         f"platform.identity:{plan.identity_digest}",
+        f"platform.definition:{source_type_name}:{definition_digest}",
     )
     bundle = ExpandedCapabilityBundle(
         bundle_id=bundle_id,
@@ -167,7 +196,7 @@ def to_expanded_typed_platform_request(
         source_request_kind="typed_platform_request",
         source_type_name=source_type_name,
         capability_bundle_id=bundle_id,
-        resolved_platform_definition_ref=f"{plan.blueprint_ref}#{plan.assembly_id}",
+        resolved_platform_definition_ref=f"{source_type_name}#{definition_digest}",
         materialization_strategy="resolved_spawn_plan_bridge",
         template_evidence_ref=plan_evidence[0],
         resolution_evidence_ref=plan_evidence[2],
