@@ -52,6 +52,8 @@ double target_source_level_db(const flecs::entity &target, double speed_mps) {
     // A future admitted AcousticSignature component can replace these platform defaults without
     // changing the receiver contract.  Keeping the fallback here makes the ownership explicit
     // and prevents a receiver-only sonar edit from rewriting a target's emission.
+    // Engineering proxy passive_target_source_proxy.v1. These values are not
+    // calibrated frequency-dependent signatures or a deployment baseline.
     constexpr double kFallbackReferenceDb = 118.0;
     constexpr double kFallbackSpeedFactorDbPerMps = 1.6;
     double source_level =
