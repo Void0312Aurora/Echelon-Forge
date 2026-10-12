@@ -170,6 +170,9 @@ uint64_t spawn_from_request(SimulationKernel &world, const WorldSpawnRequest &re
 
 } // namespace
 
+std::function<std::jthread(std::function<void()>)>
+    WorldBatchRuntime::worker_thread_factory_for_test_{};
+
 WorldBatchRuntime::WorldBatchRuntime(size_t world_count) {
     resize(world_count);
 }
@@ -279,9 +282,9 @@ void WorldBatchRuntime::parallel_for_index(size_t task_count, size_t requested_t
 
 void WorldBatchRuntime::execute_for_index(size_t task_count, size_t requested_threads,
                                          std::function<void(size_t)> fn) const {
-    if (worker_thread_factory_) {
+    if (worker_thread_factory_for_test_) {
         runtime::detail::parallel_for_index(task_count, requested_threads, std::move(fn),
-                                            worker_thread_factory_);
+                                            worker_thread_factory_for_test_);
     } else {
         runtime::detail::parallel_for_index(task_count, requested_threads, std::move(fn));
     }
