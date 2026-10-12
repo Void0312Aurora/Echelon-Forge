@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Mapping
+from typing import Any, Mapping
 
 from python.content.capability_bundles.registry import (
     ExpandedCapability,
@@ -36,6 +36,47 @@ from python.experiment.composition import thaw_json_value
 
 
 _NATIVE_CAPABILITY_FAMILIES = frozenset(PLATFORM_CAPABILITY_FAMILY_VOCABULARY)
+
+
+def _field(value: Any, name: str) -> Any:
+    if isinstance(value, Mapping):
+        return value.get(name)
+    return getattr(value, name, None)
+
+
+def _capability_identity(value: Any) -> tuple[Any, ...]:
+    return (
+        _field(value, "family"),
+        _field(value, "required"),
+        _field(value, "supported"),
+    )
+
+
+def validate_factory_resolved_capability_plan(
+    expanded: ExpandedResolvedSpawnPlan,
+    factory_plan: Any,
+) -> None:
+    """Compare content lowering with a plan already resolved by the factory.
+
+    The factory remains authoritative. This function only checks the shared
+    identity and capability projection that a typed request claims to carry.
+    Source-kind and materialization-strategy labels may differ between the
+    typed bridge and the factory's maintained projection.
+    """
+
+    if not _field(factory_plan, "source_type_name"):
+        raise PlatformAssemblyError("platform.factory_plan_source_type_missing")
+    if _field(factory_plan, "source_type_name") != expanded.source_type_name:
+        raise PlatformAssemblyError("platform.factory_plan_source_type_name_mismatch")
+    factory_capabilities = _field(factory_plan, "resolved_capabilities")
+    if not isinstance(factory_capabilities, (list, tuple)):
+        raise PlatformAssemblyError("platform.factory_plan_capabilities_missing")
+    expected_capabilities = tuple(
+        sorted(_capability_identity(capability) for capability in expanded.resolved_capabilities)
+    )
+    actual_capabilities = tuple(sorted(_capability_identity(capability) for capability in factory_capabilities))
+    if actual_capabilities != expected_capabilities:
+        raise PlatformAssemblyError("platform.factory_plan_capability_semantics_mismatch")
 
 
 def _module_index(modules: Mapping[str, ModuleRecord]) -> dict[str, ModuleRecord]:
@@ -76,6 +117,7 @@ def to_expanded_typed_platform_request(
     source_type_name: str,
     request_id: str,
     placement: SpawnPlacement,
+    factory_plan: Any | None = None,
 ) -> ExpandedTypedPlatformRequest:
     """Project one resolved assembly into the maintained typed request shape.
 
@@ -207,6 +249,8 @@ def to_expanded_typed_platform_request(
         admitted=True,
         diagnostics_reason="platform_blueprint_to_native_typed_spawn_plan",
     )
+    if factory_plan is not None:
+        validate_factory_resolved_capability_plan(resolved_plan, factory_plan)
     return ExpandedTypedPlatformRequest(
         request_id=request_id,
         source_type_name=source_type_name,
@@ -221,4 +265,7 @@ def to_expanded_typed_platform_request(
     )
 
 
-__all__ = ["to_expanded_typed_platform_request"]
+__all__ = [
+    "to_expanded_typed_platform_request",
+    "validate_factory_resolved_capability_plan",
+]
