@@ -227,12 +227,30 @@ class MissionCommandLinkQosTests(unittest.TestCase):
 
     pending_before_delivery = kernel.debug_get_pending_movement_command(entity_id)
     self.assertTrue(bool(pending_before_delivery["active"]))
+    for snapshot in (pending, pending_before_delivery):
+      self.assertTrue(bool(snapshot["current_control_state_present"]))
+      self.assertAlmostEqual(float(snapshot["current_control_target_heading_deg"]), 0.0, places=6)
+      self.assertAlmostEqual(float(snapshot["current_control_target_speed_mps"]), 240.0, places=6)
+      self.assertAlmostEqual(float(snapshot["current_control_target_altitude_m"]), 1500.0, places=6)
 
     kernel.step()
     kernel_baseline.step()
 
     pending_after_delivery = kernel.debug_get_pending_movement_command(entity_id)
     self.assertFalse(bool(pending_after_delivery["active"]))
+    self.assertTrue(bool(pending_after_delivery["current_control_state_present"]))
+    self.assertAlmostEqual(
+      float(pending_after_delivery["current_control_target_heading_deg"]), 180.0, places=6
+    )
+    self.assertAlmostEqual(
+      float(pending_after_delivery["current_control_target_speed_mps"]), 220.0, places=6
+    )
+    self.assertAlmostEqual(
+      float(pending_after_delivery["current_control_target_altitude_m"]), 1500.0, places=6
+    )
+    baseline_control = kernel_baseline.debug_get_pending_movement_command(baseline_entity_id)
+    self.assertAlmostEqual(float(baseline_control["current_control_target_heading_deg"]), 0.0, places=6)
+    self.assertAlmostEqual(float(baseline_control["current_control_target_speed_mps"]), 240.0, places=6)
 
     for _ in range(37):
       kernel.step()
@@ -240,7 +258,12 @@ class MissionCommandLinkQosTests(unittest.TestCase):
 
     baseline_heading = float(kernel_baseline.get_unit_heading(baseline_entity_id))
     heading_after_delivery = float(kernel.get_unit_heading(entity_id))
-    self.assertGreater(heading_after_delivery, baseline_heading + 20.0)
+    # Delivery must produce a materially different trajectory. Aerodynamic
+    # damping and wind can change which wrapped heading is larger, so the
+    # contract is separation from the no-delivery baseline rather than a
+    # particular turn direction.
+    heading_delta = abs((heading_after_delivery - baseline_heading + 180.0) % 360.0 - 180.0)
+    self.assertGreater(heading_delta, 20.0)
 
   def test_delayed_mission_command_preserves_roe_and_navigation_fields_until_atomic_delivery(self) -> None:
     kernel = ef_py.SimulationKernel()
