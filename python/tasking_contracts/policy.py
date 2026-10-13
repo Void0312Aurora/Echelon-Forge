@@ -276,6 +276,8 @@ class PolicyRuntimeBinding:
         optional_defaults: Mapping[str, Any] | None = None,
         observation_projector: Callable[[tuple[Any, ...], tuple[str, ...]], Any] | None = None,
         action_values: Callable[[Any], Sequence[float]] | None = None,
+        action_authorizer: Callable[[Any, Mapping[str, Any], float], Sequence[str] | str | bool | None]
+        | None = None,
         action_projector: Callable[[Any], Any] | None = None,
     ) -> None:
         if not admission.admitted or admission.policy_id != policy.policy_id:
@@ -296,7 +298,10 @@ class PolicyRuntimeBinding:
         self.optional_defaults = dict(optional_defaults or {})
         self._observation_projector = observation_projector or (lambda values, _sources: values)
         self._action_values = action_values or self._default_action_values
+        self._action_authorizer = action_authorizer
         self._action_projector = action_projector or (lambda value: value)
+        if self._action_authorizer is not None and not callable(self._action_authorizer):
+            raise TypeError("policy action_authorizer must be callable")
         if not callable(self._action_projector):
             raise TypeError("policy action_projector must be callable")
 
@@ -313,6 +318,8 @@ class PolicyRuntimeBinding:
         optional_defaults: Mapping[str, Any] | None = None,
         observation_projector: Callable[[tuple[Any, ...], tuple[str, ...]], Any] | None = None,
         action_values: Callable[[Any], Sequence[float]] | None = None,
+        action_authorizer: Callable[[Any, Mapping[str, Any], float], Sequence[str] | str | bool | None]
+        | None = None,
         action_projector: Callable[[Any], Any] | None = None,
     ) -> "PolicyRuntimeBinding":
         """Load verified owner bytes and construct the admitted binding."""
@@ -333,6 +340,7 @@ class PolicyRuntimeBinding:
             optional_defaults=optional_defaults,
             observation_projector=observation_projector,
             action_values=action_values,
+            action_authorizer=action_authorizer,
             action_projector=action_projector,
         )
 
@@ -398,6 +406,26 @@ class PolicyRuntimeBinding:
         )
         if errors:
             raise ValueError(";".join(errors))
+        if self._action_authorizer is not None:
+            try:
+                owner_errors = self._action_authorizer(action, model_context, dt)
+            except Exception as exc:  # pragma: no cover - owner-specific failure
+                raise ValueError("policy.action_owner_validation_failed") from exc
+            if owner_errors is False:
+                owner_errors = ("policy.action_owner_rejected",)
+            elif owner_errors is True or owner_errors is None:
+                owner_errors = ()
+            elif isinstance(owner_errors, str):
+                owner_errors = (owner_errors,)
+            else:
+                try:
+                    owner_errors = tuple(str(error) for error in owner_errors)
+                except TypeError as exc:
+                    raise TypeError(
+                        "policy action_authorizer must return bool, str, sequence or None"
+                    ) from exc
+            if owner_errors:
+                raise ValueError(";".join(owner_errors))
         return self._action_projector(action)
 
     def close(self) -> None:
