@@ -118,7 +118,7 @@ python -m pytest tests/architecture/mechanisms/test_air_perception_qualification
 
 The Python/native bridge requires the `ef_test` binary; it skips that proof when
 the target is absent. This local verification built the target and had no skips
-in the 149-test focused run. The JUnit record in
+in the 150-test focused run. The JUnit record in
 `build-rfc-native/rfc-focused-results.xml` carries the graph digest, executed
 test-binary SHA-256 and native numerical/fault evidence. It is a local test record,
 not a production RunReceipt or trust attestation.
@@ -135,10 +135,10 @@ tests and native composition-evidence tests. The architecture suite manifest
 registers the qualification tests. See the final execution result for counts;
 this document does not infer other-host or full-repository parity.
 
-Current branch verification results: **149 focused Python tests passed** and **34 native tests /
+Current branch verification results: **150 focused Python tests passed** and **34 native tests /
 957 assertions passed**. Ruff and whitespace checks passed on all touched Python surfaces.
 The primary checkout retained its original HEAD and clean status. The owner requested batched commits and pushes of this checkpoint
-on `codex/rfc-qualified-composition`. The publication gate repeats the 149-test
+on `codex/rfc-qualified-composition`. The publication gate repeats the 150-test
 focused run and preserves the reviewed file contents across the split.
 
 ## Batched branch publication
