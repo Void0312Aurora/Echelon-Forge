@@ -407,7 +407,9 @@ embarked-inventory metadata, and verifies that a real native step preserves the
 static S0 layout. It requires an explicit compiled-scenario input and explicit
 organization-to-entity and assembly-to-native-type bindings; it does not infer
 those mappings from the CSG domain schema. `load_qualified_csg_scenario` only
-delegates a fresh, fully qualified snapshot to `ScenarioLoader`; it does not
+delegates a fresh, fully qualified snapshot to `ScenarioLoader`; the
+qualification record also retains scoped membership/task/communication edge
+tuples alongside their digest without installing any of them. It does not
 synthesize entities or grant command authority.
 
 The physical compatibility slice for #236 is bounded and fail-closed. A
