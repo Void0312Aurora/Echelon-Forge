@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/standards/world_batch_failure_contract.md`
 Owner: `architecture/runtime-workflow`
-Last verified: `2026-10-12`
+Last verified: `2026-10-13`
 
 `WorldBatchRuntime` does not promise transactional rollback when a state-mutating
 operation fails. A worker may have advanced or otherwise changed one world before
@@ -25,13 +25,23 @@ The maintained contract is fail-closed:
 2. the affected `WorldBatchRuntime` generation is marked unhealthy;
 3. every maintained batch operation rejects a retry while that generation is unhealthy;
 4. callers may inspect the failure through `batch_healthy()` and
-   `batch_failure_reason()`, then recover by calling `reset_batch()`;
+   `batch_failure_reason()` and `batch_requires_host_recreate()`; reset is allowed
+   only when native pipeline scopes are complete, otherwise retire the host process;
 5. only a successful reset clears the unhealthy state and permits another batch operation.
 
 `reset_batch()` is a recovery boundary, not a rollback. It reinitializes all worlds
 using the requested seeds. Raw `world_raw_quarantine()` access remains a diagnostic
 escape hatch and is not a synchronized recovery API. Callers must not continue a
 failed batch or retry it as though all worlds had completed.
+
+A C++ exception inside a Flecs callback can leave its readonly/defer and iterator
+scopes unfinished. Episode reset cannot repair those internals. Reset and raw
+step reject that state before mutation; failed reset keeps the batch unhealthy
+and its generation unchanged. The native recovery diagnostic remains readable
+through the fence, and Python projects `terminate_generation` when the native
+owner requires host recreation. This does not certify in-process world teardown.
+The test-only `ef_native_system_fault_probe` verifies this path, fatal/nontermination
+bounds and fresh process startup; it does not deploy a production supervisor.
 
 Input validation that fails before any world operation, such as an invalid seed
 vector or timestep vector, does not poison the batch. Runtime task failures and
