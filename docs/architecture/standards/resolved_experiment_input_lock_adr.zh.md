@@ -72,4 +72,21 @@ digest、size、media、retention 及 native topology identity。这证明该单
 world-setup、observation 和 action 接口。改为 CPU 或 scripted 配置会产生另一个实验，
 不能作为原输入锁已执行的证明。
 
+### 世界身份关联
+
+世界数量相同不能证明 outcome 的 index 对应 receipt 中的世界。默认关闭的
+`persist_world_scope_binding` 选项在关闭前读取实际 `RuntimeWorldRef`，沿用 native
+candidate 向 RunRecorder 绑定身份的同一个 formatter，保存
+`runtime-world-scope-binding` 输出 artifact。保留原有 boot、incarnation、world ID 和
+world generation 含义，不用 composition instance ID 替代 receipt ID。启动前取消的
+candidate 不声称存在已发布世界。
+
+join 要求每个 expected outcome index 都有明确关联、世界身份唯一且与 receipt 一致，
+并核对 host boot、incarnation 和 world epoch。关联缺失时，即使 receipt 与汇总 outcome
+都为 completed，也保持 `unknown`。file-bound 关联声明还必须提供 receipt 所引用的
+artifact bytes 及其匹配的 metadata。比较会重新检查保存的 scope 和逐世界完成覆盖；
+不会按 receipt ID 排列顺序推导 index。已验证真实 native 单世界发布及新进程中的
+blob 丢失/篡改；双世界映射测试仍是合成 owner 契约夹具。这不证明 batch 逐世界 commit、
+生产信任或生产多世界准入。
+
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。

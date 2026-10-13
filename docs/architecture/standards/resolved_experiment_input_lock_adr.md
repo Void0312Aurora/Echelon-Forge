@@ -114,6 +114,28 @@ owner-observed `input_lock_semantics_executed=true` and matching nonempty
 Full Air execution/admission, production wiring and external
 durable availability remain open gates.
 
+### World identity association
+
+World cardinality alone does not bind an outcome's indexes to receipt worlds.
+The default-off `persist_world_scope_binding` candidate option now exports an
+owner projection of the actual `RuntimeWorldRef` before shutdown. The candidate
+uses the same identity formatter for its existing RunRecorder binding and the
+`runtime-world-scope-binding` output artifact. It preserves existing boot,
+incarnation, world-ID and world-generation meanings; composition instance IDs
+are not substituted for receipt IDs. No published world is claimed when a
+candidate is cancelled before start.
+
+The join requires an explicit association for every expected outcome index,
+unique world identities matching the receipt, and matching host boot,
+incarnation and world epoch. Without the association it retains `unknown` even
+when receipt and aggregate outcome say completed. A file-bound association
+claim additionally requires its receipt-referenced artifact bytes and metadata.
+Comparison rechecks the stored scope and completed per-world coverage. Receipt
+ID ordering is not used to infer index association. Native single-world
+publication and new-process loss/corruption controls are exercised; two-world
+mapping controls remain synthetic owner-contract fixtures. This is not a batch
+commit certificate, production trust proof or production multiworld admission.
+
 The first Air matrix smoke requires CUDA. The current local Python environment
 reports PyTorch `2.2.0+cpu`, no CUDA build and `torch.cuda.is_available()==False`.
 The internal candidate also lacks the maintained Air world-setup, observation
