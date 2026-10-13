@@ -978,6 +978,31 @@ def validate_stage_manifest_bindings(
             "diagnostic_trace_obligations",
         }
     )
+    sequence_fields = frozenset(
+        {
+            "semantic_stage",
+            "input_packets",
+            "output_packets",
+            "read_state_shards",
+            "write_state_shards",
+            "allowed_same_window_edges",
+            "required_barriers",
+            "event_families_emitted",
+            "diagnostic_trace_obligations",
+        }
+    )
+    string_fields = frozenset(
+        {
+            "node_id",
+            "owner_module",
+            "read_snapshot_policy",
+            "write_commit_policy",
+            "clock_domain",
+            "latency_policy",
+            "sync_policy",
+            "facade_visibility",
+        }
+    )
     for node_id, spec in graph.nodes:
         stage_id = node_stage_bindings[node_id]
         manifest = stage_manifests.get(stage_id)
@@ -998,26 +1023,113 @@ def validate_stage_manifest_bindings(
                 GraphDiagnostic("mechanism.native_stage_manifest_incomplete", path, stage_id)
             )
         if require_native_contract:
-            missing = [
-                field_name
-                for field_name in required_native_fields
-                if _manifest_field(manifest, field_name) is None
-                or (
-                    isinstance(_manifest_field(manifest, field_name), str)
-                    and not _manifest_field(manifest, field_name).strip()
+            missing = []
+            for field_name in required_native_fields:
+                value = _manifest_field(manifest, field_name)
+                if value is None:
+                    missing.append(field_name)
+                    continue
+                if field_name in string_fields and (
+                    not isinstance(value, str) or not value.strip()
+                ):
+                    diagnostics.append(
+                        GraphDiagnostic(
+                            "mechanism.native_stage_contract_field_invalid",
+                            f"{path}.{field_name}",
+                            "owner field must be a non-empty string",
+                        )
+                    )
+                    continue
+                if field_name in sequence_fields:
+                    if not isinstance(value, (list, tuple)) or any(
+                        not isinstance(item, str) or not item.strip() for item in value
+                    ):
+                        diagnostics.append(
+                            GraphDiagnostic(
+                                "mechanism.native_stage_contract_field_invalid",
+                                f"{path}.{field_name}",
+                                "owner field must be a sequence of non-empty strings",
+                            )
+                        )
+                        continue
+                    if field_name in required_nonempty_sequences and not value:
+                        missing.append(field_name)
+            adapter_projection_allowed = _manifest_field(manifest, "adapter_projection_allowed")
+            if adapter_projection_allowed is not None and type(adapter_projection_allowed) is not bool:
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.native_stage_contract_field_invalid",
+                        f"{path}.adapter_projection_allowed",
+                        "owner field must be a bool",
+                    )
                 )
-                or (
-                    field_name in required_nonempty_sequences
-                    and isinstance(_manifest_field(manifest, field_name), (list, tuple))
-                    and not _manifest_field(manifest, field_name)
-                )
-            ]
             if missing:
                 diagnostics.append(
                     GraphDiagnostic(
                         "mechanism.native_stage_contract_incomplete",
                         path,
                         "missing owner fields: " + ", ".join(missing),
+                    )
+                )
+            write_policy = _manifest_field(manifest, "write_commit_policy")
+            latency_policy = _manifest_field(manifest, "latency_policy")
+            required_barriers = _manifest_field(manifest, "required_barriers", ())
+            if (
+                isinstance(write_policy, str)
+                and isinstance(latency_policy, str)
+                and isinstance(required_barriers, (list, tuple))
+                and (
+                    write_policy == "stage_publish"
+                    or "same_window" in latency_policy
+                    or "stage_publish" in required_barriers
+                )
+                and not _manifest_field(manifest, "allowed_same_window_edges")
+            ):
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.native_stage_same_window_edges_missing",
+                        path,
+                        "same-window publish claims require allowed_same_window_edges",
+                    )
+                )
+            if (
+                write_policy == "stage_publish"
+                and isinstance(required_barriers, (list, tuple))
+                and "stage_publish" not in required_barriers
+            ):
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.native_stage_publish_barrier_missing",
+                        path,
+                        "stage_publish manifests must declare the stage_publish barrier",
+                    )
+                )
+            if (
+                _manifest_field(manifest, "facade_visibility") == "adapter_projection"
+                and adapter_projection_allowed is not True
+            ):
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.native_stage_projection_not_allowed",
+                        path,
+                        "adapter_projection visibility requires adapter_projection_allowed",
+                    )
+                )
+            output_packets = _manifest_field(manifest, "output_packets", ())
+            if (
+                isinstance(output_packets, (list, tuple))
+                and any(
+                    isinstance(packet, str)
+                    and (packet.endswith("Event") or packet.endswith("Report"))
+                    for packet in output_packets
+                )
+                and not _manifest_field(manifest, "event_families_emitted")
+            ):
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.native_stage_event_families_missing",
+                        path,
+                        "event-emitting manifests must declare event_families_emitted",
                     )
                 )
         if _manifest_field(manifest, "facade_visibility") in {

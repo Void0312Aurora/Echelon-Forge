@@ -463,6 +463,7 @@ def test_strict_stage_manifest_admission_rejects_shard_conflicts() -> None:
         "sync_policy": "host_owned",
         "required_barriers": ["window_commit"],
         "diagnostic_trace_obligations": ["trace_id"],
+        "allowed_same_window_edges": ["stage.a->stage.b"],
         "facade_visibility": "internal",
         "native_system": "NativeSystem",
         "write_state_shards": ["shared"],
@@ -478,6 +479,48 @@ def test_strict_stage_manifest_admission_rejects_shard_conflicts() -> None:
         require_native_contract=True,
     )
     assert "mechanism.native_stage_write_shard_conflict" in {item.code for item in diagnostics}
+
+
+def test_strict_stage_manifest_admission_rejects_malformed_owner_fields_and_publish_claims() -> None:
+    graph = compile_mechanism_graph(
+        "native-qualification-shape",
+        {"node": replace(_sensor(), implementation_ref="native.node")},
+        (),
+    )
+    manifest = {
+        "node_id": "stage.node",
+        "semantic_stage": ["P8"],
+        "owner_module": "native.owner",
+        "input_packets": "InputPacket",
+        "output_packets": ["ObservationEvent"],
+        "read_state_shards": ["state"],
+        "write_state_shards": [],
+        "read_snapshot_policy": "committed",
+        "write_commit_policy": "stage_publish",
+        "clock_domain": "window",
+        "latency_policy": "same_window",
+        "sync_policy": "host_owned",
+        "allowed_same_window_edges": [],
+        "required_barriers": ["window_commit"],
+        "event_families_emitted": [],
+        "diagnostic_trace_obligations": ["trace_id"],
+        "facade_visibility": "internal",
+        "adapter_projection_allowed": False,
+        "native_system": "NativeSystem",
+    }
+    diagnostics = validate_stage_manifest_bindings(
+        graph,
+        node_stage_bindings={"node": "stage.node"},
+        stage_manifests={"stage.node": manifest},
+        require_native_contract=True,
+    )
+    codes = {item.code for item in diagnostics}
+    assert {
+        "mechanism.native_stage_contract_field_invalid",
+        "mechanism.native_stage_same_window_edges_missing",
+        "mechanism.native_stage_publish_barrier_missing",
+        "mechanism.native_stage_event_families_missing",
+    } <= codes
 
 
 def test_stage_manifest_projection_emits_stable_owner_bound_qualification_only_artifact() -> None:
@@ -501,6 +544,7 @@ def test_stage_manifest_projection_emits_stable_owner_bound_qualification_only_a
         "clock_domain": "window",
         "latency_policy": "same_window",
         "sync_policy": "host_owned",
+        "allowed_same_window_edges": ["stage.sensor->stage.tracker"],
         "required_barriers": ["window_commit"],
         "diagnostic_trace_obligations": ["trace_id"],
         "facade_visibility": "internal",

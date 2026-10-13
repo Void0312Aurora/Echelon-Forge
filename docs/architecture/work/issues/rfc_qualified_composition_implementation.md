@@ -185,7 +185,8 @@ merge into main, accept the proposed ADRs or close RFC issues.
    proof is now present. The qualification compiler now accepts an owner-supplied
    schema vocabulary, rejects unknown port schemas, carries freshness through edge
    and composite identity checks, and has a strict StageNodeManifest admission
-   mode for required native contract fields and duplicate state-shard writers.
+   mode for required native contract fields, native field shapes and conditional
+   publish/event rules, and duplicate state-shard writers.
    The native owner now exposes a read-only maintained `StageNodeManifest`
    snapshot through `WorldBatchRuntime` for qualification diagnostics. The
    bounded Air lane now enforces an explicit, versioned six-schema owner
