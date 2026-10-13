@@ -204,6 +204,11 @@ def _cpp_coverage(
         "--object-directory",
         str(object_dir),
         "--gcov-ignore-errors=all",
+        # GCC can emit transient negative branch counts for instrumented
+        # exception paths (gcc bug 68080).  Keep the report generation
+        # fail-closed for actual gcov errors while allowing gcovr to warn on
+        # this known parser artifact instead of dropping the entire report.
+        "--gcov-ignore-parse-errors=negative_hits.warn",
     ]
     for filter_pattern in filters:
         base_cmd.extend(["--filter", filter_pattern])
