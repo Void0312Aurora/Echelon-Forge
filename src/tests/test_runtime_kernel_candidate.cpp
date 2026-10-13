@@ -336,7 +336,8 @@ TEST_SUITE("runtime_kernel_candidate") {
         const std::string mode = mode_value == nullptr ? "complete" : mode_value;
         REQUIRE((mode == "complete" || mode == "drift" || mode == "missing" ||
                  mode == "audit_missing_blob" || mode == "audit_missing_topology" ||
-                 mode == "audit_corrupt_topology"));
+                 mode == "audit_corrupt_topology" || mode == "audit_missing_world_scope" ||
+                 mode == "audit_corrupt_world_scope"));
         const auto root = std::filesystem::path(output_path) / "ledger";
         if (mode.starts_with("audit_")) {
             runtime::host::RuntimeFileArtifactLedgerStore reader(
@@ -345,7 +346,7 @@ TEST_SUITE("runtime_kernel_candidate") {
             CHECK_FALSE(reader.read_receipt("run-rfc239", bytes, detail));
             if (mode == "audit_missing_blob")
                 CHECK(detail.find("resolved input lock blob is not durable") != std::string::npos);
-            else if (mode == "audit_missing_topology")
+            else if (mode == "audit_missing_topology" || mode == "audit_missing_world_scope")
                 CHECK(detail == "native ArtifactLedger referenced blob is absent");
             else
                 CHECK(detail == "native ArtifactLedger referenced blob integrity failure");
@@ -394,6 +395,7 @@ TEST_SUITE("runtime_kernel_candidate") {
                 .run_receipt_template_json = receipt_template_for_run("run-rfc239", {}, sources),
                 .run_execution_sources = sources,
                 .persist_realized_cpu_topology = true,
+                .persist_world_scope_binding = true,
             };
             if (mode == "missing") {
                 CHECK_THROWS_WITH_AS(
@@ -444,7 +446,31 @@ TEST_SUITE("runtime_kernel_candidate") {
         CHECK(receipt.at("payload").at("completion").at("durable_ack") == true);
         if (mode == "complete") {
             bool found_topology = false;
+            bool found_world_scope = false;
             for (const auto &artifact : receipt.at("payload").at("results").at("output_artifacts")) {
+                if (artifact.at("name") == "runtime-world-scope-binding") {
+                    REQUIRE_FALSE(found_world_scope);
+                    found_world_scope = true;
+                    const auto blob_path =
+                        root / "blobs" / (artifact.at("digest").get<std::string>() + ".data");
+                    const auto bytes = file_bytes(blob_path.string().c_str());
+                    REQUIRE(runtime::authority_contracts::sha256_hex(bytes) ==
+                            artifact.at("digest").get<std::string>());
+                    const auto scope = nlohmann::json::parse(bytes);
+                    REQUIRE(scope.at("schema_version") ==
+                            "echelon_forge.runtime_world_scope_binding.v1");
+                    REQUIRE(scope.at("world_bindings").size() == 1);
+                    const auto &binding = scope.at("world_bindings").front();
+                    const auto &payload = receipt.at("payload");
+                    CHECK(binding.at("world_index") == 0);
+                    CHECK(binding.at("world_id") == payload.at("execution_scope").at("world_ids").front());
+                    CHECK(binding.at("world_epoch") == payload.at("execution_scope").at("epochs").at("world"));
+                    CHECK(binding.at("host_boot_id") == payload.at("host_boot_id"));
+                    CHECK(binding.at("incarnation_epoch") == payload.at("incarnation_epoch"));
+                    evidence["receipt_world_bindings"] = scope.at("world_bindings");
+                    evidence["world_scope_artifact_digest"] = artifact.at("digest");
+                    continue;
+                }
                 if (artifact.at("name") != "runtime-cpu-scheduler-topology") continue;
                 REQUIRE_FALSE(found_topology);
                 found_topology = true;
@@ -464,6 +490,7 @@ TEST_SUITE("runtime_kernel_candidate") {
                 evidence["topology_artifact_digest"] = artifact.at("digest");
             }
             REQUIRE(found_topology);
+            REQUIRE(found_world_scope);
         } else {
             CHECK(receipt.at("payload").at("results").at("output_artifacts").empty());
         }
@@ -1007,12 +1034,14 @@ TEST_SUITE("runtime_kernel_candidate") {
                 .run_header_json = run_header_for_run("run-cancelled"),
                 .run_receipt_template_json = receipt_template_for_run("run-cancelled"),
                 .run_execution_sources = execution_sources(),
+                .persist_world_scope_binding = true,
             });
         }
         REQUIRE(store.finalized);
         CHECK(store.final_receipt.at("payload").at("terminal_state") == "cancelled");
         CHECK(store.final_receipt.at("payload").at("terminal_reason") ==
               "candidate closed before start");
+        CHECK(store.final_receipt.at("payload").at("results").at("output_artifacts").empty());
     }
 
 } // TEST_SUITE("runtime_kernel_candidate")

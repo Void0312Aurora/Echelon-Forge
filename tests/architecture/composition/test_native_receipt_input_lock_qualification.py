@@ -120,6 +120,12 @@ def test_native_host_persists_and_reopens_input_lock_reference(
         assert native["topology_artifact_digest"] == topology_ref["digest"]
         assert topology["topology"]["nodes"]
         assert topology["active_pipeline_order"]
+        scope_ref = next(item for item in outputs if item["name"] == "runtime-world-scope-binding")
+        scope_blob = tmp_path / "ledger" / "blobs" / f"{scope_ref['digest']}.data"
+        assert native["world_scope_artifact_digest"] == scope_ref["digest"]
+        scope_bytes = scope_blob.read_bytes()
+        assert hashlib.sha256(scope_bytes).hexdigest() == scope_ref["digest"]
+        assert json.loads(scope_bytes)["world_bindings"] == native["receipt_world_bindings"]
         outcome = build_batch_outcome(
             **kwargs, worlds=(WorldOutcome(0, WorldState.COMPLETED, True),)
         )
@@ -128,6 +134,7 @@ def test_native_host_persists_and_reopens_input_lock_reference(
     joined = join_run_receipt_path(
         candidate, receipt_path=receipt_path, native_runtime=native, outcome=outcome,
         native_topology_path=topology_blob if mode == "complete" else None,
+        native_world_scope_path=scope_blob if mode == "complete" else None,
     )
     assert joined.status == ("completed" if mode == "complete" else "unknown")
     comparison = compare_resolved_input_locks(joined, joined)
@@ -138,21 +145,35 @@ def test_native_host_persists_and_reopens_input_lock_reference(
             join_run_receipt_path(
                 candidate, receipt_path=receipt_path, native_runtime=native, outcome=outcome
             )
+        with pytest.raises(InputLockError, match="receipt_world_scope_artifact_required"):
+            join_run_receipt_path(
+                candidate, receipt_path=receipt_path, native_runtime=native, outcome=outcome,
+                native_topology_path=topology_blob,
+            )
+        mismatched = {**native, "world_scope_artifact_digest": "f" * 64}
+        with pytest.raises(InputLockError, match="receipt_world_scope_binding_mismatch"):
+            join_run_receipt_path(
+                candidate, receipt_path=receipt_path, native_runtime=mismatched, outcome=outcome,
+                native_topology_path=topology_blob, native_world_scope_path=scope_blob,
+            )
         for field in ("realized_topology_digest", "topology_artifact_digest"):
             mismatched = {**native, field: "f" * 64}
             with pytest.raises(InputLockError, match="receipt_topology_.*mismatch"):
                 join_run_receipt_path(
                     candidate, receipt_path=receipt_path, native_runtime=mismatched,
                     outcome=outcome, native_topology_path=topology_blob,
+                    native_world_scope_path=scope_blob,
                 )
         blob = tmp_path / "ledger" / "blobs" / f"{candidate.digest}.data"
         for audit_mode, damaged_blob in (
             ("audit_missing_blob", blob),
             ("audit_missing_topology", topology_blob),
             ("audit_corrupt_topology", topology_blob),
+            ("audit_missing_world_scope", scope_blob),
+            ("audit_corrupt_world_scope", scope_blob),
         ):
             original_bytes = damaged_blob.read_bytes()
-            if audit_mode == "audit_corrupt_topology":
+            if audit_mode.startswith("audit_corrupt_"):
                 damaged_blob.write_bytes(b"{}")
             else:
                 damaged_blob.unlink()
@@ -161,6 +182,14 @@ def test_native_host_persists_and_reopens_input_lock_reference(
                     join_run_receipt_path(
                         candidate, receipt_path=receipt_path, native_runtime=native,
                         outcome=outcome, native_topology_path=topology_blob,
+                        native_world_scope_path=scope_blob,
+                    )
+            if damaged_blob == scope_blob:
+                with pytest.raises(InputLockError, match="receipt_world_scope_(unreadable|artifact_mismatch)"):
+                    join_run_receipt_path(
+                        candidate, receipt_path=receipt_path, native_runtime=native,
+                        outcome=outcome, native_topology_path=topology_blob,
+                        native_world_scope_path=scope_blob,
                     )
             environment["EF_RFC_RECEIPT_MODE"] = audit_mode
             audit = subprocess.run(
