@@ -5,6 +5,7 @@
 #include <doctest/doctest.h>
 
 #include <cstdint>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -323,6 +324,126 @@ std::string run_header_for_run(
 } // namespace
 
 TEST_SUITE("runtime_kernel_candidate") {
+
+    // Invoked explicitly by the bounded Python process test with temporary
+    // paths. Ordinary native suites do not depend on environment-provided data.
+    TEST_CASE("RFC239 native candidate publishes an input-lock-bound receipt" * doctest::skip()) {
+        const char *lock_path = std::getenv("EF_RFC_INPUT_LOCK_PATH");
+        const char *output_path = std::getenv("EF_RFC_OUTPUT_DIR");
+        const char *mode_value = std::getenv("EF_RFC_RECEIPT_MODE");
+        REQUIRE(lock_path != nullptr);
+        REQUIRE(output_path != nullptr);
+        const std::string mode = mode_value == nullptr ? "complete" : mode_value;
+        REQUIRE((mode == "complete" || mode == "drift" || mode == "missing" ||
+                 mode == "audit_missing_blob"));
+        const auto root = std::filesystem::path(output_path) / "ledger";
+        if (mode == "audit_missing_blob") {
+            runtime::host::RuntimeFileArtifactLedgerStore reader(
+                root, {runtime::host::RuntimeArtifactLedgerRole::ReadOnlyAuditor, "rfc239-audit"});
+            std::string bytes, detail;
+            CHECK_FALSE(reader.read_receipt("run-rfc239", bytes, detail));
+            CHECK(detail.find("resolved input lock blob is not durable") != std::string::npos);
+            return;
+        }
+        // Host identity initialization can load the platform RNG module. Do it
+        // before sealing process provenance, with no kernel or published world.
+        runtime::host::RuntimeHostCandidate identity_bootstrap({
+            .host_id = {.high = 0x524643323339ULL, .low = 2},
+        });
+        auto sources = execution_sources();
+        sources.owner_facts.build_dirty = true; // Qualification build-owner declaration.
+        sources.resolved_input_lock_path = lock_path;
+        const auto lock_bytes = file_bytes(lock_path);
+        const auto lock_digest = runtime::authority_contracts::sha256_hex(lock_bytes);
+        std::string detail, digest, location;
+        {
+            runtime::host::RuntimeFileArtifactLedgerStore compiler(
+                root, {runtime::host::RuntimeArtifactLedgerRole::PlanCompiler, "rfc239-compiler"});
+            REQUIRE(compiler.put_artifact(
+                file_bytes(EF_RESOLVED_EXECUTION_PLAN_PATH),
+                "application/vnd.echelon-forge.resolved-execution-plan.v1+json",
+                "active-release", digest, location, detail));
+            REQUIRE(compiler.put_artifact(
+                runtime::authority_contracts::canonical_authority_json(
+                    file_bytes(EF_RUNTIME_COMPOSITION_REQUEST_PATH)).value(),
+                "application/vnd.echelon-forge.runtime-composition-request.v1+json",
+                "active-release", digest, location, detail));
+            if (mode != "missing") {
+                REQUIRE(compiler.put_artifact(
+                    lock_bytes, "application/vnd.echelon-forge.resolved-input-lock.v1+json",
+                    "active-release", digest, location, detail));
+                REQUIRE(digest == lock_digest);
+            }
+        }
+        nlohmann::json evidence;
+        {
+            runtime::host::RuntimeFileArtifactLedgerStore store(
+                root, {runtime::host::RuntimeArtifactLedgerRole::RuntimeHost, "rfc239-host"});
+            auto config = runtime::host::integration::RuntimeKernelCandidateConfig{
+                .host_id = {.high = 0x524643323339ULL, .low = 1},
+                .run_recorder_store = &store,
+                .run_id = "run-rfc239",
+                .run_writer_id = "writer-rfc239",
+                .run_header_json = run_header_for_run("run-rfc239", {}, sources),
+                .run_receipt_template_json = receipt_template_for_run("run-rfc239", {}, sources),
+                .run_execution_sources = sources,
+            };
+            if (mode == "missing") {
+                CHECK_THROWS_WITH_AS(
+                    RuntimeKernelCandidate{config},
+                    doctest::Contains("native ArtifactLedger admitted resolved input lock blob is absent"),
+                    std::invalid_argument);
+                std::string absent;
+                CHECK_FALSE(store.read_receipt("run-rfc239", absent, detail));
+                return;
+            }
+            RuntimeKernelCandidate candidate(config);
+            REQUIRE(candidate.start());
+            REQUIRE(candidate.spawn_unit(candidate.world_ref(), {
+                .world_index = 0, .side = Side::Blue, .type_name = "Aircraft", .z = 3000.0,
+            }).has_value());
+            for (unsigned step = 0; step < 3; ++step) {
+                REQUIRE(candidate.step(candidate.world_ref()));
+            }
+            const auto composition = candidate.composition_snapshot();
+            evidence = {
+                {"resolved_manifest_sha256", composition.resolved_manifest_sha256},
+                {"executable_graph_sha256", composition.executable_graph_sha256},
+                {"host_mode", "dark"},
+                {"qualification_scope", "receipt_reference_only"},
+                {"steps_completed", 3},
+                {"input_lock_semantics_executed", false},
+            };
+            if (mode == "drift") {
+                std::ofstream changed(lock_path, std::ios::binary | std::ios::trunc);
+                changed << "{}";
+                REQUIRE(changed.good());
+            }
+            const auto shutdown = candidate.shutdown(1, 10);
+            INFO(shutdown.status.detail);
+            REQUIRE(shutdown.status);
+        }
+        // Reopen through the ledger owner after releasing the writer handle.
+        // A raw receipt file alone cannot establish durable journal/blob state.
+        runtime::host::RuntimeFileArtifactLedgerStore reader(
+            root, {runtime::host::RuntimeArtifactLedgerRole::ReadOnlyAuditor, "rfc239-reader"});
+        std::string receipt_bytes;
+        REQUIRE(reader.read_receipt("run-rfc239", receipt_bytes, detail));
+        const auto receipt = nlohmann::json::parse(receipt_bytes);
+        CHECK(receipt.at("payload").at("inputs").at("artifacts").at("resolved_input_lock") ==
+              lock_digest);
+        CHECK(receipt.at("payload").at("terminal_state") ==
+              (mode == "drift" ? "failed" : "completed"));
+        CHECK(receipt.at("payload").at("completion").at("durable_ack") == true);
+        std::ofstream receipt_output(std::filesystem::path(output_path) / "receipt.json",
+                                     std::ios::binary | std::ios::trunc);
+        receipt_output << receipt_bytes;
+        REQUIRE(receipt_output.good());
+        std::ofstream evidence_output(std::filesystem::path(output_path) / "native.json",
+                                      std::ios::binary | std::ios::trunc);
+        evidence_output << evidence.dump();
+        REQUIRE(evidence_output.good());
+    }
 
     TEST_CASE("P5-B recorder admission and mutation ACKs gate the real candidate") {
         CandidateRunStore tampered_authority_store;

@@ -233,10 +233,18 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
         const auto header = nlohmann::json::parse(config_.run_header_json);
         std::string observed_bindings_json;
         std::string verified_request_json;
-        if (!collect_runtime_execution_bindings_json(
+        const bool provenance_collected = collect_runtime_execution_bindings_json(
                 config_.run_execution_sources, header.at("receipt_bindings").dump(),
-                observed_bindings_json, header_detail, &verified_request_json) ||
-            observed_bindings_json != header.at("receipt_bindings").dump()) {
+                observed_bindings_json, header_detail, &verified_request_json);
+        if (provenance_collected && observed_bindings_json != header.at("receipt_bindings").dump()) {
+            const auto observed = nlohmann::json::parse(observed_bindings_json);
+            for (const auto &[section, expected] : header.at("receipt_bindings").items()) {
+                if (!observed.contains(section) || observed.at(section) != expected) {
+                    header_detail += " changed section: " + section;
+                }
+            }
+        }
+        if (!provenance_collected || observed_bindings_json != header.at("receipt_bindings").dump()) {
             throw std::invalid_argument("P5-B execution provenance differs from admitted header: " +
                                         header_detail);
         }

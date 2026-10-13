@@ -116,6 +116,10 @@ struct RuntimeExecutionProvenanceSources {
     std::string package_path;
     std::string wheel_path;
     RuntimeExecutionOwnerFacts owner_facts;
+    // Optional referenced experiment closure. The native collector measures
+    // input-lock JSON bytes without redefining the experiment owner's hash;
+    // this is not scenario execution admission.
+    std::string resolved_input_lock_path;
 };
 
 // Shared native RunReceipt contract gate used by both the recorder owner and
