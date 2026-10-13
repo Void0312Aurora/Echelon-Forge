@@ -11,6 +11,8 @@ from python.content.capability_bundles.schema import (
     PlatformCapabilityKeyVocabularyEntry,
 )
 from python.content.platform_blueprint import (
+    HardpointContract,
+    LoadoutSelection,
     LegacyUnitProjection,
     ModuleRecord,
     ModuleSelection,
@@ -368,3 +370,48 @@ def test_native_typed_projection_rejects_module_selection_not_loaded_in_snapshot
     )
     with pytest.raises(PlatformAssemblyError, match="native_definition_projection_mismatch"):
         _expand(blueprint, modules, plan)
+
+
+def test_native_typed_projection_preserves_loadout_capabilities_and_quantity_evidence() -> None:
+    blueprint, modules, _ = _fixture()
+    weapon = ModuleRecord(
+        "fixture.weapon",
+        "weapon",
+        frozenset({"launching"}),
+        mount_classes=frozenset({"station"}),
+        mass_kg=80.0,
+        power_draw_kw=0.0,
+        evidence_refs=("fixture:weapon",),
+        content_digest="weapon-digest",
+        native_ref="FixtureWeapon",
+    )
+    modules = {**modules, "weapon": weapon}
+    blueprint = replace(
+        blueprint,
+        hardpoints=(
+            HardpointContract(
+                "station_1", "station", capacity_kg=200.0, allowed_kinds=frozenset({"weapon"})
+            ),
+        ),
+    )
+    plan = resolve_platform_assembly(
+        assembly_id="fixture.loadout.v1",
+        blueprint=blueprint,
+        selections=(ModuleSelection("propulsion", "engine"), ModuleSelection("primary_sensor", "sensor")),
+        modules=modules,
+        loadout=(LoadoutSelection("station_1", "weapon", 2),),
+    )
+    projection = _projection(plan, default_loadout={"1": ["FixtureWeapon", "FixtureWeapon"]})
+    projection = replace(
+        projection,
+        loadout_paths=(("station_1", "default_loadout.1"),),
+    )
+    expanded = _expand(blueprint, modules, plan, projection=projection)
+    launching = [
+        capability
+        for capability in expanded.capability_bundle.capabilities
+        if capability.family == "launching"
+    ]
+    assert len(launching) == 1
+    assert "platform.hardpoint:station_1" in launching[0].evidence_refs
+    assert "platform.loadout_quantity:station_1:2" in launching[0].evidence_refs

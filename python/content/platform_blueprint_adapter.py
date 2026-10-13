@@ -130,6 +130,23 @@ def _evidence_refs(
     return tuple(dict.fromkeys(refs))
 
 
+def _loadout_evidence_refs(
+    *,
+    plan: ResolvedPlatformSpawnPlan,
+    hardpoint: str,
+    module: ModuleRecord,
+    quantity: int,
+) -> tuple[str, ...]:
+    refs = list(_evidence_refs(plan=plan, slot=hardpoint, module=module))
+    refs.extend(
+        (
+            f"platform.hardpoint:{hardpoint}",
+            f"platform.loadout_quantity:{hardpoint}:{quantity}",
+        )
+    )
+    return tuple(dict.fromkeys(refs))
+
+
 def to_expanded_typed_platform_request(
     *,
     plan: ResolvedPlatformSpawnPlan,
@@ -205,6 +222,62 @@ def to_expanded_typed_platform_request(
                     capability_type=module.kind,
                     implementation_ref=module.native_ref,
                     evidence_refs=_evidence_refs(plan=plan, slot=slot, module=module),
+                    required=family in blueprint.required_capabilities,
+                    supported=True,
+                )
+            )
+
+    hardpoints = {item.hardpoint_id: item for item in blueprint.hardpoints}
+    for hardpoint, module_ref, quantity in plan.loadout:
+        module = indexed_modules.get(module_ref)
+        contract = hardpoints.get(hardpoint)
+        if module is None:
+            raise PlatformAssemblyError(
+                f"platform.native_loadout_module_unknown:{hardpoint}:{module_ref}"
+            )
+        if contract is None:
+            raise PlatformAssemblyError(f"platform.native_hardpoint_unknown:{hardpoint}")
+        if contract.allowed_kinds and module.kind not in contract.allowed_kinds:
+            raise PlatformAssemblyError(
+                f"platform.native_loadout_kind_mismatch:{hardpoint}:{module.kind}"
+            )
+        if contract.mount_class not in module.mount_classes:
+            raise PlatformAssemblyError(
+                f"platform.native_loadout_mount_class_mismatch:{hardpoint}:{contract.mount_class}"
+            )
+        if not module.native_ref.strip() or not module.content_digest.strip():
+            raise PlatformAssemblyError(
+                f"platform.native_loadout_module_evidence_missing:{hardpoint}:{module_ref}"
+            )
+        if dict(plan.loadout_module_digests).get(hardpoint) != module.content_digest:
+            raise PlatformAssemblyError(
+                f"platform.native_loadout_module_digest_mismatch:{hardpoint}"
+            )
+        if dict(plan.loadout_native_refs).get(hardpoint) != module.native_ref:
+            raise PlatformAssemblyError(
+                f"platform.native_loadout_module_reference_mismatch:{hardpoint}"
+            )
+        for family in sorted(module.capabilities):
+            vocabulary_entry = _capability_key_entry(capability_vocabulary, family, hardpoint)
+            capability_id = f"{plan.assembly_id}:loadout:{hardpoint}:{vocabulary_entry.key}"
+            if capability_id in seen_capability_ids:
+                raise PlatformAssemblyError(
+                    f"platform.native_capability_id_duplicate:{capability_id}"
+                )
+            seen_capability_ids.add(capability_id)
+            resolved_families.add(family)
+            capabilities.append(
+                ExpandedCapability(
+                    capability_id=capability_id,
+                    family=vocabulary_entry.native_family,
+                    capability_type=module.kind,
+                    implementation_ref=module.native_ref,
+                    evidence_refs=_loadout_evidence_refs(
+                        plan=plan,
+                        hardpoint=hardpoint,
+                        module=module,
+                        quantity=quantity,
+                    ),
                     required=family in blueprint.required_capabilities,
                     supported=True,
                 )
