@@ -149,11 +149,11 @@ this document does not infer other-host or full-repository parity.
 
 Current branch verification results after merge commit `0f18684ed` and the
 qualification follow-up through `ada091a2f` (current `origin/main` integrated):
-**180 focused Python tests passed**, **17 CSG adapter tests passed**, and
+**181 focused Python tests passed**, **17 CSG adapter tests passed**, and
 **35 native tests / 963 assertions passed**. Ruff and whitespace checks passed
 on all touched Python surfaces.
 The primary checkout retained its original HEAD and clean status. The owner requested batched commits and pushes of this checkpoint
-on `codex/rfc-qualified-composition`. The publication gate repeats the 180-test
+on `codex/rfc-qualified-composition`. The publication gate repeats the 181-test
 focused run and preserves the reviewed file contents across the split.
 
 ## Batched branch publication
