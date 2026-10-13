@@ -146,8 +146,10 @@ tests and native composition-evidence tests. The architecture suite manifest
 registers the qualification tests. See the final execution result for counts;
 this document does not infer other-host or full-repository parity.
 
-Current branch verification results: **168 focused Python tests passed** and **34 native tests /
-957 assertions passed**. Ruff and whitespace checks passed on all touched Python surfaces.
+Current branch verification results after merge commit `0f18684ed` (current
+`origin/main` integrated): **168 focused Python tests passed** and **35 native
+tests / 963 assertions passed**. Ruff and whitespace checks passed on all
+touched Python surfaces.
 The primary checkout retained its original HEAD and clean status. The owner requested batched commits and pushes of this checkpoint
 on `codex/rfc-qualified-composition`. The publication gate repeats the 168-test
 focused run and preserves the reviewed file contents across the split.
