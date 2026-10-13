@@ -180,9 +180,12 @@ def test_native_fault_projection_requires_observed_unhealthy_owner() -> None:
         def batch_failure_reason(self) -> str:
             return "worker_exception"
 
+        def batch_generation(self) -> int:
+            return 1
+
     result = project_native_batch_fault(
         runtime=FakeRuntime(),
-        batch_generation_ref="native.g1",
+        batch_generation_ref="1",
         operation_ref="step.1",
         operation="step_batch",
         expected_world_indices=frozenset({0, 1}),
@@ -202,6 +205,15 @@ def test_native_fault_projection_requires_observed_unhealthy_owner() -> None:
     with pytest.raises(ValueError, match="unhealthy runtime"):
         project_native_batch_fault(
             runtime=HealthyRuntime(),
+            batch_generation_ref="1",
+            operation_ref="step.1",
+            operation="step_batch",
+            expected_world_indices=frozenset({0}),
+        )
+
+    with pytest.raises(ValueError, match="does not match native"):
+        project_native_batch_fault(
+            runtime=FakeRuntime(),
             batch_generation_ref="native.g1",
             operation_ref="step.1",
             operation="step_batch",
