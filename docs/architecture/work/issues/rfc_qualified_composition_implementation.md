@@ -147,14 +147,20 @@ tests and native composition-evidence tests. The architecture suite manifest
 registers the qualification tests. See the final execution result for counts;
 this document does not infer other-host or full-repository parity.
 
-Current branch verification results after merge commit `0f18684ed` and the
-qualification follow-up through `ada091a2f` (current `origin/main` integrated):
+The earlier publication record after merge commit `0f18684ed` and the
+qualification follow-up through `ada091a2f` remains a historical baseline:
 **181 focused Python tests passed**, **18 CSG adapter tests passed**, and
-**35 native tests / 963 assertions passed**. Ruff and whitespace checks passed
-on all touched Python surfaces.
-The primary checkout retained its original HEAD and clean status. The owner requested batched commits and pushes of this checkpoint
-on `codex/rfc-qualified-composition`. The publication gate repeats the 181-test
-focused run and preserves the reviewed file contents across the split.
+**35 native tests / 963 assertions passed**. On `2026-10-13`, the current
+continuation was rerun from `build-rfc-mainline`: the combined focused Python
+command passed **243 tests**, and the native suite passed **35 cases / 963
+assertions**. The current CSG adapter module contains **19 tests**; its grouped
+CSG regression passed **49 tests and 12 subtests**. Ruff and whitespace checks
+passed on all touched Python surfaces. These are local qualification records,
+not production admission or trust attestations.
+The primary checkout retained its original HEAD and clean status. The owner
+requested batched commits and pushes of this checkpoint on
+`codex/rfc-qualified-composition`; the current continuation command and native
+log are retained under `build-rfc-mainline`.
 
 ## Batched branch publication
 
