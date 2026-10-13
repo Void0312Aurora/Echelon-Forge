@@ -640,6 +640,7 @@ RuntimeShutdownResult RuntimeKernelCandidate::shutdown(std::uint64_t now_tick,
     // crashed/incomplete; shutdown still follows the host's terminal path.
     bool evidence_failed =
         run_recorder_ != nullptr && run_recorder_->state() == RuntimeRunRecorderState::Rejected;
+    std::string evidence_failure_reason = "durable evidence append failed";
     if (run_recorder_ != nullptr && run_recorder_->admitted() &&
         !run_recorder_->note_lifecycle("drain"))
         evidence_failed = true;
@@ -652,6 +653,17 @@ RuntimeShutdownResult RuntimeKernelCandidate::shutdown(std::uint64_t now_tick,
             terminal_state_bytes_.has_value()
                 ? std::optional<std::string>(runtime_state_payload_sha256(*terminal_state_bytes_))
                 : std::nullopt;
+        if (config_.persist_realized_cpu_topology && run_recorder_ != nullptr &&
+            run_recorder_->admitted()) {
+            try {
+                terminal_cpu_topology_json_ = kernel_->realized_cpu_scheduler_topology_json();
+            } catch (...) {
+                // Evidence collection must not prevent kernel reclamation or
+                // allow this run to be certified completed without its output.
+                evidence_failed = true;
+                evidence_failure_reason = "native CPU topology observation failed";
+            }
+        }
         kernel_->shutdown();
         stopped_ = true;
         if (run_recorder_ != nullptr && run_recorder_->admitted() &&
@@ -673,7 +685,7 @@ RuntimeShutdownResult RuntimeKernelCandidate::shutdown(std::uint64_t now_tick,
             const auto finalized =
                 evidence_failed || run_recorder_->state() == RuntimeRunRecorderState::Rejected
                     ? finalize_observed(config_.run_receipt_template_json, "failed",
-                                        "durable evidence append failed")
+                                        evidence_failure_reason)
                 : started_ ? finalize_run(config_.run_receipt_template_json)
                            : finalize_observed(config_.run_receipt_template_json, "cancelled",
                                                "candidate closed before start");
@@ -714,6 +726,15 @@ RuntimeRunRecorderStatus RuntimeKernelCandidate::finalize_run(std::string_view r
         "runtime-state", state_payload, "application/vnd.echelon-forge.runtime-state.v1+octets",
         "run-retained", artifact_digest, retrieval_location);
     if (!artifact_status) return artifact_status;
+    if (config_.persist_realized_cpu_topology) {
+        if (!terminal_cpu_topology_json_.has_value())
+            return {false, "recorder.result", "native CPU topology was not observed before shutdown"};
+        const auto topology_status = run_recorder_->put_artifact(
+            "runtime-cpu-scheduler-topology", *terminal_cpu_topology_json_,
+            "application/vnd.echelon-forge.runtime-cpu-scheduler-topology.v1+json",
+            "run-retained", artifact_digest, retrieval_location);
+        if (!topology_status) return topology_status;
+    }
     const auto result_status = run_recorder_->record_native_result(*state_sha256, *state_sha256);
     if (!result_status) return result_status;
     return finalize_observed(receipt_json, "completed", "completed");
