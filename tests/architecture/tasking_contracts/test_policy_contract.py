@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import hashlib
 import math
 import pytest
 
@@ -10,9 +11,11 @@ from python.tasking_contracts.policy import (
     FieldSpec,
     ObservationContract,
     PolicyCheckpoint,
+    PolicyCheckpointLoadError,
     PolicyDescriptor,
     PolicyRuntimeBinding,
     admit_policy,
+    load_policy_checkpoint,
     select_policy,
     validate_policy_action,
     project_policy_observation,
@@ -159,6 +162,34 @@ def test_external_checkpoint_provenance_reaches_existing_model_context() -> None
     assert model.observations[0][1]["policy_checkpoint_ref"] == checkpoint.checkpoint_ref
     assert model.observations[0][1]["policy_checkpoint_sha256"] == checkpoint.artifact_sha256
     assert model.observations[0][1]["policy_checkpoint_owner"] == checkpoint.owner_ref
+
+
+def test_checkpoint_bytes_are_verified_before_owner_loading() -> None:
+    base = _policy(category="learned")
+    payload = b"owner-checkpoint-bytes"
+    checkpoint = replace(_checkpoint(base), artifact_sha256=hashlib.sha256(payload).hexdigest())
+    loaded: list[bytes] = []
+    model = _BoundModel()
+
+    result = load_policy_checkpoint(
+        checkpoint,
+        payload,
+        owner_loader=lambda value: loaded.append(value) or model,
+    )
+    assert result is model
+    assert loaded == [payload]
+
+    with pytest.raises(PolicyCheckpointLoadError, match="artifact_digest_mismatch"):
+        load_policy_checkpoint(checkpoint, b"tampered", owner_loader=lambda value: model)
+    assert loaded == [payload]
+
+
+def test_checkpoint_owner_loader_must_return_existing_model_protocol() -> None:
+    base = _policy(category="learned")
+    payload = b"owner-checkpoint-bytes"
+    checkpoint = replace(_checkpoint(base), artifact_sha256=hashlib.sha256(payload).hexdigest())
+    with pytest.raises(PolicyCheckpointLoadError, match="model_protocol_invalid"):
+        load_policy_checkpoint(checkpoint, payload, owner_loader=lambda value: object())
 
 
 def test_unknown_category_does_not_grant_authority() -> None:

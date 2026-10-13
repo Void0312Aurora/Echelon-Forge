@@ -8,6 +8,7 @@ module does not import Gym/SB3 or alter the legacy DecisionModel lifecycle.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 import math
 import string
 from typing import Any, Callable, Mapping, Sequence
@@ -141,6 +142,47 @@ class PolicyCheckpoint:
             "action_minor": self.action_minor,
             "owner_ref": self.owner_ref,
         }
+
+
+class PolicyCheckpointLoadError(ValueError):
+    """Raised when verified checkpoint bytes cannot be handed to the owner."""
+
+
+def load_policy_checkpoint(
+    checkpoint: PolicyCheckpoint,
+    artifact: bytes | bytearray | memoryview,
+    *,
+    owner_loader: Callable[[bytes], Any],
+) -> Any:
+    """Verify checkpoint bytes, then delegate model loading to the owner.
+
+    The contract layer owns byte identity and the model protocol boundary. It
+    deliberately does not deserialize frameworks, import model code, or create
+    an action endpoint; ``owner_loader`` remains responsible for those domain
+    operations and receives an immutable byte copy only after digest checking.
+    """
+
+    if not isinstance(checkpoint, PolicyCheckpoint):
+        raise TypeError("policy checkpoint loader requires PolicyCheckpoint")
+    if not callable(owner_loader):
+        raise TypeError("policy checkpoint owner_loader must be callable")
+    try:
+        payload = bytes(artifact)
+    except (TypeError, ValueError) as exc:
+        raise PolicyCheckpointLoadError("policy.checkpoint_artifact_bytes_invalid") from exc
+    digest = hashlib.sha256(payload).hexdigest()
+    if digest != checkpoint.artifact_sha256:
+        raise PolicyCheckpointLoadError(
+            "policy.checkpoint_artifact_digest_mismatch:"
+            f"{digest}!={checkpoint.artifact_sha256}"
+        )
+    try:
+        model = owner_loader(payload)
+    except Exception as exc:  # pragma: no cover - owner-specific failure
+        raise PolicyCheckpointLoadError("policy.checkpoint_owner_load_failed") from exc
+    if not all(callable(getattr(model, name, None)) for name in ("reset", "decide", "close")):
+        raise PolicyCheckpointLoadError("policy.checkpoint_owner_model_protocol_invalid")
+    return model
 
 
 @dataclass(frozen=True)
@@ -525,11 +567,13 @@ __all__ = [
     "ObservationContract",
     "PolicyAdmission",
     "PolicyCheckpoint",
+    "PolicyCheckpointLoadError",
     "PolicyDescriptor",
     "PolicyRuntimeBinding",
     "SCHEMA_VERSION",
     "CHECKPOINT_SCHEMA_VERSION",
     "admit_policy",
+    "load_policy_checkpoint",
     "select_policy",
     "validate_policy_action",
     "project_policy_observation",
