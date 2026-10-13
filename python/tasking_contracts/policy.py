@@ -7,7 +7,7 @@ module does not import Gym/SB3 or alter the legacy DecisionModel lifecycle.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import math
 import string
@@ -15,6 +15,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 SCHEMA_VERSION = "echelon_forge.policy_contract.v1"
 CHECKPOINT_SCHEMA_VERSION = "echelon_forge.policy_checkpoint_binding.v1"
+_ADMISSION_VALIDATION_MARKER = object()
 
 
 @dataclass(frozen=True)
@@ -244,6 +245,7 @@ class PolicyAdmission:
     checkpoint: PolicyCheckpoint | None = None
     observation_view_ref: str | None = None
     observation_view_schema_version: str | None = None
+    _validation_marker: object | None = field(default=None, repr=False, compare=False)
 
     def as_dict(self) -> dict[str, object]:
         return {
@@ -282,6 +284,8 @@ class PolicyRuntimeBinding:
     ) -> None:
         if not admission.admitted or admission.policy_id != policy.policy_id:
             raise ValueError("policy.runtime_binding_not_admitted")
+        if admission._validation_marker is not _ADMISSION_VALIDATION_MARKER:
+            raise ValueError("policy.runtime_binding_admission_not_owner_validated")
         if admission.checkpoint != policy.checkpoint:
             raise ValueError("policy.runtime_binding_checkpoint_mismatch")
         if not all(callable(getattr(model, name, None)) for name in ("reset", "decide", "close")):
@@ -599,6 +603,7 @@ def admit_policy(
         checkpoint=checkpoint if checkpoint == policy.checkpoint else None,
         observation_view_ref=admitted_view_ref,
         observation_view_schema_version=admitted_view_schema_version,
+        _validation_marker=_ADMISSION_VALIDATION_MARKER,
     )
 
 
