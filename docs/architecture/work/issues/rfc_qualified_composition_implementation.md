@@ -8,9 +8,10 @@ Last verified: `2026-10-13`
 
 ## Scope and source
 
-This is a local qualification integration on the branch point
-`main@de19c3dbd69e9feb330b1291e84a210c53bfd09f` (the current upstream `main` has
-advanced independently).
+This qualification integration began at branch point
+`main@de19c3dbd69e9feb330b1291e84a210c53bfd09f` and now includes the current
+upstream `main@81bf21f093a34baff64d43c01f7975e15fb09dc1` through merge commit
+`0f18684eda439aa5f35c6ec22ddc0b3f93f9ae46`.
 It carries the proposed ADRs and prototypes from PRs #256–#261 into an isolated
 worktree. It does not mark the RFCs accepted or enable a production profile.
 The continuation also ports the existing #210 owner repair from PR #230,
