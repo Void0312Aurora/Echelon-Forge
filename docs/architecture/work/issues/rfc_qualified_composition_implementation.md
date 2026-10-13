@@ -516,3 +516,36 @@ Air facade parity passed **1 case / 26 assertions**. Ruff and
 repository test or production/RFC closure.
 
 World-association implementation checkpoint: `835c801c1`.
+
+## 2026-10-13 checkpoint admission before owner loading
+
+A local reproduction found that `from_checkpoint_artifact` invoked its owner
+loader once before rejecting a caller-created admission marker. A correct
+artifact digest therefore did not prevent model-construction side effects for
+an unadmitted binding. The existing constructor and checkpoint factory now
+share the same admission/marker, checkpoint-agreement, timing, dimension and
+action-callback checks; the factory performs them before owner loading. Bounds
+and optional defaults are copied before handing control to the loader. The
+existing verified-byte loader and model lifecycle remain the only loading and
+execution seams; no framework import or new registry was introduced.
+
+Seven negative controls verify zero owner-loader calls for forged admission,
+rejected admission, checkpoint mismatch, wrong action timing/width and invalid
+authorizer/projector callbacks. The valid owner-load/model-context case still
+passes. Policy, registry and existing DecisionRuntime regressions passed
+**55 tests**; the policy ADR and suite-manifest checks passed **10 tests**.
+Ruff and `git diff --check` passed.
+
+The next #238 consumer proof can use the maintained four-field basic mission
+catalogue (`mission_observation_basic_field_catalogue`) and `takeoff4` action
+owner. The existing two-implementation native-action test constructs
+`PilotAction` DTOs; it does not submit the checkpoint-loaded model's action
+through a native world. That actual checkpoint/DecisionRuntime/native endpoint
+path remains an independent implementation step. General non-empty typed views
+remain separately gated; the existing basic mission catalogue must not be
+misreported as unavailable. An untrained stand-in is allowed by the RFC proof
+plan, but cannot establish a trained checkpoint's performance or Air matrix
+execution. Production external checkpoint loading and profile admission remain
+open.
+
+Checkpoint admission repair: `07afe173d`.

@@ -36,7 +36,9 @@ tensor 顺序和 provenance。legacy `model_kind` 通过分阶段显式 bridge �
 `PolicyCheckpoint` 元数据契约现在可以在 binding 前绑定 artifact digest 以及 policy、observation、
 action 身份。新增的 checkpoint seam 会先校验不可变 artifact bytes，再交给 owner 提供的 loader；
 framework 反序列化和模型构造仍由 owner 负责；`PolicyRuntimeBinding.from_checkpoint_artifact`
-会在构造现有 binding 前完成这一步校验。维护中的 selected observation view 会先由其 owner
+会在调用 loader 前检查 binding admission、owner validation marker、checkpoint 一致性、
+action timing/维度及 action callbacks；artifact digest 正确也不能绕过拒绝或伪造的 admission。
+维护中的 selected observation view 会先由其 owner
 准入，identity/version 会进入现有 model context。binding 还可在通用 bounds/timing 校验后、
 投影前调用 owner action-authorizer，由 owner 判断实时 mask、authority 和 expiry；通过后再交给
 显式 owner projector。生产 native action endpoint 的实际 wiring 仍待验收。此层不会自动接纳 Python
