@@ -261,6 +261,16 @@ def test_truthy_but_incomplete_completion_evidence_is_not_comparable() -> None:
     assert result.differences == ("completion_evidence",)
 
 
+def test_completion_evidence_rejects_receipt_binding_identity_drift() -> None:
+    completed = _completed_lock(_experiment(), _registry())
+    document = completed.as_dict()
+    document["completion_evidence"]["receipt_binding"]["receipt_id"] = "other-receipt"
+    forged = ResolvedInputLock(document, completed.digest)
+    result = compare_resolved_input_locks(forged, forged)
+    assert result.comparable is False
+    assert result.differences == ("completion_evidence",)
+
+
 def test_completed_receipt_cannot_hide_an_unknown_batch_outcome() -> None:
     candidate = build_resolved_input_lock(_experiment(), _registry())
     outcome = project_unresolved_batch_fault(
