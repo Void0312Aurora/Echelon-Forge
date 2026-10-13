@@ -242,6 +242,8 @@ class PolicyAdmission:
     diagnostics: tuple[str, ...]
     schema_version: str = SCHEMA_VERSION
     checkpoint: PolicyCheckpoint | None = None
+    observation_view_ref: str | None = None
+    observation_view_schema_version: str | None = None
 
     def as_dict(self) -> dict[str, object]:
         return {
@@ -250,6 +252,8 @@ class PolicyAdmission:
             "policy_id": self.policy_id,
             "diagnostics": list(self.diagnostics),
             "checkpoint": None if self.checkpoint is None else self.checkpoint.as_dict(),
+            "observation_view_ref": self.observation_view_ref,
+            "observation_view_schema_version": self.observation_view_schema_version,
         }
 
 
@@ -364,6 +368,15 @@ class PolicyRuntimeBinding:
                 "observation_provenance": sources,
             }
         )
+        if self.admission.observation_view_ref is not None:
+            model_context.update(
+                {
+                    "policy_observation_view_ref": self.admission.observation_view_ref,
+                    "policy_observation_view_schema_version": (
+                        self.admission.observation_view_schema_version
+                    ),
+                }
+            )
         if self.admission.checkpoint is not None:
             model_context.update(
                 {
@@ -401,6 +414,36 @@ def _version_diagnostic(
     return None
 
 
+def _schema_version_parts(version: Any) -> tuple[int, int] | None:
+    text = str(version)
+    major_text, separator, minor_text = text.partition(".")
+    if not separator or not major_text.isdecimal() or not minor_text.isdecimal():
+        return None
+    return int(major_text), int(minor_text)
+
+
+def _admit_selected_observation_view(observation_view: Any) -> tuple[str, str, tuple[int, int]]:
+    """Admit the maintained owner view before policy field checks consume it."""
+
+    # Keep the dependency one-way: the policy contract asks the maintained
+    # observation owner to validate its own DTO, but does not construct or
+    # replace that DTO.
+    from python.rl.runtime.world_batch.typed_observation_view import (
+        admit_typed_observation_view_spec,
+    )
+
+    try:
+        admitted = admit_typed_observation_view_spec(observation_view)
+    except Exception as exc:
+        raise ValueError(f"policy.observation_view_invalid:{exc}") from exc
+    view_ref = str(getattr(admitted, "view_id", ""))
+    schema_version = str(getattr(admitted, "schema_version", ""))
+    version = _schema_version_parts(schema_version)
+    if not view_ref or version is None:
+        raise ValueError("policy.observation_view_identity_invalid")
+    return view_ref, schema_version, version
+
+
 def admit_policy(
     policy: PolicyDescriptor,
     binding: AgentBinding,
@@ -411,6 +454,7 @@ def admit_policy(
     action_dimensions: Mapping[str, int],
     action_timings: Mapping[str, str] | None = None,
     checkpoint: PolicyCheckpoint | None = None,
+    observation_view: Any | None = None,
 ) -> PolicyAdmission:
     """Validate policy/Agent compatibility before any runtime side effect."""
 
@@ -422,12 +466,34 @@ def admit_policy(
         diagnostics.append("policy.checkpoint_missing")
     elif checkpoint != policy.checkpoint:
         diagnostics.append("policy.checkpoint_identity_mismatch")
+    admitted_view_ref: str | None = None
+    admitted_view_schema_version: str | None = None
+    effective_observation_version = observation_version
+    if observation_view is not None:
+        try:
+            admitted_view_ref, admitted_view_schema_version, view_version = (
+                _admit_selected_observation_view(observation_view)
+            )
+        except ValueError as exc:
+            diagnostics.append(str(exc))
+        else:
+            if admitted_view_ref != policy.observation.view_ref:
+                diagnostics.append(
+                    "policy.observation_view_ref_mismatch:"
+                    f"{policy.observation.view_ref}!={admitted_view_ref}"
+                )
+            if view_version != observation_version:
+                diagnostics.append(
+                    "policy.observation_view_version_mismatch:"
+                    f"{observation_version}!={view_version}"
+                )
+            effective_observation_version = view_version
     version_error = _version_diagnostic(
         "observation",
         policy.observation.major,
-        observation_version[0],
+        effective_observation_version[0],
         policy.observation.minor,
-        observation_version[1],
+        effective_observation_version[1],
     )
     if version_error:
         diagnostics.append(version_error)
@@ -503,6 +569,8 @@ def admit_policy(
         policy.policy_id,
         tuple(diagnostics),
         checkpoint=checkpoint if checkpoint == policy.checkpoint else None,
+        observation_view_ref=admitted_view_ref,
+        observation_view_schema_version=admitted_view_schema_version,
     )
 
 

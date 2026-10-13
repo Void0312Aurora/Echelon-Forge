@@ -24,6 +24,9 @@ from python.tasking_contracts.common.decision_runtime import (
     DecisionRuntimeAgent,
     DecisionRuntimeAgentSpec,
 )
+from python.rl.runtime.world_batch.typed_observation_view import (
+    maintained_observation_view_spec,
+)
 
 
 class _BoundModel:
@@ -102,6 +105,99 @@ def test_scripted_and_learned_categories_share_contract_admission() -> None:
     )
     assert admit_policy(_policy(category="scripted"), **kwargs).admitted
     assert admit_policy(_policy(category="learned"), **kwargs).admitted
+
+
+def test_selected_maintained_observation_view_is_admitted_and_recorded() -> None:
+    policy = PolicyDescriptor(
+        "community.air.policy",
+        "1.0.0",
+        ("learned",),
+        ObservationContract("gym_envs.observation_view", 1, 0, required=()),
+        ActionContract("PilotActionAssignment", 1, 0, 4, "platform_control"),
+    )
+    result = admit_policy(
+        policy,
+        _binding(),
+        field_catalogue={},
+        observation_version=(1, 0),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+        observation_view=maintained_observation_view_spec(),
+    )
+    assert result.admitted
+    assert result.observation_view_ref == "gym_envs.observation_view"
+    assert result.observation_view_schema_version == "1.0"
+    assert result.as_dict()["observation_view_ref"] == "gym_envs.observation_view"
+
+
+def test_selected_observation_view_provenance_reaches_existing_model_context() -> None:
+    policy = PolicyDescriptor(
+        "community.air.policy",
+        "1.0.0",
+        ("learned",),
+        ObservationContract("gym_envs.observation_view", 1, 0, required=()),
+        ActionContract("PilotActionAssignment", 1, 0, 4, "platform_control"),
+    )
+    admission = admit_policy(
+        policy,
+        _binding(),
+        field_catalogue={},
+        observation_version=(1, 0),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+        observation_view=maintained_observation_view_spec(),
+    )
+    model = _BoundModel()
+    runtime_binding = PolicyRuntimeBinding(
+        policy,
+        admission,
+        model,
+        bounds=((-1, 1),) * 4,
+        timing="window",
+    )
+    runtime_binding.decide(observation={}, context={}, dt=0.0)
+    assert model.observations[0][1]["policy_observation_view_ref"] == (
+        "gym_envs.observation_view"
+    )
+    assert model.observations[0][1]["policy_observation_view_schema_version"] == "1.0"
+
+
+def test_selected_observation_view_mismatch_fails_before_policy_admission() -> None:
+    result = admit_policy(
+        _policy(),
+        _binding(),
+        field_catalogue=_catalogue(),
+        observation_version=(1, 0),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+        observation_view=maintained_observation_view_spec(),
+    )
+    assert not result.admitted
+    assert (
+        "policy.observation_view_ref_mismatch:air_observation!=gym_envs.observation_view"
+        in result.diagnostics
+    )
+
+
+def test_invalid_selected_observation_view_is_rejected_before_field_consumption() -> None:
+    view = replace(maintained_observation_view_spec(), schema_version="2.0")
+    result = admit_policy(
+        PolicyDescriptor(
+            "community.air.policy",
+            "1.0.0",
+            ("learned",),
+            ObservationContract("gym_envs.observation_view", 1, 0, required=()),
+            ActionContract("PilotActionAssignment", 1, 0, 4, "platform_control"),
+        ),
+        _binding(),
+        field_catalogue={},
+        observation_version=(1, 0),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+        observation_view=view,
+    )
+    assert not result.admitted
+    assert any(item.startswith("policy.observation_view_invalid:") for item in result.diagnostics)
 
 
 def test_external_checkpoint_requires_owner_identity_and_contract_match() -> None:
