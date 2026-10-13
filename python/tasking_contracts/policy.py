@@ -295,6 +295,30 @@ class PolicyRuntimeBinding:
         | None = None,
         action_projector: Callable[[Any], Any] | None = None,
     ) -> None:
+        self._validate_binding_inputs(
+            policy, admission, bounds=bounds, timing=timing,
+            action_authorizer=action_authorizer, action_projector=action_projector,
+        )
+        if not all(callable(getattr(model, name, None)) for name in ("reset", "decide", "close")):
+            raise TypeError("policy runtime model must implement reset/decide/close")
+        self.policy = policy
+        self.admission = admission
+        self.model = model
+        self.bounds = tuple(bounds)
+        self.timing = timing
+        self.optional_defaults = dict(optional_defaults or {})
+        self._observation_projector = observation_projector or (lambda values, _sources: values)
+        self._action_values = action_values or self._default_action_values
+        self._action_authorizer = action_authorizer
+        self._action_projector = action_projector or (lambda value: value)
+
+    @staticmethod
+    def _validate_binding_inputs(
+        policy: PolicyDescriptor, admission: PolicyAdmission, *,
+        bounds: Sequence[tuple[float, float]], timing: str,
+        action_authorizer: Any, action_projector: Any,
+    ) -> None:
+        """Shared admission checks that must precede external model loading."""
         if not admission.admitted or admission.policy_id != policy.policy_id:
             raise ValueError("policy.runtime_binding_not_admitted")
         expected_validation_token = _AdmissionValidationToken(
@@ -309,25 +333,13 @@ class PolicyRuntimeBinding:
             raise ValueError("policy.runtime_binding_admission_not_owner_validated")
         if admission.checkpoint != policy.checkpoint:
             raise ValueError("policy.runtime_binding_checkpoint_mismatch")
-        if not all(callable(getattr(model, name, None)) for name in ("reset", "decide", "close")):
-            raise TypeError("policy runtime model must implement reset/decide/close")
         if timing != policy.action.timing:
             raise ValueError("policy.action_timing_mismatch:action.timing")
         if len(bounds) != policy.action.dimension:
             raise ValueError("policy.action_dimension_mismatch:action.bounds")
-        self.policy = policy
-        self.admission = admission
-        self.model = model
-        self.bounds = tuple(bounds)
-        self.timing = timing
-        self.optional_defaults = dict(optional_defaults or {})
-        self._observation_projector = observation_projector or (lambda values, _sources: values)
-        self._action_values = action_values or self._default_action_values
-        self._action_authorizer = action_authorizer
-        self._action_projector = action_projector or (lambda value: value)
-        if self._action_authorizer is not None and not callable(self._action_authorizer):
+        if action_authorizer is not None and not callable(action_authorizer):
             raise TypeError("policy action_authorizer must be callable")
-        if not callable(self._action_projector):
+        if action_projector and not callable(action_projector):
             raise TypeError("policy action_projector must be callable")
 
     @classmethod
@@ -347,10 +359,16 @@ class PolicyRuntimeBinding:
         | None = None,
         action_projector: Callable[[Any], Any] | None = None,
     ) -> "PolicyRuntimeBinding":
-        """Load verified owner bytes and construct the admitted binding."""
+        """Validate admission before loading verified bytes through the owner."""
 
         if policy.checkpoint is None:
             raise PolicyCheckpointLoadError("policy.checkpoint_required_for_artifact_binding")
+        frozen_bounds = tuple(bounds)
+        frozen_defaults = dict(optional_defaults or {})
+        cls._validate_binding_inputs(
+            policy, admission, bounds=frozen_bounds, timing=timing,
+            action_authorizer=action_authorizer, action_projector=action_projector,
+        )
         model = load_policy_checkpoint(
             policy.checkpoint,
             artifact,
@@ -360,9 +378,9 @@ class PolicyRuntimeBinding:
             policy,
             admission,
             model,
-            bounds=bounds,
+            bounds=frozen_bounds,
             timing=timing,
-            optional_defaults=optional_defaults,
+            optional_defaults=frozen_defaults,
             observation_projector=observation_projector,
             action_values=action_values,
             action_authorizer=action_authorizer,
