@@ -194,6 +194,8 @@ void register_esm_reset_system(flecs::world &ecs) {
     X(MassProperties, "MassProperties", "flecs.component.mass_properties")                         \
     X(ShipPlatform, "ShipPlatform", "flecs.component.ship_platform")                               \
     X(SubmarinePlatform, "SubmarinePlatform", "flecs.component.submarine_platform")                \
+    X(SubmarineBathymetryPolicy, "SubmarineBathymetryPolicy",                                      \
+      "flecs.component.submarine_bathymetry_policy")                                               \
     X(Propulsion, "Propulsion", "flecs.component.propulsion")                                      \
     X(AeroTuning, "AeroTuning", "flecs.component.aero_tuning")                                     \
     X(EngineTuning, "EngineTuning", "flecs.component.engine_tuning")                               \
@@ -370,7 +372,7 @@ struct ValidationResult {
 };
 
 ValidationResult validate_registry() {
-    if (std::size(kDefaultComponents) != 90) {
+    if (std::size(kDefaultComponents) != 91) {
         return {false, "component contribution count is not the admitted default count"};
     }
     std::unordered_set<std::string_view> component_ids;

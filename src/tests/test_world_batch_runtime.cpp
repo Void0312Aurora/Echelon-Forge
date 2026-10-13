@@ -2,11 +2,14 @@
 #include "core/engine/parallel_for_index.h"
 #include "core/engine/testing/world_batch_runtime_test_access.h"
 #include "components/basic/stable_identity.h"
+#include "components/command/common/mission_command_control_state.h"
 #include "components/visual/visual_sensor.h"
 #include "gpu/gpu_world_batch_visual_binding_compatibility.h"
 #include "runtime/facade/runtime_facade.h"
 
 #include <doctest/doctest.h>
+
+#include <algorithm>
 
 #include <atomic>
 #include <cmath>
@@ -110,6 +113,43 @@ TEST_SUITE("world_batch_runtime") {
                 CHECK_NOTHROW((void)batch.composition_diagnostics());
             }
         }
+    }
+
+    TEST_CASE("world batch applies gravity without an active command") {
+        WorldBatchRuntime runtime(1);
+        BatchWorldSetupRequest setup{};
+        setup.seeds = {42};
+        setup.time_steps = {0.05};
+        WorldSpawnRequest spawn{};
+        spawn.world_index = 0;
+        spawn.side = Side::Blue;
+        spawn.type_name = "Aircraft";
+        spawn.entity_name = "GravityNoCommand";
+        spawn.is_agent = false;
+        spawn.z = 1000.0;
+        setup.spawn_requests = {spawn};
+        const auto entity_ids = runtime.apply_world_setup_batch(
+            setup.seeds, {}, {{0, 0.0, 0.0, 0.0}}, {}, setup.spawn_requests, setup.time_steps);
+        REQUIRE(entity_ids.size() == 1);
+
+        // Use the quarantine seam only to prepare the missing-input fixture;
+        // WorldBatchRuntime remains the execution and observation owner.
+        auto &kernel = runtime.world_raw_quarantine(0);
+        {
+            auto lease = kernel.acquire_world_lease();
+            const auto entity = lease.world().entity(entity_ids.front());
+            REQUIRE(entity.is_valid());
+            auto *control = entity.get_mut<MissionCommandControlState>();
+            REQUIRE(control != nullptr);
+            *control = MissionCommandControlState{};
+        }
+        constexpr double gravity = 9.80665;
+        constexpr double dt = 0.05;
+        runtime.step_batch();
+        const auto observations = runtime.get_agent_observations_batch({{0, entity_ids.front()}});
+        REQUIRE(observations.size() == 1);
+        CHECK(observations.front().vz == doctest::Approx(-gravity * dt));
+        CHECK(observations.front().z == doctest::Approx(1000.0 - 0.5 * gravity * dt * dt));
     }
 
     TEST_CASE("worker launch failure joins already started workers before propagating") {

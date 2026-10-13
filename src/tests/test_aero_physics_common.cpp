@@ -42,6 +42,42 @@ AeroState additive_aero_probe(const AeroTuning *tuning, double flaps, double spe
 }
 } // namespace
 
+namespace {
+
+ForceAccumulator run_rate_damping_probe(double velocity_x_mps, double wind_speed_mps,
+                                        double wind_from_deg) {
+    SimulationKernel kernel;
+    kernel.set_wind(wind_speed_mps, wind_from_deg);
+    auto lease = kernel.acquire_world_lease();
+    auto &world = lease.world();
+
+    AeroState aero{};
+    aero.dynamic_pressure = 20000.0;
+    aero.angle_of_attack = 0.0;
+    aero.sideslip_angle = 0.0;
+    aero.mach_number = 0.3;
+
+    MassProperties props{};
+    props.reference_area_m2 = 30.0;
+    props.wing_span_m = 10.0;
+    props.chord_m = 3.0;
+
+    auto body = world.entity()
+                    .set<ForceAccumulator>({})
+                    .set<AeroState>(aero)
+                    .set<MassProperties>(props)
+                    .set<Velocity>({velocity_x_mps, 0.0, 0.0})
+                    .set<Transform>({0.0, 0.0, 5000.0, 0.0, 0.0, 0.0})
+                    .set<AngularVelocity>({0.05, 0.04, 0.03});
+
+    REQUIRE(kernel.run_exact_stage_direct("ComputeAerodynamics"));
+    const ForceAccumulator *forces = body.get<ForceAccumulator>();
+    REQUIRE(forces != nullptr);
+    return *forces;
+}
+
+} // namespace
+
 TEST_SUITE("aero_physics_common") {
 
     TEST_CASE("additive aero defaults preserve the legacy coefficient increments") {
@@ -147,6 +183,17 @@ TEST_SUITE("aero_physics_common") {
     }
 
 } // TEST_SUITE("aero_physics_common")
+
+TEST_CASE("aerodynamic rate damping is invariant under uniform wind translation") {
+    // Wind from west at 50 m/s produces a +X world-frame wind.  Both cases have
+    // the same 100 m/s air-relative flow but different ground speeds.
+    const ForceAccumulator still_air = run_rate_damping_probe(100.0, 0.0, 0.0);
+    const ForceAccumulator translated = run_rate_damping_probe(150.0, 50.0, 270.0);
+
+    CHECK(translated.torque_roll == doctest::Approx(still_air.torque_roll).epsilon(1.0e-12));
+    CHECK(translated.torque_pitch == doctest::Approx(still_air.torque_pitch).epsilon(1.0e-12));
+    CHECK(translated.torque_yaw == doctest::Approx(still_air.torque_yaw).epsilon(1.0e-12));
+}
 
 TEST_SUITE("missile_guidance_cadence") {
 
