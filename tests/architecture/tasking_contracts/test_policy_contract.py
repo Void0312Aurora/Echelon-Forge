@@ -323,6 +323,55 @@ def test_checkpoint_artifact_binding_factory_keeps_owner_loader_in_the_existing_
     assert model.observations[0][1]["policy_checkpoint_ref"] == checkpoint.checkpoint_ref
 
 
+@pytest.mark.parametrize("case,exception,error", [
+    ("forged", ValueError, "admission_not_owner_validated"),
+    ("rejected", ValueError, "runtime_binding_not_admitted"),
+    ("checkpoint", ValueError, "runtime_binding_checkpoint_mismatch"),
+    ("timing", ValueError, "action_timing_mismatch"),
+    ("dimension", ValueError, "action_dimension_mismatch"),
+    ("authorizer", TypeError, "action_authorizer must be callable"),
+    ("projector", TypeError, "action_projector must be callable"),
+])
+def test_checkpoint_binding_rejects_invalid_contract_before_owner_loader(case, exception, error):
+    payload = b"owner-checkpoint-bytes"
+    base = _policy(category="learned")
+    checkpoint = replace(_checkpoint(base), artifact_sha256=hashlib.sha256(payload).hexdigest())
+    policy = replace(base, checkpoint=checkpoint)
+    admission = admit_policy(
+        policy, _binding(), field_catalogue=_catalogue(), observation_version=(1, 1),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4}, checkpoint=checkpoint,
+    )
+    assert admission.admitted
+    kwargs = dict(bounds=((-1, 1),) * 4, timing="window")
+    if case == "forged":
+        admission = PolicyAdmission(True, policy.policy_id, (), checkpoint=checkpoint)
+    elif case == "rejected":
+        admission = admit_policy(
+            policy, _binding(), field_catalogue={}, observation_version=(1, 1),
+            action_versions={"PilotActionAssignment": (1, 0)},
+            action_dimensions={"PilotActionAssignment": 4}, checkpoint=checkpoint,
+        )
+        assert not admission.admitted
+    elif case == "checkpoint":
+        policy = replace(policy, checkpoint=replace(checkpoint, artifact_sha256="a" * 64))
+    elif case == "timing":
+        kwargs["timing"] = "per_tick"
+    elif case == "dimension":
+        kwargs["bounds"] = ((-1, 1),) * 3
+    elif case == "authorizer":
+        kwargs["action_authorizer"] = object()
+    else:
+        kwargs["action_projector"] = object()
+    loaded = []
+    with pytest.raises(exception, match=error):
+        PolicyRuntimeBinding.from_checkpoint_artifact(
+            policy, admission, payload,
+            owner_loader=lambda value: loaded.append(value) or _BoundModel(), **kwargs,
+        )
+    assert loaded == []
+
+
 def test_unknown_category_does_not_grant_authority() -> None:
     policy = PolicyDescriptor(
         "community.custom",
