@@ -120,7 +120,7 @@ def test_omitted_expected_world_cannot_be_reported_as_completed() -> None:
 
 
 def test_direct_completed_constructor_default_scope_is_rejected() -> None:
-    with pytest.raises(ValueError, match="complete expected world scope"):
+    with pytest.raises(ValueError, match="expected world scope"):
         BatchOperationOutcome(
             batch_generation_ref="g1",
             operation_ref="op1",
@@ -128,6 +128,18 @@ def test_direct_completed_constructor_default_scope_is_rejected() -> None:
             domain=FailureDomain.BATCH,
             result=BatchResult.COMPLETED,
             worlds=(_world(0, WorldState.COMPLETED, True),),
+        )
+
+
+def test_direct_failed_constructor_requires_expected_world_scope() -> None:
+    with pytest.raises(ValueError, match="expected world scope"):
+        BatchOperationOutcome(
+            batch_generation_ref="g1",
+            operation_ref="op1",
+            operation="step",
+            domain=FailureDomain.BATCH,
+            result=BatchResult.FAILED,
+            worlds=(_world(0, WorldState.UNKNOWN_AFTER_FAULT, None),),
         )
 
 

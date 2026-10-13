@@ -138,6 +138,8 @@ class BatchOperationOutcome:
             for index in self.expected_world_indices
         ):
             raise ValueError("expected world indexes must be non-negative integers")
+        if self.result is not BatchResult.REJECTED and not self.expected_world_indices:
+            raise ValueError("execution outcome requires expected world scope")
         if self.expected_world_indices and not set(indexes).issubset(self.expected_world_indices):
             raise ValueError("world outcome is outside the expected world scope")
         if self.result is BatchResult.REJECTED and self.worlds:
