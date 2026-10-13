@@ -400,7 +400,7 @@ adapter and diagnostics-only projections; the Python binding sees the same
 owner fields. This is an owner-publication diagnostic seam, not a canonical
 schema vocabulary or authored-graph admission path.
 
-The #237 CSG adapter now has **18 force-package/adapter tests**, including two
+The #237 CSG adapter now has **19 force-package/adapter tests**, including two
 full S0 fixture runs. Each qualified run also compares every bound hull's
 native position with the compiled scenario coordinates, checks the retained
 embarked-inventory metadata, and verifies that a real native step preserves the
