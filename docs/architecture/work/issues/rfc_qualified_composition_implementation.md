@@ -130,7 +130,7 @@ python -m pytest -q `
 
 The Python/native bridge requires the `ef_test` binary; it skips that proof when
 the target is absent. This local verification built the target and had no skips
-in the 163-test focused run. The JUnit record in
+in the 176-test focused run. The JUnit record in
 `build-rfc-native/rfc-focused-results.xml` carries the graph digest, executed
 test-binary SHA-256 and native numerical/fault evidence. It is a local test record,
 not a production RunReceipt or trust attestation.
@@ -147,12 +147,13 @@ tests and native composition-evidence tests. The architecture suite manifest
 registers the qualification tests. See the final execution result for counts;
 this document does not infer other-host or full-repository parity.
 
-Current branch verification results after merge commit `0f18684ed` (current
-`origin/main` integrated): **168 focused Python tests passed** and **35 native
+Current branch verification results after merge commit `0f18684ed` and the
+qualification follow-up through `fc304de73` (current `origin/main` integrated):
+**176 focused Python tests passed** and **35 native
 tests / 963 assertions passed**. Ruff and whitespace checks passed on all
 touched Python surfaces.
 The primary checkout retained its original HEAD and clean status. The owner requested batched commits and pushes of this checkpoint
-on `codex/rfc-qualified-composition`. The publication gate repeats the 168-test
+on `codex/rfc-qualified-composition`. The publication gate repeats the 176-test
 focused run and preserves the reviewed file contents across the split.
 
 ## Batched branch publication
