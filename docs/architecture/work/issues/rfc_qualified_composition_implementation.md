@@ -152,11 +152,13 @@ qualification follow-up through `ada091a2f` remains a historical baseline:
 **181 focused Python tests passed**, **18 CSG adapter tests passed**, and
 **35 native tests / 963 assertions passed**. On `2026-10-13`, the current
 continuation was rerun from `build-rfc-mainline`: the combined focused Python
-command passed **245 tests**, and the native suite passed **35 cases / 963
-assertions**. The current CSG adapter module contains **21 tests**; its grouped
-CSG regression passed **51 tests and 12 subtests**. Ruff and whitespace checks
-passed on all touched Python surfaces. These are local qualification records,
-not production admission or trust attestations.
+command passed **245 tests**, and the native focused suite passed **35 cases /
+963 assertions**. The complete native `ef_test` rerun passed **363 cases /
+170,829 assertions**, with one skipped case. The current CSG adapter module
+contains **21 tests**; its grouped CSG regression passed **51 tests and 12
+subtests**. Ruff and whitespace checks passed on all touched Python surfaces.
+These are local qualification records, not production admission or trust
+attestations.
 The primary checkout retained its original HEAD and clean status. The owner
 requested batched commits and pushes of this checkpoint on
 `codex/rfc-qualified-composition`; the current continuation command and native
