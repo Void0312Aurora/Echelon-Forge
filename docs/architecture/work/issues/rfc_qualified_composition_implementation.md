@@ -112,7 +112,18 @@ Reproduce the native lane after building both existing targets:
 ```powershell
 cmake --build build-rfc-native --config Release --target ef_py ef_test -j 3
 $env:CMO_BUILD_DIR = 'build-rfc-native'
-python -m pytest tests/architecture/mechanisms/test_air_perception_qualification.py tests/architecture/composition/test_native_failure_qualification.py -q
+python -m pytest -q `
+  tests/architecture/mechanisms/test_ports.py `
+  tests/architecture/mechanisms/test_air_perception_qualification.py `
+  tests/content/test_platform_blueprint.py `
+  tests/content/test_platform_blueprint_adapter.py `
+  tests/runtime/bindings/test_typed_platform_spawn_bindings.py `
+  tests/architecture/tasking_contracts/test_policy_contract.py `
+  tests/architecture/tasking_contracts/test_failure_domains.py `
+  tests/experiment/test_resolved_input_lock.py `
+  tests/runtime/tasking/test_decision_runtime.py `
+  tests/architecture/runtime_facade/test_runtime_dto_contracts.py `
+  tests/architecture/composition/test_rfc_qualified_composition.py
 & build-rfc-native/Release/ef_test.exe --test-suite='world_batch_runtime,world_cv_alpha_beta_tracker,world_cva_alpha_beta_gamma_tracker,air_perception_qualification' --no-colors
 ```
 
