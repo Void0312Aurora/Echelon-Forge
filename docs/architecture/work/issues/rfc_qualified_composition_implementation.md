@@ -152,9 +152,9 @@ qualification follow-up through `ada091a2f` remains a historical baseline:
 **181 focused Python tests passed**, **18 CSG adapter tests passed**, and
 **35 native tests / 963 assertions passed**. On `2026-10-13`, the current
 continuation was rerun from `build-rfc-mainline`: the combined focused Python
-command passed **243 tests**, and the native suite passed **35 cases / 963
-assertions**. The current CSG adapter module contains **19 tests**; its grouped
-CSG regression passed **49 tests and 12 subtests**. Ruff and whitespace checks
+command passed **245 tests**, and the native suite passed **35 cases / 963
+assertions**. The current CSG adapter module contains **21 tests**; its grouped
+CSG regression passed **51 tests and 12 subtests**. Ruff and whitespace checks
 passed on all touched Python surfaces. These are local qualification records,
 not production admission or trust attestations.
 The primary checkout retained its original HEAD and clean status. The owner
@@ -406,17 +406,20 @@ adapter and diagnostics-only projections; the Python binding sees the same
 owner fields. This is an owner-publication diagnostic seam, not a canonical
 schema vocabulary or authored-graph admission path.
 
-The #237 CSG adapter now has **19 force-package/adapter tests**, including two
-full S0 fixture runs. Each qualified run also compares every bound hull's
-native position with the compiled scenario coordinates, checks the retained
-embarked-inventory metadata, and verifies that a real native step preserves the
-static S0 layout. It requires an explicit compiled-scenario input and explicit
-organization-to-entity and assembly-to-native-type bindings; it does not infer
-those mappings from the CSG domain schema. `load_qualified_csg_scenario` only
-delegates a fresh, fully qualified snapshot to `ScenarioLoader`; the
-qualification record also retains scoped membership/task/communication edge
-tuples alongside their digest without installing any of them. It does not
-synthesize entities or grant command authority.
+The #237 CSG adapter now has **21 force-package/adapter tests**, including two
+full S0 fixture runs and two explicit nested-package-to-loader runs. Each
+qualified run also compares every bound hull's native position with the
+compiled scenario coordinates, checks the retained embarked-inventory metadata,
+and verifies that a real native step preserves the static S0 layout. The nested
+fixtures preserve distinct scoped package paths and relationship edge tuples
+through the same loader boundary. It requires an explicit compiled-scenario
+input and explicit organization-to-entity and assembly-to-native-type bindings;
+it does not infer those mappings from the CSG domain schema.
+`load_qualified_csg_scenario` only delegates a fresh, fully qualified snapshot
+to `ScenarioLoader`; the qualification record retains scoped
+membership/task/communication edge tuples alongside their digest without
+installing any of them. It does not synthesize entities or grant command
+authority.
 
 The physical compatibility slice for #236 is bounded and fail-closed. A
 blueprint may declare finite mass and power budgets plus slot mount classes;
