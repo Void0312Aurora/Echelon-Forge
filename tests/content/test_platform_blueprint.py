@@ -372,3 +372,52 @@ def test_legacy_projection_requires_explicit_loadout_path(blueprint, modules) ->
     )
     lowered = lower_to_legacy_unit_definition(plan, projected, modules=loadout_modules)
     assert lowered["default_loadout"]["1"] == "Aim120"
+
+
+def test_legacy_projection_rejects_multi_store_quantity_until_native_contract_exists(
+    blueprint, modules
+) -> None:
+    loadout_blueprint = replace(
+        blueprint,
+        slots=(("propulsion", "engine"), ("primary_sensor", "sensor")),
+        hardpoints=(HardpointContract("station_1", "station", 200.0, frozenset({"weapon"})),),
+    )
+    loadout_modules = {
+        "builtin.engine.f110": replace(
+            modules["builtin.engine.f110"], content_digest="engine-digest", native_ref="Engine"
+        ),
+        "builtin.radar.apg": replace(
+            modules["builtin.radar.apg"], content_digest="radar-digest", native_ref="Radar"
+        ),
+        "builtin.aim120": replace(
+            modules["builtin.aim120"],
+            content_digest="weapon-digest",
+            native_ref="Aim120",
+            mass_kg=80.0,
+            mount_classes=frozenset({"station"}),
+        ),
+    }
+    plan = resolve_platform_assembly(
+        assembly_id="loadout.projection.multi-store",
+        blueprint=loadout_blueprint,
+        selections=(
+            ModuleSelection("propulsion", "builtin.engine.f110"),
+            ModuleSelection("primary_sensor", "builtin.radar.apg"),
+        ),
+        modules=loadout_modules,
+        loadout=(LoadoutSelection("station_1", "builtin.aim120", 2),),
+    )
+    projection = LegacyUnitProjection(
+        plan.blueprint_ref,
+        {
+            "name": "F16Loadout",
+            "type": "aircraft",
+            "propulsion": "Engine",
+            "sensor": "Radar",
+            "default_loadout": {"1": "Unresolved"},
+        },
+        slot_paths=(("propulsion", "propulsion"), ("primary_sensor", "sensor")),
+        loadout_paths=(("station_1", "default_loadout.1"),),
+    )
+    with pytest.raises(PlatformAssemblyError, match="native_loadout_quantity_unsupported"):
+        lower_to_legacy_unit_definition(plan, projection, modules=loadout_modules)

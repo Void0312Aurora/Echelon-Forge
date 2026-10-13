@@ -372,7 +372,7 @@ def test_native_typed_projection_rejects_module_selection_not_loaded_in_snapshot
         _expand(blueprint, modules, plan)
 
 
-def test_native_typed_projection_preserves_loadout_capabilities_and_quantity_evidence() -> None:
+def test_native_typed_projection_rejects_multi_store_quantity_until_native_contract_exists() -> None:
     blueprint, modules, _ = _fixture()
     weapon = ModuleRecord(
         "fixture.weapon",
@@ -406,7 +406,22 @@ def test_native_typed_projection_preserves_loadout_capabilities_and_quantity_evi
         projection,
         loadout_paths=(("station_1", "default_loadout.1"),),
     )
-    expanded = _expand(blueprint, modules, plan, projection=projection)
+    with pytest.raises(PlatformAssemblyError, match="native_loadout_quantity_unsupported"):
+        _expand(blueprint, modules, plan, projection=projection)
+
+    single_plan = resolve_platform_assembly(
+        assembly_id="fixture.loadout.single-store.v1",
+        blueprint=blueprint,
+        selections=(ModuleSelection("propulsion", "engine"), ModuleSelection("primary_sensor", "sensor")),
+        modules=modules,
+        loadout=(LoadoutSelection("station_1", "weapon", 1),),
+    )
+    single_projection = _projection(single_plan, default_loadout={"1": "FixtureWeapon"})
+    single_projection = replace(
+        single_projection,
+        loadout_paths=(("station_1", "default_loadout.1"),),
+    )
+    expanded = _expand(blueprint, modules, single_plan, projection=single_projection)
     launching = [
         capability
         for capability in expanded.capability_bundle.capabilities
@@ -414,4 +429,4 @@ def test_native_typed_projection_preserves_loadout_capabilities_and_quantity_evi
     ]
     assert len(launching) == 1
     assert "platform.hardpoint:station_1" in launching[0].evidence_refs
-    assert "platform.loadout_quantity:station_1:2" in launching[0].evidence_refs
+    assert "platform.loadout_quantity:station_1:1" in launching[0].evidence_refs
