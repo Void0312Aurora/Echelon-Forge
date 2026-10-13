@@ -279,6 +279,16 @@ def test_csg_load_rejects_compiled_package_identity_or_relationship_drift() -> N
             },
         )
 
+    with pytest.raises(ForcePackageError, match="compiled_package_identity_mismatch"):
+        load_qualified_csg_scenario(
+            loader,
+            scenario=scenario,
+            qualifications=[qualification],
+            compiled_packages={
+                qualification.package_ref: replace(compiled, package_ref="other.package@1")
+            },
+        )
+
     relationship_drift = replace(
         compiled,
         relationships=(
