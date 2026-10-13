@@ -100,7 +100,25 @@ def _completion_evidence_is_structurally_complete(value: Any) -> bool:
     binding = value["receipt_binding"]
     if not isinstance(binding, Mapping) or set(binding) != set(_RECEIPT_BINDING_FIELDS):
         return False
-    return binding.get("durable_ack") is True
+    if binding.get("durable_ack") is not True:
+        return False
+    if binding.get("receipt_id") != value["receipt_id"]:
+        return False
+    for field in (
+        "receipt_id",
+        "run_id",
+        "attempt_id",
+        "host_boot_id",
+        "writer_generation",
+    ):
+        if not isinstance(binding.get(field), str) or not binding[field].strip():
+            return False
+    for field in ("backend_system_graph_sha256", "native_validation_evidence_sha256"):
+        if not isinstance(binding.get(field), str) or re.fullmatch(
+            r"[0-9a-f]{64}", binding[field]
+        ) is None:
+            return False
+    return True
 
 
 def _scenario_projection(experiment: Experiment, repo_root: str | Path | None) -> dict[str, Any]:
