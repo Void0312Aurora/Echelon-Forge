@@ -5,6 +5,8 @@ from dataclasses import replace
 from types import SimpleNamespace
 
 from python.mechanisms.ports import (
+    FreshnessVocabulary,
+    FreshnessVocabularyEntry,
     GraphEdge,
     MechanismGraphError,
     MechanismSchemaVocabulary,
@@ -250,6 +252,63 @@ def test_freshness_is_part_of_edge_and_composite_compatibility() -> None:
 
     with pytest.raises(ValueError, match="freshness"):
         PortSpec("invalid", "Track.v1", freshness="")
+
+
+def test_owner_freshness_vocabulary_rejects_unknown_labels_and_binds_identity() -> None:
+    vocabulary = FreshnessVocabulary(
+        vocabulary_id="test.owner.freshness",
+        version="1",
+        entries=(
+            FreshnessVocabularyEntry("per_window", "native.window_owner"),
+            FreshnessVocabularyEntry("per_tick", "native.tick_owner"),
+        ),
+    )
+    producer = MechanismSpec(
+        "producer",
+        "1",
+        outputs=(PortSpec("out", "Track.v1", freshness="per_window"),),
+    )
+    consumer = MechanismSpec(
+        "consumer",
+        "1",
+        inputs=(PortSpec("in", "Track.v1", freshness="per_window"),),
+    )
+    graph = compile_mechanism_graph(
+        "owned-freshness",
+        {"p": producer, "c": consumer},
+        (GraphEdge("p", "out", "c", "in"),),
+        freshness_vocabulary=vocabulary,
+    )
+    assert graph.valid
+    assert graph.freshness_vocabulary_ref == vocabulary.vocabulary_id
+    assert graph.freshness_vocabulary_version == vocabulary.version
+    assert graph.freshness_vocabulary_digest == vocabulary.identity_digest
+    assert graph.as_dict()["freshness_vocabulary"]["identity_digest"] == vocabulary.identity_digest
+
+    unknown = compile_mechanism_graph(
+        "owned-freshness",
+        {"p": replace(producer, outputs=(PortSpec("out", "Track.v1", freshness="per_frame"),)), "c": consumer},
+        (GraphEdge("p", "out", "c", "in"),),
+        freshness_vocabulary=vocabulary,
+    )
+    assert ("mechanism.freshness_unknown", "nodes.p.outputs.out") in {
+        (item.code, item.path) for item in unknown.diagnostics
+    }
+
+    changed = replace(
+        vocabulary,
+        entries=(
+            FreshnessVocabularyEntry("per_window", "native.window_owner.v2"),
+            FreshnessVocabularyEntry("per_tick", "native.tick_owner"),
+        ),
+    )
+    changed_graph = compile_mechanism_graph(
+        "owned-freshness",
+        {"p": producer, "c": consumer},
+        (GraphEdge("p", "out", "c", "in"),),
+        freshness_vocabulary=changed,
+    )
+    assert changed_graph.identity_digest != graph.identity_digest
 
 
 def test_unknown_required_input_and_truth_boundary_fail_closed() -> None:
