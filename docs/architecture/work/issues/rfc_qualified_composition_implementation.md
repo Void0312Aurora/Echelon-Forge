@@ -212,11 +212,12 @@ merge into main, accept the proposed ADRs or close RFC issues.
    existing `DecisionRuntimeAgent`, carries policy/version and observation
    provenance into the model context, and validates produced actions before
    returning them. An owner-issued checkpoint metadata contract now binds the
-   artifact digest and observation/action versions before binding. Qualify the
-   full selected observation view, native action endpoint and a real external
-   model/checkpoint. The checkpoint seam now verifies artifact bytes before
-   handing them to an owner-provided loader; the loader remains responsible
-   for framework deserialization. Preserve existing legacy runtime/report
+   artifact digest and observation/action versions before binding. The
+   checkpoint seam verifies artifact bytes before handing them to an
+   owner-provided loader, and a validated action can be handed to an explicit
+   owner projector. Qualify the full selected observation view, wire those
+   seams to the production native endpoint and a real external model/checkpoint.
+   Preserve existing legacy runtime/report
    consumers until migration is accepted.
 6. **#239 host evidence join.** Have the existing host bind the input-lock
    digest into its actual RunReceipt inputs, verify durable completion and join
