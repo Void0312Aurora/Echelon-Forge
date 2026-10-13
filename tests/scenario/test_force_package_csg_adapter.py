@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from copy import deepcopy
+import math
 
 import pytest
 
@@ -159,11 +160,45 @@ def test_full_csg_qualification_preserves_native_geometry_inventory_and_replay(s
     ) is None
     assert {key: loader.scenario_data[key] for key in snapshot} == snapshot
     assert loader._compiled_runtime_metadata.meta_config["csg"] == snapshot["meta"]["csg"]
+
+    # Bind the qualification result to the native materialization directly.
+    # The replay helper is intentionally a separate spectator projection; its
+    # equality alone would not prove that the qualified package names resolve
+    # to the expected native entities and anchored coordinates.
+    entity_config = {
+        str(entity["name"]): entity
+        for entity in snapshot["entities"]
+        if isinstance(entity, dict) and str(entity.get("name", "")).strip()
+    }
+    groups = {str(group["group_id"]): group for group in snapshot["meta"]["csg"]["groups"]}
+    initial_positions = {}
+    for qualification in results:
+        group = groups[qualification.group_id]
+        inventory = group["embarked_inventory"]
+        assert inventory
+        assert sum(int(row["count"]) for row in inventory) > 0
+        assert all(str(row["embarked_on"]).strip() for row in inventory)
+        assert all(str(row["type"]).strip() for row in inventory)
+        for _, name in qualification.entity_bindings:
+            assert name in loader.entities
+            expected = entity_config[name]
+            runtime_id = int(loader.entities[name])
+            native_position = tuple(float(value) for value in loader.sim.get_unit_position(runtime_id))
+            assert native_position == pytest.approx(tuple(float(value) for value in expected["pos"]))
+            assert all(math.isfinite(value) for value in native_position)
+            initial_positions[runtime_id] = native_position
+
     for frame in reference["frames"]:
         if frame["tick"]:
             loader.sim.step()
         assert _csg_replay_unit_frame(loader.sim, loader) == frame["units"]
     assert len(reference["frames"]) == 241
+
+    # The S0 scenarios are static.  A real native step must retain the
+    # qualified hull layout while still advancing the native world.
+    loader.sim.step()
+    for runtime_id, expected in initial_positions.items():
+        assert tuple(float(value) for value in loader.sim.get_unit_position(runtime_id)) == pytest.approx(expected)
     assert scenario.instantiate() == snapshot
 
 
