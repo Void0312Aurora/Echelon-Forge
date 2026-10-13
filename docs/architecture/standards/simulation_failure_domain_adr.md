@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/simulation_failure_domain_adr.md`
 Owner: `architecture/failure-contracts`
-Last verified: `2026-10-12`
+Last verified: `2026-10-13`
 
 **Status:** proposed contract; no new host, transaction engine or production
 cutover is authorized. The upstream `main` line is not treated as enforcing
@@ -44,12 +44,15 @@ contract. It does not infer a state transition from an exception alone.
 | --- | --- | --- | --- |
 | `healthy` | The generation has no recorded failure fence | Admitted setup, step, read-only export and reset according to the owning API | Successful operation or successful reset evidence |
 | `failed/untrusted` | A preflight-safe failure, worker fault or post-mutation uncertainty has been recorded; rollback is not implied | Diagnostics and an explicit reset/recreate; no mutating retry or synchronized-success export | A successful reset/recreate that reinitializes the complete expected world scope |
+| `failed/host-recreate-required` | A running Flecs callback left readonly/defer scopes unfinished | Diagnostics and host retirement; reset, step and synchronized exports remain fenced | A separate replacement host initializes and successfully runs a fresh native batch |
 | `healthy` after reset | A new usable generation was initialized | Normal operations for the new generation | Reset result plus native state/setup evidence; this is not proof of rollback |
 
-The current branch can prove the second row for injected worker-launch and
-task faults on the tested native path. It cannot yet prove native-issued
-generation identifiers, reliable per-world commit publication, cancellation,
-or containment of `abort`, process death, deadlock or nontermination.
+The current branch proves native-issued generation identity, the reset path for
+tested setup/launch faults, and terminal host recreation for an injected running
+system exception. Bounded subprocess controls observe fatal exit and kill/reap a
+nonterminating callback, followed by successful replacement-host startup. They
+do not establish production supervisor isolation, reliable per-world commit,
+rollback, cancellation or safe teardown of an interrupted Flecs world.
 
 ## Outcome contract
 
@@ -111,8 +114,11 @@ with all affected worlds unknown and generation termination required; it does
 not claim to provide the supervisor or isolate a blocked native call.
 The native batch proof also injects a worker-launch failure and checks that joined
 workers, guarded exports, failed recovery and explicit reset remain fail-closed.
-These local changes are not an upstream #210 closure. An exception inside a running
-native system and bounded fatal/nontermination controls remain separate
-qualification gates.
+These local changes are not an upstream #210 closure. The running-system probe
+mutates native ECS state before throwing; it verifies that unfinished pipeline
+scopes reject reset and raw step, while the batch owner reports
+`batch_requires_host_recreate()`. Python translates that native decision into
+`terminate_generation`. Dangerous controls run only in disposable subprocesses;
+the damaged exception-test process exits without claiming safe Flecs teardown.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.
