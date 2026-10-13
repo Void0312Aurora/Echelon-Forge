@@ -456,6 +456,21 @@ def compare_resolved_input_locks(
             differences.append(axis)
     left_native = left_data["native_runtime"]
     right_native = right_data["native_runtime"]
+    if (
+        left_native.get("input_lock_semantics_executed") is not True
+        or right_native.get("input_lock_semantics_executed") is not True
+    ):
+        differences.append("input_lock_semantics_executed")
+    left_mode = left_native.get("host_mode")
+    right_mode = right_native.get("host_mode")
+    if (
+        not isinstance(left_mode, str)
+        or not left_mode.strip()
+        or not isinstance(right_mode, str)
+        or not right_mode.strip()
+        or left_mode != right_mode
+    ):
+        differences.append("host_mode")
     for field in _REQUIRED_NATIVE_IDENTITY_FIELDS:
         left_value = left_native.get(field)
         right_value = right_native.get(field)

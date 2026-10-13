@@ -66,6 +66,8 @@ def _native(topology: str = "topo-a") -> dict[str, str]:
         "resolved_manifest_sha256": "1" * 64,
         "executable_graph_sha256": "2" * 64,
         "realized_topology_digest": hashlib.sha256(topology.encode()).hexdigest(),
+        "host_mode": "native_cpp",
+        "input_lock_semantics_executed": True,  # Synthetic owner-contract observation.
     }
 
 
@@ -181,6 +183,27 @@ def test_completed_locks_require_same_realized_topology() -> None:
     assert result.differences == ("realized_topology_digest",)
 
 
+@pytest.mark.parametrize("host_mode", ["dark", "shadow", "", None])
+def test_candidate_or_missing_host_scope_cannot_compare_with_production(host_mode) -> None:
+    left = _completed_lock(_experiment(), _registry())
+    native = _native()
+    native["host_mode"] = host_mode
+    right = _completed_lock(_experiment(), _registry(), native_runtime=native)
+    result = compare_resolved_input_locks(left, right, intentional_axes=frozenset({"host_mode"}))
+    assert not result.comparable
+    assert result.differences == ("host_mode",)
+
+
+@pytest.mark.parametrize("executed", [False, None])
+def test_referenced_input_lock_is_not_executed_experiment_evidence(executed) -> None:
+    native = _native()
+    native["input_lock_semantics_executed"] = executed
+    completed = _completed_lock(_experiment(), _registry(), native_runtime=native)
+    result = compare_resolved_input_locks(completed, completed)
+    assert not result.comparable
+    assert result.differences == ("input_lock_semantics_executed",)
+
+
 def test_policy_only_axis_can_be_declared_intentional() -> None:
     left = _completed_lock(
         _experiment(),
@@ -205,7 +228,11 @@ def test_completed_comparison_requires_complete_native_identity() -> None:
         _experiment(),
         _registry(),
         status="completed",
-        native_runtime={"realized_topology_digest": _native()["realized_topology_digest"]},
+        native_runtime={
+            "realized_topology_digest": _native()["realized_topology_digest"],
+            "host_mode": "native_cpp",
+            "input_lock_semantics_executed": True,
+        },
     )
     right = _completed_lock(
         _experiment(),

@@ -963,6 +963,16 @@ bool collect_runtime_execution_bindings_json(const RuntimeExecutionProvenanceSou
             {"artifacts",
              Json{{"request", request_sha}, {"resolved_execution_plan", plan_blob_sha256}}},
         };
+        if (!sources.resolved_input_lock_path.empty()) {
+            const auto lock_bytes = read_file_bytes(sources.resolved_input_lock_path, detail);
+            if (!lock_bytes.has_value()) return false;
+            if (!Json::parse(*lock_bytes).is_object()) {
+                detail = "resolved input lock source must be a JSON object";
+                return false;
+            }
+            observed["inputs"]["artifacts"]["resolved_input_lock"] =
+                runtime::authority_contracts::sha256_hex(*lock_bytes);
+        }
         observed["backend"] = {
             {"profile_id", plan_payload.at("backend").at("profile_id")},
             {"backend_provider_id", plan_payload.at("backend").at("provider_id")},
