@@ -35,13 +35,14 @@ tensor 顺序和 provenance。legacy `model_kind` 通过分阶段显式 bridge �
 生命周期，保留 observation provenance，并在动作返回现有 runtime 前校验。owner 签发的
 `PolicyCheckpoint` 元数据契约现在可以在 binding 前绑定 artifact digest 以及 policy、observation、
 action 身份。新增的 checkpoint seam 会先校验不可变 artifact bytes，再交给 owner 提供的 loader；
-framework 反序列化和模型构造仍由 owner 负责。此层不会自动接纳 Python 或第三方代码；通过生产
-owner 加载真实外部 checkpoint 或迁移 native action endpoint 仍待验收。
+framework 反序列化和模型构造仍由 owner 负责。binding 还可在契约校验后把 action 交给显式
+owner projector，生产 native action endpoint 的实际 wiring 仍待验收。此层不会自动接纳 Python
+或第三方代码；通过生产 owner 加载真实外部 checkpoint 仍待验收。
 
 ## 方案比较与实现检查点
 
 方案比较以英文规范页的 Option comparison 为准。
 
-试点复用 mission_obs_taxonomy 的 basic 任务字段和现有 Air action 维度、边界，校验来源、frame、时序、显式可选默认值、确定性选择及 legacy kind。binding 通过现有 `DecisionRuntimeAgent` 运行，模型仍拥有 reset/decide/close 和 domain action DTO。checkpoint digest 校验及 owner-loader 协议 seam 已覆盖；完整 observation view、生产外部 checkpoint 加载与 native action endpoint 迁移仍待验收。
+试点复用 mission_obs_taxonomy 的 basic 任务字段和现有 Air action 维度、边界，校验来源、frame、时序、显式可选默认值、确定性选择及 legacy kind。binding 通过现有 `DecisionRuntimeAgent` 运行，模型仍拥有 reset/decide/close；校验后的 action 可交给显式 owner projector 生成 domain DTO。checkpoint digest 校验及 owner-loader 协议 seam 已覆盖；完整 observation view、生产外部 checkpoint 加载与 native action endpoint wiring 仍待验收。
 
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。

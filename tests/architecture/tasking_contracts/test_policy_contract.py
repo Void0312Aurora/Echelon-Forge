@@ -441,3 +441,32 @@ def test_policy_runtime_binding_rejects_owner_action_before_projection() -> None
             context={},
             dt=0.0,
         )
+
+
+def test_policy_runtime_binding_can_delegate_action_projection_to_owner_endpoint() -> None:
+    policy = _policy()
+    admission = admit_policy(
+        policy,
+        _binding(),
+        field_catalogue=_catalogue(),
+        observation_version=(1, 1),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+    )
+    projected: list[tuple[float, ...]] = []
+    binding = PolicyRuntimeBinding(
+        policy,
+        admission,
+        _BoundModel(),
+        bounds=((-1, 1),) * 4,
+        timing="window",
+        action_projector=lambda action: projected.append(tuple(action)) or {"native": tuple(action)},
+    )
+    binding.reset(context={})
+    result = binding.decide(
+        observation={"ownship.velocity": [1.0, 2.0, 3.0]},
+        context={},
+        dt=0.0,
+    )
+    assert result == {"native": (0.0, 0.5, 0.0, -0.5)}
+    assert projected == [(0.0, 0.5, 0.0, -0.5)]

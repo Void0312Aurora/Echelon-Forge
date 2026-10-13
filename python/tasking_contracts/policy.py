@@ -272,6 +272,7 @@ class PolicyRuntimeBinding:
         optional_defaults: Mapping[str, Any] | None = None,
         observation_projector: Callable[[tuple[Any, ...], tuple[str, ...]], Any] | None = None,
         action_values: Callable[[Any], Sequence[float]] | None = None,
+        action_projector: Callable[[Any], Any] | None = None,
     ) -> None:
         if not admission.admitted or admission.policy_id != policy.policy_id:
             raise ValueError("policy.runtime_binding_not_admitted")
@@ -291,6 +292,9 @@ class PolicyRuntimeBinding:
         self.optional_defaults = dict(optional_defaults or {})
         self._observation_projector = observation_projector or (lambda values, _sources: values)
         self._action_values = action_values or self._default_action_values
+        self._action_projector = action_projector or (lambda value: value)
+        if not callable(self._action_projector):
+            raise TypeError("policy action_projector must be callable")
 
     @property
     def model_kind(self) -> str | None:
@@ -345,7 +349,7 @@ class PolicyRuntimeBinding:
         )
         if errors:
             raise ValueError(";".join(errors))
-        return action
+        return self._action_projector(action)
 
     def close(self) -> None:
         self.model.close()
