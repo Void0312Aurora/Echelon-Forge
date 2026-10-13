@@ -33,7 +33,7 @@ composition diagnostics and resize operation received the same failure guard.
 | RFC | Implemented in this checkpoint | Evidence and limits |
 | --- | --- | --- |
 | #229 | Complete recursive boundaries; capability/clock/backend inheritance; incompatible information layers, clocks and multiple producers reject. Immutable parameters, backend references and clock policies participate in identity. Two native Air seeker primitive adapters and one stateful CV tracker share a qualification configuration. A bounded adapter now binds compiled nodes to an owner-provided StageNodeManifest snapshot and reuses realized-order evidence. | Native LOS conversion and world-position reconstruction feed the actual CV tracker. Four timesteps reach the same four-second horizon under a fixed measurement schedule. Missing, duplicate, incomplete or adapter-only stage evidence rejects before qualification. A child exception after native state mutation but before outer publication reuses #251's unknown-state projection. These are bounded proofs, not installation of an authored execution graph. |
-| #236 | Numeric bounds, blueprint constraints, module digests and native reference selections participate in plan identity. Bounded mass, power-budget and slot-mount compatibility checks now fail closed before publication. An explicit immutable legacy projection returns existing UnitDefinition JSON and rejects missing fields or changed module bindings before loading. The opt-in `platform_blueprint_adapter` now projects a resolved plan to the maintained typed request shape, rejects slot/cardinality, module identity and native capability-family drift before DTO publication, and can compare shared source type/capability semantics with a factory-resolved plan. The native validator rejects source, bundle and resolved-capability drift. | F-16 and Ground infantry are lowered, loaded and spawned through existing native owners. All public observation fields match at setup and after four steps. A separate F-16 assembly reaches `RuntimeFacade` through the maintained typed setup and matches `WorldSpawnRequest` at setup and after four steps. Hardpoint/loadout semantics and broader unit compatibility remain open. |
+| #236 | Numeric bounds, blueprint constraints, module digests and native reference selections participate in plan identity. Bounded mass, power-budget and slot-mount compatibility checks now fail closed before publication. Explicit hardpoint contracts and loadout selections validate mount class, allowed module kind, quantity, capacity, module physical metadata and native identity before publication; all of those values participate in the canonical plan identity. The immutable legacy projection now requires an explicit loadout path and rejects missing or mismatched loadout evidence instead of silently dropping selected modules. The opt-in `platform_blueprint_adapter` still projects a resolved plan to the maintained typed request shape, rejects slot/cardinality, module identity and native capability-family drift before DTO publication, and can compare shared source type/capability semantics with a factory-resolved plan. The native validator rejects source, bundle and resolved-capability drift. | F-16 and Ground infantry are lowered, loaded and spawned through existing native owners. All public observation fields match at setup and after four steps. A separate F-16 assembly reaches `RuntimeFacade` through the maintained typed setup and matches `WorldSpawnRequest` at setup and after four steps. Hardpoint/loadout qualification is covered by focused validation and projection tests; broader native unit compatibility and owner production review remain open. |
 | #237 | Relationships survive compilation and hashing with instance-scoped endpoints; reused packages expand independently; nested role capability requirements are checked; frame/anchor/provenance references survive in package-instance evidence. A qualification adapter now binds one compiled package to an existing CSG group by explicit entity-name and assembly-type maps, records CSG schema, scenario, geometry and embarked-inventory digests, and delegates the complete qualified snapshot to the existing loader. | Recursive, full named/mirror CSG, loader and negative fixtures. Both full S0 fixtures bind all seven surface hulls per group; native loader positions and 241 replay frames match. In-memory coordinate, inventory, geometry and runtime-metadata drift is rejected before loading. CSG still owns coordinate expansion, geodesy, embarked inventory and native scenario materialization. It does not install task authority or replace the CSG compiler. |
 | #238 | Field provenance/frame checks, explicit optional defaults with preserved field order, action bounds/timing checks, deterministic policy selection, a legacy-kind compatibility gate and an admitted binding through `DecisionRuntimeAgent`. An owner-issued `PolicyCheckpoint` metadata contract now checks artifact digest, policy/version and observation/action contract identity before binding. | Basic mission fields come from the mission packet owner, action dimensions from the existing native action adapter, and action bounds from the existing Gym space. The binding preserves the existing model reset/decide/close lifecycle, carries verified checkpoint provenance when supplied, and validates the produced action before returning it. The learned registration still uses a deterministic stand-in; no external checkpoint bytes are loaded by this layer. |
 | #239 | Deeply immutable canonical input identity, semantic freshness checks on compiled scenario snapshots, ScenarioCompiler dependency projection, separate observed native manifest/graph/topology identity, and a host receipt binding join to the existing RunReceipt validator. | One existing Air matrix entry produces a static candidate with explicit effective seeds. Source changes and in-memory semantic snapshot changes reject. The join preserves receipt/run/host/generation, backend graph, native validator evidence and durable acknowledgement, while receipt/comparability fixtures remain synthetic owner-contract vectors rather than durable production run records. A string `status=completed` alone cannot establish comparability. |
@@ -200,10 +200,12 @@ merge into main, accept the proposed ADRs or close RFC issues.
    `WorldBatchRuntime` query, preserving the factory as the only materialization
    owner. The qualification bridge now uses an explicit, versioned
    authored-key to native-family mapping and includes its digest in the typed
-   request identity; a supplied factory plan still decides admission. Owner
-   review is still required for the mapping's production contract, explicit
-   unit contracts, hardpoint/loadout semantics and broader physical
-   compatibility before any production consumer is enabled.
+   request identity; a supplied factory plan still decides admission. Explicit
+   hardpoint contracts and loadout selections now validate mount class, allowed
+   kind, quantity, capacity, physical metadata and native identity, and legacy
+   lowering requires a declared loadout path. Owner review is still required
+   for the mapping's production contract, explicit unit contracts and broader
+   native physical compatibility before any production consumer is enabled.
 4. **#237 CSG migration proof.** Consume compiled organization through the
    existing CSG/scenario placement adapter; compare generated entities, anchored
    geometry, embarked inventory and native results. Keep separate membership,
@@ -294,16 +296,20 @@ not synthesize entities or grant command authority.
 The physical compatibility slice for #236 is bounded and fail-closed. A
 blueprint may declare finite mass and power budgets plus slot mount classes;
 constrained assemblies require those module fields, use deterministic sorted
-`math.fsum` totals, and bind the physical tuple into plan identity. Legacy
-unconstrained modules remain valid with unknown physical values. The native
-factory projection seam is now covered by native and Python binding tests, but
-the adapter comparison now fails closed unless the supplied native plan is
-admitted and its capability family, type, implementation reference and
-required/supported flags match. The bridge binds a versioned canonical
-authored-key to native-family mapping, records its digest in the typed request
-identity and rejects unknown keys before DTO publication. This remains a
-qualification mapping until the native owner reviews its production contract.
-Hardpoint, loadout and broader unit contracts remain open owner gates.
+`math.fsum` totals, and bind the physical tuple into plan identity. Explicit
+hardpoint contracts and loadout selections additionally bind mount class,
+allowed kind, quantity, capacity, module digest/native reference and physical
+parameters into the plan identity. Missing loadout physical metadata, capacity
+overflow, incompatible mount/kind selections and undeclared legacy loadout
+paths reject before projection. Legacy unconstrained modules remain valid with
+unknown physical values. The native factory projection seam is now covered by
+native and Python binding tests, but the adapter comparison still fails closed
+unless the supplied native plan is admitted and its capability family, type,
+implementation reference and required/supported flags match. The bridge binds a
+versioned canonical authored-key to native-family mapping, records its digest in
+the typed request identity and rejects unknown keys before DTO publication.
+This remains a qualification mapping until the native owner reviews its
+production contract; broader unit compatibility remains open.
 
 The qualification modules, catalogue helpers, tests and proposed documents remain
 opt-in. Configuration formats, native scheduling, production profiles and

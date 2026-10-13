@@ -22,6 +22,7 @@ from python.content.capability_bundles.registry import (
 )
 from python.content.platform_blueprint import (
     LegacyUnitProjection,
+    LoadoutSelection,
     ModuleRecord,
     PlatformAssemblyError,
     PlatformBlueprint,
@@ -220,6 +221,10 @@ def to_expanded_typed_platform_request(
         selections=tuple(ModuleSelection(slot, ref) for slot, ref in plan.modules),
         modules=indexed_modules,
         parameter_overrides=dict(plan.parameter_overrides),
+        loadout=tuple(
+            LoadoutSelection(hardpoint, ref, quantity)
+            for hardpoint, ref, quantity in plan.loadout
+        ),
     )
     if canonical_plan != plan:
         raise PlatformAssemblyError("platform.native_plan_identity_mismatch")

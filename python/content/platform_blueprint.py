@@ -70,6 +70,47 @@ class ModuleRecord:
 
 
 @dataclass(frozen=True)
+class HardpointContract:
+    """Qualification contract for one loadout station."""
+
+    hardpoint_id: str
+    mount_class: str
+    capacity_kg: float | None = None
+    allowed_kinds: frozenset[str] = frozenset()
+
+    def __post_init__(self) -> None:
+        if not self.hardpoint_id.strip() or not self.mount_class.strip():
+            raise ValueError("hardpoint identity and mount_class are required")
+        object.__setattr__(
+            self,
+            "capacity_kg",
+            _optional_nonnegative_number(self.capacity_kg, "hardpoint capacity_kg"),
+        )
+        object.__setattr__(self, "allowed_kinds", frozenset(self.allowed_kinds))
+        if any(not isinstance(kind, str) or not kind.strip() for kind in self.allowed_kinds):
+            raise ValueError("hardpoint allowed_kinds must be non-empty strings")
+
+
+@dataclass(frozen=True)
+class LoadoutSelection:
+    """One explicit module assignment to a declared hardpoint."""
+
+    hardpoint_id: str
+    module_ref: str
+    quantity: int = 1
+
+    def __post_init__(self) -> None:
+        if not self.hardpoint_id.strip() or not self.module_ref.strip():
+            raise ValueError("loadout hardpoint_id and module_ref are required")
+        if (
+            isinstance(self.quantity, bool)
+            or not isinstance(self.quantity, int)
+            or self.quantity <= 0
+        ):
+            raise ValueError("loadout quantity must be a positive integer")
+
+
+@dataclass(frozen=True)
 class PlatformBlueprint:
     blueprint_id: str
     version: str
@@ -81,6 +122,7 @@ class PlatformBlueprint:
     mass_limit_kg: float | None = None
     power_budget_kw: float | None = None
     slot_mount_requirements: tuple[tuple[str, str], ...] = ()
+    hardpoints: tuple[HardpointContract, ...] = ()
 
     def __post_init__(self) -> None:
         if (
@@ -122,6 +164,12 @@ class PlatformBlueprint:
             raise ValueError("slot mount requirements must be unique")
         if any(slot not in dict(self.slots) or not isinstance(mount, str) or not mount.strip() for slot, mount in self.slot_mount_requirements):
             raise ValueError("slot mount requirements must reference known slots")
+        hardpoints = tuple(self.hardpoints)
+        if any(not isinstance(item, HardpointContract) for item in hardpoints):
+            raise TypeError("hardpoints must contain HardpointContract values")
+        if len({item.hardpoint_id for item in hardpoints}) != len(hardpoints):
+            raise ValueError("blueprint hardpoints must be unique")
+        object.__setattr__(self, "hardpoints", hardpoints)
 
     def expected_kind(self, slot: str) -> str | None:
         return dict(self.slots).get(slot)
@@ -149,6 +197,12 @@ class ResolvedPlatformSpawnPlan:
     module_digests: tuple[tuple[str, str], ...] = ()
     native_module_refs: tuple[tuple[str, str], ...] = ()
     module_physical_parameters: tuple[tuple[str, float | None, float | None, tuple[str, ...]], ...] = ()
+    loadout: tuple[tuple[str, str, int], ...] = ()
+    loadout_module_digests: tuple[tuple[str, str], ...] = ()
+    loadout_native_refs: tuple[tuple[str, str], ...] = ()
+    loadout_physical_parameters: tuple[
+        tuple[str, float | None, float | None, tuple[str, ...], int], ...
+    ] = ()
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -170,6 +224,22 @@ class ResolvedPlatformSpawnPlan:
                     "mount_classes": list(mounts),
                 }
                 for slot, mass, power, mounts in self.module_physical_parameters
+            ],
+            "loadout": [
+                {"hardpoint_id": hardpoint, "module_ref": module, "quantity": quantity}
+                for hardpoint, module, quantity in self.loadout
+            ],
+            "loadout_module_digests": dict(self.loadout_module_digests),
+            "loadout_native_refs": dict(self.loadout_native_refs),
+            "loadout_physical_parameters": [
+                {
+                    "hardpoint_id": hardpoint,
+                    "mass_kg": mass,
+                    "power_draw_kw": power,
+                    "mount_classes": list(mounts),
+                    "quantity": quantity,
+                }
+                for hardpoint, mass, power, mounts, quantity in self.loadout_physical_parameters
             ],
         }
 
@@ -197,6 +267,7 @@ def resolve_platform_assembly(
     selections: Sequence[ModuleSelection],
     modules: Mapping[str, ModuleRecord],
     parameter_overrides: Mapping[str, Any] | None = None,
+    loadout: Sequence[LoadoutSelection] = (),
 ) -> ResolvedPlatformSpawnPlan:
     """Resolve an assembly before publication to the native factory."""
 
@@ -226,7 +297,50 @@ def resolve_platform_assembly(
         selected[selection.slot] = module
     missing_slots = sorted(set(expected_slots) - set(selected))
     errors.extend(f"platform.required_slot_missing:modules.{slot}" for slot in missing_slots)
-    all_capabilities = frozenset().union(*(module.capabilities for module in selected.values()))
+    hardpoints = {item.hardpoint_id: item for item in blueprint.hardpoints}
+    selected_loadout: dict[str, tuple[ModuleRecord, int]] = {}
+    if loadout and not hardpoints:
+        errors.append("platform.loadout_hardpoints_undeclared")
+    for index, selection in enumerate(loadout):
+        path = f"loadout[{index}]"
+        if selection.hardpoint_id in selected_loadout:
+            errors.append(
+                f"platform.duplicate_hardpoint:{path}.hardpoint_id:{selection.hardpoint_id}"
+            )
+            continue
+        hardpoint = hardpoints.get(selection.hardpoint_id)
+        if hardpoint is None:
+            errors.append(
+                f"platform.unknown_hardpoint:{path}.hardpoint_id:{selection.hardpoint_id}"
+            )
+            continue
+        module = modules.get(selection.module_ref)
+        if module is None:
+            errors.append(
+                f"platform.loadout_module_unknown:{path}.module_ref:{selection.module_ref}"
+            )
+            continue
+        if hardpoint.allowed_kinds and module.kind not in hardpoint.allowed_kinds:
+            errors.append(
+                f"platform.loadout_kind_mismatch:{path}.module_ref:{selection.module_ref}:{module.kind}"
+            )
+        if hardpoint.mount_class not in module.mount_classes:
+            errors.append(
+                f"platform.loadout_mount_class_mismatch:{path}:{hardpoint.mount_class}"
+            )
+        if hardpoint.capacity_kg is not None:
+            if module.mass_kg is None:
+                errors.append(f"platform.loadout_physical_metadata_missing:{path}:mass_kg")
+            elif module.mass_kg * selection.quantity > hardpoint.capacity_kg:
+                errors.append(
+                    f"platform.loadout_capacity_exceeded:{path}:"
+                    f"{module.mass_kg * selection.quantity}>{hardpoint.capacity_kg}"
+                )
+        selected_loadout[selection.hardpoint_id] = (module, selection.quantity)
+    all_capabilities = frozenset().union(
+        *(module.capabilities for module in selected.values()),
+        *(module.capabilities for module, _ in selected_loadout.values()),
+    )
     missing_capabilities = sorted(blueprint.required_capabilities - all_capabilities)
     errors.extend(
         f"platform.required_capability_missing:capabilities.{capability}"
@@ -236,8 +350,20 @@ def resolve_platform_assembly(
     if blueprint.mass_limit_kg is not None:
         missing_mass = sorted(slot for slot, module in selected.items() if module.mass_kg is None)
         errors.extend(f"platform.physical_metadata_missing:modules.{slot}:physical.mass_kg" for slot in missing_mass)
-        if not missing_mass:
-            total_mass_kg = _physical_total([module.mass_kg for _, module in sorted(selected.items())])
+        loadout_missing_mass = sorted(
+            hardpoint
+            for hardpoint, (module, _) in selected_loadout.items()
+            if module.mass_kg is None
+        )
+        errors.extend(
+            f"platform.physical_metadata_missing:loadout.{hardpoint}:physical.mass_kg"
+            for hardpoint in loadout_missing_mass
+        )
+        if not missing_mass and not loadout_missing_mass:
+            total_mass_kg = _physical_total(
+                [module.mass_kg for _, module in sorted(selected.items())]
+                + [module.mass_kg * quantity for module, quantity in selected_loadout.values()]
+            )
             if total_mass_kg > blueprint.mass_limit_kg:
                 errors.append(
                     f"platform.mass_limit_exceeded:physical.mass_kg:{total_mass_kg}>{blueprint.mass_limit_kg}"
@@ -245,8 +371,20 @@ def resolve_platform_assembly(
     if blueprint.power_budget_kw is not None:
         missing_power = sorted(slot for slot, module in selected.items() if module.power_draw_kw is None)
         errors.extend(f"platform.physical_metadata_missing:modules.{slot}:physical.power_draw_kw" for slot in missing_power)
-        if not missing_power:
-            total_power_draw_kw = _physical_total([module.power_draw_kw for _, module in sorted(selected.items())])
+        loadout_missing_power = sorted(
+            hardpoint
+            for hardpoint, (module, _) in selected_loadout.items()
+            if module.power_draw_kw is None
+        )
+        errors.extend(
+            f"platform.physical_metadata_missing:loadout.{hardpoint}:physical.power_draw_kw"
+            for hardpoint in loadout_missing_power
+        )
+        if not missing_power and not loadout_missing_power:
+            total_power_draw_kw = _physical_total(
+                [module.power_draw_kw for _, module in sorted(selected.items())]
+                + [module.power_draw_kw * quantity for module, quantity in selected_loadout.values()]
+            )
             if total_power_draw_kw > blueprint.power_budget_kw:
                 errors.append(
                     f"platform.power_budget_exceeded:physical.power_draw_kw:{total_power_draw_kw}>{blueprint.power_budget_kw}"
@@ -295,6 +433,36 @@ def resolve_platform_assembly(
             for slot, module in selected.items()
         )
     )
+    normalized_loadout = tuple(
+        sorted(
+            (hardpoint, module.module_id + "@" + module.version, quantity)
+            for hardpoint, (module, quantity) in selected_loadout.items()
+        )
+    )
+    loadout_module_digests = tuple(
+        sorted(
+            (hardpoint, module.content_digest)
+            for hardpoint, (module, _) in selected_loadout.items()
+        )
+    )
+    loadout_native_refs = tuple(
+        sorted(
+            (hardpoint, module.native_ref)
+            for hardpoint, (module, _) in selected_loadout.items()
+        )
+    )
+    loadout_physical_parameters = tuple(
+        sorted(
+            (
+                hardpoint,
+                module.mass_kg,
+                module.power_draw_kw,
+                tuple(sorted(module.mount_classes)),
+                quantity,
+            )
+            for hardpoint, (module, quantity) in selected_loadout.items()
+        )
+    )
     identity_payload = {
         "schema_version": SCHEMA_VERSION,
         "assembly_id": assembly_id,
@@ -306,6 +474,10 @@ def resolve_platform_assembly(
         "module_digests": module_digests,
         "native_module_refs": native_module_refs,
         "module_physical_parameters": module_physical_parameters,
+        "loadout": normalized_loadout,
+        "loadout_module_digests": loadout_module_digests,
+        "loadout_native_refs": loadout_native_refs,
+        "loadout_physical_parameters": loadout_physical_parameters,
         "blueprint_contract": {
             "slots": sorted(blueprint.slots),
             "override_types": sorted(blueprint.override_types),
@@ -314,6 +486,15 @@ def resolve_platform_assembly(
             "mass_limit_kg": blueprint.mass_limit_kg,
             "power_budget_kw": blueprint.power_budget_kw,
             "slot_mount_requirements": sorted(blueprint.slot_mount_requirements),
+            "hardpoints": [
+                {
+                    "hardpoint_id": item.hardpoint_id,
+                    "mount_class": item.mount_class,
+                    "capacity_kg": item.capacity_kg,
+                    "allowed_kinds": sorted(item.allowed_kinds),
+                }
+                for item in sorted(blueprint.hardpoints, key=lambda value: value.hardpoint_id)
+            ],
         },
     }
     digest = hashlib.sha256(
@@ -337,6 +518,10 @@ def resolve_platform_assembly(
         module_digests=module_digests,
         native_module_refs=native_module_refs,
         module_physical_parameters=module_physical_parameters,
+        loadout=normalized_loadout,
+        loadout_module_digests=loadout_module_digests,
+        loadout_native_refs=loadout_native_refs,
+        loadout_physical_parameters=loadout_physical_parameters,
     )
 
 
@@ -348,10 +533,11 @@ class LegacyUnitProjection:
     definition: Mapping[str, Any]
     slot_paths: tuple[tuple[str, str], ...] = ()
     override_paths: tuple[tuple[str, str], ...] = ()
+    loadout_paths: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "definition", freeze_json_mapping(self.definition))
-        for paths in (self.slot_paths, self.override_paths):
+        for paths in (self.slot_paths, self.override_paths, self.loadout_paths):
             if len(dict(paths)) != len(paths) or len({path for _, path in paths}) != len(paths):
                 raise ValueError("projection paths must be unique")
 
@@ -372,6 +558,7 @@ def lower_to_legacy_unit_definition(
     document = thaw_json_value(projection.definition)
     slots = dict(projection.slot_paths)
     overrides = dict(projection.override_paths)
+    loadout_paths = dict(projection.loadout_paths)
     if set(slots) != {slot for slot, _ in plan.modules}:
         raise PlatformAssemblyError("platform.native_slot_projection_incomplete")
     by_ref = {f"{m.module_id}@{m.version}": m for m in modules.values()}
@@ -408,6 +595,41 @@ def lower_to_legacy_unit_definition(
         if actual_physical != physical_by_slot[slot]:
             raise PlatformAssemblyError(f"platform.native_module_physical_mismatch:modules.{slot}")
         assign(slots[slot], module.native_ref)
+    physical_by_loadout = {
+        entry[0]: entry[1:] for entry in plan.loadout_physical_parameters
+    }
+    if len(physical_by_loadout) != len(plan.loadout_physical_parameters):
+        raise PlatformAssemblyError("platform.native_loadout_physical_projection_duplicate")
+    for hardpoint, ref, quantity in plan.loadout:
+        if hardpoint not in loadout_paths:
+            raise PlatformAssemblyError(
+                f"platform.native_loadout_projection_missing:{hardpoint}"
+            )
+        module = by_ref.get(ref)
+        if module is None or not module.native_ref or not module.content_digest:
+            raise PlatformAssemblyError(
+                f"platform.native_loadout_module_evidence_missing:{hardpoint}:{ref}"
+            )
+        if (
+            dict(plan.loadout_module_digests).get(hardpoint) != module.content_digest
+            or dict(plan.loadout_native_refs).get(hardpoint) != module.native_ref
+        ):
+            raise PlatformAssemblyError(
+                f"platform.native_loadout_module_identity_mismatch:{hardpoint}"
+            )
+        expected_physical = physical_by_loadout.get(hardpoint)
+        actual_physical = (
+            module.mass_kg,
+            module.power_draw_kw,
+            tuple(sorted(module.mount_classes)),
+            quantity,
+        )
+        if expected_physical != actual_physical:
+            raise PlatformAssemblyError(
+                f"platform.native_loadout_module_physical_mismatch:{hardpoint}"
+            )
+        assigned = module.native_ref if quantity == 1 else [module.native_ref] * quantity
+        assign(loadout_paths[hardpoint], assigned)
     for name, value in plan.parameter_overrides:
         if name not in overrides:
             raise PlatformAssemblyError(f"platform.native_override_projection_missing:{name}")
@@ -420,6 +642,8 @@ def lower_to_legacy_unit_definition(
 
 
 __all__ = [
+    "HardpointContract",
+    "LoadoutSelection",
     "ModuleRecord",
     "LegacyUnitProjection",
     "ModuleSelection",
