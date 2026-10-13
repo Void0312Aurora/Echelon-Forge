@@ -309,6 +309,37 @@ def join_run_receipt(
     return ResolvedInputLock(data, candidate.digest)
 
 
+def join_run_receipt_path(
+    candidate: ResolvedInputLock,
+    *,
+    receipt_path: str | Path,
+    native_runtime: Mapping[str, Any],
+    outcome: BatchOperationOutcome,
+) -> ResolvedInputLock:
+    """Load one host-published canonical receipt, then use the same join.
+
+    The file is treated as an owner output: bytes must be canonical JSON before
+    schema validation and no receipt is synthesized by this projection.
+    """
+
+    source = Path(receipt_path)
+    try:
+        raw = source.read_bytes()
+        document = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputLockError(f"input_lock.receipt_unreadable:{source}") from exc
+    if not isinstance(document, Mapping):
+        raise InputLockError("input_lock.receipt_document_invalid")
+    if canonical_json_bytes(document) != raw:
+        raise InputLockError("input_lock.receipt_not_canonical")
+    return join_run_receipt(
+        candidate,
+        receipt=document,
+        native_runtime=native_runtime,
+        outcome=outcome,
+    )
+
+
 def project_native_composition_evidence(result: Any) -> dict[str, Any]:
     """Consume RuntimeFacade's manifest and separate realized topology export."""
     if not result.available:
@@ -404,6 +435,7 @@ __all__ = [
     "canonical_json_bytes",
     "compare_resolved_input_locks",
     "join_run_receipt",
+    "join_run_receipt_path",
     "project_compiled_scenario_dependencies",
     "project_native_composition_evidence",
 ]
