@@ -192,6 +192,40 @@ def test_checkpoint_owner_loader_must_return_existing_model_protocol() -> None:
         load_policy_checkpoint(checkpoint, payload, owner_loader=lambda value: object())
 
 
+def test_checkpoint_artifact_binding_factory_keeps_owner_loader_in_the_existing_binding() -> None:
+    base = _policy(category="learned")
+    payload = b"owner-checkpoint-bytes"
+    checkpoint = replace(_checkpoint(base), artifact_sha256=hashlib.sha256(payload).hexdigest())
+    policy = replace(base, checkpoint=checkpoint)
+    admission = admit_policy(
+        policy,
+        _binding(),
+        field_catalogue=_catalogue(),
+        observation_version=(1, 1),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+        checkpoint=checkpoint,
+    )
+    loaded: list[bytes] = []
+    model = _BoundModel()
+    binding = PolicyRuntimeBinding.from_checkpoint_artifact(
+        policy,
+        admission,
+        payload,
+        owner_loader=lambda value: loaded.append(value) or model,
+        bounds=((-1, 1),) * 4,
+        timing="window",
+    )
+    binding.reset(context={})
+    binding.decide(
+        observation={"ownship.velocity": [1.0, 2.0, 3.0]},
+        context={},
+        dt=0.0,
+    )
+    assert loaded == [payload]
+    assert model.observations[0][1]["policy_checkpoint_ref"] == checkpoint.checkpoint_ref
+
+
 def test_unknown_category_does_not_grant_authority() -> None:
     policy = PolicyDescriptor(
         "community.custom",

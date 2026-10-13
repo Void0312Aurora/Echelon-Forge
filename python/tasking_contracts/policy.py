@@ -296,6 +296,42 @@ class PolicyRuntimeBinding:
         if not callable(self._action_projector):
             raise TypeError("policy action_projector must be callable")
 
+    @classmethod
+    def from_checkpoint_artifact(
+        cls,
+        policy: PolicyDescriptor,
+        admission: PolicyAdmission,
+        artifact: bytes | bytearray | memoryview,
+        *,
+        owner_loader: Callable[[bytes], Any],
+        bounds: Sequence[tuple[float, float]],
+        timing: str,
+        optional_defaults: Mapping[str, Any] | None = None,
+        observation_projector: Callable[[tuple[Any, ...], tuple[str, ...]], Any] | None = None,
+        action_values: Callable[[Any], Sequence[float]] | None = None,
+        action_projector: Callable[[Any], Any] | None = None,
+    ) -> "PolicyRuntimeBinding":
+        """Load verified owner bytes and construct the admitted binding."""
+
+        if policy.checkpoint is None:
+            raise PolicyCheckpointLoadError("policy.checkpoint_required_for_artifact_binding")
+        model = load_policy_checkpoint(
+            policy.checkpoint,
+            artifact,
+            owner_loader=owner_loader,
+        )
+        return cls(
+            policy,
+            admission,
+            model,
+            bounds=bounds,
+            timing=timing,
+            optional_defaults=optional_defaults,
+            observation_projector=observation_projector,
+            action_values=action_values,
+            action_projector=action_projector,
+        )
+
     @property
     def model_kind(self) -> str | None:
         value = getattr(self.model, "model_kind", getattr(self.model, "_decision_model_kind", None))
