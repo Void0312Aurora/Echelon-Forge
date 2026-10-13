@@ -16,6 +16,7 @@ from python.experiment.definition import (
 )
 from python.experiment.resolved_input_lock import (
     InputLockError,
+    ResolvedInputLock,
     build_resolved_input_lock,
     compare_resolved_input_locks,
     join_run_receipt,
@@ -246,6 +247,18 @@ def test_claimed_completed_status_without_owner_receipt_is_not_comparable() -> N
         _experiment(), _registry(), status="completed", native_runtime=_native()
     )
     assert compare_resolved_input_locks(claimed, claimed).differences == ("completion_evidence",)
+
+
+def test_truthy_but_incomplete_completion_evidence_is_not_comparable() -> None:
+    claimed = build_resolved_input_lock(
+        _experiment(), _registry(), status="completed", native_runtime=_native()
+    )
+    document = claimed.as_dict()
+    document["completion_evidence"] = {"receipt_id": "caller-claim"}
+    forged = ResolvedInputLock(document, claimed.digest)
+    result = compare_resolved_input_locks(forged, forged)
+    assert result.comparable is False
+    assert result.differences == ("completion_evidence",)
 
 
 def test_completed_receipt_cannot_hide_an_unknown_batch_outcome() -> None:
