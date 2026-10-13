@@ -347,6 +347,46 @@ def project_native_batch_fault(
     )
 
 
+def project_host_fault(
+    *,
+    batch_generation_ref: str,
+    operation_ref: str,
+    operation: str,
+    expected_world_indices: frozenset[int],
+    error_code: str,
+    process_survived: bool,
+) -> BatchOperationOutcome:
+    """Project an independently observed host/process fault conservatively.
+
+    A caller or supervisor supplies the process-survival observation. This
+    helper never infers per-world commit state, recovery, or isolation from a
+    Python exception; the generation is terminated and every affected world is
+    explicitly unknown until an owner reset/recreate path establishes truth.
+    """
+
+    if not isinstance(process_survived, bool):
+        raise TypeError("process_survived must be a bool observation")
+    if not isinstance(error_code, str) or not error_code.strip():
+        raise ValueError("error_code must be a non-empty string")
+    if not expected_world_indices:
+        raise ValueError("expected_world_indices are required for a host fault")
+    worlds = tuple(
+        WorldOutcome(index, WorldState.UNKNOWN_AFTER_FAULT, None, error_code)
+        for index in sorted(expected_world_indices)
+    )
+    return BatchOperationOutcome(
+        batch_generation_ref=batch_generation_ref,
+        operation_ref=operation_ref,
+        operation=operation,
+        domain=FailureDomain.HOST,
+        result=BatchResult.FAILED,
+        worlds=worlds,
+        expected_world_indices=tuple(sorted(expected_world_indices)),
+        recovery_admission=RecoveryAdmission.TERMINATE_GENERATION,
+        diagnostics=(error_code, f"host.process_survived:{str(process_survived).lower()}"),
+    )
+
+
 __all__ = [
     "BatchOperationOutcome",
     "BatchResult",
@@ -360,4 +400,5 @@ __all__ = [
     "build_batch_outcome",
     "project_unresolved_batch_fault",
     "project_native_batch_fault",
+    "project_host_fault",
 ]

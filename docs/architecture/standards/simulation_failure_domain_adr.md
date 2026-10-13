@@ -105,7 +105,10 @@ The Python qualification adapter now reads `batch_healthy()` and
 all-unknown outcome; it rejects a healthy runtime and never invents a reset
 result. The native owner also exposes a batch generation ID that changes only
 after successful reset; the Python projection does not synthesize or reinterpret
-that identity.
+that identity. A separate `project_host_fault` projection accepts an
+independent process-survival observation and emits a host-domain failed outcome
+with all affected worlds unknown and generation termination required; it does
+not claim to provide the supervisor or isolate a blocked native call.
 The native batch proof also injects a worker-launch failure and checks that joined
 workers, guarded exports, failed recovery and explicit reset remain fail-closed.
 These local changes are not an upstream #210 closure. An exception inside a running
