@@ -109,7 +109,12 @@ nodes. Immutable
 parameters, backend reference and clock policy participate in graph/composite
 identity. Strict stage admission additionally requires the owner contract fields
 and rejects duplicate state-shard writers; the default qualification mode remains
-compatible with the smaller evidence fixtures.
+compatible with the smaller evidence fixtures. A separate static projection
+records each authored-node binding, the owner contract snapshot and stable graph,
+registry and edge digests. It consumes the native snapshot object shape directly;
+an optional realized-system name is only supplemental order evidence. The
+projection is marked non-executable and rejects invalid, duplicate,
+adapter-only and diagnostics-only bindings.
 
 This remains a static mechanism-graph contract pilot. Qualification/shadow
 compilation and production admission are separate gates; an artifact emitted

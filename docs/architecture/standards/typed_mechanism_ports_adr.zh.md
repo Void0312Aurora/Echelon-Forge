@@ -46,7 +46,10 @@ owner 提供的 `StageNodeManifest` 快照，要求节点一一绑定，并在�
 映射顺序前拒绝 adapter/diagnostic-only stage。native `WorldBatchRuntime` 还以只读副本
 暴露维护中的 manifest registry 供资格诊断使用，不会安装或修改 scheduler node。不可变参数、backend 引用与 clock policy
 参与图和组合身份。严格 stage admission 还要求 owner 契约字段并拒绝重复 state-shard writer；
-默认资格模式仍兼容较小的证据 fixture。
+默认资格模式仍兼容较小的证据 fixture。另有独立的静态 projection 为每个 authored node
+记录 owner contract 快照，并绑定图、manifest registry 和 edge 的稳定摘要；它直接接受
+native snapshot 的对象形状，若存在 realized-system 名称也只作为补充的顺序证据。该
+projection 明确标记为不可执行，并拒绝无效、重复、adapter-only 和 diagnostics-only 绑定。
 
 这仍是静态机制图契约试点。qualification/shadow 编译和生产接纳是分开的 gate；通过现有
 manifest machinery 产出的 artifact 不会自动变成可执行机制。

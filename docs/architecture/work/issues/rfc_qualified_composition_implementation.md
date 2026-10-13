@@ -179,6 +179,12 @@ merge into main, accept the proposed ADRs or close RFC issues.
    bounded Air lane now enforces an explicit, versioned six-schema owner
    vocabulary. Each entry names one of its three maintained native
    implementations, and the vocabulary digest is included in graph identity.
+   A deterministic qualification projection now emits one immutable
+   authored-node-to-owner-contract record per binding, plus graph, manifest
+   registry and edge identity digests. It accepts the native snapshot object
+   shape directly, while treating any optional realized-system name as
+   supplemental evidence. The projection is explicitly non-executable and
+   rejects invalid, duplicate, adapter-only or diagnostics-only bindings.
    Repository-wide canonical schema vocabulary and compilation of an authored
    graph into executable native contracts remain open; no second dispatcher is
    introduced.

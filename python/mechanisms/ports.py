@@ -12,7 +12,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
-from python.experiment.composition import freeze_json_mapping, thaw_json_value
+from python.experiment.composition import freeze_json_mapping, freeze_json_value, thaw_json_value
 
 SCHEMA_VERSION = "echelon_forge.mechanism_ports.v1"
 
@@ -114,6 +114,61 @@ class GraphDiagnostic:
     code: str
     path: str
     message: str
+
+
+@dataclass(frozen=True)
+class NativeStageContractProjection:
+    """One authored node mapped to an immutable owner manifest snapshot.
+
+    The projection is evidence for qualification only.  It contains no
+    callable, scheduler handle or provider installation request.
+    """
+
+    node_id: str
+    stage_node_id: str
+    owner_module: str
+    authored_node: Mapping[str, Any]
+    owner_contract: Mapping[str, Any]
+    identity_digest: str
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "node_id": self.node_id,
+            "stage_node_id": self.stage_node_id,
+            "owner_module": self.owner_module,
+            "authored_node": thaw_json_value(self.authored_node),
+            "owner_contract": thaw_json_value(self.owner_contract),
+            "identity_digest": self.identity_digest,
+        }
+
+
+@dataclass(frozen=True)
+class StageManifestQualificationProjection:
+    """Static graph-to-native contract evidence with a stable identity.
+
+    ``qualification_only`` and ``executable`` are deliberately explicit so a
+    downstream consumer cannot mistake this artifact for an executable native
+    graph or a scheduler installation plan.
+    """
+
+    graph_identity_digest: str
+    manifest_registry_digest: str
+    node_contracts: tuple[NativeStageContractProjection, ...]
+    edge_bindings: tuple[GraphEdge, ...]
+    identity_digest: str
+    qualification_only: bool = True
+    executable: bool = False
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "graph_identity_digest": self.graph_identity_digest,
+            "manifest_registry_digest": self.manifest_registry_digest,
+            "node_contracts": [contract.as_dict() for contract in self.node_contracts],
+            "edge_bindings": [edge.__dict__ for edge in self.edge_bindings],
+            "identity_digest": self.identity_digest,
+            "qualification_only": self.qualification_only,
+            "executable": self.executable,
+        }
 
 
 @dataclass(frozen=True)
@@ -620,6 +675,144 @@ def compose_graph_as_mechanism(
     )
 
 
+_STAGE_MANIFEST_PROJECTION_FIELDS = (
+    "node_id",
+    "semantic_stage",
+    "owner_module",
+    "input_packets",
+    "output_packets",
+    "read_state_shards",
+    "write_state_shards",
+    "read_snapshot_policy",
+    "write_commit_policy",
+    "clock_domain",
+    "latency_policy",
+    "sync_policy",
+    "allowed_same_window_edges",
+    "required_barriers",
+    "event_families_emitted",
+    "diagnostic_trace_obligations",
+    "facade_visibility",
+    "adapter_projection_allowed",
+    # Legacy evidence fixtures may carry an explicit realized system name.
+    # The native StageNodeManifest itself does not, so this stays optional.
+    "native_system",
+)
+
+
+def _manifest_field(manifest: Any, field_name: str, default: Any = None) -> Any:
+    if isinstance(manifest, Mapping):
+        return manifest.get(field_name, default)
+    return getattr(manifest, field_name, default)
+
+
+def _manifest_contract_payload(manifest: Any) -> Mapping[str, Any]:
+    values: dict[str, Any] = {}
+    for field_name in _STAGE_MANIFEST_PROJECTION_FIELDS:
+        value = _manifest_field(manifest, field_name)
+        if value is not None:
+            values[field_name] = thaw_json_value(freeze_json_value(value))
+    return freeze_json_mapping(values)
+
+
+def _authored_node_payload(spec: MechanismSpec) -> Mapping[str, Any]:
+    return freeze_json_mapping(
+        {
+            "mechanism_id": spec.mechanism_id,
+            "version": spec.version,
+            "inputs": [_port_dict(port) for port in spec.inputs],
+            "outputs": [_port_dict(port) for port in spec.outputs],
+            "stateful": spec.stateful,
+            "clock": spec.clock,
+            "delay_windows": spec.delay_windows,
+            "implementation_ref": spec.implementation_ref,
+            "required_capabilities": list(spec.required_capabilities),
+            "backend_ref": spec.backend_ref,
+            "clock_policy": thaw_json_value(spec.clock_policy),
+        }
+    )
+
+
+def project_stage_manifest_qualification(
+    graph: CompiledMechanismGraph,
+    *,
+    node_stage_bindings: Mapping[str, str],
+    stage_manifests: Mapping[str, Any],
+    pipeline_order: Sequence[str] = (),
+) -> StageManifestQualificationProjection:
+    """Project an authored graph onto owner StageNodeManifest snapshots.
+
+    This is a deterministic, non-executing qualification artifact.  It fails
+    closed on any validation diagnostic and never lowers authored nodes into a
+    native scheduler or provider request.
+    """
+
+    diagnostics = validate_stage_manifest_bindings(
+        graph,
+        node_stage_bindings=node_stage_bindings,
+        stage_manifests=stage_manifests,
+        pipeline_order=pipeline_order,
+        require_native_contract=True,
+    )
+    if diagnostics:
+        summary = "; ".join(f"{item.code} at {item.path}: {item.message}" for item in diagnostics)
+        raise MechanismGraphError(f"native stage qualification rejected: {summary}")
+
+    node_contracts: list[NativeStageContractProjection] = []
+    for node_id, spec in graph.nodes:
+        stage_node_id = node_stage_bindings[node_id]
+        manifest = stage_manifests[stage_node_id]
+        owner_contract = _manifest_contract_payload(manifest)
+        owner_module = _manifest_field(manifest, "owner_module")
+        node_payload = _authored_node_payload(spec)
+        node_identity = _digest(
+            {
+                "node_id": node_id,
+                "stage_node_id": stage_node_id,
+                "owner_module": owner_module,
+                "authored_node": thaw_json_value(node_payload),
+                "owner_contract": thaw_json_value(owner_contract),
+            }
+        )
+        node_contracts.append(
+            NativeStageContractProjection(
+                node_id=node_id,
+                stage_node_id=stage_node_id,
+                owner_module=owner_module,
+                authored_node=node_payload,
+                owner_contract=owner_contract,
+                identity_digest=node_identity,
+            )
+        )
+
+    node_contracts_tuple = tuple(node_contracts)
+    registry_payload = {
+        "manifests": [
+            {
+                "stage_node_id": contract.stage_node_id,
+                "owner_contract": thaw_json_value(contract.owner_contract),
+            }
+            for contract in node_contracts_tuple
+        ]
+    }
+    manifest_registry_digest = _digest(registry_payload)
+    identity_payload = {
+        "graph_identity_digest": graph.identity_digest,
+        "manifest_registry_digest": manifest_registry_digest,
+        "node_contracts": [contract.as_dict() for contract in node_contracts_tuple],
+        "edge_bindings": [edge.__dict__ for edge in graph.edges],
+        "qualification_only": True,
+        "executable": False,
+    }
+    return StageManifestQualificationProjection(
+        graph_identity_digest=graph.identity_digest,
+        manifest_registry_digest=manifest_registry_digest,
+        node_contracts=node_contracts_tuple,
+        edge_bindings=tuple(graph.edges),
+        identity_digest=_digest(identity_payload),
+    )
+
+
 def validate_realized_order(
     graph: CompiledMechanismGraph,
     *,
@@ -697,7 +890,6 @@ def validate_stage_manifest_bindings(
         "required_barriers",
         "diagnostic_trace_obligations",
         "facade_visibility",
-        "native_system",
     )
     required_nonempty_sequences = frozenset(
         {
@@ -717,11 +909,13 @@ def validate_stage_manifest_bindings(
                 GraphDiagnostic("mechanism.native_stage_manifest_missing", path, stage_id)
             )
             continue
-        if manifest.get("node_id") != stage_id:
+        if _manifest_field(manifest, "node_id") != stage_id:
             diagnostics.append(
                 GraphDiagnostic("mechanism.native_stage_manifest_identity_mismatch", path, stage_id)
             )
-        if not manifest.get("semantic_stage") or not manifest.get("owner_module"):
+        if not _manifest_field(manifest, "semantic_stage") or not _manifest_field(
+            manifest, "owner_module"
+        ):
             diagnostics.append(
                 GraphDiagnostic("mechanism.native_stage_manifest_incomplete", path, stage_id)
             )
@@ -729,13 +923,15 @@ def validate_stage_manifest_bindings(
             missing = [
                 field_name
                 for field_name in required_native_fields
-                if field_name not in manifest
-                or manifest[field_name] is None
-                or (isinstance(manifest[field_name], str) and not manifest[field_name].strip())
+                if _manifest_field(manifest, field_name) is None
+                or (
+                    isinstance(_manifest_field(manifest, field_name), str)
+                    and not _manifest_field(manifest, field_name).strip()
+                )
                 or (
                     field_name in required_nonempty_sequences
-                    and isinstance(manifest[field_name], (list, tuple))
-                    and not manifest[field_name]
+                    and isinstance(_manifest_field(manifest, field_name), (list, tuple))
+                    and not _manifest_field(manifest, field_name)
                 )
             ]
             if missing:
@@ -746,18 +942,23 @@ def validate_stage_manifest_bindings(
                         "missing owner fields: " + ", ".join(missing),
                     )
                 )
-        if manifest.get("facade_visibility") in {"adapter_projection", "diagnostics_only"}:
+        if _manifest_field(manifest, "facade_visibility") in {
+            "adapter_projection",
+            "diagnostics_only",
+        }:
             diagnostics.append(
                 GraphDiagnostic("mechanism.native_stage_not_scheduler_truth", path, stage_id)
             )
-        native_system = manifest.get("native_system", stage_id)
+        native_system = _manifest_field(manifest, "native_system")
+        if native_system is None:
+            native_system = _manifest_field(manifest, "owner_module")
         if not isinstance(native_system, str) or not native_system.strip():
             diagnostics.append(
                 GraphDiagnostic("mechanism.native_stage_system_missing", path, stage_id)
             )
         else:
             node_systems[node_id] = native_system
-        write_shards = manifest.get("write_state_shards", ())
+        write_shards = _manifest_field(manifest, "write_state_shards", ())
         if not isinstance(write_shards, (list, tuple)) or any(
             not isinstance(shard, str) or not shard.strip() for shard in write_shards
         ):
@@ -803,10 +1004,13 @@ __all__ = [
     "GraphEdge",
     "MechanismGraphError",
     "MechanismSpec",
+    "NativeStageContractProjection",
     "PortSpec",
     "SCHEMA_VERSION",
+    "StageManifestQualificationProjection",
     "compile_mechanism_graph",
     "compose_graph_as_mechanism",
+    "project_stage_manifest_qualification",
     "validate_realized_order",
     "validate_stage_manifest_bindings",
 ]
