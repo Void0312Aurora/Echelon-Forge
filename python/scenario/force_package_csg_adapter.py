@@ -243,6 +243,7 @@ def load_qualified_csg_scenario(
         compiled = compiled_packages.get(qualification.package_ref)
         if (
             compiled is None
+            or compiled.package_ref != qualification.package_ref
             or compiled.identity_digest != qualification.package_identity_digest
             or _compiled_relationships_digest(compiled)
             != qualification.compiled_relationships_digest
