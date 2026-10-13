@@ -335,14 +335,20 @@ TEST_SUITE("runtime_kernel_candidate") {
         REQUIRE(output_path != nullptr);
         const std::string mode = mode_value == nullptr ? "complete" : mode_value;
         REQUIRE((mode == "complete" || mode == "drift" || mode == "missing" ||
-                 mode == "audit_missing_blob"));
+                 mode == "audit_missing_blob" || mode == "audit_missing_topology" ||
+                 mode == "audit_corrupt_topology"));
         const auto root = std::filesystem::path(output_path) / "ledger";
-        if (mode == "audit_missing_blob") {
+        if (mode.starts_with("audit_")) {
             runtime::host::RuntimeFileArtifactLedgerStore reader(
                 root, {runtime::host::RuntimeArtifactLedgerRole::ReadOnlyAuditor, "rfc239-audit"});
             std::string bytes, detail;
             CHECK_FALSE(reader.read_receipt("run-rfc239", bytes, detail));
-            CHECK(detail.find("resolved input lock blob is not durable") != std::string::npos);
+            if (mode == "audit_missing_blob")
+                CHECK(detail.find("resolved input lock blob is not durable") != std::string::npos);
+            else if (mode == "audit_missing_topology")
+                CHECK(detail == "native ArtifactLedger referenced blob is absent");
+            else
+                CHECK(detail == "native ArtifactLedger referenced blob integrity failure");
             return;
         }
         // Host identity initialization can load the platform RNG module. Do it
@@ -387,6 +393,7 @@ TEST_SUITE("runtime_kernel_candidate") {
                 .run_header_json = run_header_for_run("run-rfc239", {}, sources),
                 .run_receipt_template_json = receipt_template_for_run("run-rfc239", {}, sources),
                 .run_execution_sources = sources,
+                .persist_realized_cpu_topology = true,
             };
             if (mode == "missing") {
                 CHECK_THROWS_WITH_AS(
@@ -435,6 +442,31 @@ TEST_SUITE("runtime_kernel_candidate") {
         CHECK(receipt.at("payload").at("terminal_state") ==
               (mode == "drift" ? "failed" : "completed"));
         CHECK(receipt.at("payload").at("completion").at("durable_ack") == true);
+        if (mode == "complete") {
+            bool found_topology = false;
+            for (const auto &artifact : receipt.at("payload").at("results").at("output_artifacts")) {
+                if (artifact.at("name") != "runtime-cpu-scheduler-topology") continue;
+                REQUIRE_FALSE(found_topology);
+                found_topology = true;
+                CHECK(artifact.at("media_type") ==
+                      "application/vnd.echelon-forge.runtime-cpu-scheduler-topology.v1+json");
+                const auto blob_path =
+                    root / "blobs" / (artifact.at("digest").get<std::string>() + ".data");
+                const auto bytes = file_bytes(blob_path.string().c_str());
+                REQUIRE(runtime::authority_contracts::sha256_hex(bytes) ==
+                        artifact.at("digest").get<std::string>());
+                const auto observed = nlohmann::json::parse(bytes);
+                REQUIRE(observed.at("topology").at("contract") ==
+                        "echelon_forge.cpu_scheduler_topology.v1");
+                REQUIRE_FALSE(observed.at("topology").at("nodes").empty());
+                REQUIRE_FALSE(observed.at("active_pipeline_order").empty());
+                evidence["realized_topology_digest"] = observed.at("sha256");
+                evidence["topology_artifact_digest"] = artifact.at("digest");
+            }
+            REQUIRE(found_topology);
+        } else {
+            CHECK(receipt.at("payload").at("results").at("output_artifacts").empty());
+        }
         std::ofstream receipt_output(std::filesystem::path(output_path) / "receipt.json",
                                      std::ios::binary | std::ios::trunc);
         receipt_output << receipt_bytes;

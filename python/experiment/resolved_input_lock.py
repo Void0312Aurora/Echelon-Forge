@@ -364,11 +364,13 @@ def join_run_receipt_path(
     receipt_path: str | Path,
     native_runtime: Mapping[str, Any],
     outcome: BatchOperationOutcome,
+    native_topology_path: str | Path | None = None,
 ) -> ResolvedInputLock:
     """Load one host-published canonical receipt, then use the same join.
 
     The file is treated as an owner output: bytes must be canonical JSON before
-    schema validation and no receipt is synthesized by this projection.
+    schema validation and no receipt is synthesized by this projection. A
+    native topology artifact claim requires its owner output bytes as well.
     """
 
     source = Path(receipt_path)
@@ -381,12 +383,55 @@ def join_run_receipt_path(
         raise InputLockError("input_lock.receipt_document_invalid")
     if canonical_json_bytes(document) != raw:
         raise InputLockError("input_lock.receipt_not_canonical")
-    return join_run_receipt(
+    if "topology_artifact_digest" in native_runtime and native_topology_path is None:
+        raise InputLockError("input_lock.receipt_topology_artifact_required")
+    joined = join_run_receipt(
         candidate,
         receipt=document,
         native_runtime=native_runtime,
         outcome=outcome,
     )
+    if native_topology_path is not None:
+        _verify_receipt_topology_artifact(document, native_runtime, Path(native_topology_path))
+    return joined
+
+
+def _verify_receipt_topology_artifact(
+    receipt: Mapping[str, Any], native_runtime: Mapping[str, Any], source: Path
+) -> None:
+    """Check owner output bytes against the existing receipt and topology identity."""
+    references = [
+        item for item in receipt["payload"]["results"]["output_artifacts"]
+        if item["name"] == "runtime-cpu-scheduler-topology"
+    ]
+    if len(references) != 1:
+        raise InputLockError("input_lock.receipt_topology_reference_missing")
+    reference = references[0]
+    if (
+        reference["media_type"]
+        != "application/vnd.echelon-forge.runtime-cpu-scheduler-topology.v1+json"
+        or reference["availability"] != "durable"
+        or reference["retention_class"] != "run-retained"
+        or reference["digest"] != native_runtime.get("topology_artifact_digest")
+    ):
+        raise InputLockError("input_lock.receipt_topology_binding_mismatch")
+    try:
+        raw = source.read_bytes()
+    except OSError as exc:
+        raise InputLockError("input_lock.receipt_topology_unreadable") from exc
+    if len(raw) != reference["size"] or hashlib.sha256(raw).hexdigest() != reference["digest"]:
+        raise InputLockError("input_lock.receipt_topology_artifact_mismatch")
+    try:
+        observed = json.loads(raw)
+        topology = observed["topology"]
+        if (
+            topology["contract"] != "echelon_forge.cpu_scheduler_topology.v1"
+            or observed["sha256"] != _digest(topology)
+            or observed["sha256"] != native_runtime.get("realized_topology_digest")
+        ):
+            raise InputLockError("input_lock.receipt_topology_identity_mismatch")
+    except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        raise InputLockError("input_lock.receipt_topology_document_invalid") from exc
 
 
 def project_native_composition_evidence(result: Any) -> dict[str, Any]:

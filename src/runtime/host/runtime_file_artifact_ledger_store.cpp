@@ -85,7 +85,8 @@ bool role_can_write_artifact_media(RuntimeArtifactLedgerRole role, std::string_v
     switch (role) {
     case RuntimeArtifactLedgerRole::RuntimeHost:
         return media_type == "application/octet-stream" ||
-               media_type == "application/vnd.echelon-forge.runtime-state.v1+octets";
+               media_type == "application/vnd.echelon-forge.runtime-state.v1+octets" ||
+               media_type == "application/vnd.echelon-forge.runtime-cpu-scheduler-topology.v1+json";
     case RuntimeArtifactLedgerRole::PlanCompiler:
         return media_type == "application/vnd.echelon-forge.resolved-execution-plan.v1+json" ||
                media_type == "application/vnd.echelon-forge.runtime-composition-request.v1+json" ||

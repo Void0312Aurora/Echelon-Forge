@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -11,6 +12,7 @@ import pytest
 
 from python.experiment.air_combat_matrix import MATRIX_ENTRIES, REGISTRY
 from python.experiment.resolved_input_lock import (
+    InputLockError,
     build_resolved_input_lock,
     canonical_json_bytes,
     compare_resolved_input_locks,
@@ -106,29 +108,69 @@ def test_native_host_persists_and_reopens_input_lock_reference(
         expected_world_indices=frozenset({0}),
     )
     if mode == "complete":
+        outputs = payload["results"]["output_artifacts"]
+        topology_ref = next(
+            item for item in outputs if item["name"] == "runtime-cpu-scheduler-topology"
+        )
+        topology_blob = tmp_path / "ledger" / "blobs" / f"{topology_ref['digest']}.data"
+        topology_bytes = topology_blob.read_bytes()
+        assert hashlib.sha256(topology_bytes).hexdigest() == topology_ref["digest"]
+        topology = json.loads(topology_bytes)
+        assert native["realized_topology_digest"] == topology["sha256"]
+        assert native["topology_artifact_digest"] == topology_ref["digest"]
+        assert topology["topology"]["nodes"]
+        assert topology["active_pipeline_order"]
         outcome = build_batch_outcome(
             **kwargs, worlds=(WorldOutcome(0, WorldState.COMPLETED, True),)
         )
     else:
         outcome = project_unresolved_batch_fault(**kwargs, error_code="input.provenance_drift")
     joined = join_run_receipt_path(
-        candidate, receipt_path=receipt_path, native_runtime=native, outcome=outcome
+        candidate, receipt_path=receipt_path, native_runtime=native, outcome=outcome,
+        native_topology_path=topology_blob if mode == "complete" else None,
     )
     assert joined.status == ("completed" if mode == "complete" else "unknown")
     comparison = compare_resolved_input_locks(joined, joined)
     assert not comparison.comparable
     if mode == "complete":
         assert "input_lock_semantics_executed" in comparison.differences
+        with pytest.raises(InputLockError, match="receipt_topology_artifact_required"):
+            join_run_receipt_path(
+                candidate, receipt_path=receipt_path, native_runtime=native, outcome=outcome
+            )
+        for field in ("realized_topology_digest", "topology_artifact_digest"):
+            mismatched = {**native, field: "f" * 64}
+            with pytest.raises(InputLockError, match="receipt_topology_.*mismatch"):
+                join_run_receipt_path(
+                    candidate, receipt_path=receipt_path, native_runtime=mismatched,
+                    outcome=outcome, native_topology_path=topology_blob,
+                )
         blob = tmp_path / "ledger" / "blobs" / f"{candidate.digest}.data"
-        blob.rename(blob.with_suffix(".missing"))
-        environment["EF_RFC_RECEIPT_MODE"] = "audit_missing_blob"
-        audit = subprocess.run(
-            result.args,
-            env=environment,
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=False,
-        )
-        assert audit.returncode == 0, audit.stdout + audit.stderr
-        assert "1 passed" in audit.stdout
+        for audit_mode, damaged_blob in (
+            ("audit_missing_blob", blob),
+            ("audit_missing_topology", topology_blob),
+            ("audit_corrupt_topology", topology_blob),
+        ):
+            original_bytes = damaged_blob.read_bytes()
+            if audit_mode == "audit_corrupt_topology":
+                damaged_blob.write_bytes(b"{}")
+            else:
+                damaged_blob.unlink()
+            if damaged_blob == topology_blob:
+                with pytest.raises(InputLockError, match="receipt_topology_(unreadable|artifact_mismatch)"):
+                    join_run_receipt_path(
+                        candidate, receipt_path=receipt_path, native_runtime=native,
+                        outcome=outcome, native_topology_path=topology_blob,
+                    )
+            environment["EF_RFC_RECEIPT_MODE"] = audit_mode
+            audit = subprocess.run(
+                result.args,
+                env=environment,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
+            assert audit.returncode == 0, audit.stdout + audit.stderr
+            assert "1 passed" in audit.stdout
+            damaged_blob.write_bytes(original_bytes)
