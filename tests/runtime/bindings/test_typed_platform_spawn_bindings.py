@@ -9,6 +9,13 @@ ensure_repo_imports()
 
 import ef_py # noqa: E402
 
+from python.mechanisms import (  # noqa: E402
+  MechanismSpec,
+  PortSpec,
+  compile_mechanism_graph,
+  project_stage_manifest_qualification,
+)
+
 
 def _valid_platform_capability() -> object:
   capability = ef_py.PlatformCapability()
@@ -248,3 +255,33 @@ def test_world_batch_exposes_maintained_native_stage_manifest_snapshot() -> None
   assert launch.input_packets
   assert launch.required_barriers
   assert runtime.batch_healthy()
+
+
+def test_native_stage_manifest_snapshot_projects_without_synthetic_fields() -> None:
+  runtime = ef_py.WorldBatchRuntime(1)
+  manifests = runtime.maintained_stage_node_manifests()
+  selected = manifests[:3]
+  graph = compile_mechanism_graph(
+    "native-runtime-snapshot-projection",
+    {
+      manifest.node_id: MechanismSpec(
+        f"native.{manifest.node_id}",
+        "1",
+        outputs=(PortSpec("packet", "NativePacket.v1"),),
+        implementation_ref=f"native.{manifest.node_id}",
+      )
+      for manifest in selected
+    },
+    (),
+  )
+
+  projection = project_stage_manifest_qualification(
+    graph,
+    node_stage_bindings={manifest.node_id: manifest.node_id for manifest in selected},
+    stage_manifests={manifest.node_id: manifest for manifest in selected},
+  )
+
+  assert projection.qualification_only
+  assert not projection.executable
+  assert len(projection.node_contracts) == len(selected)
+  assert all("native_system" not in item.owner_contract for item in projection.node_contracts)
