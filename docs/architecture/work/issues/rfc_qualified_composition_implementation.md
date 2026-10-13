@@ -401,11 +401,14 @@ owner fields. This is an owner-publication diagnostic seam, not a canonical
 schema vocabulary or authored-graph admission path.
 
 The #237 CSG adapter now has **18 force-package/adapter tests**, including two
-full S0 fixture runs. It requires an explicit compiled-scenario input and
-explicit organization-to-entity and assembly-to-native-type bindings; it does
-not infer those mappings from the CSG domain schema. `load_qualified_csg_scenario`
-only delegates a fresh, fully qualified snapshot to `ScenarioLoader`; it does
-not synthesize entities or grant command authority.
+full S0 fixture runs. Each qualified run also compares every bound hull's
+native position with the compiled scenario coordinates, checks the retained
+embarked-inventory metadata, and verifies that a real native step preserves the
+static S0 layout. It requires an explicit compiled-scenario input and explicit
+organization-to-entity and assembly-to-native-type bindings; it does not infer
+those mappings from the CSG domain schema. `load_qualified_csg_scenario` only
+delegates a fresh, fully qualified snapshot to `ScenarioLoader`; it does not
+synthesize entities or grant command authority.
 
 The physical compatibility slice for #236 is bounded and fail-closed. A
 blueprint may declare finite mass and power budgets plus slot mount classes;
