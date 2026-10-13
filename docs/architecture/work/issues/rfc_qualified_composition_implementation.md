@@ -229,12 +229,15 @@ merge into main, accept the proposed ADRs or close RFC issues.
    review is still required for the mapping's production contract, explicit
    unit contracts and broader native physical compatibility before any
    production consumer is enabled.
-4. **#237 CSG migration proof.** Consume compiled organization through the
-   existing CSG/scenario placement adapter; compare generated entities, anchored
-   geometry, embarked inventory and native results. The loader now requires the
-   independently compiled package identity and relationship digest at the
-   migration boundary. Keep separate membership, command and communication
-   graphs.
+4. **#237 review and production migration.** The bounded CSG migration proof is
+   complete on this qualification branch: compiled organization passes through
+   the existing CSG/scenario placement adapter, including explicit nested
+   package paths, and the native loader still owns geometry, inventory and
+   materialization. The loader requires independently compiled package identity
+   and relationship digests at the migration boundary. Remaining work is owner
+   review and a reviewable integration on updated `main`; membership, command
+   and communication graphs must remain separate, and no operational command
+   authority is implied by this qualification artifact.
 5. **#238 owner-controlled binding.** The admitted binding now wraps the
    existing `DecisionRuntimeAgent`, carries policy/version and observation
    provenance into the model context, and validates produced actions before
