@@ -55,18 +55,27 @@ from python.mission_obs_taxonomy import (  # noqa: E402
 )
 from python.scenario_compiler import ScenarioCompiler  # noqa: E402
 from python.simulation.air.action import air_action_dimension, build_pilot_action  # noqa: E402
+from python.simulation.air.observation import build_air_mission_vector  # noqa: E402
+from examples.policies.air_basic_mission_linear import BasicMissionLinearPolicy  # noqa: E402
 from python.tasking_contracts.policy import (  # noqa: E402
     ActionContract,
     AgentBinding,
     FieldSpec,
     ObservationContract,
     PolicyDescriptor,
+    PolicyCheckpoint,
+    PolicyCheckpointLoadError,
+    PolicyRuntimeBinding,
     admit_policy,
     validate_policy_action,
 )
 from python.tasking_contracts.common.decision_registry import (  # noqa: E402
     DecisionModelRegistration,
     DecisionModelRegistry,
+)
+from python.tasking_contracts.common.decision_runtime import (  # noqa: E402
+    DecisionRuntimeAgent,
+    DecisionRuntimeAgentSpec,
 )
 from gym_envs.universal_env_parts.spaces import make_action_space  # noqa: E402
 
@@ -561,3 +570,193 @@ def test_two_policy_implementations_share_owned_air_catalogue_and_native_action(
     assert outputs[0] == outputs[1]
     with pytest.raises(ValueError, match="kind"):
         registry.create_for(domain="air", role_id="pilot", model_id="a", model_kind="learned")
+
+
+@pytest.mark.parametrize("mode", [
+    "complete", "bad_digest", "mask_closed", "expired", "out_of_bounds",
+    "wrong_schema", "wrong_observation_order", "nonfinite_parameter",
+])
+def test_external_checkpoint_decision_runtime_reaches_native_action_owner(tmp_path, mode):
+    fields = tuple(FieldSpec(**row) for row in mission_observation_basic_field_catalogue())
+    action = ActionContract("air.takeoff4", 1, 0, air_action_dimension("takeoff4"), "platform_control")
+    observation = ObservationContract("air.mission.basic", 1, 0, required=fields)
+    agent = AgentBinding("pilot", frozenset({"agent_observation"}),
+                         frozenset({action.interface_ref}), frozenset({action.authority_scope}))
+    space = make_action_space("takeoff4")
+    bounds = tuple(zip(map(float, space.low), map(float, space.high)))
+    source = ROOT / "examples/policies/air_basic_mission_linear.v1.json"
+    artifact = tmp_path / "external-policy.json"
+    document = json.loads(source.read_bytes())
+    if mode == "out_of_bounds":
+        document["bias"][3] = 2.0
+    if mode == "wrong_schema":
+        document["schema_version"] = "unsupported"
+    if mode == "wrong_observation_order":
+        document["observation_fields"].reverse()
+    if mode == "nonfinite_parameter":
+        document["weights"][0][0] = float("nan")
+    artifact.write_text(json.dumps(document), encoding="utf-8")
+    checkpoint = PolicyCheckpoint(
+        checkpoint_ref=artifact.as_uri(), artifact_sha256=hashlib.sha256(artifact.read_bytes()).hexdigest(),
+        policy_id="example.air.basic.linear", policy_version="1",
+        observation_view_ref=observation.view_ref, observation_major=1, observation_minor=0,
+        action_interface_ref=action.interface_ref, action_major=1, action_minor=0,
+        owner_ref="example.air.basic.linear",
+    )
+    policy = PolicyDescriptor(checkpoint.policy_id, "1", ("community.linear_stand_in",),
+                              observation, action, legacy_model_kind="scripted", checkpoint=checkpoint)
+    admission = admit_policy(
+        policy, agent, field_catalogue={field.name: field for field in fields},
+        observation_version=(1, 0), action_versions={action.interface_ref: (1, 0)},
+        action_dimensions={action.interface_ref: action.dimension},
+        action_timings={action.interface_ref: "window"}, checkpoint=checkpoint,
+    )
+    assert admission.admitted
+    facade = ef_py.RuntimeFacade(2)
+    assert facade.load_database(str(DATABASE))
+    setup = ef_py.BatchWorldSetupRequest()
+    setup.seeds, setup.time_steps = [42, 42], [0.05, 0.05]
+    spawns = []
+    for index in range(2):
+        spawn = ef_py.WorldSpawnRequest()
+        spawn.world_index, spawn.type_name, spawn.entity_name = index, "F-16C_Block50", "Pilot"
+        spawn.side, spawn.z, spawn.vy = ef_py.Side.Blue, 1200.0, 220.0
+        spawns.append(spawn)
+    setup.spawn_requests = spawns
+    ids = [int(value) for value in facade.apply_world_setup(setup).entity_ids]
+    assert len(ids) == 2 and all(ids)
+    refs = []
+    commands = []
+    for index, entity_id in enumerate(ids):
+        ref = ef_py.WorldEntityRef()
+        ref.world_index, ref.entity_id = index, entity_id
+        refs.append(ref)
+        command = ef_py.MissionCommand()
+        command.command_code, command.cmd_heading_deg = 1, 45.0
+        command.cmd_altitude_m, command.cmd_speed_mps = 1200.0, 220.0
+        # Observe a maintained command packet; direct PilotAction remains the
+        # control input exercised here, without an active autopilot command.
+        command.active = False
+        assignment = ef_py.WorldMissionCommandMaintainedAssignment()
+        assignment.world_index, assignment.entity_id = index, entity_id
+        assignment.mission_command = ef_py.mission_command_maintained_batch_contract(command)
+        commands.append(assignment)
+    facade.set_mission_commands_maintained_batch(commands)
+    native_command = facade.get_mission_commands_maintained_batch(refs)[0]
+    vector = build_air_mission_vector(native_command.shared_core, mode="basic")
+    visible = dict(zip(mission_observation_field_names("basic"), map(float, vector)))
+    assert list(visible.values()) == [1.0, 45.0, 1200.0, 220.0]
+    before = [_snapshot(facade, entity_id, index) for index, entity_id in enumerate(ids)]
+    initial_observation = facade.get_agent_observations_batch([refs[0]])[0]
+    initial_position = tuple(float(getattr(initial_observation, axis)) for axis in ("x", "y", "z"))
+    projected = []
+    loaded = []
+
+    def load_owner(payload):
+        model = BasicMissionLinearPolicy.from_checkpoint_bytes(payload, action_dimension=action.dimension)
+        loaded.append(model)
+        return model
+
+    def authorize_owner(_values, context, _dt):
+        if context.get("action_mask_open") is not True:
+            return "policy.action_mask_closed"
+        if context["authority_scope"] != "platform_control":
+            return "policy.action_authority_missing"
+        if context["clock_s"] > context["action_expires_at_s"]:
+            return "policy.action_expired"
+        return True
+
+    def project_owner(values):
+        projected.append(tuple(values))
+        return build_pilot_action(values, action_mode="takeoff4",
+                                 instrument_state=facade.get_instrument_states_batch([refs[0]])[0])
+
+    payload = artifact.read_bytes() if mode != "bad_digest" else b"tampered"
+    if mode in ("bad_digest", "wrong_schema", "wrong_observation_order", "nonfinite_parameter"):
+        with pytest.raises(PolicyCheckpointLoadError):
+            PolicyRuntimeBinding.from_checkpoint_artifact(
+                policy, admission, payload, owner_loader=load_owner, bounds=bounds, timing="window"
+            )
+        assert not loaded and not projected
+        assert [_snapshot(facade, entity_id, index) for index, entity_id in enumerate(ids)] == before
+        return
+    binding = PolicyRuntimeBinding.from_checkpoint_artifact(
+        policy, admission, payload, owner_loader=load_owner, bounds=bounds, timing="window",
+        observation_projector=lambda values, _sources: values,
+        action_authorizer=authorize_owner, action_projector=project_owner,
+    )
+    runtime = DecisionRuntimeAgent(
+        DecisionRuntimeAgentSpec(agent_id="pilot", model_id=policy.policy_id, domain="air",
+                                 role_id="pilot", model_kind="scripted", authority_scope="platform_control"),
+        binding,
+    )
+    runtime.reset(episode_seed=42)
+    try:
+        context = {"action_mask_open": mode != "mask_closed",
+                   "action_expires_at_s": -0.01 if mode == "expired" else 1.0}
+        if mode != "complete":
+            error = {"mask_closed": "action_mask_closed", "expired": "action_expired",
+                     "out_of_bounds": "action_out_of_bounds"}[mode]
+            with pytest.raises(ValueError, match=error):
+                runtime.step(observation=visible, clock_s=0.0, observation_version="air.mission.basic@1.0",
+                             context=context)
+            assert not projected
+            assert [_snapshot(facade, entity_id, index) for index, entity_id in enumerate(ids)] == before
+            return
+        decision = runtime.step(observation=visible, clock_s=0.0, observation_version="air.mission.basic@1.0",
+                                context=context)
+        assert len(projected) == 1
+        assert projected[0] == pytest.approx((0.1, 0.2, 0.0, 0.8))
+        assert loaded[0].last_context["policy_checkpoint_sha256"] == checkpoint.artifact_sha256
+        assert loaded[0].last_context["policy_checkpoint_ref"] == checkpoint.checkpoint_ref
+        assignments = []
+        for index, entity_id in enumerate(ids):
+            assignment = ef_py.WorldPilotActionAssignment()
+            assignment.world_index, assignment.entity_id = index, entity_id
+            assignment.action = decision.action if index == 0 else build_pilot_action(
+                (0.1, 0.2, 0.0, 0.8), action_mode="takeoff4",
+                instrument_state=facade.get_instrument_states_batch([refs[index]])[0],
+            )
+            assignments.append(assignment)
+        initial_throttle = float(facade.get_instrument_states_batch([refs[0]])[0].throttle_pos)
+        facade.set_pilot_actions_batch(assignments)
+        for _ in range(3):
+            facade.step_batch()
+        instruments = facade.get_instrument_states_batch(refs)
+        assert float(instruments[0].throttle_pos) == pytest.approx(0.8, abs=1e-6)
+        assert float(instruments[0].throttle_pos) != pytest.approx(initial_throttle, abs=1e-4)
+        assert _snapshot(facade, ids[0], 0) == _snapshot(facade, ids[1], 1)
+        assert float(facade.get_agent_observations_batch([refs[0]])[0].sim_time) == pytest.approx(0.15)
+        # A later native mission update must alter the checkpoint model's
+        # action. This rules out a fixed-vector stand-in for the observation
+        # projection and proves another decision reaches native control.
+        for assignment in commands:
+            changed = ef_py.MissionCommand()
+            changed.command_code, changed.cmd_heading_deg = 1, 45.0
+            changed.cmd_altitude_m, changed.cmd_speed_mps = 1200.0, 110.0
+            changed.active = False
+            assignment.mission_command = ef_py.mission_command_maintained_batch_contract(changed)
+        facade.set_mission_commands_maintained_batch(commands)
+        changed_core = facade.get_mission_commands_maintained_batch(refs)[0].shared_core
+        changed_vector = build_air_mission_vector(changed_core, mode="basic")
+        changed_visible = dict(zip(mission_observation_field_names("basic"), map(float, changed_vector)))
+        decision = runtime.step(observation=changed_visible, clock_s=0.15,
+                                observation_version="air.mission.basic@1.0", context=context)
+        assert len(projected) == 2
+        assert projected[1] == pytest.approx((0.1, 0.2, 0.0, 0.4))
+        assignments[0].action = decision.action
+        assignments[1].action = build_pilot_action(
+            (0.1, 0.2, 0.0, 0.4), action_mode="takeoff4",
+            instrument_state=facade.get_instrument_states_batch([refs[1]])[0],
+        )
+        facade.set_pilot_actions_batch(assignments)
+        for _ in range(3):
+            facade.step_batch()
+        assert float(facade.get_instrument_states_batch([refs[0]])[0].throttle_pos) == pytest.approx(0.4, abs=1e-6)
+        assert _snapshot(facade, ids[0], 0) == _snapshot(facade, ids[1], 1)
+        final_observation = facade.get_agent_observations_batch([refs[0]])[0]
+        assert float(final_observation.sim_time) == pytest.approx(0.3)
+        assert tuple(float(getattr(final_observation, axis)) for axis in ("x", "y", "z")) != initial_position
+    finally:
+        runtime.close()
+        assert loaded[0].closed

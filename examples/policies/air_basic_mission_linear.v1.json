@@ -1,0 +1,12 @@
+{
+  "schema_version": "echelon_forge.example.air_basic_mission_linear.v1",
+  "observation_fields": ["command_code", "target_heading_deg", "target_altitude_m", "target_speed_mps"],
+  "action_mode": "takeoff4",
+  "weights": [
+    [0.1, 0.0, 0.0, 0.0],
+    [0.0, 0.0044444444444444444, 0.0, 0.0],
+    [0.0, 0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0, 0.0036363636363636364]
+  ],
+  "bias": [0.0, 0.0, 0.0, 0.0]
+}
