@@ -60,7 +60,8 @@ the produced action before returning it to the existing runtime. An owner-issued
 policy, observation and action identities before binding. A small checkpoint
 seam verifies immutable artifact bytes and then hands them to an owner-provided
 loader, which remains responsible for framework deserialization and model
-construction. The current maintained outputs remain authoritative; Python or
+construction; `PolicyRuntimeBinding.from_checkpoint_artifact` keeps that
+verified loading step on the existing binding path. The current maintained outputs remain authoritative; Python or
 third-party code is not auto-admitted by a descriptor, and loading a real
 external checkpoint through its production owner remains open. The binding can
 hand a validated action to an explicit owner projector after contract checks;
