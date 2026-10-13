@@ -16,6 +16,7 @@ from python.scenario.force_package import (
     ForcePackage,
     ForcePackageError,
     PackageMember,
+    PackageRelationship,
     compile_force_package,
 )
 from python.scenario.force_package_csg_adapter import (
@@ -127,6 +128,7 @@ def test_force_package_projection_matches_existing_csg_entity_identity_and_geome
     assert result.entity_bindings == ((generic_id, "BLUE_CSG12__cvn78"),)
     assert result.csg_schema == "csg.group_composition.v2"
     assert len(result.geometry_digest) == 64
+    assert result.relationship_edges == ()
     assert "scenario.csg.group_composition.v2" in result.evidence_refs
 
 
@@ -341,6 +343,44 @@ def test_csg_load_rejects_compiled_package_identity_or_relationship_drift() -> N
             scenario=scenario,
             qualifications=[qualification],
             compiled_packages={compiled.package_ref: relationship_drift},
+        )
+    assert loader.calls == []
+
+
+def test_csg_qualification_keeps_non_authoritative_relationship_edges_explicit() -> None:
+    package, assemblies = _package()
+    package = replace(
+        package,
+        relationships=(
+            PackageRelationship(
+                "communication",
+                "BLUE_CSG12__cvn78",
+                "BLUE_CSG12__cvn78",
+            ),
+        ),
+    )
+    scenario = _compiled_scenario()
+    qualification = qualify_force_package_against_csg(
+        package=package,
+        packages={},
+        assemblies=assemblies,
+        role_capabilities={"carrier": frozenset({"mobility"})},
+        scenario=scenario,
+        group_id="BLUE_CSG12",
+        entity_bindings={"qualification.csg/BLUE_CSG12__cvn78": "BLUE_CSG12__cvn78"},
+        assembly_type_names={SHIP_TYPE: SHIP_TYPE},
+    )
+    assert qualification.relationship_edges == (
+        ("communication", "qualification.csg/BLUE_CSG12__cvn78", "qualification.csg/BLUE_CSG12__cvn78"),
+    )
+    compiled = _compile_package(package, assemblies, {"carrier": frozenset({"mobility"})})
+    loader = _RecordingLoader()
+    with pytest.raises(ForcePackageError, match="compiled_package_identity_mismatch"):
+        load_qualified_csg_scenario(
+            loader,
+            scenario=scenario,
+            qualifications=[replace(qualification, relationship_edges=())],
+            compiled_packages={compiled.package_ref: compiled},
         )
     assert loader.calls == []
 
