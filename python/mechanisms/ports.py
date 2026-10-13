@@ -233,6 +233,84 @@ class MechanismSchemaVocabulary:
 
 
 @dataclass(frozen=True)
+class MechanismSchemaVocabularyRegistry:
+    """Merge owner-supplied schema vocabularies without inventing ownership.
+
+    A registry is still a qualification input.  Every entry must come from an
+    explicit owner vocabulary, and conflicting owners for one schema fail
+    closed.  It does not make a schema executable or publish a dispatcher.
+    """
+
+    registry_id: str
+    version: str
+    vocabularies: tuple[MechanismSchemaVocabulary, ...]
+    entries: tuple[SchemaVocabularyEntry, ...] = field(init=False)
+
+    def __post_init__(self) -> None:
+        for field_name in ("registry_id", "version"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+        vocabularies = tuple(self.vocabularies)
+        if not vocabularies:
+            raise ValueError("vocabularies must not be empty")
+        if any(not isinstance(item, MechanismSchemaVocabulary) for item in vocabularies):
+            raise TypeError("vocabularies must contain MechanismSchemaVocabulary values")
+        vocabulary_ids = [item.vocabulary_id for item in vocabularies]
+        if len(set(vocabulary_ids)) != len(vocabulary_ids):
+            raise ValueError("schema vocabulary registry ids must be unique")
+        owners: dict[str, str] = {}
+        for vocabulary in vocabularies:
+            for entry in vocabulary.entries:
+                previous = owners.get(entry.schema)
+                if previous is not None and previous != entry.owner_ref:
+                    raise ValueError(
+                        f"schema registry owner conflict for {entry.schema!r}: "
+                        f"{previous!r} versus {entry.owner_ref!r}"
+                    )
+                owners[entry.schema] = entry.owner_ref
+        object.__setattr__(
+            self,
+            "vocabularies",
+            tuple(sorted(vocabularies, key=lambda item: item.vocabulary_id)),
+        )
+        object.__setattr__(
+            self,
+            "entries",
+            tuple(
+                SchemaVocabularyEntry(schema, owner_ref)
+                for schema, owner_ref in sorted(owners.items())
+            ),
+        )
+
+    @property
+    def vocabulary_id(self) -> str:
+        return self.registry_id
+
+    @property
+    def schema_names(self) -> frozenset[str]:
+        return frozenset(entry.schema for entry in self.entries)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "registry_id": self.registry_id,
+            "version": self.version,
+            "vocabularies": [item.as_dict() for item in self.vocabularies],
+            "entries": [
+                {"schema": entry.schema, "owner_ref": entry.owner_ref}
+                for entry in self.entries
+            ],
+        }
+
+    @property
+    def identity_digest(self) -> str:
+        return _digest(self.as_dict())
+
+
+SchemaVocabulary = MechanismSchemaVocabulary | MechanismSchemaVocabularyRegistry
+
+
+@dataclass(frozen=True)
 class CompiledMechanismGraph:
     graph_id: str
     nodes: tuple[tuple[str, MechanismSpec], ...]
@@ -309,7 +387,7 @@ def _identity_payload(
     edges: Sequence[GraphEdge],
     *,
     external_inputs: frozenset[str],
-    schema_vocabulary: MechanismSchemaVocabulary | None = None,
+    schema_vocabulary: SchemaVocabulary | None = None,
 ) -> dict[str, Any]:
     payload = {
         "schema_version": SCHEMA_VERSION,
@@ -369,7 +447,7 @@ def compile_mechanism_graph(
     *,
     external_inputs: frozenset[str] = frozenset(),
     known_schemas: frozenset[str] | None = None,
-    schema_vocabulary: MechanismSchemaVocabulary | None = None,
+    schema_vocabulary: SchemaVocabulary | None = None,
 ) -> CompiledMechanismGraph:
     """Validate a graph and return a non-published qualification artifact."""
 
@@ -1003,6 +1081,7 @@ __all__ = [
     "GraphDiagnostic",
     "GraphEdge",
     "MechanismGraphError",
+    "MechanismSchemaVocabularyRegistry",
     "MechanismSpec",
     "NativeStageContractProjection",
     "PortSpec",

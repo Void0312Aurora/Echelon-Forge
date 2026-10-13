@@ -50,6 +50,9 @@ owner 提供的 `StageNodeManifest` 快照，要求节点一一绑定，并在�
 记录 owner contract 快照，并绑定图、manifest registry 和 edge 的稳定摘要；它直接接受
 native snapshot 的对象形状，若存在 realized-system 名称也只作为补充的顺序证据。该
 projection 明确标记为不可执行，并拒绝无效、重复、adapter-only 和 diagnostics-only 绑定。
+多个 owner vocabulary 现在可以合并为带版本的 qualification registry；只有 owner 相同的重复
+schema 才会合并，owner 冲突会 fail closed。该 registry 只是显式 owner 证据的组合 seam，
+不表示全仓库 canonical packet vocabulary 已经完整，也不提供可执行 dispatcher。
 
 这仍是静态机制图契约试点。qualification/shadow 编译和生产接纳是分开的 gate；通过现有
 manifest machinery 产出的 artifact 不会自动变成可执行机制。
