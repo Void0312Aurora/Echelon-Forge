@@ -322,6 +322,15 @@ def test_csg_qualification_rejects_ambiguous_guide_frame() -> None:
         _minimal_qualification(scenario)
 
 
+def test_csg_qualification_rejects_malformed_group_container() -> None:
+    scenario = _compiled_scenario()
+    scenario.merged_scenario_data["meta"]["csg"]["groups"] = {}
+    scenario.runtime_metadata.meta_config["csg"]["groups"] = {}
+    scenario = replace(scenario, semantic_digest="")
+    with pytest.raises(ForcePackageError, match="csg_groups_required"):
+        _minimal_qualification(scenario)
+
+
 def test_csg_loader_rejects_malformed_group_metadata_before_loader_mutation() -> None:
     scenario = _compiled_scenario()
     qualification = _minimal_qualification(scenario)

@@ -149,7 +149,7 @@ this document does not infer other-host or full-repository parity.
 
 Current branch verification results after merge commit `0f18684ed` and the
 qualification follow-up through `ada091a2f` (current `origin/main` integrated):
-**181 focused Python tests passed**, **17 CSG adapter tests passed**, and
+**181 focused Python tests passed**, **18 CSG adapter tests passed**, and
 **35 native tests / 963 assertions passed**. Ruff and whitespace checks passed
 on all touched Python surfaces.
 The primary checkout retained its original HEAD and clean status. The owner requested batched commits and pushes of this checkpoint
@@ -312,7 +312,7 @@ adapter and diagnostics-only projections; the Python binding sees the same
 owner fields. This is an owner-publication diagnostic seam, not a canonical
 schema vocabulary or authored-graph admission path.
 
-The #237 CSG adapter now has **17 force-package/adapter tests**, including two
+The #237 CSG adapter now has **18 force-package/adapter tests**, including two
 full S0 fixture runs. It requires an explicit compiled-scenario input and
 explicit organization-to-entity and assembly-to-native-type bindings; it does
 not infer those mappings from the CSG domain schema. `load_qualified_csg_scenario`
