@@ -33,6 +33,7 @@ class CsgForcePackageQualification:
     scenario_digest: str
     embarked_inventory_digest: str
     geometry_digest: str
+    compiled_relationships_digest: str
     evidence_refs: tuple[str, ...]
 
 
@@ -59,6 +60,10 @@ def _csg_entities(compiled_scenario: CompiledScenario, group_id: str) -> dict[st
     if not result:
         raise ForcePackageError("force.csg_entities_required")
     return result
+
+
+def _compiled_relationships_digest(compiled: CompiledForcePackage) -> str:
+    return _digest([relationship.__dict__ for relationship in compiled.relationships])
 
 
 def qualify_force_package_against_csg(
@@ -147,6 +152,7 @@ def qualify_force_package_against_csg(
 
     geometry = csg_meta.get("geometry", {})
     scenario_digest = _digest(scenario.merged_scenario_data)
+    relationships_digest = _compiled_relationships_digest(compiled)
     return CsgForcePackageQualification(
         package_ref=compiled.package_ref,
         package_identity_digest=compiled.identity_digest,
@@ -156,9 +162,11 @@ def qualify_force_package_against_csg(
         scenario_digest=scenario_digest,
         embarked_inventory_digest=_digest(group.get("embarked_inventory", [])),
         geometry_digest=_digest(geometry),
+        compiled_relationships_digest=relationships_digest,
         evidence_refs=(
             f"force.package:{compiled.package_ref}",
             f"force.identity:{compiled.identity_digest}",
+            f"force.relationships:{relationships_digest}",
             "scenario.csg.group_composition.v2",
             f"scenario.identity:{scenario_digest}",
             f"scenario.csg.geometry:{_digest(geometry)}",
@@ -171,11 +179,13 @@ def load_qualified_csg_scenario(
     *,
     scenario: CompiledScenario,
     qualifications: Sequence[CsgForcePackageQualification],
+    compiled_packages: Mapping[str, CompiledForcePackage],
     seed: int = 42,
 ) -> Any:
     """Validate the qualified snapshot, then delegate to the maintained loader.
 
-    Every CSG group must have a qualification result. No positions, entities,
+    Every CSG group must have a qualification result bound to the independently
+    compiled package identity supplied by the caller. No positions, entities,
     inventories or relationship authority are synthesized by this bridge.
     """
     if not scenario.is_fresh():
@@ -192,16 +202,30 @@ def load_qualified_csg_scenario(
     qualified_ids = [qualification.group_id for qualification in qualifications]
     if not qualified_ids or len(set(qualified_ids)) != len(qualified_ids) or set(qualified_ids) != set(groups):
         raise ForcePackageError("force.csg_qualification_scope_mismatch")
+    if not isinstance(compiled_packages, Mapping) or not compiled_packages:
+        raise ForcePackageError("force.csg_compiled_package_scope_required")
+    package_refs = {qualification.package_ref for qualification in qualifications}
+    if set(compiled_packages) != package_refs:
+        raise ForcePackageError("force.csg_compiled_package_scope_mismatch")
     scenario_digest = _digest(scenario.merged_scenario_data)
     geometry_digest = _digest(csg_meta["geometry"])
     for qualification in qualifications:
+        compiled = compiled_packages.get(qualification.package_ref)
+        if (
+            compiled is None
+            or compiled.identity_digest != qualification.package_identity_digest
+            or _compiled_relationships_digest(compiled)
+            != qualification.compiled_relationships_digest
+        ):
+            raise ForcePackageError("force.csg_compiled_package_identity_mismatch")
         group = groups[qualification.group_id]
         if (
             qualification.csg_schema != csg_meta["schema"]
             or qualification.scenario_digest != scenario_digest
             or qualification.geometry_digest != geometry_digest
             or qualification.embarked_inventory_digest != _digest(group["embarked_inventory"])
-            or {name for _, name in qualification.entity_bindings} != set(_csg_entities(scenario, qualification.group_id))
+            or {name for _, name in qualification.entity_bindings}
+            != set(_csg_entities(scenario, qualification.group_id))
         ):
             raise ForcePackageError("force.csg_qualification_snapshot_mismatch")
     return loader.load_compiled_scenario(scenario, seed=seed)
