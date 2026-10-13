@@ -128,10 +128,10 @@ def qualify_force_package_against_csg(
         raise ForcePackageError("force.csg_schema_not_maintained")
     if scenario.runtime_metadata.meta_config.get("csg") != csg_meta:
         raise ForcePackageError("force.csg_runtime_metadata_mismatch")
-    groups = [group for group in csg_meta.get("groups", []) if isinstance(group, dict) and group.get("group_id") == group_id]
-    if len(groups) != 1:
+    groups = _csg_groups(csg_meta)
+    group = groups.get(group_id)
+    if group is None:
         raise ForcePackageError(f"force.csg_group_unknown_or_duplicate:groups.{group_id}")
-    group = groups[0]
     if group.get("side") != package.side:
         raise ForcePackageError("force.csg_group_side_mismatch")
     guide = group.get("guide")
