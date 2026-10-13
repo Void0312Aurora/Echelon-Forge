@@ -157,6 +157,10 @@ class SimulationKernel {
     // Reset the simulation to initial state with a specific random seed
     void reset(unsigned int seed);
 
+    // Diagnostic only; unfinished Flecs scopes after a callback exception
+    // cannot be repaired by episode reset.
+    [[nodiscard]] bool has_unfinished_native_pipeline() const;
+
     // Advance the simulation by one fixed time step
     void step();
     std::vector<ExactStepStageDescriptor> exact_gpu_migration_stage_inventory() const;

@@ -195,6 +195,9 @@ def test_native_fault_projection_requires_observed_unhealthy_owner() -> None:
         def batch_generation(self) -> int:
             return 1
 
+        def batch_requires_host_recreate(self) -> bool:
+            return False
+
     result = project_native_batch_fault(
         runtime=FakeRuntime(),
         batch_generation_ref="1",
@@ -209,6 +212,21 @@ def test_native_fault_projection_requires_observed_unhealthy_owner() -> None:
         "native.batch.failure_reason:worker_exception",
     ]
     assert all(world.step_committed is None for world in result.worlds)
+
+    class TerminalRuntime(FakeRuntime):
+        def batch_requires_host_recreate(self) -> bool:
+            return True
+
+    terminal = project_native_batch_fault(
+        runtime=TerminalRuntime(),
+        batch_generation_ref="1",
+        operation_ref="step.1",
+        operation="step_batch",
+        expected_world_indices=frozenset({0, 1}),
+    )
+    assert terminal.recovery_admission is RecoveryAdmission.TERMINATE_GENERATION
+    assert "native.batch.requires_host_recreate:true" in terminal.diagnostics
+    assert all(world.step_committed is None for world in terminal.worlds)
 
     class HealthyRuntime(FakeRuntime):
         def batch_healthy(self) -> bool:
