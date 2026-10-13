@@ -600,3 +600,69 @@ def test_policy_runtime_binding_can_delegate_action_projection_to_owner_endpoint
     )
     assert result == {"native": (0.0, 0.5, 0.0, -0.5)}
     assert projected == [(0.0, 0.5, 0.0, -0.5)]
+
+
+def test_existing_runtime_path_runs_owner_action_authorization_before_projection() -> None:
+    policy = _policy(category="novel.owner.category")
+    admission = admit_policy(
+        policy,
+        _binding(),
+        field_catalogue=_catalogue(),
+        observation_version=(1, 1),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+    )
+    projected: list[tuple[float, ...]] = []
+
+    def owner_authorizer(action, context, _dt):
+        del action
+        errors = []
+        if context.get("action_mask_open") is not True:
+            errors.append("policy.action_mask_closed")
+        if context.get("authority_scope") != "platform_control":
+            errors.append("policy.action_authority_missing")
+        expiry = context.get("action_expires_at_s")
+        if expiry is None or context["clock_s"] > expiry:
+            errors.append("policy.action_expired")
+        return tuple(errors)
+
+    binding = PolicyRuntimeBinding(
+        policy,
+        admission,
+        _BoundModel(),
+        bounds=((-1, 1),) * 4,
+        timing="window",
+        action_authorizer=owner_authorizer,
+        action_projector=lambda action: projected.append(tuple(action)) or tuple(action),
+    )
+    runtime = DecisionRuntimeAgent(
+        DecisionRuntimeAgentSpec(
+            agent_id="a1",
+            model_id=policy.policy_id,
+            domain="air",
+            role_id="autopilot",
+            model_kind="scripted",
+            authority_scope="platform_control",
+        ),
+        binding,
+    )
+    runtime.reset(context={})
+    accepted = runtime.step(
+        observation={"ownship.velocity": [1.0, 2.0, 3.0]},
+        clock_s=0.1,
+        observation_version="air_observation@1.1",
+        context={"action_mask_open": True, "action_expires_at_s": 1.0},
+    )
+    assert accepted.action == (0.0, 0.5, 0.0, -0.5)
+    assert projected == [accepted.action]
+
+    with pytest.raises(ValueError, match="policy.action_expired"):
+        runtime.step(
+            observation={"ownship.velocity": [1.0, 2.0, 3.0]},
+            clock_s=2.0,
+            observation_version="air_observation@1.1",
+            context={"action_mask_open": True, "action_expires_at_s": 1.0},
+            force_decide=True,
+        )
+    assert projected == [accepted.action]
+    runtime.close()
