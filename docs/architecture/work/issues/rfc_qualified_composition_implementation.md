@@ -148,7 +148,7 @@ registers the qualification tests. See the final execution result for counts;
 this document does not infer other-host or full-repository parity.
 
 Current branch verification results after merge commit `0f18684ed` and the
-qualification follow-up through `fc304de73` (current `origin/main` integrated):
+qualification follow-up through `804cc77e7` (current `origin/main` integrated):
 **180 focused Python tests passed** and **35 native
 tests / 963 assertions passed**. Ruff and whitespace checks passed on all
 touched Python surfaces.
