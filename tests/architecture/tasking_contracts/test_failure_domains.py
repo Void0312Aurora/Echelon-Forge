@@ -11,6 +11,7 @@ from python.tasking_contracts.failure_domains import (
     WorldState,
     admission_rejection,
     build_batch_outcome,
+    project_host_fault,
     project_native_batch_fault,
     project_unresolved_batch_fault,
 )
@@ -205,4 +206,33 @@ def test_native_fault_projection_requires_observed_unhealthy_owner() -> None:
             operation_ref="step.1",
             operation="step_batch",
             expected_world_indices=frozenset({0}),
+        )
+
+
+def test_host_fault_projection_terminates_generation_without_inventing_commit_state() -> None:
+    outcome = project_host_fault(
+        batch_generation_ref="generation-1",
+        operation_ref="step-1",
+        operation="step_batch",
+        expected_world_indices=frozenset({0, 1, 2}),
+        error_code="host.nontermination_timeout",
+        process_survived=False,
+    )
+    assert outcome.domain is FailureDomain.HOST
+    assert outcome.result is BatchResult.FAILED
+    assert outcome.recovery_admission is RecoveryAdmission.TERMINATE_GENERATION
+    assert all(world.state is WorldState.UNKNOWN_AFTER_FAULT for world in outcome.worlds)
+    assert all(world.step_committed is None for world in outcome.worlds)
+    assert "host.process_survived:false" in outcome.diagnostics
+
+
+def test_host_fault_projection_requires_external_process_observation() -> None:
+    with pytest.raises(TypeError, match="process_survived"):
+        project_host_fault(
+            batch_generation_ref="generation-1",
+            operation_ref="step-1",
+            operation="step_batch",
+            expected_world_indices=frozenset({0}),
+            error_code="host.abort",
+            process_survived="unknown",
         )
