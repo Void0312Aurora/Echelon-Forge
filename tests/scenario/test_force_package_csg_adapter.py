@@ -102,6 +102,60 @@ def _full_package(group):
     return package, assemblies, role_capabilities, bindings, {member.ref: member.ref for member in members}
 
 
+def _nested_package(group):
+    """Build one explicit nested package for the CSG migration seam."""
+    gid, side = group["group_id"], group["side"]
+    items = tuple(
+        (row, name)
+        for row in group["ships"]
+        for name in row.get("entity_names", ())
+    )
+    nested_items, direct_items = items[:2], items[2:]
+
+    child = ForcePackage(
+        f"qualification.{gid}.screen",
+        "1",
+        side,
+        tuple(
+            PackageMember(name, "assembly", row["type"], row["role"], side)
+            for row, name in nested_items
+        ),
+        relationships=(
+            PackageRelationship(
+                "membership", nested_items[0][1], nested_items[1][1]
+            ),
+        ),
+        reference_frame="geodetic",
+        anchor_ref=gid,
+        provenance_ref=group["oob_ref"],
+    )
+    root = ForcePackage(
+        f"qualification.{gid}",
+        "1",
+        side,
+        (
+            PackageMember("screen", "package", child.ref, "screen", side),
+            *(
+                PackageMember(name, "assembly", row["type"], row["role"], side)
+                for row, name in direct_items
+            ),
+        ),
+        relationships=(
+            PackageRelationship("communication", "screen", direct_items[0][1]),
+        ),
+        reference_frame="geodetic",
+        anchor_ref=gid,
+        provenance_ref=group["oob_ref"],
+    )
+    assemblies = {
+        row["type"]: AssemblyReference(row["type"], side, frozenset({"mobility"}))
+        for row, _ in items
+    }
+    role_capabilities = {row["role"]: frozenset({"mobility"}) for row, _ in items}
+    role_capabilities["screen"] = frozenset({"mobility"})
+    return root, {child.ref: child}, assemblies, role_capabilities
+
+
 def _compile_package(package, assemblies, role_capabilities):
     return compile_force_package(
         package,
@@ -202,6 +256,81 @@ def test_full_csg_qualification_preserves_native_geometry_inventory_and_replay(s
     for runtime_id, expected in initial_positions.items():
         assert tuple(float(value) for value in loader.sim.get_unit_position(runtime_id)) == pytest.approx(expected)
     assert scenario.instantiate() == snapshot
+
+
+@pytest.mark.parametrize("stem", ["csg_s0_ford_vs_fujian_named_v1", "csg_s0_ford_mirror_v1"])
+def test_nested_force_package_qualification_reaches_existing_csg_loader(stem) -> None:
+    scenario_path = resolve_repo_path("scenarios", "naval", "csg", f"{stem}.json")
+    scenario = ScenarioCompiler.compile_path(scenario_path)
+    snapshot = scenario.instantiate()
+    qualifications = []
+    compiled_packages = {}
+    for index, group in enumerate(snapshot["meta"]["csg"]["groups"]):
+        if index == 0:
+            package, packages, assemblies, role_capabilities = _nested_package(group)
+            bindings = None
+        else:
+            package, assemblies, role_capabilities, bindings, type_names = _full_package(group)
+            packages = {}
+        compiled = _compile_package(
+            package,
+            assemblies,
+            role_capabilities,
+        ) if not packages else compile_force_package(
+            package,
+            packages=packages,
+            assemblies=assemblies,
+            role_capabilities=role_capabilities,
+        )
+        if bindings is None:
+            bindings = {
+                entity.entity_id: entity.provenance[-1]
+                for entity in compiled.entities
+            }
+            type_names = {assembly_id: assembly_id for assembly_id in assemblies}
+        compiled_packages[compiled.package_ref] = compiled
+        qualifications.append(
+            qualify_force_package_against_csg(
+                package=package,
+                packages=packages,
+                assemblies=assemblies,
+                role_capabilities=role_capabilities,
+                scenario=scenario,
+                group_id=group["group_id"],
+                entity_bindings=bindings,
+                assembly_type_names=type_names,
+            )
+        )
+
+    nested = qualifications[0]
+    entity_names = [
+        name
+        for row in snapshot["meta"]["csg"]["groups"][0]["ships"]
+        for name in row.get("entity_names", ())
+    ]
+    assert nested.relationship_edges == (
+        (
+            "communication",
+            f"qualification.{snapshot['meta']['csg']['groups'][0]['group_id']}/screen",
+            f"qualification.{snapshot['meta']['csg']['groups'][0]['group_id']}/{entity_names[2]}",
+        ),
+        (
+            "membership",
+            f"qualification.{snapshot['meta']['csg']['groups'][0]['group_id']}/screen/{entity_names[0]}",
+            f"qualification.{snapshot['meta']['csg']['groups'][0]['group_id']}/screen/{entity_names[1]}",
+        ),
+    )
+    adapter = create_scenario_runtime_adapter(1)
+    assert adapter.load_database(resolve_repo_path("examples", "config", "database"))
+    loader = adapter.make_scenario_loader(0)
+    assert load_qualified_csg_scenario(
+        loader,
+        scenario=scenario,
+        qualifications=qualifications,
+        compiled_packages=compiled_packages,
+        seed=3,
+    ) is None
+    assert {key: loader.scenario_data[key] for key in snapshot} == snapshot
 
 
 @pytest.mark.parametrize(
