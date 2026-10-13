@@ -11,9 +11,11 @@ ensure_repo_imports()
 
 from python.scenario.force_package import (
     AssemblyReference,
+    CompiledRelationship,
     ForcePackage,
     ForcePackageError,
     PackageMember,
+    compile_force_package,
 )
 from python.scenario.force_package_csg_adapter import (
     load_qualified_csg_scenario,
@@ -98,6 +100,15 @@ def _full_package(group):
     return package, assemblies, role_capabilities, bindings, {member.ref: member.ref for member in members}
 
 
+def _compile_package(package, assemblies, role_capabilities):
+    return compile_force_package(
+        package,
+        packages={},
+        assemblies=assemblies,
+        role_capabilities=role_capabilities,
+    )
+
+
 def test_force_package_projection_matches_existing_csg_entity_identity_and_geometry() -> None:
     package, assemblies = _package()
     scenario = _compiled_scenario()
@@ -124,8 +135,11 @@ def test_full_csg_qualification_preserves_native_geometry_inventory_and_replay(s
     scenario = ScenarioCompiler.compile_path(scenario_path)
     snapshot = scenario.instantiate()
     results = []
+    compiled_packages = {}
     for group in snapshot["meta"]["csg"]["groups"]:
         package, assemblies, role_capabilities, bindings, type_names = _full_package(group)
+        compiled = _compile_package(package, assemblies, role_capabilities)
+        compiled_packages[compiled.package_ref] = compiled
         results.append(qualify_force_package_against_csg(
             package=package, packages={}, assemblies=assemblies, role_capabilities=role_capabilities,
             scenario=scenario, group_id=group["group_id"], entity_bindings=bindings,
@@ -136,7 +150,13 @@ def test_full_csg_qualification_preserves_native_geometry_inventory_and_replay(s
     adapter = create_scenario_runtime_adapter(1)
     assert adapter.load_database(resolve_repo_path("examples", "config", "database"))
     loader = adapter.make_scenario_loader(0)
-    assert load_qualified_csg_scenario(loader, scenario=scenario, qualifications=results, seed=3) is None
+    assert load_qualified_csg_scenario(
+        loader,
+        scenario=scenario,
+        qualifications=results,
+        compiled_packages=compiled_packages,
+        seed=3,
+    ) is None
     assert {key: loader.scenario_data[key] for key in snapshot} == snapshot
     assert loader._compiled_runtime_metadata.meta_config["csg"] == snapshot["meta"]["csg"]
     for frame in reference["frames"]:
@@ -183,6 +203,11 @@ def _minimal_qualification(scenario):
     )
 
 
+def _minimal_compiled_package():
+    package, assemblies = _package()
+    return _compile_package(package, assemblies, {"carrier": frozenset({"mobility"})})
+
+
 class _RecordingLoader:
     def __init__(self):
         self.calls = []
@@ -195,6 +220,7 @@ class _RecordingLoader:
 def test_csg_snapshot_drift_rejects_before_loader_mutation(target) -> None:
     scenario = _compiled_scenario()
     qualification = _minimal_qualification(scenario)
+    compiled = _minimal_compiled_package()
     loader = _RecordingLoader()
     if target == "position":
         scenario.merged_scenario_data["entities"][0]["pos"][0] += 100.0
@@ -205,19 +231,72 @@ def test_csg_snapshot_drift_rejects_before_loader_mutation(target) -> None:
     else:
         scenario.runtime_metadata.meta_config["csg"]["groups"][0]["side"] = "Red"
     with pytest.raises(ForcePackageError, match="csg_scenario_stale|csg_runtime_metadata_mismatch"):
-        load_qualified_csg_scenario(loader, scenario=scenario, qualifications=[qualification])
+        load_qualified_csg_scenario(
+            loader,
+            scenario=scenario,
+            qualifications=[qualification],
+            compiled_packages={compiled.package_ref: compiled},
+        )
     assert loader.calls == []
 
 
 def test_csg_load_requires_complete_qualification_and_same_snapshot() -> None:
     scenario = _compiled_scenario()
     qualification = _minimal_qualification(scenario)
+    compiled = _minimal_compiled_package()
     loader = _RecordingLoader()
     for results in ([], [qualification, qualification]):
         with pytest.raises(ForcePackageError, match="qualification_scope_mismatch"):
-            load_qualified_csg_scenario(loader, scenario=scenario, qualifications=results)
+            load_qualified_csg_scenario(
+                loader,
+                scenario=scenario,
+                qualifications=results,
+                compiled_packages={compiled.package_ref: compiled},
+            )
     with pytest.raises(ForcePackageError, match="qualification_snapshot_mismatch"):
-        load_qualified_csg_scenario(loader, scenario=scenario, qualifications=[replace(qualification, scenario_digest="0" * 64)])
+        load_qualified_csg_scenario(
+            loader,
+            scenario=scenario,
+            qualifications=[replace(qualification, scenario_digest="0" * 64)],
+            compiled_packages={compiled.package_ref: compiled},
+        )
+    assert loader.calls == []
+
+
+def test_csg_load_rejects_compiled_package_identity_or_relationship_drift() -> None:
+    scenario = _compiled_scenario()
+    qualification = _minimal_qualification(scenario)
+    compiled = _minimal_compiled_package()
+    loader = _RecordingLoader()
+
+    with pytest.raises(ForcePackageError, match="compiled_package_identity_mismatch"):
+        load_qualified_csg_scenario(
+            loader,
+            scenario=scenario,
+            qualifications=[qualification],
+            compiled_packages={
+                compiled.package_ref: replace(compiled, identity_digest="0" * 64)
+            },
+        )
+
+    relationship_drift = replace(
+        compiled,
+        relationships=(
+            CompiledRelationship(
+                "communication",
+                "qualification.csg/BLUE_CSG12__cvn78",
+                "qualification.csg/BLUE_CSG12__cvn78",
+                compiled.package_ref,
+            ),
+        ),
+    )
+    with pytest.raises(ForcePackageError, match="compiled_package_identity_mismatch"):
+        load_qualified_csg_scenario(
+            loader,
+            scenario=scenario,
+            qualifications=[qualification],
+            compiled_packages={compiled.package_ref: relationship_drift},
+        )
     assert loader.calls == []
 
 
