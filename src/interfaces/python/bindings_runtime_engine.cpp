@@ -21,7 +21,8 @@ void bind_runtime_engine(nb::module_ &m) {
         .def_rw("output_packets", &runtime::scheduler::StageNodeManifest::output_packets)
         .def_rw("read_state_shards", &runtime::scheduler::StageNodeManifest::read_state_shards)
         .def_rw("write_state_shards", &runtime::scheduler::StageNodeManifest::write_state_shards)
-        .def_rw("read_snapshot_policy", &runtime::scheduler::StageNodeManifest::read_snapshot_policy)
+        .def_rw("read_snapshot_policy",
+                &runtime::scheduler::StageNodeManifest::read_snapshot_policy)
         .def_rw("write_commit_policy", &runtime::scheduler::StageNodeManifest::write_commit_policy)
         .def_rw("clock_domain", &runtime::scheduler::StageNodeManifest::clock_domain)
         .def_rw("latency_policy", &runtime::scheduler::StageNodeManifest::latency_policy)
@@ -50,10 +51,9 @@ void bind_runtime_engine(nb::module_ &m) {
         .def("batch_requires_host_recreate", &WorldBatchRuntime::batch_requires_host_recreate)
         .def("batch_generation", &WorldBatchRuntime::batch_generation)
         .def("resolve_factory_platform_spawn_plan",
-             &WorldBatchRuntime::resolve_factory_platform_spawn_plan,
-             nb::arg("world_index"), nb::arg("type_name"))
-        .def("maintained_stage_node_manifests",
-             &WorldBatchRuntime::maintained_stage_node_manifests)
+             &WorldBatchRuntime::resolve_factory_platform_spawn_plan, nb::arg("world_index"),
+             nb::arg("type_name"))
+        .def("maintained_stage_node_manifests", &WorldBatchRuntime::maintained_stage_node_manifests)
         .def("world_raw_quarantine",
              nb::overload_cast<size_t>(&WorldBatchRuntime::world_raw_quarantine),
              nb::rv_policy::reference_internal, nb::arg("index"))
