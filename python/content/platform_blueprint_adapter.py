@@ -288,6 +288,9 @@ def to_expanded_typed_platform_request(
     if not capabilities:
         raise PlatformAssemblyError("platform.native_capabilities_required")
 
+    if any(quantity != 1 for _, _, quantity in plan.loadout):
+        raise PlatformAssemblyError("platform.native_loadout_quantity_unsupported")
+
     canonical_plan = resolve_platform_assembly(
         assembly_id=plan.assembly_id,
         blueprint=blueprint,
