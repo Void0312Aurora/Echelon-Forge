@@ -253,7 +253,9 @@ merge into main, accept the proposed ADRs or close RFC issues.
    delivery. The native `WorldBatchRuntime` proof now injects a worker-launch
    failure through a private test accessor, verifies joined workers,
    failed-generation export fencing, failed recovery fencing, native-owned
-   generation IDs and explicit reset recovery. The remaining gaps are an
+   generation IDs and explicit reset recovery. Native fault projection now binds
+   its supplied generation reference to the native-owned batch generation. The
+   remaining gaps are an
    exception inside a running native system and bounded fatal/nontermination
    controls. Add those probes through
    existing test owners and subprocess/supervisor paths; no transparent retry or
