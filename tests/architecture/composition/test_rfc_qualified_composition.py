@@ -165,7 +165,7 @@ def _snapshot(facade, entity_id, world_index=0):
     }
 
 
-def _f16_native_typed_request():
+def _f16_native_expanded_request(*, factory_plan=None):
     legacy, _, projection, original_modules = _legacy_projection(
         "aircraft/units/f16c_block50.json"
     )
@@ -196,7 +196,7 @@ def _f16_native_typed_request():
         selections=tuple(ModuleSelection(field, field) for field in modules),
         modules=modules,
     )
-    expanded = to_expanded_typed_platform_request(
+    return to_expanded_typed_platform_request(
         plan=plan,
         blueprint=blueprint,
         modules=modules,
@@ -213,9 +213,12 @@ def _f16_native_typed_request():
             heading=90.0,
             vy=180.0,
         ),
+        factory_plan=factory_plan,
     )
-    assert projection.blueprint_ref == plan.blueprint_ref
-    return to_typed_platform_spawn_request(ef_py, expanded)
+
+
+def _f16_native_typed_request():
+    return to_typed_platform_spawn_request(ef_py, _f16_native_expanded_request())
 
 
 def test_platform_assembly_projects_to_native_typed_spawn_and_preserves_observations():
@@ -260,6 +263,23 @@ def test_platform_assembly_projects_to_native_typed_spawn_and_preserves_observat
     for _ in range(4):
         facade.step_batch()
     assert _snapshot(facade, reference_id, 0) == _snapshot(facade, typed_id, 1)
+
+
+def test_real_f16_factory_plan_rejects_partial_authored_capability_mapping():
+    runtime = ef_py.WorldBatchRuntime(1)
+    assert runtime.load_database(str(DATABASE))
+    factory_plan = runtime.resolve_factory_platform_spawn_plan(0, "F-16C_Block50")
+    assert bool(factory_plan.admitted)
+    assert factory_plan.source_type_name == "F-16C_Block50"
+    assert {capability.family for capability in factory_plan.resolved_capabilities} == {
+        "sensing",
+        "mobility",
+        "launching",
+        "communication",
+        "survivability",
+    }
+    with pytest.raises(PlatformAssemblyError, match="factory_plan_capability_semantics_mismatch"):
+        _f16_native_expanded_request(factory_plan=factory_plan)
 
 
 @pytest.mark.parametrize(
