@@ -368,11 +368,12 @@ TEST_SUITE("runtime_kernel_candidate") {
                 root, {runtime::host::RuntimeArtifactLedgerRole::PlanCompiler, "rfc239-compiler"});
             REQUIRE(compiler.put_artifact(
                 file_bytes(EF_RESOLVED_EXECUTION_PLAN_PATH),
-                "application/vnd.echelon-forge.resolved-execution-plan.v1+json",
-                "active-release", digest, location, detail));
+                "application/vnd.echelon-forge.resolved-execution-plan.v1+json", "active-release",
+                digest, location, detail));
             REQUIRE(compiler.put_artifact(
                 runtime::authority_contracts::canonical_authority_json(
-                    file_bytes(EF_RUNTIME_COMPOSITION_REQUEST_PATH)).value(),
+                    file_bytes(EF_RUNTIME_COMPOSITION_REQUEST_PATH))
+                    .value(),
                 "application/vnd.echelon-forge.runtime-composition-request.v1+json",
                 "active-release", digest, location, detail));
             if (mode != "missing") {
@@ -400,7 +401,8 @@ TEST_SUITE("runtime_kernel_candidate") {
             if (mode == "missing") {
                 CHECK_THROWS_WITH_AS(
                     RuntimeKernelCandidate{config},
-                    doctest::Contains("native ArtifactLedger admitted resolved input lock blob is absent"),
+                    doctest::Contains(
+                        "native ArtifactLedger admitted resolved input lock blob is absent"),
                     std::invalid_argument);
                 std::string absent;
                 CHECK_FALSE(store.read_receipt("run-rfc239", absent, detail));
@@ -408,9 +410,15 @@ TEST_SUITE("runtime_kernel_candidate") {
             }
             RuntimeKernelCandidate candidate(config);
             REQUIRE(candidate.start());
-            REQUIRE(candidate.spawn_unit(candidate.world_ref(), {
-                .world_index = 0, .side = Side::Blue, .type_name = "Aircraft", .z = 3000.0,
-            }).has_value());
+            REQUIRE(candidate
+                        .spawn_unit(candidate.world_ref(),
+                                    {
+                                        .world_index = 0,
+                                        .side = Side::Blue,
+                                        .type_name = "Aircraft",
+                                        .z = 3000.0,
+                                    })
+                        .has_value());
             for (unsigned step = 0; step < 3; ++step) {
                 REQUIRE(candidate.step(candidate.world_ref()));
             }
@@ -447,7 +455,8 @@ TEST_SUITE("runtime_kernel_candidate") {
         if (mode == "complete") {
             bool found_topology = false;
             bool found_world_scope = false;
-            for (const auto &artifact : receipt.at("payload").at("results").at("output_artifacts")) {
+            for (const auto &artifact :
+                 receipt.at("payload").at("results").at("output_artifacts")) {
                 if (artifact.at("name") == "runtime-world-scope-binding") {
                     REQUIRE_FALSE(found_world_scope);
                     found_world_scope = true;
@@ -463,8 +472,10 @@ TEST_SUITE("runtime_kernel_candidate") {
                     const auto &binding = scope.at("world_bindings").front();
                     const auto &payload = receipt.at("payload");
                     CHECK(binding.at("world_index") == 0);
-                    CHECK(binding.at("world_id") == payload.at("execution_scope").at("world_ids").front());
-                    CHECK(binding.at("world_epoch") == payload.at("execution_scope").at("epochs").at("world"));
+                    CHECK(binding.at("world_id") ==
+                          payload.at("execution_scope").at("world_ids").front());
+                    CHECK(binding.at("world_epoch") ==
+                          payload.at("execution_scope").at("epochs").at("world"));
                     CHECK(binding.at("host_boot_id") == payload.at("host_boot_id"));
                     CHECK(binding.at("incarnation_epoch") == payload.at("incarnation_epoch"));
                     evidence["receipt_world_bindings"] = scope.at("world_bindings");

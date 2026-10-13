@@ -30,8 +30,8 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(aircraft.admitted);
         CHECK(aircraft.source_type_name == "Aircraft");
         CHECK(aircraft.type_name_projection_preserved);
-        CHECK(runtime::platform_capabilities::validate_resolved_platform_spawn_plan(aircraft)
-                  .valid);
+        CHECK(
+            runtime::platform_capabilities::validate_resolved_platform_spawn_plan(aircraft).valid);
 
         const auto missing = runtime.resolve_factory_platform_spawn_plan(0, "Missing_Type");
         CHECK_FALSE(missing.admitted);
@@ -45,8 +45,10 @@ TEST_SUITE("world_batch_runtime") {
         const auto manifests = runtime.maintained_stage_node_manifests();
         REQUIRE(manifests.size() >= 3);
         CHECK(std::none_of(manifests.begin(), manifests.end(), [](const auto &manifest) {
-            return manifest.facade_visibility == runtime::scheduler::kFacadeVisibilityAdapterProjection ||
-                   manifest.facade_visibility == runtime::scheduler::kFacadeVisibilityDiagnosticsOnly;
+            return manifest.facade_visibility ==
+                       runtime::scheduler::kFacadeVisibilityAdapterProjection ||
+                   manifest.facade_visibility ==
+                       runtime::scheduler::kFacadeVisibilityDiagnosticsOnly;
         }));
         const auto it = std::find_if(manifests.begin(), manifests.end(), [](const auto &manifest) {
             return manifest.node_id == "fire_control_launch.v1";
