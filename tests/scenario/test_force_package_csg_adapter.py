@@ -311,3 +311,30 @@ def test_csg_group_metadata_conflicts_reject_before_qualification() -> None:
         scenario = ScenarioCompiler.compile_data(data)
         with pytest.raises(ForcePackageError, match=expected):
             _minimal_qualification(scenario)
+
+
+def test_csg_qualification_rejects_ambiguous_guide_frame() -> None:
+    scenario = _compiled_scenario()
+    scenario.merged_scenario_data["meta"]["csg"]["groups"][0]["guide"].clear()
+    scenario.runtime_metadata.meta_config["csg"]["groups"][0]["guide"].clear()
+    scenario = replace(scenario, semantic_digest="")
+    with pytest.raises(ForcePackageError, match="csg_guide_frame_ambiguous"):
+        _minimal_qualification(scenario)
+
+
+def test_csg_loader_rejects_malformed_group_metadata_before_loader_mutation() -> None:
+    scenario = _compiled_scenario()
+    qualification = _minimal_qualification(scenario)
+    compiled = _minimal_compiled_package()
+    scenario.merged_scenario_data["meta"]["csg"]["groups"][0].pop("group_id")
+    scenario.runtime_metadata.meta_config["csg"]["groups"][0].pop("group_id")
+    scenario = replace(scenario, semantic_digest="")
+    loader = _RecordingLoader()
+    with pytest.raises(ForcePackageError, match="csg_group_metadata_invalid"):
+        load_qualified_csg_scenario(
+            loader,
+            scenario=scenario,
+            qualifications=[qualification],
+            compiled_packages={compiled.package_ref: compiled},
+        )
+    assert loader.calls == []

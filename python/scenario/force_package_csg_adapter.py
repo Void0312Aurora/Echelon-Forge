@@ -62,6 +62,36 @@ def _csg_entities(compiled_scenario: CompiledScenario, group_id: str) -> dict[st
     return result
 
 
+def _csg_groups(csg_meta: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    groups = csg_meta.get("groups")
+    if not isinstance(groups, list) or not groups:
+        raise ForcePackageError("force.csg_groups_required")
+    result: dict[str, dict[str, Any]] = {}
+    for group in groups:
+        if not isinstance(group, dict):
+            raise ForcePackageError("force.csg_group_metadata_invalid")
+        group_id = group.get("group_id")
+        if not isinstance(group_id, str) or not group_id.strip():
+            raise ForcePackageError("force.csg_group_metadata_invalid")
+        if group_id in result:
+            raise ForcePackageError("force.csg_group_unknown_or_duplicate:groups")
+        result[group_id] = group
+    return result
+
+
+def _csg_guide_frame(guide: Mapping[str, Any]) -> str:
+    # The compiler preserves the source ``geo`` guide and adds the derived
+    # local ``pos`` for replay.  ``geo`` therefore takes precedence when both
+    # are present; a snapshot with neither frame is malformed.
+    if "geo" in guide:
+        return "geodetic"
+    if "pos" in guide:
+        return "local_enu"
+    if not guide:
+        raise ForcePackageError("force.csg_guide_frame_ambiguous")
+    raise ForcePackageError("force.csg_guide_frame_ambiguous")
+
+
 def _compiled_relationships_digest(compiled: CompiledForcePackage) -> str:
     return _digest([relationship.__dict__ for relationship in compiled.relationships])
 
@@ -116,7 +146,7 @@ def qualify_force_package_against_csg(
         for name in row.get("entity_names", [])
         if isinstance(name, str) and name.strip()
     }
-    frame = "geodetic" if "geo" in group["guide"] else "local_enu"
+    frame = _csg_guide_frame(guide)
     for instance in compiled.package_instances:
         if instance.reference_frame != frame or instance.anchor_ref != group_id:
             raise ForcePackageError(f"force.csg_frame_anchor_mismatch:packages.{instance.instance_id}")
@@ -198,7 +228,7 @@ def load_qualified_csg_scenario(
         raise ForcePackageError("force.csg_schema_not_maintained")
     if scenario.runtime_metadata.meta_config.get("csg") != csg_meta:
         raise ForcePackageError("force.csg_runtime_metadata_mismatch")
-    groups = {group["group_id"]: group for group in csg_meta["groups"]}
+    groups = _csg_groups(csg_meta)
     qualified_ids = [qualification.group_id for qualification in qualifications]
     if not qualified_ids or len(set(qualified_ids)) != len(qualified_ids) or set(qualified_ids) != set(groups):
         raise ForcePackageError("force.csg_qualification_scope_mismatch")
