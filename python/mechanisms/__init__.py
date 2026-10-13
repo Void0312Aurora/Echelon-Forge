@@ -3,6 +3,7 @@ from .ports import (
     GraphDiagnostic,
     GraphEdge,
     MechanismGraphError,
+    MechanismSchemaVocabularyRegistry,
     MechanismSpec,
     NativeStageContractProjection,
     PortSpec,

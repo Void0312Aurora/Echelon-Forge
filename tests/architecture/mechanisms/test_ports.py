@@ -8,6 +8,7 @@ from python.mechanisms.ports import (
     GraphEdge,
     MechanismGraphError,
     MechanismSchemaVocabulary,
+    MechanismSchemaVocabularyRegistry,
     MechanismSpec,
     StageManifestQualificationProjection,
     PortSpec,
@@ -169,6 +170,61 @@ def test_schema_vocabulary_rejects_duplicate_entries_and_mixed_api() -> None:
                 vocabulary_id="test.owner.schemas",
                 version="1",
                 entries=(SchemaVocabularyEntry("Measurement3D.v1", "native.sensor"),),
+            ),
+        )
+
+
+def test_owner_schema_registry_merges_explicit_vocabularies_and_binds_digest() -> None:
+    first = MechanismSchemaVocabulary(
+        vocabulary_id="owner.sensor.schemas",
+        version="1",
+        entries=(
+            SchemaVocabularyEntry("Measurement3D.v1", "native.sensor"),
+            SchemaVocabularyEntry("WorldDirection3.v1", "native.sensor"),
+        ),
+    )
+    second = MechanismSchemaVocabulary(
+        vocabulary_id="owner.tracker.schemas",
+        version="1",
+        entries=(
+            SchemaVocabularyEntry("Measurement3D.v1", "native.sensor"),
+            SchemaVocabularyEntry("TrackCollection.v1", "native.tracker"),
+        ),
+    )
+    registry = MechanismSchemaVocabularyRegistry(
+        registry_id="qualification.repository.schemas",
+        version="1",
+        vocabularies=(second, first),
+    )
+
+    assert registry.vocabulary_id == "qualification.repository.schemas"
+    assert registry.schema_names == frozenset(
+        {"Measurement3D.v1", "WorldDirection3.v1", "TrackCollection.v1"}
+    )
+    assert [item.vocabulary_id for item in registry.vocabularies] == [
+        "owner.sensor.schemas",
+        "owner.tracker.schemas",
+    ]
+    graph = compile_mechanism_graph(
+        "registry-bound",
+        {"sensor": _sensor()},
+        (),
+        schema_vocabulary=registry,
+    )
+    assert graph.valid
+    assert graph.schema_vocabulary_ref == registry.registry_id
+    assert graph.schema_vocabulary_digest == registry.identity_digest
+
+    with pytest.raises(ValueError, match="owner conflict"):
+        MechanismSchemaVocabularyRegistry(
+            registry_id="conflict",
+            version="1",
+            vocabularies=(
+                first,
+                replace(
+                    second,
+                    entries=(SchemaVocabularyEntry("Measurement3D.v1", "other.owner"),),
+                ),
             ),
         )
 

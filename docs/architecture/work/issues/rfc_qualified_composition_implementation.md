@@ -185,6 +185,10 @@ merge into main, accept the proposed ADRs or close RFC issues.
    shape directly, while treating any optional realized-system name as
    supplemental evidence. The projection is explicitly non-executable and
    rejects invalid, duplicate, adapter-only or diagnostics-only bindings.
+   Owner vocabularies can now be merged into a versioned qualification
+   registry; repeated entries are coalesced only when their owner is identical,
+   and conflicting owner claims fail closed. This is a reusable registry seam,
+   not a claim that the repository-wide canonical packet vocabulary is complete.
    Repository-wide canonical schema vocabulary and compilation of an authored
    graph into executable native contracts remain open; no second dispatcher is
    introduced.

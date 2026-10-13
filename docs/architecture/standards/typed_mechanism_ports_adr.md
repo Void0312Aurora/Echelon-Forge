@@ -115,6 +115,11 @@ registry and edge digests. It consumes the native snapshot object shape directly
 an optional realized-system name is only supplemental order evidence. The
 projection is marked non-executable and rejects invalid, duplicate,
 adapter-only and diagnostics-only bindings.
+Multiple owner vocabularies may be combined into a versioned qualification
+registry. Duplicate schema entries are accepted only when they name the same
+owner; conflicting ownership fails closed. The registry is a composition seam
+for explicit owner evidence, not the repository-wide canonical packet
+vocabulary or an executable dispatcher.
 
 This remains a static mechanism-graph contract pilot. Qualification/shadow
 compilation and production admission are separate gates; an artifact emitted
