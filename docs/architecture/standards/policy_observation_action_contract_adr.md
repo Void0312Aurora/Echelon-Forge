@@ -61,7 +61,10 @@ policy, observation and action identities before binding. A small checkpoint
 seam verifies immutable artifact bytes and then hands them to an owner-provided
 loader, which remains responsible for framework deserialization and model
 construction; `PolicyRuntimeBinding.from_checkpoint_artifact` keeps that
-verified loading step on the existing binding path. The selected maintained
+verified loading step on the existing binding path. Binding admission, its
+owner-issued validation marker, checkpoint agreement, action timing and width,
+and action callbacks are checked before invoking the loader. A valid byte
+digest does not bypass rejected or caller-forged admission. The selected maintained
 observation view is admitted by its owner and its identity/version is carried
 into the existing model context. The binding can run an owner action-authorizer
 callback after generic bounds/timing checks and before projection, so live mask,
