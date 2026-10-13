@@ -252,9 +252,19 @@ void WorldBatchRuntime::record_batch_failure(std::exception_ptr failure) const n
 
 void WorldBatchRuntime::ensure_batch_healthy() const {
     if (!batch_healthy_) {
+        if (batch_requires_host_recreate()) {
+            throw std::logic_error(
+                "WorldBatchRuntime batch is failed-closed; recreate the host process");
+        }
         throw std::logic_error(
             "WorldBatchRuntime batch is failed-closed; call reset_batch before retrying");
     }
+}
+
+bool WorldBatchRuntime::batch_requires_host_recreate() const {
+    return !batch_healthy_ && std::any_of(worlds_.begin(), worlds_.end(), [](const auto &world) {
+        return world->has_unfinished_native_pipeline();
+    });
 }
 
 std::string WorldBatchRuntime::batch_failure_reason() const {

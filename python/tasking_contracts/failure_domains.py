@@ -7,7 +7,7 @@ isolation, and it does not replace native WorldBatch/RunReceipt authority.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Any, Protocol
 
@@ -55,6 +55,8 @@ class NativeBatchHealth(Protocol):
     def batch_failure_reason(self) -> str: ...
 
     def batch_generation(self) -> int: ...
+
+    def batch_requires_host_recreate(self) -> bool: ...
 
 
 @dataclass(frozen=True)
@@ -328,6 +330,8 @@ def project_native_batch_fault(
     cannot create a failure record detached from the observed native batch.
     A healthy runtime is rejected so callers cannot create a failure record
     detached from an observed native fault.
+    A native-owned host recreation requirement terminates the generation;
+    Python does not reinterpret an unfinished pipeline as reset recoverable.
     """
 
     if runtime.batch_healthy():
@@ -348,7 +352,10 @@ def project_native_batch_fault(
         raise ValueError("batch generation reference does not match native batch generation")
     if not expected_world_indices:
         raise ValueError("expected_world_indices are required for a batch execution")
-    return build_batch_outcome(
+    requires_host_recreate = runtime.batch_requires_host_recreate()
+    if not isinstance(requires_host_recreate, bool):
+        raise TypeError("native host recreation requirement must be a bool observation")
+    outcome = build_batch_outcome(
         batch_generation_ref=batch_generation_ref,
         operation_ref=operation_ref,
         operation=operation,
@@ -360,6 +367,13 @@ def project_native_batch_fault(
         ),
         diagnostics=(error_code, f"native.batch.failure_reason:{reason}"),
     )
+    if requires_host_recreate:
+        return replace(
+            outcome,
+            recovery_admission=RecoveryAdmission.TERMINATE_GENERATION,
+            diagnostics=outcome.diagnostics + ("native.batch.requires_host_recreate:true",),
+        )
+    return outcome
 
 
 def project_host_fault(

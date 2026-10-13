@@ -47,6 +47,7 @@ void bind_runtime_engine(nb::module_ &m) {
         .def("effective_worker_threads", &WorldBatchRuntime::effective_worker_threads)
         .def("batch_healthy", &WorldBatchRuntime::batch_healthy)
         .def("batch_failure_reason", &WorldBatchRuntime::batch_failure_reason)
+        .def("batch_requires_host_recreate", &WorldBatchRuntime::batch_requires_host_recreate)
         .def("batch_generation", &WorldBatchRuntime::batch_generation)
         .def("resolve_factory_platform_spawn_plan",
              &WorldBatchRuntime::resolve_factory_platform_spawn_plan,
