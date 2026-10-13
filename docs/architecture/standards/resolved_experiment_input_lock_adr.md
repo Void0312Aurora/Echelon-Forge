@@ -100,11 +100,25 @@ and detects loss of that blob on a subsequent process read. Release/rollout
 authority inputs are qualification fixtures; no production trust or signature
 claim follows. This is an actual local host receipt with a referenced Air lock,
 not execution of that entire Air experiment. The probe explicitly reports
-`input_lock_semantics_executed=false` and has no run-owned realized topology
-export, so comparison rejects it. Comparability additionally requires an
+`input_lock_semantics_executed=false`, so comparison rejects it. An opt-in
+candidate flag now captures the existing kernel owner's realized CPU topology
+before shutdown and persists its exact JSON as a run-retained output artifact.
+The receipt binds this artifact separately from the immutable composition seal.
+Reopening rejects missing or corrupted topology bytes. The file-bound evidence
+join requires the bytes when a topology artifact is claimed and checks their
+receipt digest, size, media, retention and native topology identity. These checks
+establish same-run evidence for this single-world native probe. They do not
+establish Air matrix execution. Comparability additionally requires an
 owner-observed `input_lock_semantics_executed=true` and matching nonempty
 `host_mode`; intentional input axes cannot override those execution boundaries.
-Full Air execution/admission, observed topology, production wiring and external
+Full Air execution/admission, production wiring and external
 durable availability remain open gates.
+
+The first Air matrix smoke requires CUDA. The current local Python environment
+reports PyTorch `2.2.0+cpu`, no CUDA build and `torch.cuda.is_available()==False`.
+The internal candidate also lacks the maintained Air world-setup, observation
+and action surfaces needed to execute this training configuration. Replacing
+the declared configuration with a CPU or scripted run would be a distinct
+experiment; it cannot certify the original lock.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.

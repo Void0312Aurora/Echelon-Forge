@@ -55,9 +55,21 @@ admission，运行中 source 变化时将宿主 receipt 标为 failed，后续 b
 受限子进程复用 dark `RuntimeKernelCandidate`、native RunRecorder 和文件 ledger，引用
 第一个 Air matrix 的编译输入锁，生成 native Aircraft、推进三步、关闭宿主，然后由只读
 ledger owner 重新读取真实发布的 receipt。release/rollout 输入仍是资格夹具，不证明生产
-信任或签名。此探针没有执行完整 Air 实验，也没有导出该次运行的 realized topology；明确
+信任或签名。此探针没有执行完整 Air 实验；明确
 报告 `input_lock_semantics_executed=false`，因此比较会拒绝它。完整可比性还要求 owner
 观察到语义执行为 true，且双方 `host_mode` 非空并一致；intentional input axes 不能越过
-这些执行边界。完整 Air 执行准入、实际 topology、生产 wiring 和外部持久可用性仍待验收。
+这些执行边界。
+
+candidate 新增默认关闭的 topology 持久化选项：在关闭前调用现有 kernel owner，保存该次
+运行的 realized CPU topology 原始 JSON，作为 run-retained 输出 artifact 由 receipt 引用。
+它与不可变 composition seal 分开。ledger 重新读取时拒绝缺失或篡改的 topology bytes；
+file-bound evidence join 在声明 topology artifact 时要求提供对应文件，核对 receipt 中的
+digest、size、media、retention 及 native topology identity。这证明该单世界探针的同次
+运行证据。完整 Air 执行准入、生产 wiring 和外部持久可用性仍待验收。
+
+第一个 Air matrix smoke 要求 CUDA；当前本机为 PyTorch `2.2.0+cpu`，没有 CUDA build，
+`torch.cuda.is_available()==False`。内部 candidate 也尚未具备这项训练所需的现有 Air
+world-setup、observation 和 action 接口。改为 CPU 或 scripted 配置会产生另一个实验，
+不能作为原输入锁已执行的证明。
 
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。
