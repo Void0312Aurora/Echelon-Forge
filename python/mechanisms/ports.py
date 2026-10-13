@@ -311,6 +311,62 @@ SchemaVocabulary = MechanismSchemaVocabulary | MechanismSchemaVocabularyRegistry
 
 
 @dataclass(frozen=True)
+class FreshnessVocabularyEntry:
+    """One owner-declared sampling/freshness label."""
+
+    freshness: str
+    owner_ref: str
+
+    def __post_init__(self) -> None:
+        for field_name in ("freshness", "owner_ref"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+
+
+@dataclass(frozen=True)
+class FreshnessVocabulary:
+    """Immutable owner vocabulary for port sampling/freshness semantics."""
+
+    vocabulary_id: str
+    version: str
+    entries: tuple[FreshnessVocabularyEntry, ...]
+
+    def __post_init__(self) -> None:
+        for field_name in ("vocabulary_id", "version"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+        entries = tuple(self.entries)
+        if not entries:
+            raise ValueError("entries must not be empty")
+        if any(not isinstance(entry, FreshnessVocabularyEntry) for entry in entries):
+            raise TypeError("entries must contain FreshnessVocabularyEntry values")
+        freshness_names = [entry.freshness for entry in entries]
+        if len(set(freshness_names)) != len(freshness_names):
+            raise ValueError("freshness vocabulary entries must use unique labels")
+        object.__setattr__(self, "entries", entries)
+
+    @property
+    def freshness_names(self) -> frozenset[str]:
+        return frozenset(entry.freshness for entry in self.entries)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "vocabulary_id": self.vocabulary_id,
+            "version": self.version,
+            "entries": [
+                {"freshness": entry.freshness, "owner_ref": entry.owner_ref}
+                for entry in sorted(self.entries, key=lambda item: item.freshness)
+            ],
+        }
+
+    @property
+    def identity_digest(self) -> str:
+        return _digest(self.as_dict())
+
+
+@dataclass(frozen=True)
 class CompiledMechanismGraph:
     graph_id: str
     nodes: tuple[tuple[str, MechanismSpec], ...]
@@ -322,6 +378,9 @@ class CompiledMechanismGraph:
     schema_vocabulary_ref: str | None = None
     schema_vocabulary_version: str | None = None
     schema_vocabulary_digest: str | None = None
+    freshness_vocabulary_ref: str | None = None
+    freshness_vocabulary_version: str | None = None
+    freshness_vocabulary_digest: str | None = None
 
     @property
     def valid(self) -> bool:
@@ -360,6 +419,15 @@ class CompiledMechanismGraph:
                     "identity_digest": self.schema_vocabulary_digest,
                 }
             ),
+            "freshness_vocabulary": (
+                None
+                if self.freshness_vocabulary_ref is None
+                else {
+                    "vocabulary_id": self.freshness_vocabulary_ref,
+                    "version": self.freshness_vocabulary_version,
+                    "identity_digest": self.freshness_vocabulary_digest,
+                }
+            ),
             "diagnostics": [diagnostic.__dict__ for diagnostic in self.diagnostics],
             "identity_digest": self.identity_digest,
         }
@@ -388,6 +456,7 @@ def _identity_payload(
     *,
     external_inputs: frozenset[str],
     schema_vocabulary: SchemaVocabulary | None = None,
+    freshness_vocabulary: FreshnessVocabulary | None = None,
 ) -> dict[str, Any]:
     payload = {
         "schema_version": SCHEMA_VERSION,
@@ -430,6 +499,12 @@ def _identity_payload(
             "version": schema_vocabulary.version,
             "identity_digest": schema_vocabulary.identity_digest,
         }
+    if freshness_vocabulary is not None:
+        payload["freshness_vocabulary"] = {
+            "vocabulary_id": freshness_vocabulary.vocabulary_id,
+            "version": freshness_vocabulary.version,
+            "identity_digest": freshness_vocabulary.identity_digest,
+        }
     return payload
 
 
@@ -448,6 +523,7 @@ def compile_mechanism_graph(
     external_inputs: frozenset[str] = frozenset(),
     known_schemas: frozenset[str] | None = None,
     schema_vocabulary: SchemaVocabulary | None = None,
+    freshness_vocabulary: FreshnessVocabulary | None = None,
 ) -> CompiledMechanismGraph:
     """Validate a graph and return a non-published qualification artifact."""
 
@@ -457,6 +533,10 @@ def compile_mechanism_graph(
         raise MechanismGraphError("at least one mechanism node is required")
     if known_schemas is not None and schema_vocabulary is not None:
         raise MechanismGraphError("known_schemas and schema_vocabulary are mutually exclusive")
+    if freshness_vocabulary is not None and not isinstance(
+        freshness_vocabulary, FreshnessVocabulary
+    ):
+        raise TypeError("freshness_vocabulary must be a FreshnessVocabulary")
     diagnostics: list[GraphDiagnostic] = []
     normalized_external_inputs = frozenset(external_inputs)
     effective_schemas = (
@@ -472,6 +552,22 @@ def compile_mechanism_graph(
                                 "mechanism.schema_unknown",
                                 f"nodes.{node_id}.{side}.{port.name}",
                                 f"schema is not present in the owner vocabulary: {port.schema}",
+                            )
+                        )
+    if freshness_vocabulary is not None:
+        for node_id, spec in nodes.items():
+            for side, ports in (("inputs", spec.inputs), ("outputs", spec.outputs)):
+                for port in ports:
+                    if (
+                        port.freshness is not None
+                        and port.freshness not in freshness_vocabulary.freshness_names
+                    ):
+                        diagnostics.append(
+                            GraphDiagnostic(
+                                "mechanism.freshness_unknown",
+                                f"nodes.{node_id}.{side}.{port.name}",
+                                "freshness is not present in the owner vocabulary: "
+                                + port.freshness,
                             )
                         )
     for external_ref in sorted(normalized_external_inputs):
@@ -635,6 +731,7 @@ def compile_mechanism_graph(
         edges,
         external_inputs=normalized_external_inputs,
         schema_vocabulary=schema_vocabulary,
+        freshness_vocabulary=freshness_vocabulary,
     )
     return CompiledMechanismGraph(
         graph_id=graph_id,
@@ -646,6 +743,15 @@ def compile_mechanism_graph(
         schema_vocabulary_ref=(schema_vocabulary.vocabulary_id if schema_vocabulary else None),
         schema_vocabulary_version=(schema_vocabulary.version if schema_vocabulary else None),
         schema_vocabulary_digest=(schema_vocabulary.identity_digest if schema_vocabulary else None),
+        freshness_vocabulary_ref=(
+            freshness_vocabulary.vocabulary_id if freshness_vocabulary else None
+        ),
+        freshness_vocabulary_version=(
+            freshness_vocabulary.version if freshness_vocabulary else None
+        ),
+        freshness_vocabulary_digest=(
+            freshness_vocabulary.identity_digest if freshness_vocabulary else None
+        ),
     )
 
 
@@ -1190,6 +1296,8 @@ def validate_stage_manifest_bindings(
 
 __all__ = [
     "CompiledMechanismGraph",
+    "FreshnessVocabulary",
+    "FreshnessVocabularyEntry",
     "GraphDiagnostic",
     "GraphEdge",
     "MechanismGraphError",
