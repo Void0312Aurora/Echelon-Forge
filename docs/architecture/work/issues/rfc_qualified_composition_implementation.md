@@ -118,7 +118,7 @@ python -m pytest tests/architecture/mechanisms/test_air_perception_qualification
 
 The Python/native bridge requires the `ef_test` binary; it skips that proof when
 the target is absent. This local verification built the target and had no skips
-in the 125-test focused run. The JUnit record in
+in the 147-test focused run. The JUnit record in
 `build-rfc-native/rfc-focused-results.xml` carries the graph digest, executed
 test-binary SHA-256 and native numerical/fault evidence. It is a local test record,
 not a production RunReceipt or trust attestation.
@@ -128,24 +128,22 @@ Python 3.12.4 in `build-rfc-native`. Dependency sources were reused read-only
 from the existing pinned source trees; this worktree owns its build outputs.
 The build reported existing compiler warnings and completed successfully.
 
-Focused verification uses `CMO_BUILD_DIR=build-rfc-native` and the six
-prototype modules, six ADR guards, the native RFC integration proof,
+Focused verification uses `CMO_BUILD_DIR=build-rfc-native` and the qualification
+modules, ADR guards, the native RFC integration proof,
 `test_air_facade_demo.py`, `test_air_action_adapter.py`, the decision-registry
 tests and native composition-evidence tests. The architecture suite manifest
 registers the qualification tests. See the final execution result for counts;
 this document does not infer other-host or full-repository parity.
 
-Prior checkpoint local results: **125 focused Python tests passed** and **31 native tests /
-842 assertions passed**; **9 suite-manifest tests passed**. Ruff passed on all
-25 changed Python surfaces, whitespace checks passed, and **17 touched documents /
-116 local links had zero link issues**. The primary checkout retained its original HEAD and
-clean status. The owner requested batched commits and pushes of this checkpoint
-on `codex/rfc-qualified-composition`. The publication gate repeats the 125-test
+Current branch verification results: **147 focused Python tests passed** and **34 native tests /
+957 assertions passed**. Ruff and whitespace checks passed on all touched Python surfaces.
+The primary checkout retained its original HEAD and clean status. The owner requested batched commits and pushes of this checkpoint
+on `codex/rfc-qualified-composition`. The publication gate repeats the 147-test
 focused run and preserves the reviewed file contents across the split.
 
 ## Batched branch publication
 
-The eight commits are ordered by their implementation dependencies:
+The eight implementation batches are ordered by their dependencies:
 
 | Batch | Scope | Dependency |
 | --- | --- | --- |
