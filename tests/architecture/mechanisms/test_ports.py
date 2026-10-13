@@ -2,16 +2,19 @@ from __future__ import annotations
 
 import pytest
 from dataclasses import replace
+from types import SimpleNamespace
 
 from python.mechanisms.ports import (
     GraphEdge,
     MechanismGraphError,
     MechanismSchemaVocabulary,
     MechanismSpec,
+    StageManifestQualificationProjection,
     PortSpec,
     SchemaVocabularyEntry,
     compile_mechanism_graph,
     compose_graph_as_mechanism,
+    project_stage_manifest_qualification,
     validate_stage_manifest_bindings,
 )
 
@@ -419,3 +422,110 @@ def test_strict_stage_manifest_admission_rejects_shard_conflicts() -> None:
         require_native_contract=True,
     )
     assert "mechanism.native_stage_write_shard_conflict" in {item.code for item in diagnostics}
+
+
+def test_stage_manifest_projection_emits_stable_owner_bound_qualification_only_artifact() -> None:
+    graph = compile_mechanism_graph(
+        "native-projection",
+        {
+            "sensor": replace(_sensor(), implementation_ref="native.sensor"),
+            "tracker": replace(_tracker(), implementation_ref="native.tracker"),
+        },
+        (GraphEdge("sensor", "measurements", "tracker", "measurements"),),
+    )
+    common = {
+        "semantic_stage": ["P8"],
+        "owner_module": "native.owner",
+        "input_packets": ["InputPacket"],
+        "output_packets": ["OutputPacket"],
+        "read_state_shards": ["state"],
+        "write_state_shards": [],
+        "read_snapshot_policy": "committed",
+        "write_commit_policy": "window_commit",
+        "clock_domain": "window",
+        "latency_policy": "same_window",
+        "sync_policy": "host_owned",
+        "required_barriers": ["window_commit"],
+        "diagnostic_trace_obligations": ["trace_id"],
+        "facade_visibility": "internal",
+        "adapter_projection_allowed": False,
+    }
+    manifests = {
+        "stage.sensor": {
+            **common,
+            "node_id": "stage.sensor",
+            "owner_module": "native.sensor",
+            "native_system": "SensorSystem",
+        },
+        "stage.tracker": SimpleNamespace(
+            **{
+                **common,
+                "node_id": "stage.tracker",
+                "owner_module": "native.tracker",
+            }
+        ),
+    }
+
+    projection = project_stage_manifest_qualification(
+        graph,
+        node_stage_bindings={"sensor": "stage.sensor", "tracker": "stage.tracker"},
+        stage_manifests=manifests,
+        pipeline_order=("SensorSystem", "native.tracker"),
+    )
+
+    assert isinstance(projection, StageManifestQualificationProjection)
+    assert projection.qualification_only
+    assert not projection.executable
+    assert projection.graph_identity_digest == graph.identity_digest
+    assert [item.node_id for item in projection.node_contracts] == ["sensor", "tracker"]
+    assert projection.node_contracts[1].owner_contract["node_id"] == "stage.tracker"
+    assert "native_system" not in projection.node_contracts[1].owner_contract
+    assert projection.identity_digest == project_stage_manifest_qualification(
+        graph,
+        node_stage_bindings={"sensor": "stage.sensor", "tracker": "stage.tracker"},
+        stage_manifests=manifests,
+        pipeline_order=("SensorSystem", "native.tracker"),
+    ).identity_digest
+
+
+def test_stage_manifest_projection_rejects_duplicate_or_non_scheduler_bindings() -> None:
+    graph = compile_mechanism_graph(
+        "native-projection",
+        {
+            "sensor": replace(_sensor(), implementation_ref="native.sensor"),
+            "tracker": replace(_tracker(), implementation_ref="native.tracker"),
+        },
+        (),
+        external_inputs=frozenset({"tracker.measurements"}),
+    )
+    with pytest.raises(MechanismGraphError, match="one-to-one"):
+        project_stage_manifest_qualification(
+            graph,
+            node_stage_bindings={"sensor": "stage", "tracker": "stage"},
+            stage_manifests={
+                "stage": {
+                    "node_id": "stage",
+                    "semantic_stage": ["P8"],
+                    "owner_module": "adapter",
+                    "facade_visibility": "adapter_projection",
+                }
+            },
+        )
+    single_graph = compile_mechanism_graph(
+        "native-projection-single",
+        {"sensor": replace(_sensor(), implementation_ref="native.sensor")},
+        (),
+    )
+    with pytest.raises(MechanismGraphError, match="native_stage_not_scheduler_truth"):
+        project_stage_manifest_qualification(
+            single_graph,
+            node_stage_bindings={"sensor": "projection"},
+            stage_manifests={
+                "projection": {
+                    "node_id": "projection",
+                    "semantic_stage": ["P8"],
+                    "owner_module": "adapter",
+                    "facade_visibility": "adapter_projection",
+                }
+            },
+        )
