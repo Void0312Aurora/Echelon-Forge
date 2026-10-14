@@ -281,7 +281,13 @@ std::uint64_t
 WorldBatchRuntime::spawn_unit_from_world_spawn_request(const WorldSpawnRequest &request) {
     ensure_batch_healthy();
     const auto world_index = static_cast<size_t>(request.world_index);
-    return spawn_from_request(checked_world(world_index), request);
+    auto &world = checked_world(world_index);
+    try {
+        return spawn_from_request(world, request);
+    } catch (...) {
+        record_batch_failure(std::current_exception());
+        throw;
+    }
 }
 
 std::uint64_t
@@ -289,10 +295,15 @@ WorldBatchRuntime::spawn_typed_platform_unit(const TypedPlatformSpawnRequest &re
     ensure_batch_healthy();
     const auto world_index = static_cast<size_t>(request.world_index);
     auto &world = checked_world(world_index);
-    const auto entity = world.spawn_unit(request.side, request.source_type_name, request.x,
-                                         request.y, request.z, request.heading, request.pitch,
-                                         request.roll, request.vx, request.vy, request.vz);
-    return entity.id();
+    try {
+        const auto entity = world.spawn_unit(request.side, request.source_type_name, request.x,
+                                             request.y, request.z, request.heading, request.pitch,
+                                             request.roll, request.vx, request.vy, request.vz);
+        return entity.id();
+    } catch (...) {
+        record_batch_failure(std::current_exception());
+        throw;
+    }
 }
 
 bool WorldBatchRuntime::try_get_entity_kinematics(const WorldEntityRef &ref,
@@ -345,19 +356,24 @@ bool WorldBatchRuntime::try_set_entity_kinematics(const WorldEntityRef &ref,
         return false;
     }
 
-    entity.set<Transform>(Transform{
-        .x = state.x,
-        .y = state.y,
-        .z = state.z,
-        .heading = state.heading,
-        .pitch = state.pitch,
-        .roll = state.roll,
-    });
-    entity.set<Velocity>(Velocity{
-        .vx = state.vx,
-        .vy = state.vy,
-        .vz = state.vz,
-    });
+    try {
+        entity.set<Transform>(Transform{
+            .x = state.x,
+            .y = state.y,
+            .z = state.z,
+            .heading = state.heading,
+            .pitch = state.pitch,
+            .roll = state.roll,
+        });
+        entity.set<Velocity>(Velocity{
+            .vx = state.vx,
+            .vy = state.vy,
+            .vz = state.vz,
+        });
+    } catch (...) {
+        record_batch_failure(std::current_exception());
+        throw;
+    }
     return true;
 }
 
