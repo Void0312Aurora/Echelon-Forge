@@ -299,7 +299,7 @@ void WorldBatchRuntime::parallel_for_index(size_t task_count, size_t requested_t
 }
 
 void WorldBatchRuntime::execute_for_index(size_t task_count, size_t requested_threads,
-                                         std::function<void(size_t)> fn) const {
+                                          std::function<void(size_t)> fn) const {
     if (worker_thread_factory_for_test_) {
         runtime::detail::parallel_for_index(task_count, requested_threads, std::move(fn),
                                             worker_thread_factory_for_test_);
