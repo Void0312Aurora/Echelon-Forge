@@ -73,7 +73,6 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(missing.rejection_reason == "resolved_platform_spawn_plan_type_name_not_found");
         CHECK(runtime.batch_healthy());
     }
-    }
 
     TEST_CASE("maintained stage manifest query returns the native owner snapshot") {
         WorldBatchRuntime runtime(1);
