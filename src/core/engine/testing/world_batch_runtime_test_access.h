@@ -14,4 +14,9 @@ class WorldBatchRuntimeTestAccess {
         (void)runtime;
         WorldBatchRuntime::worker_thread_factory_for_test_ = std::move(factory);
     }
+
+    static void set_mutation_hook(WorldBatchRuntime &runtime, std::function<void()> hook) {
+        (void)runtime;
+        WorldBatchRuntime::mutation_hook_for_test_ = std::move(hook);
+    }
 };
