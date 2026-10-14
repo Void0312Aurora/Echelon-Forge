@@ -32,7 +32,7 @@ from python.content.platform_blueprint import (
     resolve_platform_assembly,
 )
 from python.content.capability_bundles.schema import PLATFORM_CAPABILITY_FAMILY_VOCABULARY
-from python.experiment.composition import thaw_json_value
+from python.json_value import thaw_json_value
 
 
 _NATIVE_CAPABILITY_FAMILIES = frozenset(PLATFORM_CAPABILITY_FAMILY_VOCABULARY)
