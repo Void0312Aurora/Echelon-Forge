@@ -151,6 +151,7 @@ class WorldBatchRuntime {
                                                       int downsample, bool use_gpu = false) const;
 
   private:
+    friend class WorldBatchRuntimeTestAccess;
     void parallel_for_index(size_t task_count, size_t requested_threads,
                             std::function<void(size_t)> fn) const;
     void ensure_batch_healthy() const;
@@ -165,4 +166,6 @@ class WorldBatchRuntime {
     size_t worker_threads_ = 1;
     mutable bool batch_healthy_ = true;
     mutable std::exception_ptr batch_failure_;
+    // Private native test seam; static storage avoids changing object layout.
+    static std::function<void()> mutation_hook_for_test_;
 };
