@@ -132,6 +132,7 @@ def qualify_force_package_against_csg(
         packages=packages,
         assemblies=assemblies,
         role_capabilities=role_capabilities,
+        assembly_type_names=assembly_type_names,
     )
     if not scenario.is_fresh():
         raise ForcePackageError("force.csg_scenario_stale")
@@ -296,11 +297,13 @@ def load_qualified_csg_scenario(
             raise ForcePackageError("force.csg_qualification_binding_identity_mismatch")
         for generic_id, native_name, expected_type, expected_role, expected_side, expected_member_ref in expected_projection:
             compiled_entity = compiled_entities.get(generic_id)
+            compiled_native_type = dict(compiled.assembly_type_bindings).get(expected_member_ref)
             if (
                 compiled_entity is None
                 or compiled_entity.member_ref != expected_member_ref
                 or compiled_entity.role != expected_role
                 or compiled_entity.side != expected_side
+                or compiled_native_type != expected_type
             ):
                 raise ForcePackageError("force.csg_qualification_binding_compiled_package_mismatch")
             csg_entity = csg_entities.get(native_name)
