@@ -18,10 +18,10 @@ struct SpawnParams {
 };
 
 class IUnitFactory {
-public:
+  public:
     virtual ~IUnitFactory() = default;
 
-    virtual const UnitDefinition* get_definition(const std::string& name) const = 0;
+    virtual const UnitDefinition *get_definition(const std::string &name) const = 0;
 
     // Read-only owner projection used by qualification and diagnostics. The
     // factory remains authoritative; this seam does not grant a spawn bypass.
@@ -37,12 +37,10 @@ public:
         plan.diagnostics_reason = plan.rejection_reason;
         return plan;
     }
-    virtual flecs::entity spawn(flecs::world& ecs,
-                                const std::string& unit_name,
-                                const SpawnParams& params) = 0;
+    virtual flecs::entity spawn(flecs::world &ecs, const std::string &unit_name,
+                                const SpawnParams &params) = 0;
 
-    virtual bool load_definitions(const std::string& /*path*/,
-                                  std::string* error) {
+    virtual bool load_definitions(const std::string & /*path*/, std::string *error) {
         if (error) *error = "UnitFactory does not support loading definitions.";
         return false;
     }

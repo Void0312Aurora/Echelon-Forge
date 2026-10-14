@@ -282,7 +282,7 @@ std::string WorldBatchRuntime::batch_failure_reason() const {
 
 runtime::platform_capabilities::ResolvedPlatformSpawnPlan
 WorldBatchRuntime::resolve_factory_platform_spawn_plan(std::size_t world_index,
-                                                        const std::string &type_name) const {
+                                                       const std::string &type_name) const {
     ensure_batch_healthy();
     return checked_world(world_index).resolve_platform_spawn_plan_for_type_name(type_name);
 }
@@ -309,7 +309,7 @@ void WorldBatchRuntime::parallel_for_index(size_t task_count, size_t requested_t
 }
 
 void WorldBatchRuntime::execute_for_index(size_t task_count, size_t requested_threads,
-                                         std::function<void(size_t)> fn) const {
+                                          std::function<void(size_t)> fn) const {
     if (worker_thread_factory_for_test_) {
         runtime::detail::parallel_for_index(task_count, requested_threads, std::move(fn),
                                             worker_thread_factory_for_test_);
@@ -414,10 +414,9 @@ void WorldBatchRuntime::reset_batch(const std::vector<uint32_t> &seeds) {
         if (batch_generation_ == std::numeric_limits<std::uint64_t>::max()) {
             throw std::overflow_error("WorldBatchRuntime batch generation exhausted");
         }
-        execute_for_index(
-            worlds_.size(), worker_threads_, [&](size_t i) {
-                worlds_[i]->reset(world_batch_setup::resolve_reset_seed(i, worlds_.size(), seeds));
-            });
+        execute_for_index(worlds_.size(), worker_threads_, [&](size_t i) {
+            worlds_[i]->reset(world_batch_setup::resolve_reset_seed(i, worlds_.size(), seeds));
+        });
         ++batch_generation_;
         batch_healthy_ = true;
         batch_failure_ = nullptr;
