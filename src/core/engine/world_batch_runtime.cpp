@@ -170,6 +170,8 @@ uint64_t spawn_from_request(SimulationKernel &world, const WorldSpawnRequest &re
 
 } // namespace
 
+std::function<void()> WorldBatchRuntime::mutation_hook_for_test_{};
+
 WorldBatchRuntime::WorldBatchRuntime(size_t world_count) {
     resize(world_count);
 }
@@ -283,7 +285,11 @@ WorldBatchRuntime::spawn_unit_from_world_spawn_request(const WorldSpawnRequest &
     const auto world_index = static_cast<size_t>(request.world_index);
     auto &world = checked_world(world_index);
     try {
-        return spawn_from_request(world, request);
+        const auto entity_id = spawn_from_request(world, request);
+        if (mutation_hook_for_test_) {
+            mutation_hook_for_test_();
+        }
+        return entity_id;
     } catch (...) {
         record_batch_failure(std::current_exception());
         throw;
@@ -299,6 +305,9 @@ WorldBatchRuntime::spawn_typed_platform_unit(const TypedPlatformSpawnRequest &re
         const auto entity = world.spawn_unit(request.side, request.source_type_name, request.x,
                                              request.y, request.z, request.heading, request.pitch,
                                              request.roll, request.vx, request.vy, request.vz);
+        if (mutation_hook_for_test_) {
+            mutation_hook_for_test_();
+        }
         return entity.id();
     } catch (...) {
         record_batch_failure(std::current_exception());
@@ -365,6 +374,9 @@ bool WorldBatchRuntime::try_set_entity_kinematics(const WorldEntityRef &ref,
             .pitch = state.pitch,
             .roll = state.roll,
         });
+        if (mutation_hook_for_test_) {
+            mutation_hook_for_test_();
+        }
         entity.set<Velocity>(Velocity{
             .vx = state.vx,
             .vy = state.vy,
