@@ -493,23 +493,32 @@ def _schema_version_parts(version: Any) -> tuple[int, int] | None:
     return int(major_text), int(minor_text)
 
 
-def _admit_selected_observation_view(observation_view: Any) -> tuple[str, str, tuple[int, int]]:
-    """Admit the maintained owner view before policy field checks consume it."""
+def _admit_selected_observation_view(
+    observation_view: Any,
+    observation_view_admitter: Callable[[Any], Any] | None = None,
+) -> tuple[str, str, tuple[int, int]]:
+    """Admit an observation view through an injected owner seam.
 
-    # Keep the dependency one-way: the policy contract asks the maintained
-    # observation owner to validate its own DTO, but does not construct or
-    # replace that DTO.
-    from python.rl.runtime.world_batch.typed_observation_view import (
-        admit_typed_observation_view_spec,
-    )
+    The neutral contract performs only shape checks when no owner callback is
+    supplied.  Runtime adapters can inject their maintained owner validator
+    without making this contracts package import a runtime implementation.
+    """
 
     try:
-        admitted = admit_typed_observation_view_spec(observation_view)
+        admitted = (
+            observation_view
+            if observation_view_admitter is None
+            else observation_view_admitter(observation_view)
+        )
+        schema_version = str(getattr(admitted, "schema_version", ""))
+        version = _schema_version_parts(schema_version)
+        if version is None or version[0] != 1:
+            raise ValueError("observation view schema version must be a valid 1.x value")
+        if not str(getattr(admitted, "view_id", "")):
+            raise ValueError("observation view must declare a non-empty view_id")
     except Exception as exc:
         raise ValueError(f"policy.observation_view_invalid:{exc}") from exc
     view_ref = str(getattr(admitted, "view_id", ""))
-    schema_version = str(getattr(admitted, "schema_version", ""))
-    version = _schema_version_parts(schema_version)
     if not view_ref or version is None:
         raise ValueError("policy.observation_view_identity_invalid")
     return view_ref, schema_version, version
@@ -526,6 +535,7 @@ def admit_policy(
     action_timings: Mapping[str, str] | None = None,
     checkpoint: PolicyCheckpoint | None = None,
     observation_view: Any | None = None,
+    observation_view_admitter: Callable[[Any], Any] | None = None,
 ) -> PolicyAdmission:
     """Validate policy/Agent compatibility before any runtime side effect."""
 
@@ -543,7 +553,9 @@ def admit_policy(
     if observation_view is not None:
         try:
             admitted_view_ref, admitted_view_schema_version, view_version = (
-                _admit_selected_observation_view(observation_view)
+                _admit_selected_observation_view(
+                    observation_view, observation_view_admitter
+                )
             )
         except ValueError as exc:
             diagnostics.append(str(exc))
