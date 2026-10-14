@@ -30,6 +30,8 @@ class CsgForcePackageQualification:
     csg_schema: str
     group_id: str
     entity_bindings: tuple[tuple[str, str], ...]
+    entity_bindings_digest: str
+    entity_binding_projection: tuple[tuple[str, str, str, str, str], ...]
     scenario_digest: str
     embarked_inventory_digest: str
     geometry_digest: str
@@ -165,6 +167,7 @@ def qualify_force_package_against_csg(
         raise ForcePackageError("force.csg_binding_duplicate:entity_bindings")
     if set(entity_bindings.values()) != set(csg_entities):
         raise ForcePackageError("force.csg_entity_set_mismatch:entity_bindings")
+    entity_binding_projection = []
     for generic in compiled.entities:
         name = entity_bindings[generic.entity_id]
         csg_entity = csg_entities[name]
@@ -179,16 +182,28 @@ def qualify_force_package_against_csg(
             or generic.side != csg_entity.get("side")
         ):
             raise ForcePackageError(f"force.csg_entity_projection_mismatch:{name}")
+        entity_binding_projection.append(
+            (
+                generic.entity_id,
+                name,
+                assembly_type_names[generic.member_ref],
+                generic.role,
+                generic.side,
+            )
+        )
 
     geometry = csg_meta.get("geometry", {})
     scenario_digest = _digest(scenario.merged_scenario_data)
     relationships_digest = _compiled_relationships_digest(compiled)
+    sorted_bindings = tuple(sorted(entity_bindings.items()))
     return CsgForcePackageQualification(
         package_ref=compiled.package_ref,
         package_identity_digest=compiled.identity_digest,
         csg_schema=csg_meta["schema"],
         group_id=group_id,
-        entity_bindings=tuple(sorted(entity_bindings.items())),
+        entity_bindings=sorted_bindings,
+        entity_bindings_digest=_digest(sorted_bindings),
+        entity_binding_projection=tuple(sorted(entity_binding_projection)),
         scenario_digest=scenario_digest,
         embarked_inventory_digest=_digest(group.get("embarked_inventory", [])),
         geometry_digest=_digest(geometry),
@@ -240,6 +255,26 @@ def load_qualified_csg_scenario(
     scenario_digest = _digest(scenario.merged_scenario_data)
     geometry_digest = _digest(csg_meta["geometry"])
     for qualification in qualifications:
+        sorted_bindings = tuple(sorted(qualification.entity_bindings))
+        expected_projection = tuple(sorted(qualification.entity_binding_projection))
+        csg_entities = _csg_entities(scenario, qualification.group_id)
+        if (
+            qualification.entity_bindings != sorted_bindings
+            or qualification.entity_bindings_digest != _digest(sorted_bindings)
+            or len(expected_projection) != len(sorted_bindings)
+            or {(row[0], row[1]) for row in expected_projection} != set(sorted_bindings)
+        ):
+            raise ForcePackageError("force.csg_qualification_binding_identity_mismatch")
+        for generic_id, native_name, expected_type, expected_role, expected_side in expected_projection:
+            csg_entity = csg_entities.get(native_name)
+            member = csg_entity.get("csg_member") if csg_entity else None
+            if (
+                not isinstance(member, dict)
+                or csg_entity.get("type") != expected_type
+                or member.get("role") != expected_role
+                or csg_entity.get("side") != expected_side
+            ):
+                raise ForcePackageError("force.csg_qualification_binding_projection_mismatch")
         compiled = compiled_packages.get(qualification.package_ref)
         if (
             compiled is None
@@ -254,8 +289,7 @@ def load_qualified_csg_scenario(
             or qualification.scenario_digest != scenario_digest
             or qualification.geometry_digest != geometry_digest
             or qualification.embarked_inventory_digest != _digest(group["embarked_inventory"])
-            or {name for _, name in qualification.entity_bindings}
-            != set(_csg_entities(scenario, qualification.group_id))
+            or {name for _, name in sorted_bindings} != set(csg_entities)
         ):
             raise ForcePackageError("force.csg_qualification_snapshot_mismatch")
     return loader.load_compiled_scenario(scenario, seed=seed)

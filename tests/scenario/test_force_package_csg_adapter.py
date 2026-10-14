@@ -300,6 +300,34 @@ def test_csg_load_rejects_compiled_package_identity_or_relationship_drift() -> N
     assert loader.calls == []
 
 
+def test_csg_binding_permutation_rejects_before_loader_mutation() -> None:
+    scenario_path = resolve_repo_path("scenarios", "naval", "csg", "csg_s0_ford_vs_fujian_named_v1.json")
+    scenario = ScenarioCompiler.compile_path(scenario_path)
+    group = scenario.instantiate()["meta"]["csg"]["groups"][0]
+    package, assemblies, role_capabilities, bindings, type_names = _full_package(group)
+    qualification = qualify_force_package_against_csg(
+        package=package,
+        packages={},
+        assemblies=assemblies,
+        role_capabilities=role_capabilities,
+        scenario=scenario,
+        group_id=group["group_id"],
+        entity_bindings=bindings,
+        assembly_type_names=type_names,
+    )
+    pairs = list(qualification.entity_bindings)
+    pairs[0], pairs[1] = (pairs[0][0], pairs[1][1]), (pairs[1][0], pairs[0][1])
+    loader = _RecordingLoader()
+    with pytest.raises(ForcePackageError, match="binding_identity_mismatch"):
+        load_qualified_csg_scenario(
+            loader,
+            scenario=scenario,
+            qualifications=[replace(qualification, entity_bindings=tuple(pairs))],
+            seed=3,
+        )
+    assert loader.calls == []
+
+
 def test_csg_group_metadata_conflicts_reject_before_qualification() -> None:
     original = _compiled_scenario().instantiate()
     for mutator, expected in (
