@@ -10,6 +10,15 @@
       "reason": "The qualification-only input-lock adapter validates an existing host-owned RunReceipt without becoming a production receipt authority.",
       "exit_condition": "Replace the tool import with a runtime/facade-owned receipt validation protocol before production admission.",
       "max_sites": 1
+    },
+    {
+      "kind": "python_import",
+      "source": "python.tasking_contracts.policy",
+      "target": "python.rl.runtime.world_batch.typed_observation_view",
+      "owner": "RFC-238 qualification boundary",
+      "reason": "The policy qualification seam asks the maintained observation owner to validate a selected DTO while keeping policy admission side-effect free.",
+      "exit_condition": "Move the observation-view validator behind a neutral contract or native facade protocol before production policy admission.",
+      "max_sites": 1
     }
   ]
 }
