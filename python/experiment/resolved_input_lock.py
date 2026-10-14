@@ -15,7 +15,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from python.experiment.composition import compose_config, freeze_json_mapping, thaw_json_value
+from python.experiment.composition import compose_config
+from python.json_value import freeze_json_mapping, thaw_json_value
 from python.experiment.definition import Experiment, ExperimentRegistry
 from python.tasking_contracts.failure_domains import BatchOperationOutcome, BatchResult
 
