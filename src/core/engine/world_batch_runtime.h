@@ -186,4 +186,5 @@ class WorldBatchRuntime {
     std::uint64_t batch_generation_ = 1;
     // Private native test seam; static storage avoids changing object layout.
     static std::function<std::jthread(std::function<void()>)> worker_thread_factory_for_test_;
+    static std::function<void()> mutation_hook_for_test_;
 };
