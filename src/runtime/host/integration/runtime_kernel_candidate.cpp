@@ -234,9 +234,10 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
         std::string observed_bindings_json;
         std::string verified_request_json;
         const bool provenance_collected = collect_runtime_execution_bindings_json(
-                config_.run_execution_sources, header.at("receipt_bindings").dump(),
-                observed_bindings_json, header_detail, &verified_request_json);
-        if (provenance_collected && observed_bindings_json != header.at("receipt_bindings").dump()) {
+            config_.run_execution_sources, header.at("receipt_bindings").dump(),
+            observed_bindings_json, header_detail, &verified_request_json);
+        if (provenance_collected &&
+            observed_bindings_json != header.at("receipt_bindings").dump()) {
             const auto observed = nlohmann::json::parse(observed_bindings_json);
             for (const auto &[section, expected] : header.at("receipt_bindings").items()) {
                 if (!observed.contains(section) || observed.at(section) != expected) {
@@ -244,7 +245,8 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
                 }
             }
         }
-        if (!provenance_collected || observed_bindings_json != header.at("receipt_bindings").dump()) {
+        if (!provenance_collected ||
+            observed_bindings_json != header.at("receipt_bindings").dump()) {
             throw std::invalid_argument("P5-B execution provenance differs from admitted header: " +
                                         header_detail);
         }
@@ -667,11 +669,12 @@ RuntimeShutdownResult RuntimeKernelCandidate::shutdown(std::uint64_t now_tick,
         if (started_ && config_.persist_world_scope_binding && run_recorder_ != nullptr &&
             run_recorder_->admitted()) {
             try {
-                terminal_world_scope_json_ = nlohmann::json{
-                    {"schema_version", "echelon_forge.runtime_world_scope_binding.v1"},
-                    {"world_bindings", nlohmann::json::array({
-                        nlohmann::json::parse(observed_world_binding_json())})}}
-                    .dump();
+                terminal_world_scope_json_ =
+                    nlohmann::json{
+                        {"schema_version", "echelon_forge.runtime_world_scope_binding.v1"},
+                        {"world_bindings", nlohmann::json::array({nlohmann::json::parse(
+                                               observed_world_binding_json())})}}
+                        .dump();
             } catch (...) {
                 evidence_failed = true;
                 evidence_failure_reason = "native world scope observation failed";
@@ -741,20 +744,22 @@ RuntimeRunRecorderStatus RuntimeKernelCandidate::finalize_run(std::string_view r
     if (!artifact_status) return artifact_status;
     if (config_.persist_realized_cpu_topology) {
         if (!terminal_cpu_topology_json_.has_value())
-            return {false, "recorder.result", "native CPU topology was not observed before shutdown"};
+            return {false, "recorder.result",
+                    "native CPU topology was not observed before shutdown"};
         const auto topology_status = run_recorder_->put_artifact(
             "runtime-cpu-scheduler-topology", *terminal_cpu_topology_json_,
-            "application/vnd.echelon-forge.runtime-cpu-scheduler-topology.v1+json",
-            "run-retained", artifact_digest, retrieval_location);
+            "application/vnd.echelon-forge.runtime-cpu-scheduler-topology.v1+json", "run-retained",
+            artifact_digest, retrieval_location);
         if (!topology_status) return topology_status;
     }
     if (config_.persist_world_scope_binding) {
         if (!terminal_world_scope_json_.has_value())
-            return {false, "recorder.result", "native world scope was not observed before shutdown"};
+            return {false, "recorder.result",
+                    "native world scope was not observed before shutdown"};
         const auto scope_status = run_recorder_->put_artifact(
             "runtime-world-scope-binding", *terminal_world_scope_json_,
-            "application/vnd.echelon-forge.runtime-world-scope-binding.v1+json",
-            "run-retained", artifact_digest, retrieval_location);
+            "application/vnd.echelon-forge.runtime-world-scope-binding.v1+json", "run-retained",
+            artifact_digest, retrieval_location);
         if (!scope_status) return scope_status;
     }
     const auto result_status = run_recorder_->record_native_result(*state_sha256, *state_sha256);
