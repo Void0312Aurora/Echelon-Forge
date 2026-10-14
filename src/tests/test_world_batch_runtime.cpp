@@ -1,5 +1,6 @@
 #include "core/engine/world_batch_runtime.h"
 #include "core/engine/parallel_for_index.h"
+#include "components/basic/common.h"
 #include "components/basic/stable_identity.h"
 #include "components/command/common/mission_command_control_state.h"
 #include "components/visual/visual_sensor.h"
@@ -409,6 +410,73 @@ TEST_SUITE("world_batch_runtime") {
         CHECK_THROWS_AS(runtime.try_get_entity_kinematics(bad_world_ref, &state),
                         std::out_of_range);
         CHECK_THROWS_AS(runtime.try_set_entity_kinematics(bad_world_ref, state), std::out_of_range);
+    }
+
+    TEST_CASE("mutation callback failure poisons the batch after a partial kinematics write") {
+        WorldBatchRuntime runtime(1);
+        WorldSpawnRequest spawn{};
+        spawn.world_index = 0;
+        spawn.side = Side::Blue;
+        spawn.type_name = "Aircraft";
+        spawn.z = 1000.0;
+        const auto entity_ids = runtime.apply_world_setup_batch({}, {}, {}, {}, {spawn});
+        REQUIRE(entity_ids.size() == 1);
+
+        {
+            auto world_lease = runtime.world_raw_quarantine(0).acquire_world_lease();
+            bool callback_entered = false;
+            auto throwing_observer =
+                world_lease.world()
+                    .observer<Velocity>()
+                    .event(flecs::OnSet)
+                    .each([&](flecs::entity, Velocity &) {
+                        callback_entered = true;
+                        throw std::runtime_error("injected velocity callback failure");
+                    });
+
+            WorldEntityKinematics state{};
+            state.x = 17.0;
+            state.vx = 3.0;
+            const WorldEntityRef ref{0, entity_ids.front()};
+            CHECK_THROWS_AS(runtime.try_set_entity_kinematics(ref, state), std::runtime_error);
+            CHECK(callback_entered);
+            CHECK_FALSE(runtime.batch_healthy());
+            CHECK(runtime.batch_failure_reason().find("injected velocity callback failure") !=
+                  std::string::npos);
+            CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
+            (void)throwing_observer;
+        }
+        CHECK_NOTHROW(runtime.reset_batch());
+        CHECK(runtime.batch_healthy());
+    }
+
+    TEST_CASE("direct native spawn callback failure poisons the batch") {
+        WorldBatchRuntime runtime(1);
+        auto world_lease = runtime.world_raw_quarantine(0).acquire_world_lease();
+        bool callback_entered = false;
+        auto throwing_observer =
+            world_lease.world()
+                .observer<Transform>()
+                .event(flecs::OnSet)
+                .each([&](flecs::entity, Transform &) {
+                    callback_entered = true;
+                    throw std::runtime_error("injected direct spawn callback failure");
+                });
+
+        TypedPlatformSpawnRequest request{};
+        request.world_index = 0;
+        request.side = Side::Blue;
+        request.request_id = "direct-spawn-failure";
+        request.source_type_name = "Aircraft";
+        request.entity_name = "DirectSpawnFailure";
+        request.z = 1000.0;
+        CHECK_THROWS_AS(runtime.spawn_typed_platform_unit(request), std::runtime_error);
+        CHECK(callback_entered);
+        CHECK_FALSE(runtime.batch_healthy());
+        CHECK(runtime.batch_failure_reason().find("injected direct spawn callback failure") !=
+              std::string::npos);
+        CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
+        (void)throwing_observer;
     }
 
     TEST_CASE("complete world setup with missing wind resets calm") {
