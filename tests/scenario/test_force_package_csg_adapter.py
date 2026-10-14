@@ -101,12 +101,13 @@ def _full_package(group):
     return package, assemblies, role_capabilities, bindings, {member.ref: member.ref for member in members}
 
 
-def _compile_package(package, assemblies, role_capabilities):
+def _compile_package(package, assemblies, role_capabilities, assembly_type_names=None):
     return compile_force_package(
         package,
         packages={},
         assemblies=assemblies,
         role_capabilities=role_capabilities,
+        assembly_type_names=assembly_type_names,
     )
 
 
@@ -139,7 +140,7 @@ def test_full_csg_qualification_preserves_native_geometry_inventory_and_replay(s
     compiled_packages = {}
     for group in snapshot["meta"]["csg"]["groups"]:
         package, assemblies, role_capabilities, bindings, type_names = _full_package(group)
-        compiled = _compile_package(package, assemblies, role_capabilities)
+        compiled = _compile_package(package, assemblies, role_capabilities, type_names)
         compiled_packages[compiled.package_ref] = compiled
         results.append(qualify_force_package_against_csg(
             package=package, packages={}, assemblies=assemblies, role_capabilities=role_capabilities,
@@ -206,7 +207,9 @@ def _minimal_qualification(scenario):
 
 def _minimal_compiled_package():
     package, assemblies = _package()
-    return _compile_package(package, assemblies, {"carrier": frozenset({"mobility"})})
+    return _compile_package(
+        package, assemblies, {"carrier": frozenset({"mobility"})}, {SHIP_TYPE: SHIP_TYPE}
+    )
 
 
 class _RecordingLoader:
@@ -325,7 +328,9 @@ def test_csg_binding_permutation_rejects_before_loader_mutation() -> None:
             scenario=scenario,
             qualifications=[replace(qualification, entity_bindings=tuple(pairs))],
             compiled_packages={
-                qualification.package_ref: _compile_package(package, assemblies, role_capabilities)
+                qualification.package_ref: _compile_package(
+                    package, assemblies, role_capabilities, type_names
+                )
             },
             seed=3,
         )
@@ -347,7 +352,7 @@ def test_csg_correlated_binding_tamper_rejects_against_compiled_package() -> Non
         entity_bindings=bindings,
         assembly_type_names=type_names,
     )
-    compiled = _compile_package(package, assemblies, role_capabilities)
+    compiled = _compile_package(package, assemblies, role_capabilities, type_names)
     pairs = list(qualification.entity_bindings)
     projection = list(qualification.entity_binding_projection)
     first, second = projection[0], projection[1]
@@ -367,6 +372,55 @@ def test_csg_correlated_binding_tamper_rejects_against_compiled_package() -> Non
             scenario=scenario,
             qualifications=[tampered],
             compiled_packages={compiled.package_ref: compiled},
+            seed=3,
+        )
+    assert loader.calls == []
+
+
+def test_csg_same_role_different_type_tamper_rejects_against_compiled_package() -> None:
+    scenario_path = resolve_repo_path("scenarios", "naval", "csg", "csg_s0_ford_vs_fujian_named_v1.json")
+    scenario = ScenarioCompiler.compile_path(scenario_path)
+    snapshot = scenario.instantiate()
+    qualifications = []
+    compiled_packages = {}
+    for group in snapshot["meta"]["csg"]["groups"]:
+        package, assemblies, role_capabilities, bindings, type_names = _full_package(group)
+        qualification = qualify_force_package_against_csg(
+            package=package,
+            packages={},
+            assemblies=assemblies,
+            role_capabilities=role_capabilities,
+            scenario=scenario,
+            group_id=group["group_id"],
+            entity_bindings=bindings,
+            assembly_type_names=type_names,
+        )
+        compiled = _compile_package(package, assemblies, role_capabilities, type_names)
+        compiled_packages[compiled.package_ref] = compiled
+        if group["group_id"] == "RED_CV18":
+            projection = list(qualification.entity_binding_projection)
+            first_index = next(i for i, row in enumerate(projection) if row[2] == "CSG_CN_Type055_Renhai")
+            second_index = next(i for i, row in enumerate(projection) if row[2] == "CSG_CN_Type052D_Luyang3")
+            first, second = projection[first_index], projection[second_index]
+            pairs = dict(qualification.entity_bindings)
+            pairs[first[0]] = second[1]
+            pairs[second[0]] = first[1]
+            projection[first_index] = (first[0], second[1], second[2], first[3], first[4], first[5])
+            projection[second_index] = (second[0], first[1], first[2], second[3], second[4], second[5])
+            qualification = replace(
+                qualification,
+                entity_bindings=tuple(sorted(pairs.items())),
+                entity_bindings_digest=_digest(tuple(sorted(pairs.items()))),
+                entity_binding_projection=tuple(projection),
+            )
+        qualifications.append(qualification)
+    loader = _RecordingLoader()
+    with pytest.raises(ForcePackageError, match="compiled_package_mismatch"):
+        load_qualified_csg_scenario(
+            loader,
+            scenario=scenario,
+            qualifications=qualifications,
+            compiled_packages=compiled_packages,
             seed=3,
         )
     assert loader.calls == []
