@@ -18,6 +18,7 @@ from python.scenario.force_package import (
     compile_force_package,
 )
 from python.scenario.force_package_csg_adapter import (
+    _digest,
     load_qualified_csg_scenario,
     qualify_force_package_against_csg,
 )
@@ -333,6 +334,49 @@ def test_csg_binding_permutation_rejects_before_loader_mutation() -> None:
             loader,
             scenario=scenario,
             qualifications=[replace(qualification, entity_bindings=tuple(pairs))],
+            compiled_packages={
+                qualification.package_ref: _compile_package(package, assemblies, role_capabilities)
+            },
+            seed=3,
+        )
+    assert loader.calls == []
+
+
+def test_csg_correlated_binding_tamper_rejects_against_compiled_package() -> None:
+    scenario_path = resolve_repo_path("scenarios", "naval", "csg", "csg_s0_ford_vs_fujian_named_v1.json")
+    scenario = ScenarioCompiler.compile_path(scenario_path)
+    group = scenario.instantiate()["meta"]["csg"]["groups"][0]
+    package, assemblies, role_capabilities, bindings, type_names = _full_package(group)
+    qualification = qualify_force_package_against_csg(
+        package=package,
+        packages={},
+        assemblies=assemblies,
+        role_capabilities=role_capabilities,
+        scenario=scenario,
+        group_id=group["group_id"],
+        entity_bindings=bindings,
+        assembly_type_names=type_names,
+    )
+    compiled = _compile_package(package, assemblies, role_capabilities)
+    pairs = list(qualification.entity_bindings)
+    projection = list(qualification.entity_binding_projection)
+    first, second = projection[0], projection[1]
+    pairs[0], pairs[1] = (pairs[0][0], pairs[1][1]), (pairs[1][0], pairs[0][1])
+    projection[0] = (first[0], second[1], second[2], second[3], second[4], first[5])
+    projection[1] = (second[0], first[1], first[2], first[3], first[4], second[5])
+    tampered = replace(
+        qualification,
+        entity_bindings=tuple(pairs),
+        entity_bindings_digest=_digest(tuple(pairs)),
+        entity_binding_projection=tuple(projection),
+    )
+    loader = _RecordingLoader()
+    with pytest.raises(ForcePackageError, match="compiled_package_mismatch"):
+        load_qualified_csg_scenario(
+            loader,
+            scenario=scenario,
+            qualifications=[tampered],
+            compiled_packages={compiled.package_ref: compiled},
             seed=3,
         )
     assert loader.calls == []
