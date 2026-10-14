@@ -444,7 +444,10 @@ TEST_SUITE("world_batch_runtime") {
             CHECK(runtime.batch_failure_reason().find("injected velocity callback failure") !=
                   std::string::npos);
             CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
-            (void)throwing_observer;
+            throwing_observer.destruct();
+            if (world_lease.world().is_deferred()) {
+                world_lease.world().defer_end();
+            }
         }
         CHECK_NOTHROW(runtime.reset_batch());
         CHECK(runtime.batch_healthy());
@@ -476,7 +479,10 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(runtime.batch_failure_reason().find("injected direct spawn callback failure") !=
               std::string::npos);
         CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
-        (void)throwing_observer;
+        throwing_observer.destruct();
+        if (world_lease.world().is_deferred()) {
+            world_lease.world().defer_end();
+        }
     }
 
     TEST_CASE("complete world setup with missing wind resets calm") {
