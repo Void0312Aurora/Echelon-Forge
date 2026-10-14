@@ -13,7 +13,7 @@ import math
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
-from python.experiment.composition import freeze_json_mapping, thaw_json_value
+from python.json_value import freeze_json_mapping, thaw_json_value
 
 SCHEMA_VERSION = "echelon_forge.platform_assembly.v1"
 
