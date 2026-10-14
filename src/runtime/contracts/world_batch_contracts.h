@@ -229,8 +229,7 @@ validate_typed_platform_spawn_request_common(const TypedPlatformSpawnRequest &re
                     });
     if (request.capability_bundle.source_type_name != request.source_type_name ||
         request.resolved_spawn_plan.source_type_name != request.source_type_name ||
-        request.resolved_spawn_plan.capability_bundle_id !=
-            request.capability_bundle.bundle_id ||
+        request.resolved_spawn_plan.capability_bundle_id != request.capability_bundle.bundle_id ||
         (request.resolved_spawn_plan.admitted && !capabilities_match)) {
         return reject_typed_platform_spawn_request(
             kTypedPlatformSpawnRejectionInvalidResolvedPlan,
