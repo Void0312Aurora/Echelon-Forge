@@ -27,7 +27,7 @@ Last verified: `2026-10-12`
 连接必须检查 schema 版本、单位、坐标系、新鲜度和可见性；owner 提供 schema vocabulary 时，未知
 schema 必须在发布前拒绝。vocabulary 是不可变且带版本的资格产物；每个 schema 条目都标明 owner
 引用，vocabulary 摘要会参与图身份；需要转换或估计时必须显式插入节点，
-不得凭空制造信息。禁止同一窗口内的瞬时环；延迟或有状态反馈必须声明延迟和状态所有者。组合
+不得凭空制造信息。禁止同一窗口内的瞬时环；延迟反馈必须声明正的边延迟，并将源节点作为状态所有者，且其状态窗口必须覆盖该边。组合
 节点导出类型化公共端口及状态/效果契约后，才能作为父图中的节点重新验证。
 
 首个证明应放在资格验证路径，包含兼容连接、单位/坐标系或 schema 冲突、禁止环、子机制故障和
@@ -35,7 +35,7 @@ schema 必须在发布前拒绝。vocabulary 是不可变且带版本的资格�
 
 最小语义表为：端口边检查物理单位和坐标系；每秒值由有状态 owner 模型积分，每 tick 值必须显式
 标记；采样/新鲜度属于端口契约；状态写入只在 owner 的 publication/commit barrier 后可见；延迟
-反馈必须声明延迟窗口和状态 owner。这些检查不证明数值标定或 timestep 不变性。
+反馈必须声明正的边延迟和源节点状态 owner。这些检查不证明数值标定或 timestep 不变性。
 
 ## 方案比较与实现检查点
 
@@ -64,4 +64,4 @@ manifest machinery 产出的 artifact 不会自动变成可执行机制。
 既有 native 实现的受限 owner 映射，且 vocabulary 摘要会绑定到图身份；它不是全仓库 packet vocabulary。snapshot 发布 seam 仅用于诊断，
 不会把用户编写的图安装进 native 调度；跨域 schema 选择和 authored graph 接纳仍是独立 gate。
 
-详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。
+延迟边必须声明正的延迟窗口，并将边的源节点声明为状态拥有者，且源节点的状态窗口必须覆盖该边；组合机制保留节点/边声明的最大延迟窗口。详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。
