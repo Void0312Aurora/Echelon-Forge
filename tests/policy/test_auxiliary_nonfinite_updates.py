@@ -187,6 +187,9 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       enabled=True,
     )
     probe.install(model)
+    self.assertEqual(model.train.__func__.__module__, "python.rl.policy_algo.ppo_adaptive_kl")
+    self.assertEqual(model.collect_rollouts.__func__.__module__, "python.rl.policy_algo.ppo_adaptive_kl")
+    self.assertTrue(hasattr(model, "_training_observer"))
     assert model.policy.hybrid_event_head is not None
     model._last_obs = env.reset()
     model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
@@ -209,6 +212,8 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
 
     before = model.policy.hybrid_event_head.bias.detach().clone()
     model.train()
+    observed_stages = [event["stage"] for event in probe.recorder.history]
+    self.assertIn("train.end", observed_stages)
     after = model.policy.hybrid_event_head.bias.detach().clone()
 
     self.assertFalse(th.allclose(before, after))

@@ -226,6 +226,27 @@ class TraceRecorder:
             )
 
 
+class _TrainingTraceObserver:
+    """Adapter for the canonical PPO observation points."""
+
+    def __init__(self, recorder: TraceRecorder):
+        self.recorder = recorder
+
+    def observe(
+        self,
+        stage: str,
+        *,
+        value=None,
+        named_tensors=None,
+        context: dict[str, Any] | None = None,
+    ) -> None:
+        if context:
+            self.recorder.set_context(**context)
+        if named_tensors is not None:
+            self.recorder.check_named_tensors(stage, list(named_tensors))
+        elif value is not None:
+            self.recorder.check(stage, value)
+
 class _PassThroughCallback(BaseCallback):
     def _on_step(self) -> bool:
         return True
@@ -480,275 +501,8 @@ def _patch_policy(policy: SquashedMultiInputPolicy, tracer: TraceRecorder) -> No
 
 
 def _patch_algo(model: AdaptiveKLPPO, tracer: TraceRecorder) -> None:
-    def traced_collect_rollouts(
-        self,
-        env: VecEnv,
-        callback: BaseCallback,
-        rollout_buffer,
-        n_rollout_steps: int,
-    ) -> bool:
-        assert self._last_obs is not None, "No previous observation was provided"
-        self.policy.set_training_mode(False)
-
-        n_steps = 0
-        rollout_buffer.reset()
-        if self.use_sde:
-            self.policy.reset_noise(env.num_envs)
-
-        callback.on_rollout_start()
-
-        while n_steps < n_rollout_steps:
-            tracer.set_context(
-                phase="rollout",
-                rollout_step=int(n_steps),
-                num_timesteps=int(self.num_timesteps),
-                update_index=int(self._n_updates),
-            )
-            if self.use_sde and self.sde_sample_freq > 0 and n_steps % self.sde_sample_freq == 0:
-                self.policy.reset_noise(env.num_envs)
-
-            with th.no_grad():
-                obs_tensor = self._get_policy_obs_tensor(env, self._last_obs)
-                if isinstance(obs_tensor, dict):
-                    for key, value in obs_tensor.items():
-                        tracer.check(f"rollout.obs_tensor.{key}", value)
-                else:
-                    tracer.check("rollout.obs_tensor", obs_tensor)
-                actions_tensor, values, log_probs = self.policy(obs_tensor)
-                tracer.check("rollout.actions_tensor", actions_tensor)
-                tracer.check("rollout.values", values)
-                tracer.check("rollout.log_probs", log_probs)
-            actions = actions_tensor.detach().cpu().numpy()
-            tracer.check("rollout.actions_numpy", actions)
-
-            clipped_actions = actions
-            if isinstance(self.action_space, spaces.Box):
-                if self.policy.squash_output:
-                    clipped_actions = self.policy.unscale_action(clipped_actions)
-                else:
-                    clipped_actions = np.clip(actions, self.action_space.low, self.action_space.high)
-            tracer.check("rollout.clipped_actions", clipped_actions)
-
-            new_obs, rewards, dones, infos = env.step(clipped_actions)
-            tracer.check("rollout.rewards", rewards)
-            tracer.check("rollout.dones", dones.astype(np.float32))
-            if isinstance(new_obs, dict):
-                for key, value in new_obs.items():
-                    tracer.check(f"rollout.new_obs.{key}", value)
-            else:
-                tracer.check("rollout.new_obs", new_obs)
-
-            self.num_timesteps += env.num_envs
-            callback.update_locals(locals())
-            if not callback.on_step():
-                return False
-
-            self._update_info_buffer(infos, dones)
-            n_steps += 1
-
-            if isinstance(self.action_space, spaces.Discrete):
-                actions = actions.reshape(-1, 1)
-
-            for idx, done in enumerate(dones):
-                if (
-                    done
-                    and infos[idx].get("terminal_observation") is not None
-                    and infos[idx].get("TimeLimit.truncated", False)
-                ):
-                    terminal_obs = self.policy.obs_to_tensor(infos[idx]["terminal_observation"])[0]
-                    with th.no_grad():
-                        terminal_value = self.policy.predict_values(terminal_obs)[0]
-                    rewards[idx] += self.gamma * terminal_value
-
-            rollout_buffer.add(
-                self._last_obs,
-                actions,
-                rewards,
-                self._last_episode_starts,
-                values,
-                log_probs,
-            )
-            self._last_obs = new_obs
-            self._last_episode_starts = dones
-
-        with th.no_grad():
-            last_values = self.policy.predict_values(self._get_policy_obs_tensor(env, new_obs))
-            tracer.check("rollout.last_values", last_values)
-
-        rollout_buffer.compute_returns_and_advantage(last_values=last_values, dones=dones)
-        if isinstance(rollout_buffer.observations, dict):
-            for key, value in rollout_buffer.observations.items():
-                tracer.check(f"rollout.buffer.obs.{key}", value)
-        else:
-            tracer.check("rollout.buffer.obs", rollout_buffer.observations)
-        tracer.check("rollout.buffer.actions", rollout_buffer.actions)
-        tracer.check("rollout.buffer.values", rollout_buffer.values)
-        tracer.check("rollout.buffer.log_probs", rollout_buffer.log_probs)
-        tracer.check("rollout.buffer.advantages", rollout_buffer.advantages)
-        tracer.check("rollout.buffer.returns", rollout_buffer.returns)
-
-        callback.update_locals(locals())
-        callback.on_rollout_end()
-        return True
-
-    def traced_train(self) -> None:
-        self.policy.set_training_mode(True)
-        self._update_learning_rate(self.policy.optimizer)
-        self._apply_lr_multiplier()
-
-        clip_range = float(self.clip_range(self._current_progress_remaining))
-        clip_range *= float(self._clip_mult)
-        clip_range = float(np.clip(clip_range, 1e-4, 0.4))
-
-        if self.clip_range_vf is not None:
-            clip_range_vf = float(self.clip_range_vf(self._current_progress_remaining))
-        else:
-            clip_range_vf = None
-
-        entropy_losses = []
-        pg_losses, value_losses = [], []
-        clip_fractions = []
-        approx_kl_divs = []
-        continue_training = True
-
-        tracer.check_named_tensors("train.params.start", _parameter_payload(self.policy))
-
-        for epoch in range(self.n_epochs):
-            for minibatch_idx, rollout_data in enumerate(self.rollout_buffer.get(self.batch_size)):
-                tracer.set_context(
-                    phase="train",
-                    epoch=int(epoch),
-                    minibatch=int(minibatch_idx),
-                    num_timesteps=int(self.num_timesteps),
-                    update_index=int(self._n_updates),
-                )
-                tracer.check_named_tensors("train.params.batch_start", _parameter_payload(self.policy))
-
-                if isinstance(rollout_data.observations, dict):
-                    for key, value in rollout_data.observations.items():
-                        tracer.check(f"train.rollout_data.obs.{key}", value)
-                else:
-                    tracer.check("train.rollout_data.obs", rollout_data.observations)
-                tracer.check("train.rollout_data.actions", rollout_data.actions)
-                tracer.check("train.rollout_data.old_values", rollout_data.old_values)
-                tracer.check("train.rollout_data.old_log_prob", rollout_data.old_log_prob)
-                tracer.check("train.rollout_data.advantages", rollout_data.advantages)
-                tracer.check("train.rollout_data.returns", rollout_data.returns)
-
-                actions = rollout_data.actions
-                if isinstance(self.action_space, spaces.Discrete):
-                    actions = rollout_data.actions.long().flatten()
-
-                values, log_prob, entropy = self.policy.evaluate_actions(rollout_data.observations, actions)
-                tracer.check("train.values.raw", values)
-                tracer.check("train.log_prob", log_prob)
-                if entropy is not None:
-                    tracer.check("train.entropy.raw", entropy)
-                values = values.flatten()
-                tracer.check("train.values.flattened", values)
-
-                advantages = rollout_data.advantages
-                if self.normalize_advantage and len(advantages) > 1:
-                    adv_mean = advantages.mean()
-                    adv_std = advantages.std()
-                    tracer.check("train.advantages.mean", adv_mean)
-                    tracer.check("train.advantages.std", adv_std)
-                    advantages = (advantages - adv_mean) / (adv_std + 1e-8)
-                tracer.check("train.advantages.used", advantages)
-
-                ratio = th.exp(log_prob - rollout_data.old_log_prob)
-                tracer.check("train.ratio", ratio)
-
-                policy_loss_1 = advantages * ratio
-                tracer.check("train.policy_loss_1", policy_loss_1)
-                policy_loss_2 = advantages * th.clamp(ratio, 1 - clip_range, 1 + clip_range)
-                tracer.check("train.policy_loss_2", policy_loss_2)
-                policy_loss = -th.min(policy_loss_1, policy_loss_2).mean()
-                tracer.check("train.policy_loss", policy_loss)
-
-                pg_losses.append(policy_loss.item())
-                clip_fraction = th.mean((th.abs(ratio - 1) > clip_range).float()).item()
-                clip_fractions.append(clip_fraction)
-
-                if clip_range_vf is None:
-                    values_pred = values
-                else:
-                    values_pred = rollout_data.old_values + th.clamp(
-                        values - rollout_data.old_values, -clip_range_vf, clip_range_vf
-                    )
-                tracer.check("train.values_pred", values_pred)
-                value_loss = F.mse_loss(rollout_data.returns, values_pred)
-                tracer.check("train.value_loss", value_loss)
-                value_losses.append(value_loss.item())
-
-                if entropy is None:
-                    entropy_loss = -th.mean(-log_prob)
-                else:
-                    entropy_loss = -th.mean(entropy)
-                tracer.check("train.entropy_loss", entropy_loss)
-                entropy_losses.append(entropy_loss.item())
-
-                log_ratio = log_prob - rollout_data.old_log_prob
-                tracer.check("train.log_ratio", log_ratio)
-                approx_kl = th.mean((th.exp(log_ratio) - 1) - log_ratio)
-                tracer.check("train.approx_kl", approx_kl)
-
-                loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss
-                if self.kl_penalty_coef > 0.0:
-                    loss = loss + float(self.kl_penalty_coef) * approx_kl
-                tracer.check("train.loss", loss)
-
-                with th.no_grad():
-                    approx_kl_div = float(approx_kl.detach().cpu().numpy())
-                approx_kl_divs.append(approx_kl_div)
-                if self.target_kl is not None and approx_kl_div > 1.5 * float(self.target_kl):
-                    continue_training = False
-                    break
-
-                self.policy.optimizer.zero_grad()
-                loss.backward()
-                tracer.check_named_tensors("train.gradients.post_backward", _gradient_payload(self.policy))
-                grad_norm = th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
-                tracer.check("train.grad_norm", grad_norm)
-                tracer.check_named_tensors("train.gradients.post_clip", _gradient_payload(self.policy))
-                self.policy.optimizer.step()
-                tracer.check_named_tensors("train.params.post_step", _parameter_payload(self.policy))
-
-            self._n_updates += 1
-            if not continue_training:
-                break
-
-        explained_var = explained_variance(
-            np.asarray(self.rollout_buffer.values).reshape(-1),
-            np.asarray(self.rollout_buffer.returns).reshape(-1),
-        )
-        tracer.check("train.explained_variance", np.asarray([explained_var], dtype=np.float32))
-
-        mean_kl = float(np.mean(approx_kl_divs)) if len(approx_kl_divs) > 0 else None
-        self._adapt_kl_controls(mean_kl)
-
-        self.logger.record("train/entropy_loss", float(np.mean(entropy_losses)))
-        self.logger.record("train/policy_gradient_loss", float(np.mean(pg_losses)))
-        self.logger.record("train/value_loss", float(np.mean(value_losses)))
-        self.logger.record("train/approx_kl", float(np.mean(approx_kl_divs)) if len(approx_kl_divs) > 0 else 0.0)
-        self.logger.record("train/clip_fraction", float(np.mean(clip_fractions)))
-        self.logger.record("train/loss", float(loss.item()))
-        self.logger.record("train/explained_variance", float(explained_var))
-        if hasattr(self.policy, "log_std"):
-            self.logger.record("train/std", float(th.exp(self.policy.log_std).mean().item()))
-
-        self.logger.record("train/n_updates", int(self._n_updates), exclude="tensorboard")
-        self.logger.record("train/clip_range", float(clip_range))
-        if clip_range_vf is not None:
-            self.logger.record("train/clip_range_vf", float(clip_range_vf))
-        self.logger.record("train/kl_penalty_coef", float(self.kl_penalty_coef))
-        self.logger.record("train/kl_lr_mult", float(self._lr_mult))
-        self.logger.record("train/kl_clip_mult", float(self._clip_mult))
-        self.logger.record("train/kl_low_streak", int(self._low_kl_streak))
-
-    model.collect_rollouts = MethodType(traced_collect_rollouts, model)
-    model.train = MethodType(traced_train, model)
-
+    """Observe the maintained PPO implementation without replacing it."""
+    setattr(model, "_training_observer", _TrainingTraceObserver(tracer))
 
 def _write_report(path: str, report: dict[str, Any]) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
