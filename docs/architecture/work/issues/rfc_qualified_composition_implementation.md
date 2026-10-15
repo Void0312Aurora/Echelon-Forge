@@ -147,14 +147,22 @@ tests and native composition-evidence tests. The architecture suite manifest
 registers the qualification tests. See the final execution result for counts;
 this document does not infer other-host or full-repository parity.
 
-Current branch verification results after merge commit `0f18684ed` and the
-qualification follow-up through `ada091a2f` (current `origin/main` integrated):
+The earlier publication record after merge commit `0f18684ed` and the
+qualification follow-up through `ada091a2f` remains a historical baseline:
 **181 focused Python tests passed**, **18 CSG adapter tests passed**, and
-**35 native tests / 963 assertions passed**. Ruff and whitespace checks passed
-on all touched Python surfaces.
-The primary checkout retained its original HEAD and clean status. The owner requested batched commits and pushes of this checkpoint
-on `codex/rfc-qualified-composition`. The publication gate repeats the 181-test
-focused run and preserves the reviewed file contents across the split.
+**35 native tests / 963 assertions passed**. On `2026-10-13`, the current
+continuation was rerun from `build-rfc-mainline`: the combined focused Python
+command passed **245 tests**, and the native focused suite passed **35 cases /
+963 assertions**. The complete native `ef_test` rerun passed **363 cases /
+170,829 assertions**, with one skipped case. The current CSG adapter module
+contains **21 tests**; its grouped CSG regression passed **51 tests and 12
+subtests**. Ruff and whitespace checks passed on all touched Python surfaces.
+These are local qualification records, not production admission or trust
+attestations.
+The primary checkout retained its original HEAD and clean status. The owner
+requested batched commits and pushes of this checkpoint on
+`codex/rfc-qualified-composition`; the current continuation command and native
+log are retained under `build-rfc-mainline`.
 
 ## Batched branch publication
 
@@ -223,12 +231,15 @@ merge into main, accept the proposed ADRs or close RFC issues.
    review is still required for the mapping's production contract, explicit
    unit contracts and broader native physical compatibility before any
    production consumer is enabled.
-4. **#237 CSG migration proof.** Consume compiled organization through the
-   existing CSG/scenario placement adapter; compare generated entities, anchored
-   geometry, embarked inventory and native results. The loader now requires the
-   independently compiled package identity and relationship digest at the
-   migration boundary. Keep separate membership, command and communication
-   graphs.
+4. **#237 review and production migration.** The bounded CSG migration proof is
+   complete on this qualification branch: compiled organization passes through
+   the existing CSG/scenario placement adapter, including explicit nested
+   package paths, and the native loader still owns geometry, inventory and
+   materialization. The loader requires independently compiled package identity
+   and relationship digests at the migration boundary. Remaining work is owner
+   review and a reviewable integration on updated `main`; membership, command
+   and communication graphs must remain separate, and no operational command
+   authority is implied by this qualification artifact.
 5. **#238 owner-controlled binding.** The admitted binding now wraps the
    existing `DecisionRuntimeAgent`, carries policy/version and observation
    provenance into the model context, and validates produced actions before
@@ -400,12 +411,20 @@ adapter and diagnostics-only projections; the Python binding sees the same
 owner fields. This is an owner-publication diagnostic seam, not a canonical
 schema vocabulary or authored-graph admission path.
 
-The #237 CSG adapter now has **18 force-package/adapter tests**, including two
-full S0 fixture runs. It requires an explicit compiled-scenario input and
-explicit organization-to-entity and assembly-to-native-type bindings; it does
-not infer those mappings from the CSG domain schema. `load_qualified_csg_scenario`
-only delegates a fresh, fully qualified snapshot to `ScenarioLoader`; it does
-not synthesize entities or grant command authority.
+The #237 CSG adapter now has **21 force-package/adapter tests**, including two
+full S0 fixture runs and two explicit nested-package-to-loader runs. Each
+qualified run also compares every bound hull's native position with the
+compiled scenario coordinates, checks the retained embarked-inventory metadata,
+and verifies that a real native step preserves the static S0 layout. The nested
+fixtures preserve distinct scoped package paths and relationship edge tuples
+through the same loader boundary. It requires an explicit compiled-scenario
+input and explicit organization-to-entity and assembly-to-native-type bindings;
+it does not infer those mappings from the CSG domain schema.
+`load_qualified_csg_scenario` only delegates a fresh, fully qualified snapshot
+to `ScenarioLoader`; the qualification record retains scoped
+membership/task/communication edge tuples alongside their digest without
+installing any of them. It does not synthesize entities or grant command
+authority.
 
 The physical compatibility slice for #236 is bounded and fail-closed. A
 blueprint may declare finite mass and power budgets plus slot mount classes;

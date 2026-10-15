@@ -36,6 +36,7 @@ class CsgForcePackageQualification:
     embarked_inventory_digest: str
     geometry_digest: str
     compiled_relationships_digest: str
+    relationship_edges: tuple[tuple[str, str, str], ...]
     evidence_refs: tuple[str, ...]
 
 
@@ -96,6 +97,16 @@ def _csg_guide_frame(guide: Mapping[str, Any]) -> str:
 
 def _compiled_relationships_digest(compiled: CompiledForcePackage) -> str:
     return _digest([relationship.__dict__ for relationship in compiled.relationships])
+
+
+def _compiled_relationship_edges(
+    compiled: CompiledForcePackage,
+) -> tuple[tuple[str, str, str], ...]:
+    """Expose scoped relationship evidence without granting runtime authority."""
+    return tuple(
+        (relationship.relationship_type, relationship.source, relationship.target)
+        for relationship in compiled.relationships
+    )
 
 
 def qualify_force_package_against_csg(
@@ -197,6 +208,7 @@ def qualify_force_package_against_csg(
     geometry = csg_meta.get("geometry", {})
     scenario_digest = _digest(scenario.merged_scenario_data)
     relationships_digest = _compiled_relationships_digest(compiled)
+    relationship_edges = _compiled_relationship_edges(compiled)
     sorted_bindings = tuple(sorted(entity_bindings.items()))
     return CsgForcePackageQualification(
         package_ref=compiled.package_ref,
@@ -210,6 +222,7 @@ def qualify_force_package_against_csg(
         embarked_inventory_digest=_digest(group.get("embarked_inventory", [])),
         geometry_digest=_digest(geometry),
         compiled_relationships_digest=relationships_digest,
+        relationship_edges=relationship_edges,
         evidence_refs=(
             f"force.package:{compiled.package_ref}",
             f"force.identity:{compiled.identity_digest}",
@@ -302,6 +315,15 @@ def load_qualified_csg_scenario(
                 or csg_entity.get("side") != expected_side
             ):
                 raise ForcePackageError("force.csg_qualification_binding_projection_mismatch")
+        compiled = compiled_packages.get(qualification.package_ref)
+        if (
+            not isinstance(compiled, CompiledForcePackage)
+            or compiled.package_ref != qualification.package_ref
+            or compiled.identity_digest != qualification.package_identity_digest
+            or _compiled_relationships_digest(compiled) != qualification.compiled_relationships_digest
+            or _compiled_relationship_edges(compiled) != qualification.relationship_edges
+        ):
+            raise ForcePackageError("force.csg_compiled_package_identity_mismatch")
         group = groups[qualification.group_id]
         if (
             qualification.csg_schema != csg_meta["schema"]
