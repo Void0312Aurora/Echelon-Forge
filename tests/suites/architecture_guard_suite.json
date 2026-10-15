@@ -162,10 +162,10 @@
     "tests/architecture/governance/test_resolved_experiment_input_lock_adr.py",
     "tests/architecture/governance/test_simulation_failure_domain_adr.py",
     "tests/architecture/governance/test_typed_mechanism_ports_adr.py",
-    "tests/architecture/mechanisms/test_ports.py",
     "tests/architecture/tasking_contracts/test_failure_domains.py",
     "tests/architecture/tasking_contracts/test_policy_contract.py",
     "tests/architecture/mechanisms/test_air_perception_qualification.py",
+    "tests/architecture/mechanisms/test_ports.py",
     "tests/architecture/composition/test_native_failure_qualification.py",
     "tests/architecture/composition/test_native_receipt_input_lock_qualification.py"
   ]
