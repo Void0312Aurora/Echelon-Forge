@@ -61,7 +61,10 @@ policy, observation and action identities before binding. A small checkpoint
 seam verifies immutable artifact bytes and then hands them to an owner-provided
 loader, which remains responsible for framework deserialization and model
 construction; `PolicyRuntimeBinding.from_checkpoint_artifact` keeps that
-verified loading step on the existing binding path. The selected maintained
+verified loading step on the existing binding path. Binding admission, its
+owner-issued validation marker, checkpoint agreement, action timing and width,
+and action callbacks are checked before invoking the loader. A valid byte
+digest does not bypass rejected or caller-forged admission. The selected maintained
 observation view is admitted by its owner and its identity/version is carried
 into the existing model context. The binding can run an owner action-authorizer
 callback after generic bounds/timing checks and before projection, so live mask,
@@ -70,7 +73,9 @@ outputs remain authoritative; Python or third-party code is not auto-admitted by
 a descriptor, and loading a real external checkpoint through its production
 owner remains open. The binding can hand an authorized action to an explicit
 owner projector after contract checks; wiring that projector to the production
-native action endpoint remains open.
+native action endpoint remains open. The explicit qualification consumer below
+now exercises the existing native facade endpoint without enabling a default
+Policy profile.
 
 Mechanism ports (#229), platform/force composition (#236/#237), and RuntimeFacade
 capability presence (#224) remain separate owners; this ADR only defines the
@@ -87,3 +92,31 @@ agent-facing compatibility layer.
 The pilot consumes the basic mission field catalogue from mission_obs_taxonomy and actual Air action dimensions/bounds. It checks source/frame, action timing/bounds, explicit optional defaults, deterministic selection and legacy-kind mismatch. The binding is exercised through the existing `DecisionRuntimeAgent`; the wrapped model still owns reset/decide/close. The maintained observation view is admitted before binding, and an owner authorizer can reject an actual action for current mask, authority or expiry before the owner projector creates the domain DTO. Checkpoint digest verification and the owner-loader protocol seam are covered; production external checkpoint loading and native action endpoint wiring remain open.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.
+
+## External checkpoint and native consumer proof
+
+The opt-in [external JSON example](../../../examples/policies/README.md) owns
+only its coefficients and the existing DecisionModel lifecycle. It is an
+untrained linear stand-in, as allowed by the RFC proof plan; it loads JSON data
+after the checkpoint digest and binding-admission gates, without framework
+deserialization or automatic registration. Field order comes from the mission
+packet owner, action dimensions/projection from the Air action owner, and bounds
+from the maintained `takeoff4` space.
+
+The focused consumer reads an actual native maintained command, projects its
+basic mission vector with the existing domain function and supplies the named
+fields to `PolicyRuntimeBinding`. `DecisionRuntimeAgent` runs the loaded model;
+generic contract checks and an explicit qualification authorizer precede the
+owner `PilotAction` projection and actual native facade submission. Native
+mission speed changes from 220 to 110 cause the model and instrument throttle to
+change from 0.8 to 0.4 across two decisions and six native steps. Physical
+position advances, and native state matches a direct-action reference world.
+The native runtime/factory remains the sole execution/materialization authority.
+
+Negative controls cover byte digest, checkpoint schema, observation order,
+nonfinite coefficients, closed mask, expired action and out-of-bounds output;
+rejection leaves existing world snapshots unchanged. The mask/expiry provider
+here is a qualification harness, not a production authorization service. This
+proves the scoped checkpoint/model/DecisionRuntime/native consumer seam;
+trained checkpoint quality, production selection/profile admission, broader
+typed observation migration and complete Air matrix execution remain open.

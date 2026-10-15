@@ -85,10 +85,14 @@ bool role_can_write_artifact_media(RuntimeArtifactLedgerRole role, std::string_v
     switch (role) {
     case RuntimeArtifactLedgerRole::RuntimeHost:
         return media_type == "application/octet-stream" ||
-               media_type == "application/vnd.echelon-forge.runtime-state.v1+octets";
+               media_type == "application/vnd.echelon-forge.runtime-state.v1+octets" ||
+               media_type ==
+                   "application/vnd.echelon-forge.runtime-cpu-scheduler-topology.v1+json" ||
+               media_type == "application/vnd.echelon-forge.runtime-world-scope-binding.v1+json";
     case RuntimeArtifactLedgerRole::PlanCompiler:
         return media_type == "application/vnd.echelon-forge.resolved-execution-plan.v1+json" ||
-               media_type == "application/vnd.echelon-forge.runtime-composition-request.v1+json";
+               media_type == "application/vnd.echelon-forge.runtime-composition-request.v1+json" ||
+               media_type == "application/vnd.echelon-forge.resolved-input-lock.v1+json";
     case RuntimeArtifactLedgerRole::ReleaseArtifactPipeline:
         return media_type == "application/vnd.echelon-forge.release-manifest.v1+json" ||
                media_type == "application/vnd.echelon-forge.release-package.v1+octets" ||
@@ -1710,6 +1714,11 @@ bool RuntimeFileArtifactLedgerStore::verify_admission_artifacts_unlocked(
             !verify_authority_blob(
                 artifacts.at("request").get<std::string>(),
                 "application/vnd.echelon-forge.runtime-composition-request.v1+json", "request"))
+            return false;
+        if (artifacts.contains("resolved_input_lock") &&
+            !verify_authority_blob(artifacts.at("resolved_input_lock").get<std::string>(),
+                                   "application/vnd.echelon-forge.resolved-input-lock.v1+json",
+                                   "resolved input lock"))
             return false;
     } catch (const std::exception &) {
         detail = "native ArtifactLedger admission artifact references are invalid";

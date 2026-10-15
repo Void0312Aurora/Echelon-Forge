@@ -36,9 +36,9 @@ composition diagnostics and resize operation received the same failure guard.
 | #229 | Complete recursive boundaries; capability/clock/backend inheritance; incompatible information layers, clocks and multiple producers reject. Immutable parameters, backend references and clock policies participate in identity. Two native Air seeker primitive adapters and one stateful CV tracker share a qualification configuration. A bounded adapter now binds compiled nodes to an owner-provided StageNodeManifest snapshot and reuses realized-order evidence. Versioned owner vocabularies now cover both port schemas and freshness labels, and freshness vocabulary identity participates in graph identity. | Native LOS conversion and world-position reconstruction feed the actual CV tracker. Four timesteps reach the same four-second horizon under a fixed measurement schedule. Missing, duplicate, incomplete or adapter-only stage evidence rejects before qualification. A child exception after native state mutation but before outer publication reuses #251's unknown-state projection. These are bounded proofs, not installation of an authored execution graph. |
 | #236 | Numeric bounds, blueprint constraints, module digests and native reference selections participate in plan identity. Bounded mass, power-budget and slot-mount compatibility checks now fail closed before publication. Explicit hardpoint contracts and loadout selections validate mount class, allowed module kind, quantity, capacity, module physical metadata and native identity before publication; all of those values participate in the canonical plan identity. The immutable legacy projection now requires an explicit loadout path and rejects missing or mismatched loadout evidence instead of silently dropping selected modules. Because the maintained native `UnitDefinition::default_loadout` map stores one weapon reference per station, native lowering and the typed adapter reject `quantity != 1` until an owner multi-store contract exists; quantity remains qualification evidence and identity. The opt-in `platform_blueprint_adapter` projects slot and supported single-store loadout capabilities into the maintained typed request shape, carries hardpoint and quantity evidence, rejects slot/cardinality, module identity and native capability-family drift before DTO publication, and compares shared source type/capability semantics against an actual native factory-resolved plan. The native validator rejects source, bundle and resolved-capability drift. | F-16 and Ground infantry are lowered, loaded and spawned through existing native owners. An explicit F-16 two-station loadout projection reaches the existing native loader with observation parity after one step. The real database-backed F-16 factory plan is queried; a partial authored capability mapping is rejected before typed DTO publication instead of being treated as equivalent. All public observation fields match at setup and after four steps for the existing F-16/Ground and typed Air proofs. Hardpoint/loadout validation, quantity rejection, legacy projection, native capability projection and factory-plan mismatch fencing are covered by focused tests; broader owner-approved capability mapping, native unit compatibility, multi-store native representation and owner production review remain open. |
 | #237 | Relationships survive compilation and hashing with instance-scoped endpoints; reused packages expand independently; nested role capability requirements are checked; frame/anchor/provenance references survive in package-instance evidence. A qualification adapter now binds one compiled package to an existing CSG group by explicit entity-name and assembly-type maps, carries the compiled relationship digest, records CSG schema, scenario, geometry and embarked-inventory digests, and delegates the complete qualified snapshot to the existing loader. The loader requires an independently supplied compiled-package scope and rechecks package and relationship identity before delegation. Malformed group metadata and missing guide-frame evidence now fail closed with explicit qualification errors. | Recursive, full named/mirror CSG, loader and negative fixtures. Both full S0 fixtures bind all seven surface hulls per group; native loader positions and 241 replay frames match. In-memory coordinate, inventory, geometry, runtime-metadata, compiled-package and relationship drift is rejected before loading. CSG still owns coordinate expansion, geodesy, embarked inventory and native scenario materialization. It does not install task authority or replace the CSG compiler. |
-| #238 | Field provenance/frame checks, explicit optional defaults with preserved field order, action bounds/timing checks, deterministic policy selection, a legacy-kind compatibility gate and an admitted binding through `DecisionRuntimeAgent`. An owner-issued `PolicyCheckpoint` metadata contract now checks artifact digest, policy/version and observation/action contract identity before binding. Verified checkpoint bytes can now pass through an explicit owner-loader seam, and `PolicyRuntimeBinding.from_checkpoint_artifact` verifies bytes before constructing the existing binding; the contract layer verifies the model lifecycle protocol without deserializing a framework. Runtime binding now rejects a caller-constructed admitted DTO and accepts only the marker produced by `admit_policy()`. The marker is field-bound, so resealing a rejected admission with `dataclasses.replace()` cannot turn it into an admitted binding. The binding supports an owner action-authorizer after generic value/timing checks and before the owner action projector, so current mask, authority and expiry remain native/domain-owner decisions. Admission can consume the maintained owner `ObservationViewSpec`, fail closed on invalid identity/schema/layers, compare the selected view against the policy contract, and carry the admitted view identity/version into the existing model context. | Basic mission fields come from the mission packet owner, action dimensions from the existing native action adapter, and action bounds from the existing Gym space. The binding preserves the existing model reset/decide/close lifecycle, carries verified checkpoint provenance when supplied, validates produced actions and delegates live authorization plus final action projection to owner callbacks. Focused tests cover digest rejection before owner loading, owner protocol rejection, binding-factory loading, action projection, maintained-view binding/provenance, direct and resealed caller-constructed admission rejection and a real `DecisionRuntimeAgent` path that rejects an expired action before projection. Production external checkpoint/model loading and native action endpoint wiring remain open. |
-| #239 | Deeply immutable canonical input identity, semantic freshness checks on compiled scenario snapshots, ScenarioCompiler dependency projection, separate observed native manifest/graph/topology identity, and a host receipt binding join to the existing RunReceipt validator. A file-bound join now reads a host-published canonical receipt, verifies its bytes and delegates to the same owner validator without synthesizing a receipt. Completed comparison now requires the exact structural evidence shape emitted by that join, including a completed outcome, receipt digest/binding and durable acknowledgement. | One existing Air matrix entry produces a static candidate with explicit effective seeds. Source changes and in-memory semantic snapshot changes reject. The join preserves receipt/run/host/generation, backend graph, native validator evidence and durable acknowledgement, and the file-bound path rejects noncanonical or unreadable host output. Receipt/comparability fixtures remain synthetic owner-contract vectors rather than durable production run records. A string `status=completed` or arbitrary truthy evidence cannot establish comparability. |
-| #251 | Exact completion coverage and conservative aggregate-fault projection; local #210 native failure fence, guarded exports and explicit reset recovery. The Python projection now reads native `batch_healthy()`/`batch_failure_reason()` and binds the supplied generation reference to native `batch_generation()` before emitting all-unknown outcomes. Direct execution outcomes also require an explicit expected-world scope, so failed or partial records cannot omit the affected batch. `WorldBatchRuntime` now issues a native-owned batch generation ID that changes only after successful reset. A host-fault projection accepts an independent process-survival observation and terminates the generation without inventing per-world commit state. Actual 3/4-world launch-failure injection remains private to native test access. | Native 3/4-world serial/parallel mixed-advancement, post-timestep setup faults and first/later worker-launch failures, invalid recovery input, blocked retry/export and successful reset. The state matrix distinguishes `healthy`, `failed/untrusted` and reset-created `healthy`; generation identity is checked against the native owner, while per-world commit, rollback, cancellation, a real supervisor/process-isolation path and fatal/nontermination bounds remain unestablished. Upstream `main` has not received this local #210 port. |
+| #238 | Field provenance/frame checks, explicit optional defaults with preserved field order, action bounds/timing checks, deterministic policy selection, a legacy-kind compatibility gate and an admitted binding through `DecisionRuntimeAgent`. An owner-issued `PolicyCheckpoint` metadata contract now checks artifact digest, policy/version and observation/action contract identity before binding. Verified checkpoint bytes can now pass through an explicit owner-loader seam, and `PolicyRuntimeBinding.from_checkpoint_artifact` verifies bytes before constructing the existing binding; the contract layer verifies the model lifecycle protocol without deserializing a framework. Runtime binding now rejects a caller-constructed admitted DTO and accepts only the marker produced by `admit_policy()`. The marker is field-bound, so resealing a rejected admission with `dataclasses.replace()` cannot turn it into an admitted binding. The binding supports an owner action-authorizer after generic value/timing checks and before the owner action projector, so current mask, authority and expiry remain native/domain-owner decisions. Admission can consume the maintained owner `ObservationViewSpec`, fail closed on invalid identity/schema/layers, compare the selected view against the policy contract, and carry the admitted view identity/version into the existing model context. | Basic mission fields come from the mission packet owner, action dimensions from the existing native action adapter, and action bounds from the existing Gym space. The binding preserves the existing model reset/decide/close lifecycle, carries verified checkpoint provenance when supplied, validates produced actions and delegates live authorization plus final action projection to owner callbacks. Focused tests cover digest rejection before owner loading, owner protocol rejection, binding-factory loading, action projection, maintained-view binding/provenance, direct and resealed caller-constructed admission rejection and a real `DecisionRuntimeAgent` path that rejects an expired action before projection. An external JSON stand-in checkpoint now runs through PolicyRuntimeBinding and DecisionRuntimeAgent into the existing native facade action endpoint; live native mission updates change model output and observed throttle with direct-action state parity. Production checkpoint quality, selection/profile admission and authorization-provider wiring remain open. |
+| #239 | Deeply immutable canonical input identity, semantic freshness checks on compiled scenario snapshots, ScenarioCompiler dependency projection, separate observed native manifest/graph/topology identity, and a host receipt binding join to the existing RunReceipt validator. A file-bound join now reads a host-published canonical receipt, verifies its bytes and delegates to the same owner validator without synthesizing a receipt. Completed comparison now requires the exact structural evidence shape emitted by that join, including a completed outcome, receipt digest/binding and durable acknowledgement. The comparator also checks receipt binding identity fields and digest-shaped native evidence before treating completion evidence as comparable. | One existing Air matrix entry produces a static candidate with explicit effective seeds. Source changes and in-memory semantic snapshot changes reject. The join preserves receipt/run/host/generation, backend graph, native validator evidence and durable acknowledgement, and the file-bound path rejects noncanonical or unreadable host output. Receipt/comparability fixtures remain synthetic owner-contract vectors rather than durable production run records. A bounded native dark-host subprocess now publishes an actual receipt referencing the Air input lock and reopens it through the native file ledger. It checks admission with a missing lock blob, source drift and later blob loss. This reference-only run explicitly reports unexecuted input-lock semantics and remains incomparable; matching host mode and owner-observed semantic execution are required for ordinary comparisons. An opt-in native shutdown capture now persists the same-run CPU scheduler topology as a receipt-bound output artifact; ledger reopening and the file-bound join reject missing, corrupted or mismatched topology evidence. A separate opt-in native world-scope artifact binds outcome indexes to receipt world IDs, boot, incarnation and world epoch. Missing associations remain unknown; file-bound associations require matching receipt-referenced bytes. A string `status=completed` or arbitrary truthy evidence cannot establish comparability. |
+| #251 | Exact completion coverage and conservative aggregate-fault projection; local #210 native failure fence, guarded exports and explicit reset recovery. The Python projection now reads native `batch_healthy()`/`batch_failure_reason()` and binds the supplied generation reference to native `batch_generation()` before emitting all-unknown outcomes. Direct execution outcomes also require an explicit expected-world scope, so failed or partial records cannot omit the affected batch. `WorldBatchRuntime` now issues a native-owned batch generation ID that changes only after successful reset. A host-fault projection accepts an independent process-survival observation and terminates the generation without inventing per-world commit state. Actual 3/4-world launch-failure injection remains private to native test access. A test-only native subprocess now injects a running Flecs callback fault after ECS mutation; unfinished readonly/defer scopes reject reset and raw step, and native `batch_requires_host_recreate()` projects terminal recovery into Python. | Native 3/4-world serial/parallel mixed-advancement, post-timestep setup faults and first/later worker-launch failures, invalid recovery input, blocked retry/export and successful reset. The state matrix distinguishes `healthy`, `failed/untrusted` and reset-created `healthy`; generation identity is checked against the native owner, while per-world commit, rollback and cancellation remain unestablished. Running-system exceptions, process-fatal abort and nontermination now have bounded local subprocess controls with verified replacement-process startup; production supervisor isolation and availability remain unestablished. Upstream `main` has not received this local #210 port. |
 
 ## Single-owner integration map
 
@@ -238,8 +238,10 @@ merge into main, accept the proposed ADRs or close RFC issues.
    owner-provided loader, and a validated action can be handed to an explicit
    owner projector. The maintained selected observation view identity/schema
    is now admitted and carried into the existing model context. Wire the
-   remaining seams to the production native endpoint and a real external
-   model/checkpoint.
+   production selection/profile and authorization providers. An explicit JSON
+   stand-in checkpoint consumer now submits validated actions to the existing
+   native facade, observes control changes and matches a direct-action world.
+   Trained external checkpoint quality and production admission remain open.
    Preserve existing legacy runtime/report
    consumers until migration is accepted.
 6. **#239 host evidence join.** Have the existing host bind the input-lock
@@ -248,21 +250,107 @@ merge into main, accept the proposed ADRs or close RFC issues.
    attempt/host/generation identity, backend system-graph digest, native
    validator evidence digest and durable acknowledgement, and rejects a
    supplied nested or top-level native receipt binding that disagrees. The
-   current proof still uses a synthetic receipt vector and does not establish
-   signatures or durable availability from a live host.
-7. **#251 remaining fault gates.** The existing #210 lineage is locally ported and
-   verified against this branch's interface baseline; upstream main still lacks it.
-   Preserve its owner during review and
-   delivery. The native `WorldBatchRuntime` proof now injects a worker-launch
-   failure through a private test accessor, verifies joined workers,
-   failed-generation export fencing, failed recovery fencing, native-owned
-   generation IDs and explicit reset recovery. Native fault projection now binds
-   its supplied generation reference to the native-owned batch generation. The
-   remaining gaps are an
-   exception inside a running native system and bounded fatal/nontermination
-   controls. Add those probes through
-   existing test owners and subprocess/supervisor paths; no transparent retry or
-   per-world commit claim follows from current evidence.
+   native source now accepts an optional lock JSON path, hashes its exact bytes
+   and binds them to the receipt; the file ledger requires the corresponding
+   durable blob. A bounded dark-host process publishes and reopens an actual
+   receipt referencing the first Air matrix lock, with negative controls for
+   missing bytes and source drift. This is reference-only publication; full Air
+   execution/admission, production signatures and
+   external durable availability remain open.
+7. **#251 fault gates.** The existing #210 lineage is locally ported and verified
+   against this branch's interface baseline; upstream main still lacks it. The
+   native `WorldBatchRuntime` proof injects worker-launch and running-system
+   failures through a private test executable, verifies native ECS mutation before
+   the exception, joined workers, failed-generation export fencing and stable
+   generation identity. A Flecs callback exception leaves the affected world
+   readonly/deferred; the native owner therefore rejects reset and raw step,
+   exposes `batch_requires_host_recreate()`, and does not reopen the generation.
+   A disposable subprocess probe bounds `abort()` and nontermination, projects
+   all affected worlds as unknown with `project_host_fault`, kills the child and
+   starts a fresh native process. This proves local process-boundary behavior,
+   not a production supervisor, durable host availability, rollback or a
+   per-world commit claim.
+
+## 2026-10-13 native input-lock receipt reference
+
+The existing native provenance collector accepts an optional
+`RuntimeExecutionProvenanceSources.resolved_input_lock_path`. It reads and hashes
+the exact experiment-owner JSON bytes; it does not apply native authority
+canonicalization to a Python-owned lock or admit that lock's scenario semantics.
+The native file ledger permits the PlanCompiler role to retain this input
+artifact and verifies its blob at header admission, finalization and receipt
+read. The default empty path preserves the existing receipt inputs.
+
+The bounded `test_native_receipt_input_lock_qualification.py` subprocess invokes
+an explicitly selected test in the existing native candidate target. It uses the
+first Air matrix's compiler-backed lock, a real dark host, the native recorder
+and the durable file ledger. The host creates an Aircraft, performs three native
+steps, completes shutdown, then a read-only ledger handle reopens its issued
+receipt. Separate controls reject admission with a missing lock blob, mark
+source drift as failed, and reject receipt reads after later blob loss. The
+probe runs with a 30-second process bound and uses temporary paths only. Host
+identity initialization occurs before provenance collection so the platform RNG
+module is included in the measured process dependency set.
+
+The result proves local host receipt publication and lock-reference durability.
+It does not execute the complete Air matrix entry; release/rollout inputs remain
+qualification fixtures. The emitted native record explicitly has
+`input_lock_semantics_executed=false`, `host_mode=dark`, and no run-owned
+realized-topology claim. Ordinary comparison therefore rejects it. The
+comparison gate now requires matching nonempty host modes and owner-observed
+semantic execution; these execution boundaries cannot be overridden by an
+intentional input axis. Full experiment execution/admission, realized topology,
+production trust and external availability remain the next #239 gates.
+
+Focused validation passed **39 Python tests**, including all three native
+receipt subprocess cases, six comparison-boundary negative fixtures, the ADR
+gate and suite-manifest checks. Existing native host and RunRecorder regressions
+passed **7 cases / 2691 assertions** and **21 cases / 213 assertions** respectively.
+Ruff and `git diff --check` passed. This is local qualification evidence rather
+than a full repository or production-admission pass.
+
+## 2026-10-13 running-system and process fault qualification
+
+`ef_native_system_fault_probe` is compiled only with test-enabled builds. It
+registers a test Flecs system in the existing `SimulationKernel` world, mutates
+a native ECS component, and injects an exception, `abort()`, or nonterminating
+callback while the maintained native pipeline is executing. No production
+provider, binding injection API, supervisor or new execution engine is added.
+
+The exception matrix covers 3/4 worlds and 1/2/4 batch workers. Serial execution
+stops before later worlds; parallel workers outside the faulting chunk finish.
+The probe records per-world clocks and callback visits as diagnostics; neither
+proves effect commit. Retry and export remain fenced. The new probe found that
+episode reset previously cleared batch health while Flecs remained readonly.
+Reset and raw step now reject unfinished readonly/defer scopes before mutation.
+Repeated rejected resets retain the failed generation. The native batch owner
+exposes `batch_requires_host_recreate()` and the Python outcome projection
+translates that observation into `terminate_generation`, preserving every
+world's unknown commit state. Other setup/launch faults retain their existing
+explicit reset recovery when no unfinished native pipeline exists.
+
+The damaged exception-test host exits with `std::_Exit` after reporting the
+terminal fence. This intentionally does not establish safe in-process Flecs
+iterator teardown. Fatal controls require nonzero process exit within 20 seconds;
+nontermination controls use a three-second subprocess deadline followed by kill
+and a five-second reaping bound. Both verify that the native callback was entered,
+derive process survival from the child process handle, and project terminal,
+all-unknown host outcomes. Each fault case starts a separate replacement native
+process and verifies normal reset/step and clean exit. The parent test process
+continues. These are local acceptance probes, not deployed production isolation.
+
+Reproduce with `CMO_BUILD_DIR=build-rfc-mainline`, build the Release targets
+`ef_native_system_fault_probe`, `ef_test` and `ef_py`, then run
+`tests/architecture/composition/test_native_failure_qualification.py` and
+`tests/architecture/tasking_contracts/test_failure_domains.py`. A configured build
+missing the probe fails the fault gate instead of silently skipping it.
+
+The rebuilt Release targets passed **44 Python tests**, including the existing
+RFC composition contract tests, and the selected healthy/native failure
+regression passed **35 cases / 963 assertions**. The 10 new subprocess cases
+cover six running-system exception cells and four fatal/nontermination cells.
+The CMake target-readiness and suite-manifest checks also passed; Ruff and
+`git diff --check` passed. These focused gates are not a full repository test run.
 
 ## 2026-10-12 native typed-plan continuation
 
@@ -344,3 +432,167 @@ changes post-exception retry/export behavior to fail-closed; healthy default Air
 paths retain the measured parity. Reverting that owner repair is separate from
 removing the qualification frontend. Branch publication does not imply delivery
 to main, production admission or RFC issue closure.
+
+## 2026-10-13 receipt-bound same-run CPU topology
+
+The internal candidate now has a default-off
+`persist_realized_cpu_topology` option. After the host drains and before kernel
+shutdown, it calls the existing `SimulationKernel` topology owner. The exact
+owner JSON is retained separately from the immutable composition seal and
+persisted through the existing native RunRecorder and file ArtifactLedger as
+`runtime-cpu-scheduler-topology`, with the runtime-host media permission and
+`run-retained` retention. The completed receipt references the artifact digest,
+size and retrieval metadata. A collection failure still reclaims the kernel
+and prevents successful completion. Failed provenance-drift receipts retain
+failed status and publish no successful output-artifact claims.
+
+The bounded native receipt probe consumes this persisted output after the
+read-only ledger owner reopens the actual receipt. It records the existing
+owner's topology identity and the separate artifact-byte digest. New-process
+reads reject missing or corrupted topology blobs. The file-bound input-lock
+join now requires owner bytes when a topology artifact is claimed; it checks
+the receipt reference, exact byte digest and size, media and retention, then
+checks the owner topology identity against the native record. Negative controls
+cover omitted bytes, wrong artifact digest, wrong topology identity, blob loss
+and blob corruption. This establishes same-run topology evidence for the
+single-world, three-step dark-host probe.
+
+Full Air matrix execution remains unproven: the probe still reports
+`input_lock_semantics_executed=false` and comparison rejects it. A live local
+check reports PyTorch `2.2.0+cpu`, no CUDA build, and
+`torch.cuda.is_available()==False`; the selected matrix requires CUDA. The
+internal candidate also lacks the maintained Air world-setup, observation and
+action surfaces needed for that training run. A CPU/scripted substitution
+would change the experiment identity. Remaining acceptance includes full Air
+execution under its declared configuration, stable world-scope association
+rather than cardinality alone, production trust and external availability.
+The latest live #259/#260 reviews remain scoped to earlier repair heads; branch
+publication does not update their original PR branches or establish RFC closure.
+
+Focused validation passed **39 Python tests**, with the native receipt cases
+including the added topology negative controls. Existing native candidate and
+RunRecorder suites passed **7 cases / 2691 assertions** and
+**21 cases / 213 assertions**. The affected native consumers were rebuilt; the native Air facade parity
+suite passed **1 case / 26 assertions**. Ruff and `git diff --check` passed.
+Implementation checkpoint: `211e97ba1` on `codex/rfc-qualified-composition`. This is local qualification evidence rather
+than a full repository or production-admission pass.
+
+## 2026-10-13 receipt world identity association
+
+The internal candidate's default-off `persist_world_scope_binding` option
+captures the actual published `RuntimeWorldRef` before shutdown. Its existing
+RunRecorder binding and evidence export now share the same native identity
+formatter. The export references world index/ID, host boot, incarnation epoch
+and world generation; it does not reuse the different composition instance-ID
+namespace. The existing recorder and ledger persist it as the run-retained
+`runtime-world-scope-binding` output artifact. Cancellation before start still emits a cancelled receipt without claiming a world artifact.
+
+The input-lock join now checks an explicit native association for every expected
+outcome index, unique receipt world identities and matching boot/incarnation/
+world epochs. Matching counts alone leave completion unknown. The file-bound
+join additionally verifies the receipt-referenced association artifact's
+metadata, exact bytes and equality to the native association record. Comparison
+rechecks saved associations, the native record and completed per-world coverage;
+a later rewritten scope or omitted world cannot retain successful comparability.
+No RunReceipt schema, default production payload, global ledger or second world
+identity authority was introduced. Direct mapping joins remain contract checks,
+not signature or durable-storage proof.
+
+The actual native single-world probe publishes and reopens this artifact. New
+child-process audits reject association blob loss or corruption; omitted bytes
+and a wrong artifact digest also reject the file-bound join. Synthetic
+two-world controls reject same-count identity/index/boot/epoch mismatches and
+missing associations, and accept explicit associations independent of row order.
+These controls do not certify a production multiworld host, worker commits or
+scientific validity. Full Air input semantics remain unexecuted and the dark-host
+record remains incomparable under the existing execution gate. The local CUDA
+check was repeated: PyTorch remains `2.2.0+cpu` with no CUDA build or device
+availability.
+
+Focused validation passed **52 Python tests**, including the native subprocess
+artifact controls and 13 new association/comparison cases. After rebuilding the
+native candidate and its consumer, the host suite passed **7 cases / 2692
+assertions**, native RunRecorder passed **21 cases / 213 assertions**, and
+Air facade parity passed **1 case / 26 assertions**. Ruff and
+`git diff --check` passed. This is a focused qualification pass, not a full
+repository test or production/RFC closure.
+
+World-association implementation checkpoint: `835c801c1`.
+
+## 2026-10-13 checkpoint admission before owner loading
+
+A local reproduction found that `from_checkpoint_artifact` invoked its owner
+loader once before rejecting a caller-created admission marker. A correct
+artifact digest therefore did not prevent model-construction side effects for
+an unadmitted binding. The existing constructor and checkpoint factory now
+share the same admission/marker, checkpoint-agreement, timing, dimension and
+action-callback checks; the factory performs them before owner loading. Bounds
+and optional defaults are copied before handing control to the loader. The
+existing verified-byte loader and model lifecycle remain the only loading and
+execution seams; no framework import or new registry was introduced.
+
+Seven negative controls verify zero owner-loader calls for forged admission,
+rejected admission, checkpoint mismatch, wrong action timing/width and invalid
+authorizer/projector callbacks. The valid owner-load/model-context case still
+passes. Policy, registry and existing DecisionRuntime regressions passed
+**55 tests**; the policy ADR and suite-manifest checks passed **10 tests**.
+Ruff and `git diff --check` passed.
+
+The next #238 consumer proof can use the maintained four-field basic mission
+catalogue (`mission_observation_basic_field_catalogue`) and `takeoff4` action
+owner. The existing two-implementation native-action test constructs
+`PilotAction` DTOs; it does not submit the checkpoint-loaded model's action
+through a native world. That actual checkpoint/DecisionRuntime/native endpoint
+path remains an independent implementation step. General non-empty typed views
+remain separately gated; the existing basic mission catalogue must not be
+misreported as unavailable. An untrained stand-in is allowed by the RFC proof
+plan, but cannot establish a trained checkpoint's performance or Air matrix
+execution. Production external checkpoint loading and profile admission remain
+open.
+
+Checkpoint admission repair: `07afe173d`.
+
+## 2026-10-13 external checkpoint to native action consumer
+
+The new opt-in example in `examples/policies/air_basic_mission_linear.py` loads
+JSON coefficients from an external artifact through the existing verified
+`PolicyCheckpoint` and `PolicyRuntimeBinding.from_checkpoint_artifact` path.
+It implements the existing DecisionModel lifecycle, declares its legacy kind
+as scripted and leaves open Policy categories as metadata. It is explicitly
+untrained and registers nothing on import. A fresh-process import confirmed
+that neither `ef_py`, PyTorch nor SB3 is imported by the example module.
+
+The actual consumer proof reads the native maintained mission command, passes
+its shared core through `build_air_mission_vector` and uses the basic mission
+packet owner's field catalogue. The loaded model runs through
+`DecisionRuntimeAgent`; generic bounds/timing and an explicit qualification
+authorizer precede `build_pilot_action`. The existing native facade receives
+the resulting PilotAction, while a second native world receives reference
+actions through that same action owner. The factory loads the maintained
+F-16C definition; no alternative native runtime or Policy dispatcher is used.
+
+Changing the native command speed from 220 to 110 changes model output and
+observed native throttle from 0.8 to 0.4. Across two decisions and six native
+steps, physical position advances and the observed AgentObservation snapshot
+matches the direct-action reference world. Verified checkpoint identity reaches
+the existing model context and the existing close lifecycle is exercised.
+Seven negative cells cover changed bytes, unsupported checkpoint schema, wrong
+field order, nonfinite coefficients, closed mask, expired action and out-of-
+bounds output. Rejected operations produce no native action projection and
+leave the existing world snapshots unchanged.
+
+The combined qualification/Policy/DecisionRuntime regression passed **67
+Python tests**. The final physical-motion assertion and all eight new native
+consumer cells passed the focused rerun; ADR and suite-manifest checks passed
+**10 tests**. Ruff and `git diff --check` passed. Native sources were unchanged
+in this continuation, so the built maintained facade was reused. These are
+focused local gates rather than a full repository or production-admission pass.
+
+This closes the local external stand-in/checkpoint/model/runtime/native action
+consumer seam. It does not prove trained checkpoint performance, a production
+mask/expiry authorization provider, default Policy profile selection, general
+non-empty typed views or complete Air training-matrix execution. The remaining
+#238 work is production owner acceptance and migration of those named seams;
+qualification branch publication does not establish RFC closure.
+
+External checkpoint/native consumer implementation: `29867ea28`.

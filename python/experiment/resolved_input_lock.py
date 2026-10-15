@@ -39,7 +39,7 @@ _RECEIPT_BINDING_FIELDS = (
     "durable_ack",
 )
 _COMPLETION_EVIDENCE_FIELDS = frozenset(
-    {"receipt_id", "receipt_sha256", "terminal_state", "outcome", "receipt_binding"}
+    {"receipt_id", "receipt_sha256", "terminal_state", "outcome", "receipt_binding", "world_scope"}
 )
 
 
@@ -101,7 +101,87 @@ def _completion_evidence_is_structurally_complete(value: Any) -> bool:
     binding = value["receipt_binding"]
     if not isinstance(binding, Mapping) or set(binding) != set(_RECEIPT_BINDING_FIELDS):
         return False
-    return binding.get("durable_ack") is True
+    if binding.get("durable_ack") is not True:
+        return False
+    if binding.get("receipt_id") != value["receipt_id"]:
+        return False
+    for field in (
+        "receipt_id",
+        "run_id",
+        "attempt_id",
+        "host_boot_id",
+        "writer_generation",
+    ):
+        if not isinstance(binding.get(field), str) or not binding[field].strip():
+            return False
+    for field in ("backend_system_graph_sha256", "native_validation_evidence_sha256"):
+        if not isinstance(binding.get(field), str) or re.fullmatch(
+            r"[0-9a-f]{64}", binding[field]
+        ) is None:
+            return False
+    scope = value["world_scope"]
+    if not isinstance(scope, Mapping) or set(scope) != {
+        "host_boot_id", "incarnation_epoch", "world_epoch", "world_ids", "bindings"
+    } or scope["host_boot_id"] != binding["host_boot_id"]:
+        return False
+    try:
+        _validate_world_bindings(scope["bindings"], scope, outcome["expected_world_indices"])
+        worlds = outcome["worlds"]
+        if not isinstance(worlds, (list, tuple)) or any(
+            not isinstance(world, Mapping) or world.get("state") != "completed"
+            or world.get("step_committed") is not True
+            or type(world.get("world_index")) is not int for world in worlds
+        ):
+            return False
+        if sorted(world["world_index"] for world in worlds) != outcome["expected_world_indices"]:
+            return False
+    except (InputLockError, KeyError, TypeError):
+        return False
+    return True
+
+
+def _validate_world_bindings(
+    bindings: Any, receipt_scope: Mapping[str, Any], expected_indices: Sequence[int]
+) -> None:
+    """Verify a native-owner association; never derive IDs from array order."""
+    if not isinstance(bindings, (list, tuple)) or not bindings:
+        raise InputLockError("input_lock.receipt_world_binding_invalid")
+    if not isinstance(receipt_scope["host_boot_id"], str) or not receipt_scope["host_boot_id"].strip():
+        raise InputLockError("input_lock.receipt_world_binding_invalid")
+    for field in ("incarnation_epoch", "world_epoch"):
+        if not isinstance(receipt_scope[field], str) or re.fullmatch(
+            r"[1-9][0-9]*", receipt_scope[field]
+        ) is None:
+            raise InputLockError("input_lock.receipt_world_binding_invalid")
+    world_ids = receipt_scope["world_ids"]
+    if not isinstance(world_ids, (list, tuple)) or any(
+        not isinstance(identity, str) or not identity.strip() for identity in world_ids
+    ) or len(set(world_ids)) != len(world_ids):
+        raise InputLockError("input_lock.receipt_world_binding_invalid")
+    expected = list(expected_indices)
+    if not expected or any(type(index) is not int or index < 0 for index in expected):
+        raise InputLockError("input_lock.receipt_world_index_invalid")
+    if expected != sorted(set(expected)):
+        raise InputLockError("input_lock.receipt_world_index_invalid")
+    indexes, identities = [], []
+    for item in bindings:
+        if not isinstance(item, Mapping) or set(item) != {
+            "world_index", "world_id", "host_boot_id", "incarnation_epoch", "world_epoch"
+        }:
+            raise InputLockError("input_lock.receipt_world_binding_invalid")
+        if type(item["world_index"]) is not int or item["world_index"] < 0:
+            raise InputLockError("input_lock.receipt_world_index_invalid")
+        if not isinstance(item["world_id"], str) or not item["world_id"].strip():
+            raise InputLockError("input_lock.receipt_world_identity_invalid")
+        for field in ("host_boot_id", "incarnation_epoch", "world_epoch"):
+            if item[field] != receipt_scope[field]:
+                raise InputLockError(f"input_lock.receipt_world_binding_mismatch:{field}")
+        indexes.append(item["world_index"])
+        identities.append(item["world_id"])
+    if sorted(indexes) != expected or len(set(indexes)) != len(indexes):
+        raise InputLockError("input_lock.receipt_world_index_mismatch")
+    if len(set(identities)) != len(identities) or set(identities) != set(receipt_scope["world_ids"]):
+        raise InputLockError("input_lock.receipt_world_identity_mismatch")
 
 
 def _scenario_projection(experiment: Experiment, repo_root: str | Path | None) -> dict[str, Any]:
@@ -294,6 +374,8 @@ def join_run_receipt(
 
     The host must bind the candidate digest in inputs.artifacts. Receipt schema
     validation does not verify signatures, durability or scientific validity.
+    A completed outcome also needs explicit native-owner world associations;
+    equal world counts alone leave the joined status unknown.
     """
     from tools.maintenance.runtime_run_receipt import validate_run_receipt
 
@@ -303,6 +385,17 @@ def join_run_receipt(
         raise InputLockError("input_lock.receipt_input_binding_mismatch")
     if len(payload["execution_scope"]["world_ids"]) != len(outcome.expected_world_indices):
         raise InputLockError("input_lock.receipt_world_scope_mismatch")
+    world_bindings = native_runtime.get("receipt_world_bindings")
+    world_scope = None
+    if world_bindings is not None:
+        world_scope = {
+            "host_boot_id": payload["host_boot_id"],
+            "incarnation_epoch": payload["incarnation_epoch"],
+            "world_epoch": payload["execution_scope"]["epochs"]["world"],
+            "world_ids": payload["execution_scope"]["world_ids"],
+            "bindings": thaw_json_value(world_bindings),
+        }
+        _validate_world_bindings(world_bindings, world_scope, outcome.expected_world_indices)
     receipt_binding = {
         "receipt_id": payload["receipt_id"],
         "run_id": payload["run_id"],
@@ -328,7 +421,11 @@ def join_run_receipt(
         if supplied_value is not None and supplied_value != receipt_binding[field]:
             raise InputLockError(f"input_lock.native_receipt_binding_mismatch:{field}")
     data = candidate.as_dict()
-    complete = payload["terminal_state"] == "completed" and outcome.result is BatchResult.COMPLETED
+    complete = (
+        payload["terminal_state"] == "completed"
+        and outcome.result is BatchResult.COMPLETED
+        and world_scope is not None
+    )
     data["status"] = "completed" if complete else "unknown"
     data["native_runtime"] = dict(native_runtime)
     data["completion_evidence"] = {
@@ -337,6 +434,7 @@ def join_run_receipt(
         "terminal_state": payload["terminal_state"],
         "outcome": outcome.as_dict(),
         "receipt_binding": receipt_binding,
+        "world_scope": world_scope,
     }
     return ResolvedInputLock(data, candidate.digest)
 
@@ -347,11 +445,15 @@ def join_run_receipt_path(
     receipt_path: str | Path,
     native_runtime: Mapping[str, Any],
     outcome: BatchOperationOutcome,
+    native_topology_path: str | Path | None = None,
+    native_world_scope_path: str | Path | None = None,
 ) -> ResolvedInputLock:
     """Load one host-published canonical receipt, then use the same join.
 
     The file is treated as an owner output: bytes must be canonical JSON before
-    schema validation and no receipt is synthesized by this projection.
+    schema validation and no receipt is synthesized by this projection. A
+    native topology or world-scope artifact claim requires its owner output
+    bytes as well.
     """
 
     source = Path(receipt_path)
@@ -364,12 +466,87 @@ def join_run_receipt_path(
         raise InputLockError("input_lock.receipt_document_invalid")
     if canonical_json_bytes(document) != raw:
         raise InputLockError("input_lock.receipt_not_canonical")
-    return join_run_receipt(
+    if "topology_artifact_digest" in native_runtime and native_topology_path is None:
+        raise InputLockError("input_lock.receipt_topology_artifact_required")
+    if "world_scope_artifact_digest" in native_runtime and native_world_scope_path is None:
+        raise InputLockError("input_lock.receipt_world_scope_artifact_required")
+    joined = join_run_receipt(
         candidate,
         receipt=document,
         native_runtime=native_runtime,
         outcome=outcome,
     )
+    if native_topology_path is not None:
+        _verify_receipt_topology_artifact(document, native_runtime, Path(native_topology_path))
+    if native_world_scope_path is not None:
+        _verify_receipt_world_scope_artifact(document, native_runtime, Path(native_world_scope_path))
+    return joined
+
+
+def _verify_receipt_topology_artifact(
+    receipt: Mapping[str, Any], native_runtime: Mapping[str, Any], source: Path
+) -> None:
+    """Check owner output bytes against the existing receipt and topology identity."""
+    raw = _read_receipt_evidence_artifact(
+        receipt, source, name="runtime-cpu-scheduler-topology",
+        media="application/vnd.echelon-forge.runtime-cpu-scheduler-topology.v1+json",
+        claimed_digest=native_runtime.get("topology_artifact_digest"),
+        error_prefix="input_lock.receipt_topology",
+    )
+    try:
+        observed = json.loads(raw)
+        topology = observed["topology"]
+        if (
+            topology["contract"] != "echelon_forge.cpu_scheduler_topology.v1"
+            or observed["sha256"] != _digest(topology)
+            or observed["sha256"] != native_runtime.get("realized_topology_digest")
+        ):
+            raise InputLockError("input_lock.receipt_topology_identity_mismatch")
+    except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        raise InputLockError("input_lock.receipt_topology_document_invalid") from exc
+
+
+def _verify_receipt_world_scope_artifact(
+    receipt: Mapping[str, Any], native_runtime: Mapping[str, Any], source: Path
+) -> None:
+    raw = _read_receipt_evidence_artifact(
+        receipt, source, name="runtime-world-scope-binding",
+        media="application/vnd.echelon-forge.runtime-world-scope-binding.v1+json",
+        claimed_digest=native_runtime.get("world_scope_artifact_digest"),
+        error_prefix="input_lock.receipt_world_scope",
+    )
+    try:
+        observed = json.loads(raw)
+        if observed["schema_version"] != "echelon_forge.runtime_world_scope_binding.v1":
+            raise InputLockError("input_lock.receipt_world_scope_schema_invalid")
+        if observed["world_bindings"] != thaw_json_value(native_runtime.get("receipt_world_bindings")):
+            raise InputLockError("input_lock.receipt_world_scope_identity_mismatch")
+    except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        raise InputLockError("input_lock.receipt_world_scope_document_invalid") from exc
+
+
+def _read_receipt_evidence_artifact(
+    receipt: Mapping[str, Any], source: Path, *, name: str, media: str,
+    claimed_digest: Any, error_prefix: str,
+) -> bytes:
+    references = [
+        item for item in receipt["payload"]["results"]["output_artifacts"] if item["name"] == name
+    ]
+    if len(references) != 1:
+        raise InputLockError(f"{error_prefix}_reference_missing")
+    reference = references[0]
+    if (
+        reference["media_type"] != media or reference["availability"] != "durable"
+        or reference["retention_class"] != "run-retained" or reference["digest"] != claimed_digest
+    ):
+        raise InputLockError(f"{error_prefix}_binding_mismatch")
+    try:
+        raw = source.read_bytes()
+    except OSError as exc:
+        raise InputLockError(f"{error_prefix}_unreadable") from exc
+    if len(raw) != reference["size"] or hashlib.sha256(raw).hexdigest() != reference["digest"]:
+        raise InputLockError(f"{error_prefix}_artifact_mismatch")
+    return raw
 
 
 def project_native_composition_evidence(result: Any) -> dict[str, Any]:
@@ -421,6 +598,13 @@ def compare_resolved_input_locks(
             ("completion_evidence",),
             "claimed status requires a bound validated RunReceipt and complete outcome",
         )
+    for data in (left_data, right_data):
+        if data["native_runtime"].get("receipt_world_bindings") != (
+            data["completion_evidence"]["world_scope"]["bindings"]
+        ):
+            return ComparisonResult(
+                False, ("completion_evidence",), "native world association differs from joined receipt scope"
+            )
     differences: list[str] = []
     for axis in (
         "scenario",
@@ -439,6 +623,21 @@ def compare_resolved_input_locks(
             differences.append(axis)
     left_native = left_data["native_runtime"]
     right_native = right_data["native_runtime"]
+    if (
+        left_native.get("input_lock_semantics_executed") is not True
+        or right_native.get("input_lock_semantics_executed") is not True
+    ):
+        differences.append("input_lock_semantics_executed")
+    left_mode = left_native.get("host_mode")
+    right_mode = right_native.get("host_mode")
+    if (
+        not isinstance(left_mode, str)
+        or not left_mode.strip()
+        or not isinstance(right_mode, str)
+        or not right_mode.strip()
+        or left_mode != right_mode
+    ):
+        differences.append("host_mode")
     for field in _REQUIRED_NATIVE_IDENTITY_FIELDS:
         left_value = left_native.get(field)
         right_value = right_native.get(field)

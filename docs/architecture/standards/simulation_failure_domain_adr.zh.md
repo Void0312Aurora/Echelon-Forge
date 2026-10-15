@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/simulation_failure_domain_adr.md`
 Owner: `architecture/failure-contracts`
-Last verified: `2026-10-12`
+Last verified: `2026-10-13`
 
 **状态：** 待评审的契约设计；不授权新增 host、事务引擎或生产切换。
 上游 `main` 不被视为已经执行了完整契约；资格分支只携带本地 #210 owner
@@ -32,11 +32,13 @@ RunReceipt/evidence 和 #239 投影继续作为证据权威。
 | --- | --- | --- | --- |
 | `healthy` | generation 没有故障 fence | 按 owner API 执行已准入 setup、step、只读导出和 reset | 成功操作或成功 reset 证据 |
 | `failed/untrusted` | 已记录 preflight 安全失败、worker 故障或修改后不确定性；不暗示 rollback | 诊断和显式 reset/recreate；禁止修改性重试或同步成功导出 | 成功 reset/recreate，重新初始化完整 expected world 范围 |
+| `failed/host-recreate-required` | 运行中的 Flecs callback 留下未结束的 readonly/defer 状态 | 诊断并退役宿主进程；reset、step 和同步导出继续被封锁 | 独立替代进程初始化并成功运行新的 native batch |
 | reset 后 `healthy` | 新 generation 已完成初始化 | 新 generation 的正常操作 | reset 结果及 native 状态/setup 证据；不证明发生了 rollback |
 
 本分支可以在受测 native 路径证明注入的 worker 启动和任务故障会进入第二行；native
-owner 现在提供仅在成功 reset 后递增的 batch generation ID，但尚未证明可靠的 per-world 提交发布、取消，或对
-`abort`、进程退出、死锁和非终止的隔离。
+owner 提供仅在成功 reset 后递增的 batch generation ID。运行中 system 异常证明进入终止恢复路径；
+受限子进程控制验证 fatal 退出、非终止 callback 的超时终止及回收、替代宿主进程正常启动。
+这些证据尚不证明生产 supervisor 隔离、可靠的 per-world 提交、回滚、取消或受损 Flecs world 的安全析构。
 
 Python 资格 adapter 现在先读取 native owner 的 `batch_healthy()` 和
 `batch_failure_reason()`，再投影全部未知结果；健康 runtime 会被拒绝，adapter 不会创建
@@ -57,7 +59,9 @@ native 3/4-world 串并行证明覆盖不同 world 的推进差异、时间步�
 fence。全部 world 未知时结果为 `failed`，要求显式 reset/recreate，不推断 per-world commit。
 机制子故障证明单独观察到内部状态改变、外部 packet 尚未发布。这些本地变更不代表上游
 #210 关闭；native batch 另注入 worker 启动失败，验证已启动 worker 汇合、导出封锁、失败
-恢复封锁和显式 reset 的 fail-closed 行为。运行中的 native system 异常、runtime generation
-ID 和受限 fatal/阻塞控制仍待验证。
+恢复封锁和显式 reset 的 fail-closed 行为。新的 native system 探针在修改 ECS 状态后抛异常，
+验证未结束的 pipeline 会拒绝 reset 和 raw step，native owner 的
+`batch_requires_host_recreate()` 由 Python 转译为 `terminate_generation`。
+危险控制只在独立子进程中执行；受损异常测试进程直接退役，不宣称 Flecs 析构安全。
 
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。

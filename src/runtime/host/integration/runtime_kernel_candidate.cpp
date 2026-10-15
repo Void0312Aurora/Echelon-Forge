@@ -233,9 +233,19 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
         const auto header = nlohmann::json::parse(config_.run_header_json);
         std::string observed_bindings_json;
         std::string verified_request_json;
-        if (!collect_runtime_execution_bindings_json(
-                config_.run_execution_sources, header.at("receipt_bindings").dump(),
-                observed_bindings_json, header_detail, &verified_request_json) ||
+        const bool provenance_collected = collect_runtime_execution_bindings_json(
+            config_.run_execution_sources, header.at("receipt_bindings").dump(),
+            observed_bindings_json, header_detail, &verified_request_json);
+        if (provenance_collected &&
+            observed_bindings_json != header.at("receipt_bindings").dump()) {
+            const auto observed = nlohmann::json::parse(observed_bindings_json);
+            for (const auto &[section, expected] : header.at("receipt_bindings").items()) {
+                if (!observed.contains(section) || observed.at(section) != expected) {
+                    header_detail += " changed section: " + section;
+                }
+            }
+        }
+        if (!provenance_collected ||
             observed_bindings_json != header.at("receipt_bindings").dump()) {
             throw std::invalid_argument("P5-B execution provenance differs from admitted header: " +
                                         header_detail);
@@ -475,12 +485,12 @@ RuntimeHostStatus RuntimeKernelCandidate::initialize_candidate() {
             return {.error = RuntimeHostError::InvalidArgument,
                     .detail = "P5-B runtime identity lacks an active episode"};
         }
+        const auto world_binding = nlohmann::json::parse(observed_world_binding_json());
         const auto bound = run_recorder_->bind_runtime_identity(
-            "boot-" + std::to_string(incarnation_.host.boot_id.high) + "-" +
-                std::to_string(incarnation_.host.boot_id.low),
-            std::to_string(incarnation_.incarnation_epoch),
-            "world-" + std::to_string(episode_ref.world.world_slot),
-            std::to_string(episode_ref.world.world_generation),
+            world_binding.at("host_boot_id").get<std::string>(),
+            world_binding.at("incarnation_epoch").get<std::string>(),
+            world_binding.at("world_id").get<std::string>(),
+            world_binding.at("world_epoch").get<std::string>(),
             "episode-" + std::to_string(episode_ref.episode_id.high) + "-" +
                 std::to_string(episode_ref.episode_id.low),
             std::to_string(episode_ref.episode_generation), "request-" + config_.run_id);
@@ -632,6 +642,7 @@ RuntimeShutdownResult RuntimeKernelCandidate::shutdown(std::uint64_t now_tick,
     // crashed/incomplete; shutdown still follows the host's terminal path.
     bool evidence_failed =
         run_recorder_ != nullptr && run_recorder_->state() == RuntimeRunRecorderState::Rejected;
+    std::string evidence_failure_reason = "durable evidence append failed";
     if (run_recorder_ != nullptr && run_recorder_->admitted() &&
         !run_recorder_->note_lifecycle("drain"))
         evidence_failed = true;
@@ -644,6 +655,31 @@ RuntimeShutdownResult RuntimeKernelCandidate::shutdown(std::uint64_t now_tick,
             terminal_state_bytes_.has_value()
                 ? std::optional<std::string>(runtime_state_payload_sha256(*terminal_state_bytes_))
                 : std::nullopt;
+        if (config_.persist_realized_cpu_topology && run_recorder_ != nullptr &&
+            run_recorder_->admitted()) {
+            try {
+                terminal_cpu_topology_json_ = kernel_->realized_cpu_scheduler_topology_json();
+            } catch (...) {
+                // Evidence collection must not prevent kernel reclamation or
+                // allow this run to be certified completed without its output.
+                evidence_failed = true;
+                evidence_failure_reason = "native CPU topology observation failed";
+            }
+        }
+        if (started_ && config_.persist_world_scope_binding && run_recorder_ != nullptr &&
+            run_recorder_->admitted()) {
+            try {
+                terminal_world_scope_json_ =
+                    nlohmann::json{
+                        {"schema_version", "echelon_forge.runtime_world_scope_binding.v1"},
+                        {"world_bindings", nlohmann::json::array({nlohmann::json::parse(
+                                               observed_world_binding_json())})}}
+                        .dump();
+            } catch (...) {
+                evidence_failed = true;
+                evidence_failure_reason = "native world scope observation failed";
+            }
+        }
         kernel_->shutdown();
         stopped_ = true;
         if (run_recorder_ != nullptr && run_recorder_->admitted() &&
@@ -665,7 +701,7 @@ RuntimeShutdownResult RuntimeKernelCandidate::shutdown(std::uint64_t now_tick,
             const auto finalized =
                 evidence_failed || run_recorder_->state() == RuntimeRunRecorderState::Rejected
                     ? finalize_observed(config_.run_receipt_template_json, "failed",
-                                        "durable evidence append failed")
+                                        evidence_failure_reason)
                 : started_ ? finalize_run(config_.run_receipt_template_json)
                            : finalize_observed(config_.run_receipt_template_json, "cancelled",
                                                "candidate closed before start");
@@ -706,6 +742,26 @@ RuntimeRunRecorderStatus RuntimeKernelCandidate::finalize_run(std::string_view r
         "runtime-state", state_payload, "application/vnd.echelon-forge.runtime-state.v1+octets",
         "run-retained", artifact_digest, retrieval_location);
     if (!artifact_status) return artifact_status;
+    if (config_.persist_realized_cpu_topology) {
+        if (!terminal_cpu_topology_json_.has_value())
+            return {false, "recorder.result",
+                    "native CPU topology was not observed before shutdown"};
+        const auto topology_status = run_recorder_->put_artifact(
+            "runtime-cpu-scheduler-topology", *terminal_cpu_topology_json_,
+            "application/vnd.echelon-forge.runtime-cpu-scheduler-topology.v1+json", "run-retained",
+            artifact_digest, retrieval_location);
+        if (!topology_status) return topology_status;
+    }
+    if (config_.persist_world_scope_binding) {
+        if (!terminal_world_scope_json_.has_value())
+            return {false, "recorder.result",
+                    "native world scope was not observed before shutdown"};
+        const auto scope_status = run_recorder_->put_artifact(
+            "runtime-world-scope-binding", *terminal_world_scope_json_,
+            "application/vnd.echelon-forge.runtime-world-scope-binding.v1+json", "run-retained",
+            artifact_digest, retrieval_location);
+        if (!scope_status) return scope_status;
+    }
     const auto result_status = run_recorder_->record_native_result(*state_sha256, *state_sha256);
     if (!result_status) return result_status;
     return finalize_observed(receipt_json, "completed", "completed");
@@ -804,6 +860,23 @@ std::optional<std::vector<std::uint8_t>> RuntimeKernelCandidate::observed_state_
     } catch (...) {
         return std::nullopt;
     }
+}
+
+std::string RuntimeKernelCandidate::observed_world_binding_json() const {
+    const auto world = world_ref();
+    if (!world.well_formed())
+        throw std::invalid_argument("native world receipt binding requires a published world");
+    // This is the existing candidate -> RunRecorder identity formatting. The
+    // evidence export and recorder binding share this owner projection; Python
+    // must not infer the association from composition instance IDs or order.
+    return nlohmann::json{
+        {"host_boot_id", "boot-" + std::to_string(world.incarnation.host.boot_id.high) + "-" +
+                             std::to_string(world.incarnation.host.boot_id.low)},
+        {"incarnation_epoch", std::to_string(world.incarnation.incarnation_epoch)},
+        {"world_id", "world-" + std::to_string(world.world_slot)},
+        {"world_epoch", std::to_string(world.world_generation)},
+        {"world_index", world.world_slot}}
+        .dump();
 }
 
 RuntimeHostSnapshot RuntimeKernelCandidate::host_snapshot() const {

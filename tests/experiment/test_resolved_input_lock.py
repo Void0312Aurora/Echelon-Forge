@@ -61,22 +61,37 @@ def _experiment(seeds: SeedSpec | None = None) -> Experiment:
     )
 
 
-def _native(topology: str = "topo-a") -> dict[str, str]:
+def _receipt_payload():
+    vector = json.loads(
+        (Path(__file__).resolve().parents[2]
+         / "tests/architecture/composition/fixtures/run_receipt.v1.json").read_text(encoding="utf-8")
+    )
+    return json.loads(vector["canonical_envelope_json"])["payload"]
+
+
+def _native(topology: str = "topo-a") -> dict[str, object]:
+    payload = _receipt_payload()
     return {
         "resolved_manifest_sha256": "1" * 64,
         "executable_graph_sha256": "2" * 64,
         "realized_topology_digest": hashlib.sha256(topology.encode()).hexdigest(),
+        "host_mode": "native_cpp",
+        "input_lock_semantics_executed": True,  # Synthetic owner-contract observation.
+        "receipt_world_bindings": [
+            {
+                "world_index": index,
+                "world_id": f"world-{index + 1}",
+                "host_boot_id": payload["host_boot_id"],
+                "incarnation_epoch": payload["incarnation_epoch"],
+                "world_epoch": payload["execution_scope"]["epochs"]["world"],
+            }
+            for index in range(2)
+        ],
     }
 
 
 def _receipt(candidate):
-    vector = json.loads(
-        (
-            Path(__file__).resolve().parents[2]
-            / "tests/architecture/composition/fixtures/run_receipt.v1.json"
-        ).read_text(encoding="utf-8")
-    )
-    payload = json.loads(vector["canonical_envelope_json"])["payload"]
+    payload = _receipt_payload()
     payload["inputs"]["artifacts"]["resolved_input_lock"] = candidate.digest
     payload["execution_scope"]["world_ids"] = ["world-1", "world-2"]
     return build_run_receipt(**payload)
@@ -85,6 +100,7 @@ def _receipt(candidate):
 def _completed_lock(*args, **kwargs):
     """Synthetic owner receipt fixture, not a claim of an actual run."""
     native = kwargs.pop("native_runtime", _native())
+    native.setdefault("receipt_world_bindings", _native()["receipt_world_bindings"])
     candidate = build_resolved_input_lock(*args, **kwargs)
     outcome = build_batch_outcome(
         batch_generation_ref="g1",
@@ -99,6 +115,68 @@ def _completed_lock(*args, **kwargs):
     return join_run_receipt(
         candidate, receipt=_receipt(candidate), native_runtime=native, outcome=outcome
     )
+
+
+@pytest.mark.parametrize("field,value,error", [
+    ("world_id", "world-other", "world_identity_mismatch"),
+    ("world_id", "world-2", "world_identity_mismatch"),
+    ("world_index", 2, "world_index_mismatch"),
+    ("world_index", 1, "world_index_mismatch"),
+    ("world_index", True, "world_index_invalid"),
+    ("host_boot_id", "other-boot", "world_binding_mismatch:host_boot_id"),
+    ("incarnation_epoch", "99", "world_binding_mismatch:incarnation_epoch"),
+    ("world_epoch", "99", "world_binding_mismatch:world_epoch"),
+])
+def test_equal_world_counts_do_not_hide_wrong_native_world_binding(field, value, error):
+    native = _native()
+    native["receipt_world_bindings"][0][field] = value
+    with pytest.raises(InputLockError, match=error):
+        _completed_lock(_experiment(), _registry(), native_runtime=native)
+
+
+def test_missing_native_world_binding_keeps_real_receipt_completion_unknown():
+    completed = _completed_lock(_experiment(), _registry())
+    candidate = build_resolved_input_lock(_experiment(), _registry())
+    native = _native()
+    native.pop("receipt_world_bindings")
+    outcome = build_batch_outcome(
+        batch_generation_ref="g1", operation_ref="op1", operation="step",
+        worlds=(WorldOutcome(0, WorldState.COMPLETED, True), WorldOutcome(1, WorldState.COMPLETED, True)),
+        expected_world_indices=frozenset({0, 1}),
+    )
+    joined = join_run_receipt(candidate, receipt=_receipt(candidate), native_runtime=native, outcome=outcome)
+    assert joined.status == "unknown"
+    assert joined.as_dict()["completion_evidence"]["world_scope"] is None
+    assert not compare_resolved_input_locks(joined, completed).comparable
+
+
+def test_native_world_binding_does_not_infer_identity_from_receipt_array_order():
+    candidate = build_resolved_input_lock(_experiment(), _registry())
+    receipt = _receipt(candidate)
+    native = _native()
+    native["receipt_world_bindings"].reverse()
+    outcome = build_batch_outcome(
+        batch_generation_ref="g1", operation_ref="op1", operation="step",
+        worlds=(WorldOutcome(0, WorldState.COMPLETED, True), WorldOutcome(1, WorldState.COMPLETED, True)),
+        expected_world_indices=frozenset({0, 1}),
+    )
+    joined = join_run_receipt(candidate, receipt=receipt, native_runtime=native, outcome=outcome)
+    assert joined.status == "completed"
+    assert compare_resolved_input_locks(joined, joined).comparable
+
+
+@pytest.mark.parametrize("changed", ["scope", "native", "coverage"])
+def test_comparison_rechecks_joined_world_scope_and_coverage(changed):
+    completed = _completed_lock(_experiment(), _registry())
+    document = completed.as_dict()
+    if changed == "scope":
+        document["completion_evidence"]["world_scope"]["bindings"][0]["world_id"] = "other-world"
+    elif changed == "native":
+        document["native_runtime"]["receipt_world_bindings"][0]["world_id"] = "other-world"
+    else:
+        document["completion_evidence"]["outcome"]["worlds"].pop()
+    forged = ResolvedInputLock(document, completed.digest)
+    assert compare_resolved_input_locks(forged, forged).differences == ("completion_evidence",)
 
 
 def test_lock_is_canonical_under_scenario_json_key_order(tmp_path) -> None:
@@ -181,6 +259,27 @@ def test_completed_locks_require_same_realized_topology() -> None:
     assert result.differences == ("realized_topology_digest",)
 
 
+@pytest.mark.parametrize("host_mode", ["dark", "shadow", "", None])
+def test_candidate_or_missing_host_scope_cannot_compare_with_production(host_mode) -> None:
+    left = _completed_lock(_experiment(), _registry())
+    native = _native()
+    native["host_mode"] = host_mode
+    right = _completed_lock(_experiment(), _registry(), native_runtime=native)
+    result = compare_resolved_input_locks(left, right, intentional_axes=frozenset({"host_mode"}))
+    assert not result.comparable
+    assert result.differences == ("host_mode",)
+
+
+@pytest.mark.parametrize("executed", [False, None])
+def test_referenced_input_lock_is_not_executed_experiment_evidence(executed) -> None:
+    native = _native()
+    native["input_lock_semantics_executed"] = executed
+    completed = _completed_lock(_experiment(), _registry(), native_runtime=native)
+    result = compare_resolved_input_locks(completed, completed)
+    assert not result.comparable
+    assert result.differences == ("input_lock_semantics_executed",)
+
+
 def test_policy_only_axis_can_be_declared_intentional() -> None:
     left = _completed_lock(
         _experiment(),
@@ -205,7 +304,11 @@ def test_completed_comparison_requires_complete_native_identity() -> None:
         _experiment(),
         _registry(),
         status="completed",
-        native_runtime={"realized_topology_digest": _native()["realized_topology_digest"]},
+        native_runtime={
+            "realized_topology_digest": _native()["realized_topology_digest"],
+            "host_mode": "native_cpp",
+            "input_lock_semantics_executed": True,
+        },
     )
     right = _completed_lock(
         _experiment(),
@@ -256,6 +359,16 @@ def test_truthy_but_incomplete_completion_evidence_is_not_comparable() -> None:
     document = claimed.as_dict()
     document["completion_evidence"] = {"receipt_id": "caller-claim"}
     forged = ResolvedInputLock(document, claimed.digest)
+    result = compare_resolved_input_locks(forged, forged)
+    assert result.comparable is False
+    assert result.differences == ("completion_evidence",)
+
+
+def test_completion_evidence_rejects_receipt_binding_identity_drift() -> None:
+    completed = _completed_lock(_experiment(), _registry())
+    document = completed.as_dict()
+    document["completion_evidence"]["receipt_binding"]["receipt_id"] = "other-receipt"
+    forged = ResolvedInputLock(document, completed.digest)
     result = compare_resolved_input_locks(forged, forged)
     assert result.comparable is False
     assert result.differences == ("completion_evidence",)

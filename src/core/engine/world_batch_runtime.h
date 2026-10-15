@@ -56,9 +56,13 @@ class WorldBatchRuntime {
 
     // A state-mutating batch failure fail-closes this runtime generation. Raw
     // quarantine access remains available for diagnostics, but maintained batch
-    // operations reject retries until reset_batch completes successfully.
+    // operations reject retries until reset_batch completes successfully. An
+    // unfinished native pipeline requires host process recreation instead.
     [[nodiscard]] bool batch_healthy() const noexcept { return batch_healthy_; }
     [[nodiscard]] std::string batch_failure_reason() const;
+    // An unfinished Flecs callback scope is terminal for its host process.
+    // This diagnostic remains readable through the failed-generation fence.
+    [[nodiscard]] bool batch_requires_host_recreate() const;
     // Native-owned batch generation. A failed batch retains its generation;
     // successful reset_batch creates the next generation.
     [[nodiscard]] std::uint64_t batch_generation() const noexcept { return batch_generation_; }

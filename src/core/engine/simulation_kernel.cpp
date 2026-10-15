@@ -178,9 +178,24 @@ void SimulationKernel::set_missile_tuning(const MissileTuning &tuning) {
     world_state_mutated_ = true;
 }
 
+bool SimulationKernel::has_unfinished_native_pipeline() const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("has_unfinished_native_pipeline");
+    return ecs.is_readonly() || ecs.is_deferred();
+}
+
 void SimulationKernel::reset(unsigned int seed) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("reset");
+    // C++ exceptions escaping a Flecs callback can bypass its C cleanup and
+    // leave a readonly world or an open defer scope. Clearing episode entities
+    // cannot repair those pipeline/iterator internals. Keep this world fenced;
+    // its hosting process must be retired instead of certifying a reset.
+    if (ecs.is_readonly() || ecs.is_deferred()) {
+        throw std::logic_error(
+            "SimulationKernel::reset cannot recover an unfinished native pipeline; "
+            "recreate the host process");
+    }
     if (IEngagementEventStore *store = engagement_event_store()) {
         store->clear();
     }
@@ -210,6 +225,11 @@ void SimulationKernel::step() {
     if (exact_stage_trace_frame_active_) {
         throw std::logic_error(
             "SimulationKernel::step() cannot run while an exact-stage trace frame is active");
+    }
+    if (ecs.is_readonly() || ecs.is_deferred()) {
+        throw std::logic_error(
+            "SimulationKernel::step cannot resume an unfinished native pipeline; "
+            "recreate the host process");
     }
     // Fixed timestep update
     // We pass the fixed delta_time to progress
