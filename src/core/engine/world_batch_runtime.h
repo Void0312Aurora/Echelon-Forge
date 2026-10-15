@@ -14,7 +14,9 @@
 #include "core/engine/simulation_kernel.h"
 #include "core/engine/world_batch_visual_binding_compatibility_types.h"
 #include "core/interfaces/observation.h"
+#include "runtime/contracts/stage_node_manifest_registry.h"
 #include "runtime/contracts/world_batch_contracts.h"
+#include "runtime/contracts/platform_capability_contracts.h"
 
 struct WorldEntityKinematics {
     double x = 0.0;
@@ -57,6 +59,14 @@ class WorldBatchRuntime {
     // operations reject retries until reset_batch completes successfully.
     [[nodiscard]] bool batch_healthy() const noexcept { return batch_healthy_; }
     [[nodiscard]] std::string batch_failure_reason() const;
+    // Native-owned batch generation. A failed batch retains its generation;
+    // successful reset_batch creates the next generation.
+    [[nodiscard]] std::uint64_t batch_generation() const noexcept { return batch_generation_; }
+    [[nodiscard]] runtime::platform_capabilities::ResolvedPlatformSpawnPlan
+    resolve_factory_platform_spawn_plan(std::size_t world_index,
+                                        const std::string &type_name) const;
+    [[nodiscard]] std::vector<runtime::scheduler::StageNodeManifest>
+    maintained_stage_node_manifests() const;
 
     std::uint64_t spawn_unit_from_world_spawn_request(const WorldSpawnRequest &request);
     std::uint64_t spawn_typed_platform_unit(const TypedPlatformSpawnRequest &request);
@@ -169,6 +179,7 @@ class WorldBatchRuntime {
     size_t worker_threads_ = 1;
     mutable bool batch_healthy_ = true;
     mutable std::exception_ptr batch_failure_;
+    std::uint64_t batch_generation_ = 1;
     // Private native test seam; static storage avoids changing object layout.
     static std::function<std::jthread(std::function<void()>)> worker_thread_factory_for_test_;
     static std::function<void()> mutation_hook_for_test_;

@@ -6,11 +6,15 @@ from dataclasses import replace
 import pytest
 
 from python.content.platform_blueprint import (
+    HardpointContract,
+    LegacyUnitProjection,
+    LoadoutSelection,
     ModuleRecord,
     ModuleSelection,
     PlatformAssemblyError,
     PlatformBlueprint,
     resolve_platform_assembly,
+    lower_to_legacy_unit_definition,
 )
 
 
@@ -248,3 +252,172 @@ def test_physical_override_bounds_and_module_content_are_bound_to_plan_identity(
         assembly_id="a", blueprint=bounded, selections=_selections(), modules=changed_physical
     )
     assert left.identity_digest != physical.identity_digest
+
+
+def test_hardpoint_loadout_is_validated_and_bound_to_plan_identity(blueprint, modules) -> None:
+    loadout_blueprint = replace(
+        blueprint,
+        slots=(("propulsion", "engine"), ("primary_sensor", "sensor")),
+        hardpoints=(
+            HardpointContract(
+                "station_1", "station", capacity_kg=250.0, allowed_kinds=frozenset({"weapon"})
+            ),
+        ),
+    )
+    selections = (
+        ModuleSelection("propulsion", "builtin.engine.f110"),
+        ModuleSelection("primary_sensor", "builtin.radar.apg"),
+    )
+    plan = resolve_platform_assembly(
+        assembly_id="loadout.v1",
+        blueprint=loadout_blueprint,
+        selections=selections,
+        modules=modules,
+        loadout=(LoadoutSelection("station_1", "builtin.aim120"),),
+    )
+    assert plan.loadout == (("station_1", "builtin.aim120@1", 1),)
+    changed = resolve_platform_assembly(
+        assembly_id="loadout.v1",
+        blueprint=loadout_blueprint,
+        selections=selections,
+        modules=modules,
+        loadout=(LoadoutSelection("station_1", "builtin.aim120", 2),),
+    )
+    assert changed.identity_digest != plan.identity_digest
+
+    with pytest.raises(PlatformAssemblyError, match="loadout_mount_class_mismatch"):
+        resolve_platform_assembly(
+            assembly_id="loadout.bad.mount",
+            blueprint=loadout_blueprint,
+            selections=selections,
+            modules={
+                **modules,
+                "builtin.aim120": replace(
+                    modules["builtin.aim120"], mount_classes=frozenset({"wing"})
+                ),
+            },
+            loadout=(LoadoutSelection("station_1", "builtin.aim120"),),
+        )
+    with pytest.raises(PlatformAssemblyError, match="loadout_capacity_exceeded"):
+        capacity_limited = replace(
+            loadout_blueprint,
+            hardpoints=(
+                HardpointContract(
+                    "station_1",
+                    "station",
+                    capacity_kg=120.0,
+                    allowed_kinds=frozenset({"weapon"}),
+                ),
+            ),
+        )
+        resolve_platform_assembly(
+            assembly_id="loadout.bad.capacity",
+            blueprint=capacity_limited,
+            selections=selections,
+            modules=modules,
+            loadout=(LoadoutSelection("station_1", "builtin.aim120", 2),),
+        )
+
+
+def test_legacy_projection_requires_explicit_loadout_path(blueprint, modules) -> None:
+    loadout_blueprint = replace(
+        blueprint,
+        slots=(("propulsion", "engine"), ("primary_sensor", "sensor")),
+        hardpoints=(HardpointContract("station_1", "station", 120.0, frozenset({"weapon"})),),
+    )
+    loadout_modules = {
+        "builtin.engine.f110": replace(
+            modules["builtin.engine.f110"],
+            content_digest="engine-digest",
+            native_ref="Engine",
+        ),
+        "builtin.radar.apg": replace(
+            modules["builtin.radar.apg"],
+            content_digest="radar-digest",
+            native_ref="Radar",
+        ),
+        "builtin.aim120": replace(
+            modules["builtin.aim120"], content_digest="weapon-digest", native_ref="Aim120"
+        ),
+    }
+    plan = resolve_platform_assembly(
+        assembly_id="loadout.projection",
+        blueprint=loadout_blueprint,
+        selections=(
+            ModuleSelection("propulsion", "builtin.engine.f110"),
+            ModuleSelection("primary_sensor", "builtin.radar.apg"),
+        ),
+        modules=loadout_modules,
+        loadout=(LoadoutSelection("station_1", "builtin.aim120"),),
+    )
+    base = {
+        "name": "F16Loadout",
+        "type": "aircraft",
+        "propulsion": "Engine",
+        "sensor": "Radar",
+        "default_loadout": {"1": "Unresolved"},
+    }
+    projection = LegacyUnitProjection(
+        plan.blueprint_ref,
+        base,
+        slot_paths=(("propulsion", "propulsion"), ("primary_sensor", "sensor")),
+    )
+    with pytest.raises(PlatformAssemblyError, match="native_loadout_projection_missing"):
+        lower_to_legacy_unit_definition(plan, projection, modules=loadout_modules)
+    projected = LegacyUnitProjection(
+        plan.blueprint_ref,
+        base,
+        slot_paths=(("propulsion", "propulsion"), ("primary_sensor", "sensor")),
+        loadout_paths=(("station_1", "default_loadout.1"),),
+    )
+    lowered = lower_to_legacy_unit_definition(plan, projected, modules=loadout_modules)
+    assert lowered["default_loadout"]["1"] == "Aim120"
+
+
+def test_legacy_projection_rejects_multi_store_quantity_until_native_contract_exists(
+    blueprint, modules
+) -> None:
+    loadout_blueprint = replace(
+        blueprint,
+        slots=(("propulsion", "engine"), ("primary_sensor", "sensor")),
+        hardpoints=(HardpointContract("station_1", "station", 200.0, frozenset({"weapon"})),),
+    )
+    loadout_modules = {
+        "builtin.engine.f110": replace(
+            modules["builtin.engine.f110"], content_digest="engine-digest", native_ref="Engine"
+        ),
+        "builtin.radar.apg": replace(
+            modules["builtin.radar.apg"], content_digest="radar-digest", native_ref="Radar"
+        ),
+        "builtin.aim120": replace(
+            modules["builtin.aim120"],
+            content_digest="weapon-digest",
+            native_ref="Aim120",
+            mass_kg=80.0,
+            mount_classes=frozenset({"station"}),
+        ),
+    }
+    plan = resolve_platform_assembly(
+        assembly_id="loadout.projection.multi-store",
+        blueprint=loadout_blueprint,
+        selections=(
+            ModuleSelection("propulsion", "builtin.engine.f110"),
+            ModuleSelection("primary_sensor", "builtin.radar.apg"),
+        ),
+        modules=loadout_modules,
+        loadout=(LoadoutSelection("station_1", "builtin.aim120", 2),),
+    )
+    projection = LegacyUnitProjection(
+        plan.blueprint_ref,
+        {
+            "name": "F16Loadout",
+            "type": "aircraft",
+            "propulsion": "Engine",
+            "sensor": "Radar",
+            "default_loadout": {"1": "Unresolved"},
+        },
+        slot_paths=(("propulsion", "propulsion"), ("primary_sensor", "sensor")),
+        loadout_paths=(("station_1", "default_loadout.1"),),
+    )
+    with pytest.raises(PlatformAssemblyError, match="native_loadout_quantity_unsupported"):
+        lower_to_legacy_unit_definition(plan, projection, modules=loadout_modules)

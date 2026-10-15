@@ -12,7 +12,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
-from python.json_value import freeze_json_mapping, thaw_json_value
+from python.json_value import freeze_json_mapping, freeze_json_value, thaw_json_value
 
 SCHEMA_VERSION = "echelon_forge.mechanism_ports.v1"
 
@@ -25,6 +25,7 @@ class PortSpec:
     frame: str | None = None
     visibility: str = "belief"
     required: bool = True
+    freshness: str | None = None
 
     def __post_init__(self) -> None:
         for field_name in ("name", "schema", "visibility"):
@@ -35,6 +36,10 @@ class PortSpec:
             raise ValueError("unit must be a non-empty string when supplied")
         if self.frame is not None and (not isinstance(self.frame, str) or not self.frame.strip()):
             raise ValueError("frame must be a non-empty string when supplied")
+        if self.freshness is not None and (
+            not isinstance(self.freshness, str) or not self.freshness.strip()
+        ):
+            raise ValueError("freshness must be a non-empty string when supplied")
         if type(self.required) is not bool:
             raise TypeError("required must be a bool")
         if self.visibility not in {"belief", "truth", "agent_observation", "effect"}:
@@ -112,6 +117,200 @@ class GraphDiagnostic:
 
 
 @dataclass(frozen=True)
+class NativeStageContractProjection:
+    """One authored node mapped to an immutable owner manifest snapshot.
+
+    The projection is evidence for qualification only.  It contains no
+    callable, scheduler handle or provider installation request.
+    """
+
+    node_id: str
+    stage_node_id: str
+    owner_module: str
+    authored_node: Mapping[str, Any]
+    owner_contract: Mapping[str, Any]
+    identity_digest: str
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "node_id": self.node_id,
+            "stage_node_id": self.stage_node_id,
+            "owner_module": self.owner_module,
+            "authored_node": thaw_json_value(self.authored_node),
+            "owner_contract": thaw_json_value(self.owner_contract),
+            "identity_digest": self.identity_digest,
+        }
+
+
+@dataclass(frozen=True)
+class StageManifestQualificationProjection:
+    """Static graph-to-native contract evidence with a stable identity.
+
+    ``qualification_only`` and ``executable`` are deliberately explicit so a
+    downstream consumer cannot mistake this artifact for an executable native
+    graph or a scheduler installation plan.
+    """
+
+    graph_identity_digest: str
+    manifest_registry_digest: str
+    node_contracts: tuple[NativeStageContractProjection, ...]
+    edge_bindings: tuple[GraphEdge, ...]
+    identity_digest: str
+    qualification_only: bool = True
+    executable: bool = False
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "graph_identity_digest": self.graph_identity_digest,
+            "manifest_registry_digest": self.manifest_registry_digest,
+            "node_contracts": [contract.as_dict() for contract in self.node_contracts],
+            "edge_bindings": [edge.__dict__ for edge in self.edge_bindings],
+            "identity_digest": self.identity_digest,
+            "qualification_only": self.qualification_only,
+            "executable": self.executable,
+        }
+
+
+@dataclass(frozen=True)
+class SchemaVocabularyEntry:
+    """One owner-declared schema and the native contract that owns it."""
+
+    schema: str
+    owner_ref: str
+
+    def __post_init__(self) -> None:
+        for field_name in ("schema", "owner_ref"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+
+
+@dataclass(frozen=True)
+class MechanismSchemaVocabulary:
+    """Immutable owner vocabulary used to qualify mechanism port schemas.
+
+    This is a qualification artifact.  It identifies the native owner of each
+    schema, but it does not publish a dispatcher or create an executable
+    contract on its own.
+    """
+
+    vocabulary_id: str
+    version: str
+    entries: tuple[SchemaVocabularyEntry, ...]
+
+    def __post_init__(self) -> None:
+        for field_name in ("vocabulary_id", "version"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+        entries = tuple(self.entries)
+        if not entries:
+            raise ValueError("entries must not be empty")
+        if any(not isinstance(entry, SchemaVocabularyEntry) for entry in entries):
+            raise TypeError("entries must contain SchemaVocabularyEntry values")
+        schemas = [entry.schema for entry in entries]
+        if len(set(schemas)) != len(schemas):
+            raise ValueError("schema vocabulary entries must use unique schema names")
+        object.__setattr__(self, "entries", entries)
+
+    @property
+    def schema_names(self) -> frozenset[str]:
+        return frozenset(entry.schema for entry in self.entries)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "vocabulary_id": self.vocabulary_id,
+            "version": self.version,
+            "entries": [
+                {"schema": entry.schema, "owner_ref": entry.owner_ref}
+                for entry in sorted(self.entries, key=lambda item: item.schema)
+            ],
+        }
+
+    @property
+    def identity_digest(self) -> str:
+        return _digest(self.as_dict())
+
+
+@dataclass(frozen=True)
+class MechanismSchemaVocabularyRegistry:
+    """Merge owner-supplied schema vocabularies without inventing ownership.
+
+    A registry is still a qualification input.  Every entry must come from an
+    explicit owner vocabulary, and conflicting owners for one schema fail
+    closed.  It does not make a schema executable or publish a dispatcher.
+    """
+
+    registry_id: str
+    version: str
+    vocabularies: tuple[MechanismSchemaVocabulary, ...]
+    entries: tuple[SchemaVocabularyEntry, ...] = field(init=False)
+
+    def __post_init__(self) -> None:
+        for field_name in ("registry_id", "version"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+        vocabularies = tuple(self.vocabularies)
+        if not vocabularies:
+            raise ValueError("vocabularies must not be empty")
+        if any(not isinstance(item, MechanismSchemaVocabulary) for item in vocabularies):
+            raise TypeError("vocabularies must contain MechanismSchemaVocabulary values")
+        vocabulary_ids = [item.vocabulary_id for item in vocabularies]
+        if len(set(vocabulary_ids)) != len(vocabulary_ids):
+            raise ValueError("schema vocabulary registry ids must be unique")
+        owners: dict[str, str] = {}
+        for vocabulary in vocabularies:
+            for entry in vocabulary.entries:
+                previous = owners.get(entry.schema)
+                if previous is not None and previous != entry.owner_ref:
+                    raise ValueError(
+                        f"schema registry owner conflict for {entry.schema!r}: "
+                        f"{previous!r} versus {entry.owner_ref!r}"
+                    )
+                owners[entry.schema] = entry.owner_ref
+        object.__setattr__(
+            self,
+            "vocabularies",
+            tuple(sorted(vocabularies, key=lambda item: item.vocabulary_id)),
+        )
+        object.__setattr__(
+            self,
+            "entries",
+            tuple(
+                SchemaVocabularyEntry(schema, owner_ref)
+                for schema, owner_ref in sorted(owners.items())
+            ),
+        )
+
+    @property
+    def vocabulary_id(self) -> str:
+        return self.registry_id
+
+    @property
+    def schema_names(self) -> frozenset[str]:
+        return frozenset(entry.schema for entry in self.entries)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "registry_id": self.registry_id,
+            "version": self.version,
+            "vocabularies": [item.as_dict() for item in self.vocabularies],
+            "entries": [
+                {"schema": entry.schema, "owner_ref": entry.owner_ref}
+                for entry in self.entries
+            ],
+        }
+
+    @property
+    def identity_digest(self) -> str:
+        return _digest(self.as_dict())
+
+
+SchemaVocabulary = MechanismSchemaVocabulary | MechanismSchemaVocabularyRegistry
+
+
+@dataclass(frozen=True)
 class CompiledMechanismGraph:
     graph_id: str
     nodes: tuple[tuple[str, MechanismSpec], ...]
@@ -120,6 +319,9 @@ class CompiledMechanismGraph:
     identity_digest: str
     external_inputs: frozenset[str] = frozenset()
     schema_version: str = SCHEMA_VERSION
+    schema_vocabulary_ref: str | None = None
+    schema_vocabulary_version: str | None = None
+    schema_vocabulary_digest: str | None = None
 
     @property
     def valid(self) -> bool:
@@ -149,6 +351,15 @@ class CompiledMechanismGraph:
             ],
             "edges": [edge.__dict__ for edge in self.edges],
             "external_inputs": sorted(self.external_inputs),
+            "schema_vocabulary": (
+                None
+                if self.schema_vocabulary_ref is None
+                else {
+                    "vocabulary_id": self.schema_vocabulary_ref,
+                    "version": self.schema_vocabulary_version,
+                    "identity_digest": self.schema_vocabulary_digest,
+                }
+            ),
             "diagnostics": [diagnostic.__dict__ for diagnostic in self.diagnostics],
             "identity_digest": self.identity_digest,
         }
@@ -166,6 +377,7 @@ def _port_dict(port: PortSpec) -> dict[str, Any]:
         "frame": port.frame,
         "visibility": port.visibility,
         "required": port.required,
+        "freshness": port.freshness,
     }
 
 
@@ -175,8 +387,9 @@ def _identity_payload(
     edges: Sequence[GraphEdge],
     *,
     external_inputs: frozenset[str],
+    schema_vocabulary: SchemaVocabulary | None = None,
 ) -> dict[str, Any]:
-    return {
+    payload = {
         "schema_version": SCHEMA_VERSION,
         "graph_id": graph_id,
         "nodes": {
@@ -211,6 +424,13 @@ def _identity_payload(
         ],
         "external_inputs": sorted(external_inputs),
     }
+    if schema_vocabulary is not None:
+        payload["schema_vocabulary"] = {
+            "vocabulary_id": schema_vocabulary.vocabulary_id,
+            "version": schema_vocabulary.version,
+            "identity_digest": schema_vocabulary.identity_digest,
+        }
+    return payload
 
 
 def _digest(payload: Mapping[str, Any]) -> str:
@@ -226,6 +446,8 @@ def compile_mechanism_graph(
     edges: Sequence[GraphEdge],
     *,
     external_inputs: frozenset[str] = frozenset(),
+    known_schemas: frozenset[str] | None = None,
+    schema_vocabulary: SchemaVocabulary | None = None,
 ) -> CompiledMechanismGraph:
     """Validate a graph and return a non-published qualification artifact."""
 
@@ -233,8 +455,25 @@ def compile_mechanism_graph(
         raise MechanismGraphError("graph_id is required")
     if not nodes:
         raise MechanismGraphError("at least one mechanism node is required")
+    if known_schemas is not None and schema_vocabulary is not None:
+        raise MechanismGraphError("known_schemas and schema_vocabulary are mutually exclusive")
     diagnostics: list[GraphDiagnostic] = []
     normalized_external_inputs = frozenset(external_inputs)
+    effective_schemas = (
+        schema_vocabulary.schema_names if schema_vocabulary is not None else known_schemas
+    )
+    if effective_schemas is not None:
+        for node_id, spec in nodes.items():
+            for side, ports in (("inputs", spec.inputs), ("outputs", spec.outputs)):
+                for port in ports:
+                    if port.schema not in effective_schemas:
+                        diagnostics.append(
+                            GraphDiagnostic(
+                                "mechanism.schema_unknown",
+                                f"nodes.{node_id}.{side}.{port.name}",
+                                f"schema is not present in the owner vocabulary: {port.schema}",
+                            )
+                        )
     for external_ref in sorted(normalized_external_inputs):
         if not isinstance(external_ref, str) or external_ref.count(".") != 1:
             diagnostics.append(
@@ -299,6 +538,16 @@ def compile_mechanism_graph(
                     "mechanism.frame_incompatible",
                     path,
                     f"{source_port.frame!r} -> {target_port.frame!r}",
+                )
+            )
+        if source_port.freshness != target_port.freshness and (
+            source_port.freshness is not None or target_port.freshness is not None
+        ):
+            diagnostics.append(
+                GraphDiagnostic(
+                    "mechanism.freshness_incompatible",
+                    path,
+                    f"{source_port.freshness!r} -> {target_port.freshness!r}",
                 )
             )
         if source_port.visibility == "truth" and target_port.visibility == "agent_observation":
@@ -380,7 +629,13 @@ def compile_mechanism_graph(
     for node_id in nodes:
         visit(node_id, ())
 
-    payload = _identity_payload(graph_id, nodes, edges, external_inputs=normalized_external_inputs)
+    payload = _identity_payload(
+        graph_id,
+        nodes,
+        edges,
+        external_inputs=normalized_external_inputs,
+        schema_vocabulary=schema_vocabulary,
+    )
     return CompiledMechanismGraph(
         graph_id=graph_id,
         nodes=tuple(sorted(nodes.items())),
@@ -388,6 +643,9 @@ def compile_mechanism_graph(
         diagnostics=tuple(diagnostics),
         identity_digest=_digest(payload),
         external_inputs=normalized_external_inputs,
+        schema_vocabulary_ref=(schema_vocabulary.vocabulary_id if schema_vocabulary else None),
+        schema_vocabulary_version=(schema_vocabulary.version if schema_vocabulary else None),
+        schema_vocabulary_digest=(schema_vocabulary.identity_digest if schema_vocabulary else None),
     )
 
 
@@ -442,6 +700,7 @@ def compose_graph_as_mechanism(
             and public.unit == internal.unit
             and public.frame == internal.frame
             and public.visibility == internal.visibility
+            and public.freshness == internal.freshness
         )
 
     for public in inputs:
@@ -494,6 +753,144 @@ def compose_graph_as_mechanism(
     )
 
 
+_STAGE_MANIFEST_PROJECTION_FIELDS = (
+    "node_id",
+    "semantic_stage",
+    "owner_module",
+    "input_packets",
+    "output_packets",
+    "read_state_shards",
+    "write_state_shards",
+    "read_snapshot_policy",
+    "write_commit_policy",
+    "clock_domain",
+    "latency_policy",
+    "sync_policy",
+    "allowed_same_window_edges",
+    "required_barriers",
+    "event_families_emitted",
+    "diagnostic_trace_obligations",
+    "facade_visibility",
+    "adapter_projection_allowed",
+    # Legacy evidence fixtures may carry an explicit realized system name.
+    # The native StageNodeManifest itself does not, so this stays optional.
+    "native_system",
+)
+
+
+def _manifest_field(manifest: Any, field_name: str, default: Any = None) -> Any:
+    if isinstance(manifest, Mapping):
+        return manifest.get(field_name, default)
+    return getattr(manifest, field_name, default)
+
+
+def _manifest_contract_payload(manifest: Any) -> Mapping[str, Any]:
+    values: dict[str, Any] = {}
+    for field_name in _STAGE_MANIFEST_PROJECTION_FIELDS:
+        value = _manifest_field(manifest, field_name)
+        if value is not None:
+            values[field_name] = thaw_json_value(freeze_json_value(value))
+    return freeze_json_mapping(values)
+
+
+def _authored_node_payload(spec: MechanismSpec) -> Mapping[str, Any]:
+    return freeze_json_mapping(
+        {
+            "mechanism_id": spec.mechanism_id,
+            "version": spec.version,
+            "inputs": [_port_dict(port) for port in spec.inputs],
+            "outputs": [_port_dict(port) for port in spec.outputs],
+            "stateful": spec.stateful,
+            "clock": spec.clock,
+            "delay_windows": spec.delay_windows,
+            "implementation_ref": spec.implementation_ref,
+            "required_capabilities": list(spec.required_capabilities),
+            "backend_ref": spec.backend_ref,
+            "clock_policy": thaw_json_value(spec.clock_policy),
+        }
+    )
+
+
+def project_stage_manifest_qualification(
+    graph: CompiledMechanismGraph,
+    *,
+    node_stage_bindings: Mapping[str, str],
+    stage_manifests: Mapping[str, Any],
+    pipeline_order: Sequence[str] = (),
+) -> StageManifestQualificationProjection:
+    """Project an authored graph onto owner StageNodeManifest snapshots.
+
+    This is a deterministic, non-executing qualification artifact.  It fails
+    closed on any validation diagnostic and never lowers authored nodes into a
+    native scheduler or provider request.
+    """
+
+    diagnostics = validate_stage_manifest_bindings(
+        graph,
+        node_stage_bindings=node_stage_bindings,
+        stage_manifests=stage_manifests,
+        pipeline_order=pipeline_order,
+        require_native_contract=True,
+    )
+    if diagnostics:
+        summary = "; ".join(f"{item.code} at {item.path}: {item.message}" for item in diagnostics)
+        raise MechanismGraphError(f"native stage qualification rejected: {summary}")
+
+    node_contracts: list[NativeStageContractProjection] = []
+    for node_id, spec in graph.nodes:
+        stage_node_id = node_stage_bindings[node_id]
+        manifest = stage_manifests[stage_node_id]
+        owner_contract = _manifest_contract_payload(manifest)
+        owner_module = _manifest_field(manifest, "owner_module")
+        node_payload = _authored_node_payload(spec)
+        node_identity = _digest(
+            {
+                "node_id": node_id,
+                "stage_node_id": stage_node_id,
+                "owner_module": owner_module,
+                "authored_node": thaw_json_value(node_payload),
+                "owner_contract": thaw_json_value(owner_contract),
+            }
+        )
+        node_contracts.append(
+            NativeStageContractProjection(
+                node_id=node_id,
+                stage_node_id=stage_node_id,
+                owner_module=owner_module,
+                authored_node=node_payload,
+                owner_contract=owner_contract,
+                identity_digest=node_identity,
+            )
+        )
+
+    node_contracts_tuple = tuple(node_contracts)
+    registry_payload = {
+        "manifests": [
+            {
+                "stage_node_id": contract.stage_node_id,
+                "owner_contract": thaw_json_value(contract.owner_contract),
+            }
+            for contract in node_contracts_tuple
+        ]
+    }
+    manifest_registry_digest = _digest(registry_payload)
+    identity_payload = {
+        "graph_identity_digest": graph.identity_digest,
+        "manifest_registry_digest": manifest_registry_digest,
+        "node_contracts": [contract.as_dict() for contract in node_contracts_tuple],
+        "edge_bindings": [edge.__dict__ for edge in graph.edges],
+        "qualification_only": True,
+        "executable": False,
+    }
+    return StageManifestQualificationProjection(
+        graph_identity_digest=graph.identity_digest,
+        manifest_registry_digest=manifest_registry_digest,
+        node_contracts=node_contracts_tuple,
+        edge_bindings=tuple(graph.edges),
+        identity_digest=_digest(identity_payload),
+    )
+
+
 def validate_realized_order(
     graph: CompiledMechanismGraph,
     *,
@@ -533,15 +930,166 @@ def validate_realized_order(
     return tuple(diagnostics)
 
 
+def validate_stage_manifest_bindings(
+    graph: CompiledMechanismGraph,
+    *,
+    node_stage_bindings: Mapping[str, str],
+    stage_manifests: Mapping[str, Mapping[str, Any]],
+    pipeline_order: Sequence[str] = (),
+    require_native_contract: bool = False,
+) -> tuple[GraphDiagnostic, ...]:
+    """Qualify a graph against an owner-provided native stage snapshot.
+
+    The snapshot is consumed as evidence. This adapter does not construct a
+    provider, install a scheduler node or infer a native manifest from Python.
+    """
+
+    if not graph.valid:
+        raise MechanismGraphError("cannot qualify an invalid mechanism graph")
+    expected_nodes = {node_id for node_id, _ in graph.nodes}
+    if set(node_stage_bindings) != expected_nodes:
+        raise MechanismGraphError("native stage bindings must cover every graph node exactly")
+    if len(set(node_stage_bindings.values())) != len(node_stage_bindings):
+        raise MechanismGraphError("native stage bindings must be one-to-one")
+
+    diagnostics: list[GraphDiagnostic] = []
+    node_systems: dict[str, str] = {}
+    write_shard_owners: dict[str, str] = {}
+    required_native_fields = (
+        "input_packets",
+        "output_packets",
+        "read_state_shards",
+        "write_state_shards",
+        "read_snapshot_policy",
+        "write_commit_policy",
+        "clock_domain",
+        "latency_policy",
+        "sync_policy",
+        "required_barriers",
+        "diagnostic_trace_obligations",
+        "facade_visibility",
+    )
+    required_nonempty_sequences = frozenset(
+        {
+            "input_packets",
+            "output_packets",
+            "read_state_shards",
+            "required_barriers",
+            "diagnostic_trace_obligations",
+        }
+    )
+    for node_id, spec in graph.nodes:
+        stage_id = node_stage_bindings[node_id]
+        manifest = stage_manifests.get(stage_id)
+        path = f"nodes.{node_id}"
+        if manifest is None:
+            diagnostics.append(
+                GraphDiagnostic("mechanism.native_stage_manifest_missing", path, stage_id)
+            )
+            continue
+        if _manifest_field(manifest, "node_id") != stage_id:
+            diagnostics.append(
+                GraphDiagnostic("mechanism.native_stage_manifest_identity_mismatch", path, stage_id)
+            )
+        if not _manifest_field(manifest, "semantic_stage") or not _manifest_field(
+            manifest, "owner_module"
+        ):
+            diagnostics.append(
+                GraphDiagnostic("mechanism.native_stage_manifest_incomplete", path, stage_id)
+            )
+        if require_native_contract:
+            missing = [
+                field_name
+                for field_name in required_native_fields
+                if _manifest_field(manifest, field_name) is None
+                or (
+                    isinstance(_manifest_field(manifest, field_name), str)
+                    and not _manifest_field(manifest, field_name).strip()
+                )
+                or (
+                    field_name in required_nonempty_sequences
+                    and isinstance(_manifest_field(manifest, field_name), (list, tuple))
+                    and not _manifest_field(manifest, field_name)
+                )
+            ]
+            if missing:
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.native_stage_contract_incomplete",
+                        path,
+                        "missing owner fields: " + ", ".join(missing),
+                    )
+                )
+        if _manifest_field(manifest, "facade_visibility") in {
+            "adapter_projection",
+            "diagnostics_only",
+        }:
+            diagnostics.append(
+                GraphDiagnostic("mechanism.native_stage_not_scheduler_truth", path, stage_id)
+            )
+        native_system = _manifest_field(manifest, "native_system")
+        if native_system is None:
+            native_system = _manifest_field(manifest, "owner_module")
+        if not isinstance(native_system, str) or not native_system.strip():
+            diagnostics.append(
+                GraphDiagnostic("mechanism.native_stage_system_missing", path, stage_id)
+            )
+        else:
+            node_systems[node_id] = native_system
+        write_shards = _manifest_field(manifest, "write_state_shards", ())
+        if not isinstance(write_shards, (list, tuple)) or any(
+            not isinstance(shard, str) or not shard.strip() for shard in write_shards
+        ):
+            diagnostics.append(
+                GraphDiagnostic(
+                    "mechanism.native_stage_write_shards_invalid",
+                    path,
+                    "write_state_shards must be a sequence of non-empty strings",
+                )
+            )
+        else:
+            for shard in write_shards:
+                previous = write_shard_owners.get(shard)
+                if previous is not None and previous != node_id:
+                    diagnostics.append(
+                        GraphDiagnostic(
+                            "mechanism.native_stage_write_shard_conflict",
+                            path,
+                            f"state shard {shard!r} is written by both {previous} and {node_id}",
+                        )
+                    )
+                else:
+                    write_shard_owners[shard] = node_id
+        if spec.implementation_ref.startswith("qualification."):
+            diagnostics.append(
+                GraphDiagnostic(
+                    "mechanism.native_implementation_qualification_only",
+                    path,
+                    spec.implementation_ref,
+                )
+            )
+
+    if pipeline_order and len(node_systems) == len(expected_nodes):
+        diagnostics.extend(
+            validate_realized_order(graph, node_systems=node_systems, pipeline_order=pipeline_order)
+        )
+    return tuple(diagnostics)
+
+
 __all__ = [
     "CompiledMechanismGraph",
     "GraphDiagnostic",
     "GraphEdge",
     "MechanismGraphError",
+    "MechanismSchemaVocabularyRegistry",
     "MechanismSpec",
+    "NativeStageContractProjection",
     "PortSpec",
     "SCHEMA_VERSION",
+    "StageManifestQualificationProjection",
     "compile_mechanism_graph",
     "compose_graph_as_mechanism",
+    "project_stage_manifest_qualification",
     "validate_realized_order",
+    "validate_stage_manifest_bindings",
 ]

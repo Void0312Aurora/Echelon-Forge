@@ -82,8 +82,10 @@ CUDA results are reported separately from admitted CPU/facade guarantees.
 | Per-world outcomes and quarantine | held until native publication evidence can reliably distinguish each world |
 | Transactional rollback of all effects | held; no current proof of atomic rollback |
 
-Completed constructors require exact expected-world coverage. Skipped/unknown
-outcomes cannot masquerade as completion, and aggregate faults project all affected
+The public `BatchOperationOutcome` constructor requires non-empty expected-world
+evidence and exact index coverage for every `completed` result; the default empty
+scope cannot be used to bypass that invariant. Skipped/unknown outcomes cannot
+masquerade as completion, and aggregate faults project all affected
 worlds as unknown without inferring rollback from clocks. The #210 owner repair
 from PR #230 has been ported locally onto the qualification branch's current
 interfaces, including the
@@ -100,12 +102,17 @@ commit status. The mechanism child
 fault proof separately observes state mutation without outer packet publication.
 The Python qualification adapter now reads `batch_healthy()` and
 `batch_failure_reason()` from the native owner before projecting that
-all-unknown outcome; it rejects a healthy runtime and never invents a generation
-ID or reset result.
+all-unknown outcome; it rejects a healthy runtime and never invents a reset
+result. The native owner also exposes a batch generation ID that changes only
+after successful reset; the Python projection does not synthesize or reinterpret
+that identity. A separate `project_host_fault` projection accepts an
+independent process-survival observation and emits a host-domain failed outcome
+with all affected worlds unknown and generation termination required; it does
+not claim to provide the supervisor or isolate a blocked native call.
 The native batch proof also injects a worker-launch failure and checks that joined
 workers, guarded exports, failed recovery and explicit reset remain fail-closed.
 These local changes are not an upstream #210 closure. An exception inside a running
-native system, runtime generation IDs and bounded fatal/nontermination controls
-remain separate qualification gates.
+native system and bounded fatal/nontermination controls remain separate
+qualification gates.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.

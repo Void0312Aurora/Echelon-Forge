@@ -59,6 +59,42 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(observations.front().z == doctest::Approx(1000.0 - 0.5 * gravity * dt * dt));
     }
 
+    TEST_CASE("factory plan query uses the native owner without mutation") {
+        WorldBatchRuntime runtime(1);
+
+        const auto aircraft = runtime.resolve_factory_platform_spawn_plan(0, "Aircraft");
+        CHECK(aircraft.admitted);
+        CHECK(aircraft.source_type_name == "Aircraft");
+        CHECK(aircraft.type_name_projection_preserved);
+        CHECK(
+            runtime::platform_capabilities::validate_resolved_platform_spawn_plan(aircraft).valid);
+
+        const auto missing = runtime.resolve_factory_platform_spawn_plan(0, "Missing_Type");
+        CHECK_FALSE(missing.admitted);
+        CHECK(missing.rejection_reason == "resolved_platform_spawn_plan_type_name_not_found");
+        CHECK(runtime.batch_healthy());
+    }
+
+    TEST_CASE("maintained stage manifest query returns the native owner snapshot") {
+        WorldBatchRuntime runtime(1);
+
+        const auto manifests = runtime.maintained_stage_node_manifests();
+        REQUIRE(manifests.size() >= 3);
+        CHECK(std::none_of(manifests.begin(), manifests.end(), [](const auto &manifest) {
+            return manifest.facade_visibility ==
+                       runtime::scheduler::kFacadeVisibilityAdapterProjection ||
+                   manifest.facade_visibility ==
+                       runtime::scheduler::kFacadeVisibilityDiagnosticsOnly;
+        }));
+        const auto it = std::find_if(manifests.begin(), manifests.end(), [](const auto &manifest) {
+            return manifest.node_id == "fire_control_launch.v1";
+        });
+        REQUIRE(it != manifests.end());
+        CHECK(it->owner_module == "src/core/engine/simulation_kernel_weapon_api.cpp");
+        CHECK(runtime::scheduler::validate_stage_node_manifest_registry(manifests).valid);
+        CHECK(runtime.batch_healthy());
+    }
+
     TEST_CASE("batch worker launch failure fences exports and failed recovery until reset") {
         for (const std::size_t world_count : {std::size_t{3}, std::size_t{4}}) {
             for (const std::size_t failed_launch : {std::size_t{0}, std::size_t{1}}) {
@@ -84,6 +120,7 @@ TEST_SUITE("world_batch_runtime") {
                 CHECK(launch_count.load() == failed_launch + 1);
                 CHECK(finished_count.load() == failed_launch);
                 CHECK_FALSE(batch.batch_healthy());
+                const auto failed_generation = batch.batch_generation();
                 CHECK(batch.batch_failure_reason() == "injected batch worker launch failure");
                 CHECK((clock(0) > 0.0) == (failed_launch == 1));
                 for (std::size_t index = 1; index < world_count; ++index) {
@@ -105,6 +142,7 @@ TEST_SUITE("world_batch_runtime") {
                 WorldBatchRuntimeTestAccess::set_worker_thread_factory(batch, {});
                 REQUIRE_NOTHROW(batch.reset_batch({31}));
                 CHECK(batch.batch_healthy());
+                CHECK(batch.batch_generation() == failed_generation + 1);
                 CHECK(batch.batch_failure_reason().empty());
                 for (std::size_t index = 0; index < world_count; ++index) {
                     CHECK(clock(index) == 0.0);
@@ -143,6 +181,7 @@ TEST_SUITE("world_batch_runtime") {
             CHECK(runtime.batch_healthy());
             CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
             CHECK_FALSE(runtime.batch_healthy());
+            const auto failed_generation = runtime.batch_generation();
             CHECK(runtime.batch_failure_reason().find("exact-stage trace frame") !=
                   std::string::npos);
 
@@ -152,6 +191,7 @@ TEST_SUITE("world_batch_runtime") {
             runtime.world_raw_quarantine(1).end_exact_stage_trace_frame();
             CHECK_NOTHROW(runtime.reset_batch({11, 17}));
             CHECK(runtime.batch_healthy());
+            CHECK(runtime.batch_generation() == failed_generation + 1);
             CHECK(runtime.batch_failure_reason().empty());
             CHECK_NOTHROW(runtime.step_batch());
         }

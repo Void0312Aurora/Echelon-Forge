@@ -19,6 +19,7 @@ from python.experiment.resolved_input_lock import (
     build_resolved_input_lock,
     compare_resolved_input_locks,
     join_run_receipt,
+    join_run_receipt_path,
     project_compiled_scenario_dependencies,
 )
 from python.scenario.compiler import ScenarioCompiler
@@ -319,4 +320,65 @@ def test_host_receipt_binding_is_preserved_and_checked() -> None:
     with pytest.raises(InputLockError, match="receipt_binding_mismatch"):
         join_run_receipt(
             candidate, receipt=receipt, native_runtime=mismatched, outcome=outcome
+        )
+
+
+def test_top_level_native_receipt_fields_are_cross_checked_against_owner_receipt() -> None:
+    candidate = build_resolved_input_lock(_experiment(), _registry())
+    receipt = _receipt(candidate)
+    payload = receipt["payload"]
+    native = _native()
+    native["backend_system_graph_sha256"] = payload["backend"]["system_graph_sha256"]
+    native["native_validation_evidence_sha256"] = payload["results"]["native_validation"][
+        "evidence_sha256"
+    ]
+    native["durable_ack"] = payload["completion"]["durable_ack"]
+    outcome = build_batch_outcome(
+        batch_generation_ref="g1",
+        operation_ref="op1",
+        operation="step",
+        worlds=(
+            WorldOutcome(0, WorldState.COMPLETED, True),
+            WorldOutcome(1, WorldState.COMPLETED, True),
+        ),
+        expected_world_indices=frozenset({0, 1}),
+    )
+    joined = join_run_receipt(candidate, receipt=receipt, native_runtime=native, outcome=outcome)
+    assert joined.status == "completed"
+
+    native["backend_system_graph_sha256"] = "f" * 64
+    with pytest.raises(InputLockError, match="native_receipt_binding_mismatch"):
+        join_run_receipt(candidate, receipt=receipt, native_runtime=native, outcome=outcome)
+
+
+def test_host_published_receipt_path_requires_canonical_owner_bytes(tmp_path) -> None:
+    candidate = build_resolved_input_lock(_experiment(), _registry())
+    receipt = _receipt(candidate)
+    path = tmp_path / "run_receipt.json"
+    path.write_bytes(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode("utf-8"))
+    outcome = build_batch_outcome(
+        batch_generation_ref="g1",
+        operation_ref="op1",
+        operation="step",
+        worlds=(
+            WorldOutcome(0, WorldState.COMPLETED, True),
+            WorldOutcome(1, WorldState.COMPLETED, True),
+        ),
+        expected_world_indices=frozenset({0, 1}),
+    )
+    joined = join_run_receipt_path(
+        candidate,
+        receipt_path=path,
+        native_runtime=_native(),
+        outcome=outcome,
+    )
+    assert joined.status == "completed"
+
+    path.write_text(" {\"not\": \"canonical\"} ", encoding="utf-8")
+    with pytest.raises(InputLockError, match="receipt_not_canonical"):
+        join_run_receipt_path(
+            candidate,
+            receipt_path=path,
+            native_runtime=_native(),
+            outcome=outcome,
         )

@@ -55,9 +55,22 @@ the same field contract, tests positive optional-field projection and all
 negative admission cases, and records contract identities as evidence. An
 admitted `PolicyRuntimeBinding` now wraps the existing `DecisionModel`
 reset/decide/close lifecycle, preserves observation provenance and validates
-the produced action before returning it to the existing runtime. Python or
-third-party code is not auto-admitted by a descriptor; a real external
-checkpoint or native action endpoint migration remains open.
+the produced action before returning it to the existing runtime. An owner-issued
+`PolicyCheckpoint` metadata contract can now bind an artifact digest and the
+policy, observation and action identities before binding. A small checkpoint
+seam verifies immutable artifact bytes and then hands them to an owner-provided
+loader, which remains responsible for framework deserialization and model
+construction; `PolicyRuntimeBinding.from_checkpoint_artifact` keeps that
+verified loading step on the existing binding path. The selected maintained
+observation view is admitted by its owner and its identity/version is carried
+into the existing model context. The binding can run an owner action-authorizer
+callback after generic bounds/timing checks and before projection, so live mask,
+authority and expiry decisions remain owner-controlled. The current maintained
+outputs remain authoritative; Python or third-party code is not auto-admitted by
+a descriptor, and loading a real external checkpoint through its production
+owner remains open. The binding can hand an authorized action to an explicit
+owner projector after contract checks; wiring that projector to the production
+native action endpoint remains open.
 
 Mechanism ports (#229), platform/force composition (#236/#237), and RuntimeFacade
 capability presence (#224) remain separate owners; this ADR only defines the
@@ -71,6 +84,6 @@ agent-facing compatibility layer.
 | Non-authoritative Policy descriptor consuming owner catalogues | proposed pilot route with unchanged DecisionModel lifecycle |
 | Use a closed category enum as compatibility/permission | rejected; category metadata cannot prove contract compatibility or rights |
 
-The pilot consumes the basic mission field catalogue from mission_obs_taxonomy and actual Air action dimensions/bounds. It checks source/frame, action timing/bounds, explicit optional defaults, deterministic selection and legacy-kind mismatch. The binding is exercised through the existing `DecisionRuntimeAgent`; the wrapped model still owns reset/decide/close and the domain action DTO. Full observation-view binding, checkpoint admission and native action endpoint migration remain open.
+The pilot consumes the basic mission field catalogue from mission_obs_taxonomy and actual Air action dimensions/bounds. It checks source/frame, action timing/bounds, explicit optional defaults, deterministic selection and legacy-kind mismatch. The binding is exercised through the existing `DecisionRuntimeAgent`; the wrapped model still owns reset/decide/close. The maintained observation view is admitted before binding, and an owner authorizer can reject an actual action for current mask, authority or expiry before the owner projector creates the domain DTO. Checkpoint digest verification and the owner-loader protocol seam are covered; production external checkpoint loading and native action endpoint wiring remain open.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.

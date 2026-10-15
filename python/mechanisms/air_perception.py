@@ -14,7 +14,9 @@ from python.mechanisms.ports import (
     CompiledMechanismGraph,
     GraphEdge,
     MechanismSpec,
+    MechanismSchemaVocabulary,
     PortSpec,
+    SchemaVocabularyEntry,
     compile_mechanism_graph,
     compose_graph_as_mechanism,
 )
@@ -24,6 +26,22 @@ NATIVE_IMPLEMENTATIONS = (
     "missile_guidance::world_position_from_los_range",
     "missile_guidance::update_world_cv_alpha_beta_tracker",
 )
+AIR_PERCEPTION_OWNER_SCHEMA_VOCABULARY = MechanismSchemaVocabulary(
+    vocabulary_id="qualification.air.perception.schemas",
+    version="1",
+    entries=(
+        SchemaVocabularyEntry(
+            "RelativeAnglesWithObserverHeading.v1",
+            NATIVE_IMPLEMENTATIONS[0],
+        ),
+        SchemaVocabularyEntry("WorldDirection3.v1", NATIVE_IMPLEMENTATIONS[0]),
+        SchemaVocabularyEntry("RangeWithObserverPosition.v1", NATIVE_IMPLEMENTATIONS[1]),
+        SchemaVocabularyEntry("Position3.v1", NATIVE_IMPLEMENTATIONS[1]),
+        SchemaVocabularyEntry("CurrentAndMeasurementTime.v1", NATIVE_IMPLEMENTATIONS[2]),
+        SchemaVocabularyEntry("WorldCvTrack.v1", NATIVE_IMPLEMENTATIONS[2]),
+    ),
+)
+AIR_PERCEPTION_SCHEMA_VOCABULARY = AIR_PERCEPTION_OWNER_SCHEMA_VOCABULARY.schema_names
 _PARAMETER_NAMES = frozenset({"alpha", "beta", "minimum_velocity_baseline_s", "maximum_speed_mps"})
 
 
@@ -103,6 +121,7 @@ def air_perception_qualification_graph(config: Mapping[str, Any]) -> CompiledMec
             GraphEdge("projection", "position", "tracker", "position"),
         ),
         external_inputs=frozenset({"los.angles", "projection.range_observer", "tracker.epochs"}),
+        schema_vocabulary=AIR_PERCEPTION_OWNER_SCHEMA_VOCABULARY,
     )
 
 

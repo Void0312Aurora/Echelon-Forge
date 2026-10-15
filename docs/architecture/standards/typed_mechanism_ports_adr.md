@@ -57,11 +57,15 @@ do not prove numerical calibration or timestep invariance.
 ## Compatibility and recursion
 
 Connections require compatible schema versions, units, frames, freshness and
-visibility. Explicit conversion or estimation nodes are required when a
-connection would otherwise fabricate information. Instantaneous same-window
-cycles are rejected; delayed/stateful feedback must declare its delay and state
-owner. A composite exports a typed public port set and state/effect contract,
-so it can be validated as a node in a parent graph.
+visibility. When an owner supplies a schema vocabulary, unknown port schemas
+are rejected before publication. The vocabulary is an immutable, versioned
+qualification artifact: each schema entry names its owner reference, and the
+vocabulary digest participates in the graph identity. Explicit conversion or
+estimation nodes are required when a connection would otherwise fabricate
+information. Instantaneous same-window cycles are rejected; delayed/stateful
+feedback must declare its delay and state owner. A composite exports a typed
+public port set and state/effect contract, so it can be validated as a node in
+a parent graph.
 
 The first proof should use two primitive adapters and one stateful adapter in a
 qualification lane. It must include one compatible edge, one unit/frame or
@@ -95,9 +99,27 @@ failure-domain ownership.
 | Independent execution graph/runtime | rejected because scheduling and world truth would have competing owners |
 
 The prototype checks complete recursive input closure, capabilities, information
-layers, clock compatibility and multiple producers. An explicit native-system
-mapping is checked against exported realized order. Immutable parameters, backend
- reference and clock policy participate in graph/composite identity.
+layers, clock compatibility and multiple producers. A qualification adapter now
+consumes an owner-provided `StageNodeManifest` snapshot, requires one-to-one
+node bindings and rejects adapter/diagnostic-only stages before checking the
+explicit native-system mapping against exported realized order. The native
+`WorldBatchRuntime` also exposes a read-only copy of the maintained manifest
+registry for qualification diagnostics; it does not install or mutate scheduler
+nodes. Immutable
+parameters, backend reference and clock policy participate in graph/composite
+identity. Strict stage admission additionally requires the owner contract fields
+and rejects duplicate state-shard writers; the default qualification mode remains
+compatible with the smaller evidence fixtures. A separate static projection
+records each authored-node binding, the owner contract snapshot and stable graph,
+registry and edge digests. It consumes the native snapshot object shape directly;
+an optional realized-system name is only supplemental order evidence. The
+projection is marked non-executable and rejects invalid, duplicate,
+adapter-only and diagnostics-only bindings.
+Multiple owner vocabularies may be combined into a versioned qualification
+registry. Duplicate schema entries are accepted only when they name the same
+owner; conflicting ownership fails closed. The registry is a composition seam
+for explicit owner evidence, not the repository-wide canonical packet
+vocabulary or an executable dispatcher.
 
 This remains a static mechanism-graph contract pilot. Qualification/shadow
 compilation and production admission are separate gates; an artifact emitted
@@ -109,7 +131,13 @@ window publication from numerical rates per second. A fixed measurement schedule
 and four timesteps reach the same four-second horizon within the documented
 tolerance. A test-lane child exception after tracker mutation but before outer
 packet publication projects an unknown outcome through #251; it proves no rollback.
-This does not install authored graphs into native scheduling. Unknown-schema
-admission, shard ownership and freshness enforcement remain open.
+The selected Air lane now enforces an explicit, versioned six-schema
+qualification vocabulary while compiling; every entry names one of the three
+maintained native implementations and the resulting vocabulary digest is
+bound into the graph identity. This is a bounded owner mapping, not a
+repository-wide packet vocabulary.
+The snapshot publication seam is diagnostic only and does not install authored
+graphs into native scheduling. Cross-domain schema selection and authored-graph
+admission remain separate gates.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.

@@ -292,6 +292,10 @@ def join_run_receipt(
             raise InputLockError("input_lock.receipt_binding_fields_invalid")
         if dict(supplied_binding) != receipt_binding:
             raise InputLockError("input_lock.receipt_binding_mismatch")
+    for field in _RECEIPT_BINDING_FIELDS:
+        supplied_value = native_runtime.get(field)
+        if supplied_value is not None and supplied_value != receipt_binding[field]:
+            raise InputLockError(f"input_lock.native_receipt_binding_mismatch:{field}")
     data = candidate.as_dict()
     complete = payload["terminal_state"] == "completed" and outcome.result is BatchResult.COMPLETED
     data["status"] = "completed" if complete else "unknown"
@@ -304,6 +308,37 @@ def join_run_receipt(
         "receipt_binding": receipt_binding,
     }
     return ResolvedInputLock(data, candidate.digest)
+
+
+def join_run_receipt_path(
+    candidate: ResolvedInputLock,
+    *,
+    receipt_path: str | Path,
+    native_runtime: Mapping[str, Any],
+    outcome: BatchOperationOutcome,
+) -> ResolvedInputLock:
+    """Load one host-published canonical receipt, then use the same join.
+
+    The file is treated as an owner output: bytes must be canonical JSON before
+    schema validation and no receipt is synthesized by this projection.
+    """
+
+    source = Path(receipt_path)
+    try:
+        raw = source.read_bytes()
+        document = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputLockError(f"input_lock.receipt_unreadable:{source}") from exc
+    if not isinstance(document, Mapping):
+        raise InputLockError("input_lock.receipt_document_invalid")
+    if canonical_json_bytes(document) != raw:
+        raise InputLockError("input_lock.receipt_not_canonical")
+    return join_run_receipt(
+        candidate,
+        receipt=document,
+        native_runtime=native_runtime,
+        outcome=outcome,
+    )
 
 
 def project_native_composition_evidence(result: Any) -> dict[str, Any]:
@@ -401,6 +436,7 @@ __all__ = [
     "canonical_json_bytes",
     "compare_resolved_input_locks",
     "join_run_receipt",
+    "join_run_receipt_path",
     "project_compiled_scenario_dependencies",
     "project_native_composition_evidence",
 ]

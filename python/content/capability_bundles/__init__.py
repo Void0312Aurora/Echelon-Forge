@@ -35,8 +35,11 @@ from python.content.capability_bundles.registry import (
 )
 from python.content.capability_bundles.schema import (
     CONTENT_CAPABILITY_BUNDLE_SCHEMA_VERSION,
+    PLATFORM_CAPABILITY_KEY_VOCABULARY,
     PLATFORM_CAPABILITY_FAMILY_VOCABULARY,
     CapabilityBundleValidationDiagnostics,
+    PlatformCapabilityKeyVocabulary,
+    PlatformCapabilityKeyVocabularyEntry,
     validate_capability_bundle_document,
 )
 
@@ -44,6 +47,9 @@ __all__ = [
     "CONTENT_CAPABILITY_BUNDLE_SCHEMA_VERSION",
     "FACADE_EVIDENCE_TYPED_PLATFORM_SPAWN_REQUESTS",
     "PLATFORM_CAPABILITY_FAMILY_VOCABULARY",
+    "PLATFORM_CAPABILITY_KEY_VOCABULARY",
+    "PlatformCapabilityKeyVocabulary",
+    "PlatformCapabilityKeyVocabularyEntry",
     "REJECTION_DUPLICATE_FAMILY_REGISTRATION",
     "REJECTION_FAMILY_NOT_REGISTERED",
     "RESOLVED_SPAWN_PLAN_BRIDGE_STRATEGY",

@@ -9,6 +9,25 @@ ensure_repo_imports()
 
 import ef_py # noqa: E402
 
+from python.content.capability_bundles import SpawnPlacement  # noqa: E402
+from python.content.platform_blueprint import (  # noqa: E402
+  LegacyUnitProjection,
+  ModuleRecord,
+  ModuleSelection,
+  PlatformBlueprint,
+  resolve_platform_assembly,
+)
+from python.content.platform_blueprint_adapter import (  # noqa: E402
+  to_expanded_typed_platform_request,
+)
+
+from python.mechanisms import (  # noqa: E402
+  MechanismSpec,
+  PortSpec,
+  compile_mechanism_graph,
+  project_stage_manifest_qualification,
+)
+
 
 def _valid_platform_capability() -> object:
   capability = ef_py.PlatformCapability()
@@ -212,3 +231,149 @@ def test_legacy_world_spawn_request_type_name_path_remains_python_mainline_surfa
   assert legacy_spawn.type_name == "DDG-51_Flight_I_USS_Arleigh_Burke"
   assert not hasattr(legacy_spawn, "source_type_name")
   assert not hasattr(legacy_spawn, "resolved_spawn_plan")
+
+
+def test_world_batch_exposes_native_factory_resolved_plan_read_only() -> None:
+  runtime = ef_py.WorldBatchRuntime(1)
+  initial_generation = runtime.batch_generation()
+  assert initial_generation > 0
+  plan = runtime.resolve_factory_platform_spawn_plan(0, "Aircraft")
+
+  assert plan.admitted
+  assert plan.source_type_name == "Aircraft"
+  assert plan.type_name_projection_preserved
+  assert plan.materialization_strategy == "factory_projection_materialization"
+  assert list(plan.resolved_capabilities)
+
+  missing = runtime.resolve_factory_platform_spawn_plan(0, "Missing_Type")
+  assert not missing.admitted
+  assert missing.rejection_reason == "resolved_platform_spawn_plan_type_name_not_found"
+  assert runtime.batch_healthy()
+  runtime.reset_batch([31])
+  assert runtime.batch_generation() == initial_generation + 1
+
+
+def test_platform_adapter_compares_against_actual_native_factory_plan() -> None:
+  modules = {
+    "airframe": ModuleRecord(
+      "fixture.airframe", "airframe", frozenset({"mobility"}),
+      evidence_refs=("fixture:airframe",), content_digest="airframe-digest",
+      native_ref="platform.definition.aircraft",
+    ),
+    "sensor": ModuleRecord(
+      "fixture.sensor", "inline_sensor", frozenset({"sensing"}),
+      evidence_refs=("fixture:sensor",), content_digest="sensor-digest",
+      native_ref="platform.definition.aircraft",
+    ),
+    "command": ModuleRecord(
+      "fixture.command", "command_link", frozenset({"command"}),
+      evidence_refs=("fixture:command",), content_digest="command-digest",
+      native_ref="platform.definition.aircraft",
+    ),
+    "data": ModuleRecord(
+      "fixture.data", "data_link", frozenset({"communication"}),
+      evidence_refs=("fixture:data",), content_digest="data-digest",
+      native_ref="platform.definition.aircraft",
+    ),
+    "health": ModuleRecord(
+      "fixture.health", "health_and_damage_model", frozenset({"survivability"}),
+      evidence_refs=("fixture:health",), content_digest="health-digest",
+      native_ref="platform.definition.aircraft",
+    ),
+  }
+  blueprint = PlatformBlueprint(
+    "fixture.native.aircraft", "1", "aircraft",
+    slots=(
+      ("airframe", "airframe"),
+      ("sensor", "inline_sensor"),
+      ("command", "command_link"),
+      ("data", "data_link"),
+      ("health", "health_and_damage_model"),
+    ),
+    required_capabilities=frozenset({
+      "mobility", "sensing", "command", "communication", "survivability",
+    }),
+  )
+  plan = resolve_platform_assembly(
+    assembly_id="fixture.native.aircraft.v1",
+    blueprint=blueprint,
+    selections=tuple(ModuleSelection(slot, ref) for slot, ref in (
+      ("airframe", "airframe"), ("sensor", "sensor"), ("command", "command"),
+      ("data", "data"), ("health", "health"),
+    )),
+    modules=modules,
+  )
+  projection = LegacyUnitProjection(
+    plan.blueprint_ref,
+    {
+      "name": "Aircraft",
+      "type": "aircraft",
+      "airframe": "platform.definition.aircraft",
+      "sensor": "platform.definition.aircraft",
+      "command": "platform.definition.aircraft",
+      "data": "platform.definition.aircraft",
+      "health": "platform.definition.aircraft",
+    },
+    slot_paths=tuple((slot, slot) for slot in ("airframe", "sensor", "command", "data", "health")),
+  )
+  factory_plan = ef_py.WorldBatchRuntime(1).resolve_factory_platform_spawn_plan(0, "Aircraft")
+  expanded = to_expanded_typed_platform_request(
+    plan=plan,
+    blueprint=blueprint,
+    modules=modules,
+    projection=projection,
+    source_type_name="Aircraft",
+    request_id="fixture:native-aircraft",
+    placement=SpawnPlacement(entity_name="Aircraft"),
+    factory_plan=factory_plan,
+  )
+  assert expanded.resolved_spawn_plan.source_type_name == "Aircraft"
+  assert {cap.family for cap in expanded.resolved_spawn_plan.resolved_capabilities} == {
+    "mobility", "sensing", "command", "communication", "survivability",
+  }
+
+
+def test_world_batch_exposes_maintained_native_stage_manifest_snapshot() -> None:
+  runtime = ef_py.WorldBatchRuntime(1)
+  manifests = runtime.maintained_stage_node_manifests()
+
+  assert len(manifests) >= 3
+  assert all(
+    manifest.facade_visibility not in {"adapter_projection", "diagnostics_only"}
+    for manifest in manifests
+  )
+  launch = next(manifest for manifest in manifests if manifest.node_id == "fire_control_launch.v1")
+  assert launch.owner_module == "src/core/engine/simulation_kernel_weapon_api.cpp"
+  assert launch.input_packets
+  assert launch.required_barriers
+  assert runtime.batch_healthy()
+
+
+def test_native_stage_manifest_snapshot_projects_without_synthetic_fields() -> None:
+  runtime = ef_py.WorldBatchRuntime(1)
+  manifests = runtime.maintained_stage_node_manifests()
+  selected = manifests[:3]
+  graph = compile_mechanism_graph(
+    "native-runtime-snapshot-projection",
+    {
+      manifest.node_id: MechanismSpec(
+        f"native.{manifest.node_id}",
+        "1",
+        outputs=(PortSpec("packet", "NativePacket.v1"),),
+        implementation_ref=f"native.{manifest.node_id}",
+      )
+      for manifest in selected
+    },
+    (),
+  )
+
+  projection = project_stage_manifest_qualification(
+    graph,
+    node_stage_bindings={manifest.node_id: manifest.node_id for manifest in selected},
+    stage_manifests={manifest.node_id: manifest for manifest in selected},
+  )
+
+  assert projection.qualification_only
+  assert not projection.executable
+  assert len(projection.node_contracts) == len(selected)
+  assert all("native_system" not in item.owner_contract for item in projection.node_contracts)

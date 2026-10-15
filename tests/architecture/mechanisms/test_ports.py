@@ -2,14 +2,21 @@ from __future__ import annotations
 
 import pytest
 from dataclasses import replace
+from types import SimpleNamespace
 
 from python.mechanisms.ports import (
     GraphEdge,
     MechanismGraphError,
+    MechanismSchemaVocabulary,
+    MechanismSchemaVocabularyRegistry,
     MechanismSpec,
+    StageManifestQualificationProjection,
     PortSpec,
+    SchemaVocabularyEntry,
     compile_mechanism_graph,
     compose_graph_as_mechanism,
+    project_stage_manifest_qualification,
+    validate_stage_manifest_bindings,
 )
 
 
@@ -96,6 +103,153 @@ def test_incompatible_schema_unit_and_frame_are_rejected_before_publication() ->
         "mechanism.unit_incompatible",
         "mechanism.frame_incompatible",
     }
+
+
+def test_owner_schema_vocabulary_rejects_unknown_port_schema() -> None:
+    graph = compile_mechanism_graph(
+        "owned-schema",
+        {"sensor": _sensor()},
+        (),
+        known_schemas=frozenset({"TrackCollection.v1"}),
+    )
+    assert not graph.valid
+    assert [(item.code, item.path) for item in graph.diagnostics] == [
+        ("mechanism.schema_unknown", "nodes.sensor.outputs.measurements")
+    ]
+
+
+def test_versioned_owner_schema_vocabulary_is_bound_to_graph_identity() -> None:
+    vocabulary = MechanismSchemaVocabulary(
+        vocabulary_id="test.owner.schemas",
+        version="1",
+        entries=(SchemaVocabularyEntry("Measurement3D.v1", "native.sensor"),),
+    )
+    graph = compile_mechanism_graph(
+        "owned-schema",
+        {"sensor": _sensor()},
+        (),
+        schema_vocabulary=vocabulary,
+    )
+    assert graph.valid
+    assert graph.schema_vocabulary_ref == "test.owner.schemas"
+    assert graph.schema_vocabulary_version == "1"
+    assert graph.schema_vocabulary_digest == vocabulary.identity_digest
+    assert graph.as_dict()["schema_vocabulary"]["identity_digest"] == vocabulary.identity_digest
+
+    changed = replace(
+        vocabulary,
+        entries=(SchemaVocabularyEntry("Measurement3D.v1", "native.sensor.v2"),),
+    )
+    changed_graph = compile_mechanism_graph(
+        "owned-schema",
+        {"sensor": _sensor()},
+        (),
+        schema_vocabulary=changed,
+    )
+    assert changed_graph.valid
+    assert changed_graph.identity_digest != graph.identity_digest
+
+
+def test_schema_vocabulary_rejects_duplicate_entries_and_mixed_api() -> None:
+    with pytest.raises(ValueError, match="unique schema names"):
+        MechanismSchemaVocabulary(
+            vocabulary_id="duplicate",
+            version="1",
+            entries=(
+                SchemaVocabularyEntry("Measurement3D.v1", "native.sensor"),
+                SchemaVocabularyEntry("Measurement3D.v1", "native.sensor.v2"),
+            ),
+        )
+    with pytest.raises(MechanismGraphError, match="mutually exclusive"):
+        compile_mechanism_graph(
+            "mixed-schema-api",
+            {"sensor": _sensor()},
+            (),
+            known_schemas=frozenset({"Measurement3D.v1"}),
+            schema_vocabulary=MechanismSchemaVocabulary(
+                vocabulary_id="test.owner.schemas",
+                version="1",
+                entries=(SchemaVocabularyEntry("Measurement3D.v1", "native.sensor"),),
+            ),
+        )
+
+
+def test_owner_schema_registry_merges_explicit_vocabularies_and_binds_digest() -> None:
+    first = MechanismSchemaVocabulary(
+        vocabulary_id="owner.sensor.schemas",
+        version="1",
+        entries=(
+            SchemaVocabularyEntry("Measurement3D.v1", "native.sensor"),
+            SchemaVocabularyEntry("WorldDirection3.v1", "native.sensor"),
+        ),
+    )
+    second = MechanismSchemaVocabulary(
+        vocabulary_id="owner.tracker.schemas",
+        version="1",
+        entries=(
+            SchemaVocabularyEntry("Measurement3D.v1", "native.sensor"),
+            SchemaVocabularyEntry("TrackCollection.v1", "native.tracker"),
+        ),
+    )
+    registry = MechanismSchemaVocabularyRegistry(
+        registry_id="qualification.repository.schemas",
+        version="1",
+        vocabularies=(second, first),
+    )
+
+    assert registry.vocabulary_id == "qualification.repository.schemas"
+    assert registry.schema_names == frozenset(
+        {"Measurement3D.v1", "WorldDirection3.v1", "TrackCollection.v1"}
+    )
+    assert [item.vocabulary_id for item in registry.vocabularies] == [
+        "owner.sensor.schemas",
+        "owner.tracker.schemas",
+    ]
+    graph = compile_mechanism_graph(
+        "registry-bound",
+        {"sensor": _sensor()},
+        (),
+        schema_vocabulary=registry,
+    )
+    assert graph.valid
+    assert graph.schema_vocabulary_ref == registry.registry_id
+    assert graph.schema_vocabulary_digest == registry.identity_digest
+
+    with pytest.raises(ValueError, match="owner conflict"):
+        MechanismSchemaVocabularyRegistry(
+            registry_id="conflict",
+            version="1",
+            vocabularies=(
+                first,
+                replace(
+                    second,
+                    entries=(SchemaVocabularyEntry("Measurement3D.v1", "other.owner"),),
+                ),
+            ),
+        )
+
+
+def test_freshness_is_part_of_edge_and_composite_compatibility() -> None:
+    producer = MechanismSpec(
+        "producer",
+        "1",
+        outputs=(PortSpec("out", "Track.v1", freshness="per_window"),),
+    )
+    consumer = MechanismSpec(
+        "consumer",
+        "1",
+        inputs=(PortSpec("in", "Track.v1", freshness="per_tick"),),
+    )
+    graph = compile_mechanism_graph(
+        "freshness",
+        {"p": producer, "c": consumer},
+        (GraphEdge("p", "out", "c", "in"),),
+    )
+    assert not graph.valid
+    assert "mechanism.freshness_incompatible" in {item.code for item in graph.diagnostics}
+
+    with pytest.raises(ValueError, match="freshness"):
+        PortSpec("invalid", "Track.v1", freshness="")
 
 
 def test_unknown_required_input_and_truth_boundary_fail_closed() -> None:
@@ -218,3 +372,216 @@ def test_truth_cannot_be_relabelled_as_belief_by_an_edge() -> None:
         (GraphEdge("a", "measurements", "b", "measurements"),),
     )
     assert "mechanism.visibility_incompatible" in {d.code for d in graph.diagnostics}
+
+
+def test_stage_manifest_binding_consumes_owner_snapshot_and_checks_realized_order() -> None:
+    producer = replace(_sensor(), implementation_ref="native.sensor")
+    consumer = replace(_tracker(), implementation_ref="native.tracker")
+    graph = compile_mechanism_graph(
+        "native-qualification",
+        {"sensor": producer, "tracker": consumer},
+        (GraphEdge("sensor", "measurements", "tracker", "measurements"),),
+    )
+    manifests = {
+        "native.sensor.v1": {
+            "node_id": "native.sensor.v1",
+            "semantic_stage": ["P8 Sensor"],
+            "owner_module": "native.sensor",
+            "facade_visibility": "maintained_facade_surface",
+            "native_system": "SensorSystem",
+        },
+        "native.tracker.v1": {
+            "node_id": "native.tracker.v1",
+            "semantic_stage": ["P10 ObservationExport"],
+            "owner_module": "native.tracker",
+            "facade_visibility": "maintained_facade_surface",
+            "native_system": "TrackerSystem",
+        },
+    }
+    assert validate_stage_manifest_bindings(
+        graph,
+        node_stage_bindings={"sensor": "native.sensor.v1", "tracker": "native.tracker.v1"},
+        stage_manifests=manifests,
+        pipeline_order=("SensorSystem", "TrackerSystem"),
+    ) == ()
+    reversed_diagnostics = validate_stage_manifest_bindings(
+        graph,
+        node_stage_bindings={"sensor": "native.sensor.v1", "tracker": "native.tracker.v1"},
+        stage_manifests=manifests,
+        pipeline_order=("TrackerSystem", "SensorSystem"),
+    )
+    assert [item.code for item in reversed_diagnostics] == ["mechanism.realized_order_mismatch"]
+
+
+def test_stage_manifest_binding_rejects_projection_and_missing_owner_evidence() -> None:
+    graph = compile_mechanism_graph(
+        "native-qualification", {"tracker": replace(_tracker(), implementation_ref="native.tracker")}, (),
+        external_inputs=frozenset({"tracker.measurements"}),
+    )
+    diagnostics = validate_stage_manifest_bindings(
+        graph,
+        node_stage_bindings={"tracker": "projection"},
+        stage_manifests={
+            "projection": {
+                "node_id": "projection",
+                "semantic_stage": ["P10"],
+                "owner_module": "adapter",
+                "facade_visibility": "adapter_projection",
+                "native_system": "ProjectionSystem",
+            }
+        },
+    )
+    assert [item.code for item in diagnostics] == ["mechanism.native_stage_not_scheduler_truth"]
+    with pytest.raises(MechanismGraphError, match="cover every graph node"):
+        validate_stage_manifest_bindings(
+            graph,
+            node_stage_bindings={},
+            stage_manifests={},
+        )
+
+
+def test_strict_stage_manifest_admission_rejects_shard_conflicts() -> None:
+    graph = compile_mechanism_graph(
+        "native-qualification",
+        {
+            "a": replace(_sensor(), implementation_ref="native.a"),
+            "b": replace(_tracker(), implementation_ref="native.b"),
+        },
+        (),
+        external_inputs=frozenset({"b.measurements"}),
+    )
+    common = {
+        "semantic_stage": ["P8"],
+        "owner_module": "native.owner",
+        "input_packets": ["InputPacket"],
+        "output_packets": ["OutputPacket"],
+        "read_state_shards": ["state"],
+        "read_snapshot_policy": "committed",
+        "write_commit_policy": "window_commit",
+        "clock_domain": "window",
+        "latency_policy": "same_window",
+        "sync_policy": "host_owned",
+        "required_barriers": ["window_commit"],
+        "diagnostic_trace_obligations": ["trace_id"],
+        "facade_visibility": "internal",
+        "native_system": "NativeSystem",
+        "write_state_shards": ["shared"],
+    }
+    manifests = {
+        "stage.a": {**common, "node_id": "stage.a"},
+        "stage.b": {**common, "node_id": "stage.b"},
+    }
+    diagnostics = validate_stage_manifest_bindings(
+        graph,
+        node_stage_bindings={"a": "stage.a", "b": "stage.b"},
+        stage_manifests=manifests,
+        require_native_contract=True,
+    )
+    assert "mechanism.native_stage_write_shard_conflict" in {item.code for item in diagnostics}
+
+
+def test_stage_manifest_projection_emits_stable_owner_bound_qualification_only_artifact() -> None:
+    graph = compile_mechanism_graph(
+        "native-projection",
+        {
+            "sensor": replace(_sensor(), implementation_ref="native.sensor"),
+            "tracker": replace(_tracker(), implementation_ref="native.tracker"),
+        },
+        (GraphEdge("sensor", "measurements", "tracker", "measurements"),),
+    )
+    common = {
+        "semantic_stage": ["P8"],
+        "owner_module": "native.owner",
+        "input_packets": ["InputPacket"],
+        "output_packets": ["OutputPacket"],
+        "read_state_shards": ["state"],
+        "write_state_shards": [],
+        "read_snapshot_policy": "committed",
+        "write_commit_policy": "window_commit",
+        "clock_domain": "window",
+        "latency_policy": "same_window",
+        "sync_policy": "host_owned",
+        "required_barriers": ["window_commit"],
+        "diagnostic_trace_obligations": ["trace_id"],
+        "facade_visibility": "internal",
+        "adapter_projection_allowed": False,
+    }
+    manifests = {
+        "stage.sensor": {
+            **common,
+            "node_id": "stage.sensor",
+            "owner_module": "native.sensor",
+            "native_system": "SensorSystem",
+        },
+        "stage.tracker": SimpleNamespace(
+            **{
+                **common,
+                "node_id": "stage.tracker",
+                "owner_module": "native.tracker",
+            }
+        ),
+    }
+
+    projection = project_stage_manifest_qualification(
+        graph,
+        node_stage_bindings={"sensor": "stage.sensor", "tracker": "stage.tracker"},
+        stage_manifests=manifests,
+        pipeline_order=("SensorSystem", "native.tracker"),
+    )
+
+    assert isinstance(projection, StageManifestQualificationProjection)
+    assert projection.qualification_only
+    assert not projection.executable
+    assert projection.graph_identity_digest == graph.identity_digest
+    assert [item.node_id for item in projection.node_contracts] == ["sensor", "tracker"]
+    assert projection.node_contracts[1].owner_contract["node_id"] == "stage.tracker"
+    assert "native_system" not in projection.node_contracts[1].owner_contract
+    assert projection.identity_digest == project_stage_manifest_qualification(
+        graph,
+        node_stage_bindings={"sensor": "stage.sensor", "tracker": "stage.tracker"},
+        stage_manifests=manifests,
+        pipeline_order=("SensorSystem", "native.tracker"),
+    ).identity_digest
+
+
+def test_stage_manifest_projection_rejects_duplicate_or_non_scheduler_bindings() -> None:
+    graph = compile_mechanism_graph(
+        "native-projection",
+        {
+            "sensor": replace(_sensor(), implementation_ref="native.sensor"),
+            "tracker": replace(_tracker(), implementation_ref="native.tracker"),
+        },
+        (),
+        external_inputs=frozenset({"tracker.measurements"}),
+    )
+    with pytest.raises(MechanismGraphError, match="one-to-one"):
+        project_stage_manifest_qualification(
+            graph,
+            node_stage_bindings={"sensor": "stage", "tracker": "stage"},
+            stage_manifests={
+                "stage": {
+                    "node_id": "stage",
+                    "semantic_stage": ["P8"],
+                    "owner_module": "adapter",
+                    "facade_visibility": "adapter_projection",
+                }
+            },
+        )
+    single_graph = compile_mechanism_graph(
+        "native-projection-single",
+        {"sensor": replace(_sensor(), implementation_ref="native.sensor")},
+        (),
+    )
+    with pytest.raises(MechanismGraphError, match="native_stage_not_scheduler_truth"):
+        project_stage_manifest_qualification(
+            single_graph,
+            node_stage_bindings={"sensor": "projection"},
+            stage_manifests={
+                "projection": {
+                    "node_id": "projection",
+                    "semantic_stage": ["P8"],
+                    "owner_module": "adapter",
+                    "facade_visibility": "adapter_projection",
+                }
+            },
+        )

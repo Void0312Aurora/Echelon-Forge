@@ -18,7 +18,9 @@ ensure_repo_imports()
 import ef_py  # noqa: E402
 
 from python.content.platform_blueprint import (  # noqa: E402
+    HardpointContract,
     LegacyUnitProjection,
+    LoadoutSelection,
     ModuleRecord,
     ModuleSelection,
     PlatformAssemblyError,
@@ -163,7 +165,7 @@ def _snapshot(facade, entity_id, world_index=0):
     }
 
 
-def _f16_native_typed_request():
+def _f16_native_expanded_request(*, factory_plan=None):
     legacy, _, projection, original_modules = _legacy_projection(
         "aircraft/units/f16c_block50.json"
     )
@@ -194,7 +196,7 @@ def _f16_native_typed_request():
         selections=tuple(ModuleSelection(field, field) for field in modules),
         modules=modules,
     )
-    expanded = to_expanded_typed_platform_request(
+    return to_expanded_typed_platform_request(
         plan=plan,
         blueprint=blueprint,
         modules=modules,
@@ -211,9 +213,12 @@ def _f16_native_typed_request():
             heading=90.0,
             vy=180.0,
         ),
+        factory_plan=factory_plan,
     )
-    assert projection.blueprint_ref == plan.blueprint_ref
-    return to_typed_platform_spawn_request(ef_py, expanded)
+
+
+def _f16_native_typed_request():
+    return to_typed_platform_spawn_request(ef_py, _f16_native_expanded_request())
 
 
 def test_platform_assembly_projects_to_native_typed_spawn_and_preserves_observations():
@@ -260,6 +265,23 @@ def test_platform_assembly_projects_to_native_typed_spawn_and_preserves_observat
     assert _snapshot(facade, reference_id, 0) == _snapshot(facade, typed_id, 1)
 
 
+def test_real_f16_factory_plan_rejects_partial_authored_capability_mapping():
+    runtime = ef_py.WorldBatchRuntime(1)
+    assert runtime.load_database(str(DATABASE))
+    factory_plan = runtime.resolve_factory_platform_spawn_plan(0, "F-16C_Block50")
+    assert bool(factory_plan.admitted)
+    assert factory_plan.source_type_name == "F-16C_Block50"
+    assert {capability.family for capability in factory_plan.resolved_capabilities} == {
+        "sensing",
+        "mobility",
+        "launching",
+        "communication",
+        "survivability",
+    }
+    with pytest.raises(PlatformAssemblyError, match="factory_plan_capability_semantics_mismatch"):
+        _f16_native_expanded_request(factory_plan=factory_plan)
+
+
 @pytest.mark.parametrize(
     "relative_path",
     [
@@ -298,6 +320,93 @@ def test_platform_projection_preserves_native_setup_and_step_observations(relati
         assert _snapshot(facades[0], ids[0]) == _snapshot(facades[1], ids[1])
         for facade in facades:
             facade.step_batch()
+    assert _snapshot(facades[0], ids[0]) == _snapshot(facades[1], ids[1])
+
+
+def test_explicit_single_store_loadout_reaches_existing_native_loader(tmp_path):
+    legacy, _, base_projection, original_modules = _legacy_projection(
+        "aircraft/units/f16c_block50.json"
+    )
+    slot_modules = {
+        field: module
+        for field, module in original_modules.items()
+        if not field.startswith("default_loadout.")
+    }
+    weapon_mounts = {
+        "default_loadout.2": "Pylon",
+        "default_loadout.8": "Pylon",
+    }
+    modules = dict(slot_modules)
+    for field, mount_class in weapon_mounts.items():
+        module = original_modules[field]
+        modules[field] = replace(
+            module,
+            mass_kg=152.0 if "120" in module.native_ref else 85.0,
+            mount_classes=frozenset({mount_class}),
+        )
+    hardpoints = tuple(
+        HardpointContract(
+            str(item["station_id"]),
+            next(iter(item["type"])),
+            float(item["capacity_kg"]),
+            frozenset({"Missile"}),
+        )
+        for item in legacy["hardpoints"]
+        if str(item["station_id"]) in {"2", "8"}
+    )
+    blueprint = PlatformBlueprint(
+        "qualification." + legacy["name"] + ".explicit-loadout",
+        "1",
+        legacy["type"],
+        slots=tuple((field, module.kind) for field, module in slot_modules.items()),
+        hardpoints=hardpoints,
+    )
+    plan = resolve_platform_assembly(
+        assembly_id=legacy["name"] + "@explicit-loadout",
+        blueprint=blueprint,
+        selections=tuple(ModuleSelection(field, field) for field in slot_modules),
+        modules=modules,
+        loadout=tuple(
+            LoadoutSelection(station, f"default_loadout.{station}")
+            for station in ("2", "8")
+        ),
+    )
+    projection = replace(
+        base_projection,
+        blueprint_ref=plan.blueprint_ref,
+        slot_paths=tuple((field, field) for field in slot_modules),
+        loadout_paths=tuple(
+            (station, f"default_loadout.{station}")
+            for station in ("2", "8")
+        ),
+    )
+    lowered = lower_to_legacy_unit_definition(plan, projection, modules=modules)
+    assert lowered["default_loadout"] == legacy["default_loadout"]
+    path = tmp_path / "explicit-loadout.json"
+    path.write_text(json.dumps({"units": [lowered]}), encoding="utf-8")
+
+    facades = [ef_py.RuntimeFacade(1), ef_py.RuntimeFacade(1)]
+    ids = []
+    for index, facade in enumerate(facades):
+        assert facade.load_database(str(DATABASE))
+        if index:
+            assert facade.load_unit_definitions(str(path))
+        setup = ef_py.BatchWorldSetupRequest()
+        setup.seeds = [123]
+        setup.time_steps = [0.05]
+        spawn = ef_py.WorldSpawnRequest()
+        spawn.type_name = legacy["name"]
+        spawn.entity_name = "ExplicitLoadoutF16"
+        spawn.side = ef_py.Side.Blue
+        spawn.x = spawn.y = 100000.0
+        spawn.z = 1200.0
+        spawn.vy = 180.0
+        setup.spawn_requests = [spawn]
+        ids.append(int(facade.apply_world_setup(setup).entity_ids[0]))
+    assert all(ids)
+    assert _snapshot(facades[0], ids[0]) == _snapshot(facades[1], ids[1])
+    for facade in facades:
+        facade.step_batch()
     assert _snapshot(facades[0], ids[0]) == _snapshot(facades[1], ids[1])
 
 
