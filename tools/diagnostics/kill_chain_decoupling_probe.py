@@ -2184,6 +2184,13 @@ def _audit_row(
   }
 
 def kill_chain_completion_audit(report: dict[str, Any]) -> dict[str, Any]:
+  """Project dated P0-P6 completion bookkeeping on explicit request.
+
+  The audit is intentionally separate from the runtime guidance/proximity
+  report. Its rows describe study completion and evidence closeout; they are
+  not required to establish the behavioral stage, effects, or authority
+  boundaries emitted by the core diagnostic.
+  """
   guidance_cases = list(report.get("guidance_cases", []) or [])
   proximity_cases = list(report.get("proximity_sweep", []) or [])
   all_cases = [*guidance_cases, *proximity_cases]
@@ -4023,7 +4030,6 @@ def generate_report(
     "guidance_cases": guidance_results,
     "proximity_sweep": proximity_results,
   }
-  report["completion_audit"] = kill_chain_completion_audit(report)
   return report
 
 def _parse_distances(value: str) -> tuple[float, ...]:
