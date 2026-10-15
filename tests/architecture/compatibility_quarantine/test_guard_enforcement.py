@@ -72,19 +72,22 @@ SIM_DIRECT_ACCESS_ALLOWLIST = {
   "compatibility_only": {
     "files": {
       "python/rl/control/wrappers.py",
-      "python/rl/runtime/cooperative_world_batch_vec_env.py",
       "python/rl/runtime/leader_world_batch_runtime.py",
-      "python/rl/runtime/single_world_batch_runtime.py",
-      "python/rl/runtime/world_batch/cooperative_director.py",
       "python/rl/runtime/world_batch/runtime_access.py",
-      "python/rl/runtime/world_batch_vec_env.py",
-      "python/rl/tasking/bridge.py",
-      "python/rl/tasking/leader_tasking.py",
       "python/scenario/runtime/kernel_apply.py",
+      "python/scenario/runtime/csg_replay.py",
+      "python/scenario/runtime/csg_transit.py",
+      "gym_envs/leader_env_parts/decision_runtime/observations.py",
+      "gym_envs/leader_env_parts/execution_runtime/policy_runtime.py",
+      "gym_envs/leader_env_parts/runtime_facade.py",
+      "gym_envs/leader_env_parts/scripted_exec.py",
+      "gym_envs/observation_view.py",
+      "gym_envs/scenario_loader/core.py",
+      "gym_envs/scenario_loader/execution_runtime/mainline.py",
+      "gym_envs/universal_env_parts/info.py",
     },
-    "prefixes": {
-      "gym_envs/",
-    },
+    "owner": "runtime-facade and scenario-runtime",
+    "retirement_condition": "remove each named entry after its caller consumes the maintained facade or typed native owner contract",
   },
   "diagnostics_only": {
     "prefixes": {
@@ -97,11 +100,15 @@ SIM_DIRECT_ACCESS_ALLOWLIST = {
     "files": {
       "world_model_train.py",
     },
+    "owner": "diagnostics",
+    "retirement_condition": "remove when the diagnostic producer no longer reads native simulation state directly",
   },
   "test_only": {
     "prefixes": {
       "tests/",
     },
+    "owner": "test-infrastructure",
+    "retirement_condition": "remove when test fixtures use the maintained test facade or no longer need direct simulation probes",
   },
   # Bounded single-soldier Ground training probe. It calls only the quarantined
   # `BINDINGS_GROUND_NATIVE_PROBE_ALLOWLIST` surface and is not a maintained runtime
@@ -110,6 +117,8 @@ SIM_DIRECT_ACCESS_ALLOWLIST = {
     "files": {
       "python/rl/ground/native_probe.py",
     },
+    "owner": "ground-qualification",
+    "retirement_condition": "remove after a reviewed Ground facade contract replaces the native probe",
   },
 }
 
@@ -278,6 +287,21 @@ def test_direct_sim_access_is_limited_to_explicitly_labeled_allowlists() -> None
 
   for label, spec in SIM_DIRECT_ACCESS_ALLOWLIST.items():
     assert spec.get("files", set()) or spec.get("prefixes", set()), f"empty allowlist for {label}"
+    assert spec.get("owner"), f"allowlist owner missing for {label}"
+    assert spec.get("retirement_condition"), f"allowlist retirement condition missing for {label}"
+
+
+def test_compatibility_allowlist_is_an_actual_hit_inventory_and_rejects_future_gym_files() -> None:
+  actual_compatibility_hits = {
+    path.relative_to(REPO_ROOT).as_posix()
+    for path in _iter_python_files()
+    if _sim_access_lines(path)
+    and _label_for_path(path.relative_to(REPO_ROOT).as_posix()) == "compatibility_only"
+  }
+  compatibility_files = SIM_DIRECT_ACCESS_ALLOWLIST["compatibility_only"]["files"]
+  assert not SIM_DIRECT_ACCESS_ALLOWLIST["compatibility_only"].get("prefixes")
+  assert actual_compatibility_hits == compatibility_files
+  assert _label_for_path("gym_envs/new_frontend.py") is None
 
 
 def test_wp9_guard_allowlist_evidence_doc_matches_the_explicit_labels() -> None:
@@ -293,7 +317,6 @@ def test_wp9_guard_allowlist_evidence_doc_matches_the_explicit_labels() -> None:
   ):
     assert path in text
 
-  assert "python/rl/tasking/bridge.py" in SIM_DIRECT_ACCESS_ALLOWLIST["compatibility_only"]["files"]
 
 
 def test_wp22_legacy_command_direct_include_allowlist_stays_explicit() -> None:
