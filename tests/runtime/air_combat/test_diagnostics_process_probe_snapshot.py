@@ -18,6 +18,13 @@ ensure_repo_imports()
 
 from tools.diagnostics import air_combat_weapon_employment_process_probe as probe # noqa: E402
 
+from tests.support.air_combat_diagnostic_events import (
+  _entity,
+  _standard_component_damage_event,
+  _standard_component_load_event,
+  _standard_warhead_event,
+)
+
 
 class _DummyHybridDistribution:
   def __init__(self) -> None:
@@ -29,10 +36,6 @@ class _DummyHybridDistribution:
 
   def _fire_event_logits(self):
     return th.tensor([[1.0, 3.0]], dtype=th.float32)
-
-
-def _entity(entity_id: int) -> SimpleNamespace:
-  return SimpleNamespace(entity_id=int(entity_id), world_index=0)
 
 
 def _header(
@@ -117,31 +120,6 @@ def _standard_fuze_event(
   )
 
 
-def _standard_warhead_event() -> SimpleNamespace:
-  return SimpleNamespace(
-    header=_header(
-      chain_id=301,
-      event_id=104,
-      parent_event_id=101,
-      stage="warhead_mechanism",
-      status="applied",
-      reason="generic_research_warhead_profile",
-      target_id=200,
-    ),
-    mechanism_family="blast_fragmentation",
-    warhead_mass_kg=12.0,
-    lethal_radius_m=35.0,
-    fragment_energy_j=540.0,
-    fragment_density_per_m2=17.0,
-    blast_overpressure_kpa=18.0,
-    blast_impulse_kpa_ms=41.0,
-    blast_scaled_distance_m_kg13=2.5,
-    rod_cut_margin=0.0,
-    penetration_margin=0.35,
-    surface_incidence_cos=0.8,
-  )
-
-
 def _standard_spatial_event() -> SimpleNamespace:
   return SimpleNamespace(
     header=_header(
@@ -159,57 +137,6 @@ def _standard_spatial_event() -> SimpleNamespace:
     hit_fraction=0.005,
     energy_scale=0.74,
     pattern_scale=1.1,
-  )
-
-
-def _standard_component_load_event() -> SimpleNamespace:
-  return SimpleNamespace(
-    header=_header(
-      chain_id=301,
-      event_id=106,
-      parent_event_id=101,
-      stage="component_load",
-      status="projected",
-      reason="generic_research_component_load_projection",
-      target_id=200,
-    ),
-    component_name="right_aileron_actuator",
-    component_system="flight_control",
-    direct_hit=True,
-    distance_m=0.7,
-    effect_scale=0.83,
-    fragment_energy_j=420.0,
-    fragment_density_per_m2=13.0,
-    blast_overpressure_kpa=14.0,
-    blast_impulse_kpa_ms=32.0,
-    blast_scaled_distance_m_kg13=2.7,
-    rod_cut_margin=0.0,
-    penetration_margin=0.25,
-    surface_incidence_cos=0.9,
-    load_source="direct_component_hit",
-  )
-
-
-def _standard_component_damage_event() -> SimpleNamespace:
-  return SimpleNamespace(
-    header=_header(
-      chain_id=301,
-      event_id=107,
-      parent_event_id=106,
-      stage="component_damage",
-      status="sampled",
-      reason="generic_research_component_damage_candidate",
-      target_id=200,
-    ),
-    component_name="right_aileron_actuator",
-    component_system="flight_control",
-    component_redundancy_group_id="flight_control:right_aileron",
-    integrity_before=1.0,
-    integrity_after=0.68,
-    failure_mode="cut",
-    failure_severity=0.74,
-    failure_probability=0.82,
-    failure_sample=0.21,
   )
 
 
@@ -298,6 +225,18 @@ def _dummy_lethality_events() -> SimpleNamespace:
 
 
 class DiagnosticsProcessProbeSnapshotTests(unittest.TestCase):
+  def test_shared_air_combat_event_builders_are_independent(self) -> None:
+    first = _standard_component_damage_event()
+    second = _standard_component_damage_event()
+
+    first.header.event_id = 999
+    first.header.target.entity_id = 999
+    first.integrity_after = 0.0
+
+    self.assertEqual(second.header.event_id, 107)
+    self.assertEqual(second.header.target.entity_id, 200)
+    self.assertEqual(second.integrity_after, 0.68)
+
   def test_run_probe_payload_and_chain_csv_include_lethality_chain_rows(self) -> None:
     class DummyInstrumentState:
       ias = 180.0
@@ -795,7 +734,6 @@ class DiagnosticsProcessProbeSnapshotTests(unittest.TestCase):
     self.assertEqual(summary["invalid_fire_attempt_count"], 1)
     self.assertEqual(summary["invalid_fire_attempt_steps"], [3])
     self.assertEqual(summary["invalid_fire_attempt_rate"], 0.5)
-
 
 
 if __name__ == "__main__":
