@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/resolved_experiment_input_lock_adr.md`
 Owner: `architecture/experiment-contracts`
-Last verified: `2026-10-11`
+Last verified: `2026-10-12`
 
 **Status:** proposed static/qualification projection; native composition and
 RunReceipt authorities remain canonical.
@@ -28,6 +28,12 @@ labels values as claimed, admitted, observed or referenced. A shared lock may
 be used by multiple run receipts; a logical experiment may resolve to a new
 lock when dependencies change.
 
+The lifecycle has two evidence moments. The pre-run lock freezes intended
+inputs and dependency closure; it cannot contain observed completion or mint a
+RunReceipt. A post-run evidence join references the native admitted composition,
+realized scheduler identity and RunReceipt/status emitted by their owners. The
+experiment layer never recomputes or replaces those native hashes.
+
 ## Canonicalization and comparability
 
 Canonical identity uses logical IDs, versions, normalized JSON and dependency
@@ -43,12 +49,24 @@ owners. Declarative composition identity is not a substitute for realized
 Flecs scheduler topology; the experiment layer only references the existing
 topology evidence.
 
+The comparison result follows this matrix:
+
+| Case | Result | Reason |
+| --- | --- | --- |
+| Equal resolved lock, native identities and complete successful receipt | `comparable` | All truth-affecting inputs and realized execution evidence agree |
+| Explicit policy-only or mechanism-only change allowed by the profile, with otherwise equal evidence | `conditionally comparable` | The changed axis is declared and must be analyzed separately |
+| Hidden content, native manifest, executable graph or realized topology difference | `incomparable` | An undeclared truth-affecting difference invalidates the comparison |
+| Effective seed set differs | `incomparable` unless the profile explicitly admits seed variation | Seed identity changes the sampled experiment |
+| Partial, failed or state-unknown WorldBatch outcome | `incomparable` to a completed successful sample | #251/#210 outcome authority does not establish synchronized success |
+
 ## Proof and non-goals
 
 The first proof is non-running and covers one existing Air experiment, key
 order/import reorder, a truth-affecting change, effective seeds, a stale
 resource, native identity mismatch, a policy-only comparison and a failed-run
-segregation. Existing `Experiment`, report envelopes, matrix output and
+segregation. It proves static lock construction only; it does not prove runtime
+reproducibility, native receipt equivalence or durable host publication.
+Existing `Experiment`, report envelopes, matrix output and
 RunReceipt ABI remain unchanged by default. No second ledger, replay engine,
 composition authority or telemetry bus is introduced.
 
@@ -60,6 +78,6 @@ composition authority or telemetry bus is introduced.
 | Immutable opt-in projection using existing compiler and receipt | proposed route; preserves independent input and observed runtime identities |
 | New experiment runtime/receipt/ledger | rejected; duplicates native execution and durable evidence owners |
 
-Input identity is deeply immutable and independent of subsequent native evidence. Scenario dependencies are projected from ScenarioCompiler rather than recompiled; the compiled semantic snapshot is checked in addition to dependency mtimes. Native topology is distinct from executable-graph identity. Comparability requires bound validated RunReceipt evidence and complete outcomes. Receipt vectors are synthetic qualification fixtures; actual host publication/durability remains open.
+Input identity is deeply immutable and independent of subsequent native evidence. Scenario dependencies are projected from ScenarioCompiler rather than recompiled; the compiled semantic snapshot is checked in addition to dependency mtimes. Native topology is distinct from executable-graph identity. Comparability requires bound validated RunReceipt evidence and complete outcomes. The evidence join preserves the host receipt identity, backend system-graph digest, native-validator evidence digest and durable acknowledgement; when a native adapter supplies the same binding, mismatches fail closed. Receipt vectors are synthetic qualification fixtures; actual host publication/durability remains open.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.

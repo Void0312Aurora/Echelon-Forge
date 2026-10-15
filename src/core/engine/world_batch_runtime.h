@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "components/physics/instruments.h"
@@ -152,6 +153,8 @@ class WorldBatchRuntime {
 
   private:
     friend class WorldBatchRuntimeTestAccess;
+    void execute_for_index(size_t task_count, size_t requested_threads,
+                           std::function<void(size_t)> fn) const;
     void parallel_for_index(size_t task_count, size_t requested_threads,
                             std::function<void(size_t)> fn) const;
     void ensure_batch_healthy() const;
@@ -167,5 +170,6 @@ class WorldBatchRuntime {
     mutable bool batch_healthy_ = true;
     mutable std::exception_ptr batch_failure_;
     // Private native test seam; static storage avoids changing object layout.
+    static std::function<std::jthread(std::function<void()>)> worker_thread_factory_for_test_;
     static std::function<void()> mutation_hook_for_test_;
 };

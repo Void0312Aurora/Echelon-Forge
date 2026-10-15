@@ -59,6 +59,62 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(observations.front().z == doctest::Approx(1000.0 - 0.5 * gravity * dt * dt));
     }
 
+    TEST_CASE("batch worker launch failure fences exports and failed recovery until reset") {
+        for (const std::size_t world_count : {std::size_t{3}, std::size_t{4}}) {
+            for (const std::size_t failed_launch : {std::size_t{0}, std::size_t{1}}) {
+                WorldBatchRuntime batch(world_count);
+                batch.set_worker_threads(world_count);
+                std::atomic<std::size_t> launch_count{0};
+                std::atomic<std::size_t> finished_count{0};
+                auto clock = [&](std::size_t index) {
+                    auto lease = batch.world_raw_quarantine(index).acquire_world_lease();
+                    return ecs_get_world_info(lease.world().c_ptr())->world_time_total;
+                };
+                WorldBatchRuntimeTestAccess::set_worker_thread_factory(
+                    batch, [&](std::function<void()> task) -> std::jthread {
+                        if (launch_count.fetch_add(1) == failed_launch) {
+                            throw std::runtime_error("injected batch worker launch failure");
+                        }
+                        return std::jthread([&, task = std::move(task)] {
+                            task();
+                            finished_count.fetch_add(1);
+                        });
+                    });
+                CHECK_THROWS_WITH(batch.step_batch(), "injected batch worker launch failure");
+                CHECK(launch_count.load() == failed_launch + 1);
+                CHECK(finished_count.load() == failed_launch);
+                CHECK_FALSE(batch.batch_healthy());
+                CHECK(batch.batch_failure_reason() == "injected batch worker launch failure");
+                CHECK((clock(0) > 0.0) == (failed_launch == 1));
+                for (std::size_t index = 1; index < world_count; ++index) {
+                    CHECK(clock(index) == 0.0);
+                }
+                // Clocks are diagnostics, never per-world commit/rollback evidence.
+                CHECK_THROWS_AS(batch.step_batch(), std::logic_error);
+                CHECK_THROWS_AS((void)batch.composition_diagnostics(), std::logic_error);
+                CHECK_THROWS_AS(batch.get_agent_observations_batch({}), std::logic_error);
+                CHECK(launch_count.load() == failed_launch + 1);
+                // A recovery launch exception also leaves the generation fenced.
+                WorldBatchRuntimeTestAccess::set_worker_thread_factory(
+                    batch, [](std::function<void()>) -> std::jthread {
+                        throw std::runtime_error("injected recovery launch failure");
+                    });
+                CHECK_THROWS_WITH(batch.reset_batch({31}), "injected recovery launch failure");
+                CHECK_FALSE(batch.batch_healthy());
+                CHECK_THROWS_AS(batch.step_batch(), std::logic_error);
+                WorldBatchRuntimeTestAccess::set_worker_thread_factory(batch, {});
+                REQUIRE_NOTHROW(batch.reset_batch({31}));
+                CHECK(batch.batch_healthy());
+                CHECK(batch.batch_failure_reason().empty());
+                for (std::size_t index = 0; index < world_count; ++index) {
+                    CHECK(clock(index) == 0.0);
+                }
+                CHECK_NOTHROW(batch.step_batch());
+                CHECK_NOTHROW((void)batch.composition_diagnostics());
+            }
+        }
+    }
+
     TEST_CASE("worker launch failure joins already started workers before propagating") {
         std::atomic<std::size_t> launch_count{0};
         std::atomic<bool> worker_finished{false};

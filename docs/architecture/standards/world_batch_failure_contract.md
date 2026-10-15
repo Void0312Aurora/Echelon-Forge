@@ -8,11 +8,16 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/standards/world_batch_failure_contract.md`
 Owner: `architecture/runtime-workflow`
-Last verified: `2026-10-11`
+Last verified: `2026-10-12`
 
 `WorldBatchRuntime` does not promise transactional rollback when a state-mutating
 operation fails. A worker may have advanced or otherwise changed one world before
 another world reports an exception.
+
+This page describes the maintained owner contract exercised by the qualification
+branch. The upstream `main` line has not yet received the local #210 port described
+below, so branch evidence must not be reported as a production guarantee until the
+owner repair is delivered and verified on mainline ancestry.
 
 The maintained contract is fail-closed:
 
@@ -34,8 +39,16 @@ worker-launch failures do poison it. Read-only batch exports use the same guard 
 maintained callers cannot consume a failed generation as a successful synchronized
 step.
 
+The native qualification test injects first/later worker-launch failures through
+a private test accessor on actual 3/4-world batches. It verifies that already
+started workers are joined before the exception reaches the caller, exports and
+retry are fenced, a recovery launch failure keeps the fence, and a successful
+reset restores operation. Clock observations remain diagnostics; the aggregate
+Python projection still reports unknown per-world commit status.
+
 This local integration ports PR #230's #210 owner implementation from
-`7989800d284484c76ccd0aed77cca32300fb2dda` to current main. It preserves current
+`7989800d284484c76ccd0aed77cca32300fb2dda` to the qualification branch's
+`de19c3dbd69e9feb330b1291e84a210c53bfd09f` interface baseline. It preserves current
 maintained command interfaces and broadphase types. The newer composition
 diagnostics export and resize operation also reject an unhealthy generation.
 The port is carried on the qualification branch; #210 remains open upstream

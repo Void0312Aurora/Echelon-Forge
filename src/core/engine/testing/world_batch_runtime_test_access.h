@@ -8,6 +8,13 @@
 // absent from facade/binding APIs and must be changed only while the batch is idle.
 class WorldBatchRuntimeTestAccess {
   public:
+    static void
+    set_worker_thread_factory(WorldBatchRuntime &runtime,
+                              std::function<std::jthread(std::function<void()>)> factory) {
+        (void)runtime;
+        WorldBatchRuntime::worker_thread_factory_for_test_ = std::move(factory);
+    }
+
     static void set_mutation_hook(WorldBatchRuntime &runtime, std::function<void()> hook) {
         (void)runtime;
         WorldBatchRuntime::mutation_hook_for_test_ = std::move(hook);

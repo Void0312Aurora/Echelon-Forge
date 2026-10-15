@@ -170,6 +170,8 @@ uint64_t spawn_from_request(SimulationKernel &world, const WorldSpawnRequest &re
 
 } // namespace
 
+std::function<std::jthread(std::function<void()>)>
+    WorldBatchRuntime::worker_thread_factory_for_test_{};
 std::function<void()> WorldBatchRuntime::mutation_hook_for_test_{};
 
 WorldBatchRuntime::WorldBatchRuntime(size_t world_count) {
@@ -272,10 +274,20 @@ void WorldBatchRuntime::parallel_for_index(size_t task_count, size_t requested_t
                                            std::function<void(size_t)> fn) const {
     ensure_batch_healthy();
     try {
-        runtime::detail::parallel_for_index(task_count, requested_threads, std::move(fn));
+        execute_for_index(task_count, requested_threads, std::move(fn));
     } catch (...) {
         record_batch_failure(std::current_exception());
         throw;
+    }
+}
+
+void WorldBatchRuntime::execute_for_index(size_t task_count, size_t requested_threads,
+                                          std::function<void(size_t)> fn) const {
+    if (worker_thread_factory_for_test_) {
+        runtime::detail::parallel_for_index(task_count, requested_threads, std::move(fn),
+                                            worker_thread_factory_for_test_);
+    } else {
+        runtime::detail::parallel_for_index(task_count, requested_threads, std::move(fn));
     }
 }
 
@@ -398,7 +410,7 @@ WorldBatchRuntime::export_recent_engagement_events(size_t world_index) const {
 void WorldBatchRuntime::reset_batch(const std::vector<uint32_t> &seeds) {
     world_batch_setup::validate_reset_seeds(worlds_.size(), seeds);
     try {
-        runtime::detail::parallel_for_index(worlds_.size(), worker_threads_, [&](size_t i) {
+        execute_for_index(worlds_.size(), worker_threads_, [&](size_t i) {
             worlds_[i]->reset(world_batch_setup::resolve_reset_seed(i, worlds_.size(), seeds));
         });
         batch_healthy_ = true;

@@ -8,10 +8,13 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/standards/world_batch_failure_contract.md`
 Owner: `architecture/runtime-workflow`
-Last verified: `2026-10-11`
+Last verified: `2026-10-12`
 
 `WorldBatchRuntime` 不承诺对状态修改失败进行事务回滚。一个 world 可能已经推进或修改，
 另一个 world 才报告异常。
+
+本页描述的是资格分支验证的 maintained owner 契约。上游 `main` 尚未接收下面所述的本地
+#210 移植，因此在 owner 修复交付并按主线祖先验证前，不能把本分支证据报告为生产保证。
 
 现有 fail-closed 契约要求：
 
@@ -26,6 +29,12 @@ reset 使用指定 seed 重新初始化全部 world；它不是回滚。`world_r
 runtime task/worker 启动异常会使其失效。只读 batch 导出同样受保护，不能把失败 generation
 当成成功同步结果。
 
-本地集成从 `7989800d284484c76ccd0aed77cca32300fb2dda` 移植 PR #230 的 #210 owner 实现，
-保留当前 maintained command 接口和 broadphase 类型，同时保护后来新增的组合证据导出和
+native 资格测试通过私有 test accessor，在实际 3/4-world batch 中注入首个或后续 worker
+启动失败，验证已启动 worker 在异常返回前汇合、导出和重试被封锁、恢复启动失败仍保留
+故障状态，以及成功 reset 后恢复操作。时钟观察仍只是诊断；Python 聚合投影继续报告
+未知的 per-world commit 状态。
+
+本地集成从 `7989800d284484c76ccd0aed77cca32300fb2dda` 移植 PR #230 的 #210 owner 实现到
+资格分支的 `de19c3dbd69e9feb330b1291e84a210c53bfd09f` 接口基线，保留当前 maintained command
+接口和 broadphase 类型，同时保护后来新增的组合证据导出和
 resize 操作。移植保留在资格验证分支，上游 #210 仍然 open，此分支不代表已交付 main。

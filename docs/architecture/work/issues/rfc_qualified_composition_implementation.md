@@ -8,14 +8,16 @@ Last verified: `2026-10-12`
 
 ## Scope and source
 
-This is a local qualification integration on `main@de19c3dbd69e9feb330b1291e84a210c53bfd09f`.
+This is a local qualification integration on the branch point
+`main@de19c3dbd69e9feb330b1291e84a210c53bfd09f` (the current upstream `main` has
+advanced independently).
 It carries the proposed ADRs and prototypes from PRs #256–#261 into an isolated
 worktree. It does not mark the RFCs accepted or enable a production profile.
 The continuation also ports the existing #210 owner repair from PR #230,
-`7989800d284484c76ccd0aed77cca32300fb2dda`, onto current main interfaces.
+`7989800d284484c76ccd0aed77cca32300fb2dda`, onto the branch-point interfaces.
 Only its failure guards, recovery behavior, bindings and tests were carried;
-obsolete command setters and older broadphase code were excluded. Current main's
-newer composition diagnostics and resize operation received the same failure guard.
+obsolete command setters and older broadphase code were excluded. The branch-point
+composition diagnostics and resize operation received the same failure guard.
 
 | RFC | Source PR | Source head |
 | --- | --- | --- |
@@ -33,9 +35,9 @@ newer composition diagnostics and resize operation received the same failure gua
 | #229 | Complete recursive boundaries; capability/clock/backend inheritance; incompatible information layers, clocks and multiple producers reject. Immutable parameters, backend references and clock policies participate in identity. Two native Air seeker primitive adapters and one stateful CV tracker share a qualification configuration. | Native LOS conversion and world-position reconstruction feed the actual CV tracker. Four timesteps reach the same four-second horizon under a fixed measurement schedule. A child exception after native state mutation but before outer publication reuses #251's unknown-state projection. The live topology order checker still detects a reversed `ClearForces`/`FlightControl` mapping. These are bounded proofs, not installation of an authored execution graph. |
 | #236 | Numeric bounds, blueprint constraints, module digests and native reference selections participate in plan identity. Bounded mass, power-budget and slot-mount compatibility checks now fail closed before publication. An explicit immutable legacy projection returns existing UnitDefinition JSON and rejects missing fields or changed module bindings before loading. The opt-in `platform_blueprint_adapter` now projects a resolved plan to the maintained typed request shape and rejects slot/cardinality, module identity and native capability-family drift before DTO publication. The native validator rejects source, bundle and resolved-capability drift. | F-16 and Ground infantry are lowered, loaded and spawned through existing native owners. All public observation fields match at setup and after four steps. A separate F-16 assembly reaches `RuntimeFacade` through the maintained typed setup and matches `WorldSpawnRequest` at setup and after four steps. Full factory-plan comparison, hardpoint/loadout semantics and broader unit compatibility remain open. |
 | #237 | Relationships survive compilation and hashing with instance-scoped endpoints; reused packages expand independently; nested role capability requirements are checked; frame/anchor/provenance references survive in package-instance evidence. A qualification adapter now binds one compiled package to an existing CSG group by explicit entity-name and assembly-type maps, records CSG schema, scenario, geometry and embarked-inventory digests, and delegates the complete qualified snapshot to the existing loader. | Recursive, full named/mirror CSG, loader and negative fixtures. Both full S0 fixtures bind all seven surface hulls per group; native loader positions and 241 replay frames match. In-memory coordinate, inventory, geometry and runtime-metadata drift is rejected before loading. CSG still owns coordinate expansion, geodesy, embarked inventory and native scenario materialization. It does not install task authority or replace the CSG compiler. |
-| #238 | Field provenance/frame checks, explicit optional defaults with preserved field order, action bounds/timing checks, deterministic policy selection and a legacy-kind compatibility gate. | Basic mission fields come from the mission packet owner, action dimensions from the existing native action adapter, and action bounds from the existing Gym space. Two models created through DecisionModelRegistry retain reset/decide/close and generate identical native PilotAction values. The learned registration uses a deterministic stand-in, not a trained checkpoint. |
-| #239 | Deeply immutable canonical input identity, semantic freshness checks on compiled scenario snapshots, ScenarioCompiler dependency projection, separate observed native manifest/graph/topology identity, and a join to the existing RunReceipt validator. | One existing Air matrix entry produces a static candidate with explicit effective seeds. Source changes and in-memory semantic snapshot changes reject. Receipt/comparability fixtures are synthetic owner-contract vectors; they are not durable production run records. A string `status=completed` alone cannot establish comparability. |
-| #251 | Exact completion coverage and conservative aggregate-fault projection; local #210 native failure fence, guarded exports and explicit reset recovery. Python/facade reuse that owner implementation. | Native 3/4-world serial/parallel mixed-advancement and post-timestep setup faults, invalid recovery input, blocked retry/export and successful reset. No per-world commit, rollback, cancellation or process isolation is established. |
+| #238 | Field provenance/frame checks, explicit optional defaults with preserved field order, action bounds/timing checks, deterministic policy selection, a legacy-kind compatibility gate and an admitted binding through `DecisionRuntimeAgent`. | Basic mission fields come from the mission packet owner, action dimensions from the existing native action adapter, and action bounds from the existing Gym space. The binding preserves the existing model reset/decide/close lifecycle and validates the produced action before returning it. The learned registration uses a deterministic stand-in, not a trained checkpoint. |
+| #239 | Deeply immutable canonical input identity, semantic freshness checks on compiled scenario snapshots, ScenarioCompiler dependency projection, separate observed native manifest/graph/topology identity, and a host receipt binding join to the existing RunReceipt validator. | One existing Air matrix entry produces a static candidate with explicit effective seeds. Source changes and in-memory semantic snapshot changes reject. The join preserves receipt/run/host/generation, backend graph, native validator evidence and durable acknowledgement, while receipt/comparability fixtures remain synthetic owner-contract vectors rather than durable production run records. A string `status=completed` alone cannot establish comparability. |
+| #251 | Exact completion coverage and conservative aggregate-fault projection; local #210 native failure fence, guarded exports and explicit reset recovery. The Python projection now reads native `batch_healthy()`/`batch_failure_reason()` before emitting all-unknown outcomes. Actual 3/4-world launch-failure injection remains private to native test access. | Native 3/4-world serial/parallel mixed-advancement, post-timestep setup faults and first/later worker-launch failures, invalid recovery input, blocked retry/export and successful reset. The state matrix distinguishes `healthy`, `failed/untrusted` and reset-created `healthy`; no per-world commit, rollback, cancellation, native generation ID or process isolation is established. Upstream `main` has not received this local #210 port. |
 
 ## Single-owner integration map
 
@@ -133,7 +135,7 @@ tests and native composition-evidence tests. The architecture suite manifest
 registers the qualification tests. See the final execution result for counts;
 this document does not infer other-host or full-repository parity.
 
-Latest local results: **125 focused Python tests passed** and **31 native tests /
+Prior checkpoint local results: **125 focused Python tests passed** and **31 native tests /
 842 assertions passed**; **9 suite-manifest tests passed**. Ruff passed on all
 25 changed Python surfaces, whitespace checks passed, and **17 touched documents /
 116 local links had zero link issues**. The primary checkout retained its original HEAD and
@@ -188,15 +190,22 @@ merge into main, accept the proposed ADRs or close RFC issues.
    Preserve existing legacy runtime/report consumers until migration is accepted.
 6. **#239 host evidence join.** Have the existing host bind the input-lock
    digest into its actual RunReceipt inputs, verify durable completion and join
-   publication evidence. The current proof validates a schema, not signatures
-   or durable availability.
+   publication evidence. The qualification join now preserves receipt/run/
+   attempt/host/generation identity, backend system-graph digest, native
+   validator evidence digest and durable acknowledgement, and rejects a
+   supplied native binding that disagrees. The current proof still uses a
+   synthetic receipt vector and does not establish signatures or durable
+   availability from a live host.
 7. **#251 remaining fault gates.** The existing #210 lineage is locally ported and
-   verified; upstream main still lacks it. Preserve its owner during review and
-   delivery. The completed setup/worker proofs do not cover an exception inside a
-   running native system, native-issued generation IDs, worker-launch failure
-   observed through a full batch instance, or bounded fatal/nontermination controls.
-   Add those probes through existing test owners and subprocess/supervisor paths;
-   no transparent retry or per-world commit claim follows from current evidence.
+   verified against this branch's interface baseline; upstream main still lacks it.
+   Preserve its owner during review and
+   delivery. The native `WorldBatchRuntime` proof now injects a worker-launch
+   failure through a private test accessor, verifies joined workers,
+   failed-generation export fencing, failed recovery fencing and explicit reset
+   recovery. The remaining gaps are an exception inside a running native system,
+   native-issued generation IDs and bounded fatal/nontermination controls. Add those probes through
+   existing test owners and subprocess/supervisor paths; no transparent retry or
+   per-world commit claim follows from current evidence.
 
 ## 2026-10-12 native typed-plan continuation
 
@@ -214,7 +223,8 @@ while rejected plans retain their specific rejection reason.
 The current continuation passed the new **92-test typed-platform/input-lock
 regression subset**, plus **229 scenario tests with 23 subtests** after the
 compiler and CSG changes. Ruff, whitespace checks and focused existing native
-tests remain required gates. The prior continuation passed **67 content/composition/binding/rollback and
+tests remain required gates. The current native rerun passed **32 cases / 938 assertions**;
+the prior continuation passed **67 content/composition/binding/rollback and
 manifest tests**, **35 platform-spawn architecture tests**, and Ruff on all
 changed Python files. After rebuilding both native targets, the selected native
 suites passed **31 cases / 842 assertions**. The prior four standalone MSVC
