@@ -22,6 +22,28 @@ class PlatformAssemblyError(ValueError):
     """Raised for malformed authoring documents."""
 
 
+def _optional_nonnegative_number(value: Any, label: str) -> float | None:
+    if value is None:
+        return None
+    try:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError
+        normalized = float(value)
+        if not math.isfinite(normalized) or normalized < 0.0:
+            raise ValueError
+    except (ValueError, OverflowError) as exc:
+        raise ValueError(f"{label} must be finite and non-negative") from exc
+    return normalized if normalized else 0.0
+
+
+def _physical_total(values: Sequence[float]) -> float:
+    try:
+        return math.fsum(values)
+    except OverflowError:
+        # Every declared budget is finite, so overflow must fail its bound.
+        return math.inf
+
+
 @dataclass(frozen=True)
 class ModuleRecord:
     module_id: str
@@ -31,12 +53,20 @@ class ModuleRecord:
     evidence_refs: tuple[str, ...] = ()
     content_digest: str = ""
     native_ref: str = ""
+    mass_kg: float | None = None
+    power_draw_kw: float | None = None
+    mount_classes: frozenset[str] = frozenset()
 
     def __post_init__(self) -> None:
         if not self.module_id.strip() or not self.kind.strip() or not self.version.strip():
             raise ValueError("module_id, kind, and version are required")
         if not self.evidence_refs or any(not ref.strip() for ref in self.evidence_refs):
             raise ValueError("module evidence_refs are required")
+        for label, value in (("mass_kg", self.mass_kg), ("power_draw_kw", self.power_draw_kw)):
+            object.__setattr__(self, label, _optional_nonnegative_number(value, f"module {label}"))
+        object.__setattr__(self, "mount_classes", frozenset(self.mount_classes))
+        if any(not isinstance(mount, str) or not mount.strip() for mount in self.mount_classes):
+            raise ValueError("module mount classes must be non-empty")
 
 
 @dataclass(frozen=True)
@@ -48,6 +78,9 @@ class PlatformBlueprint:
     required_capabilities: frozenset[str] = frozenset()
     override_types: tuple[tuple[str, str], ...] = ()
     override_ranges: tuple[tuple[str, float, float], ...] = ()
+    mass_limit_kg: float | None = None
+    power_budget_kw: float | None = None
+    slot_mount_requirements: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         if (
@@ -81,6 +114,14 @@ class PlatformBlueprint:
                 raise ValueError(
                     "override range must name an allowlisted field with finite ordered bounds"
                 )
+        for label, value in (("mass_limit_kg", self.mass_limit_kg), ("power_budget_kw", self.power_budget_kw)):
+            object.__setattr__(self, label, _optional_nonnegative_number(value, label))
+        object.__setattr__(self, "slot_mount_requirements", tuple((slot, mount) for slot, mount in self.slot_mount_requirements))
+        mount_slots = [slot for slot, _ in self.slot_mount_requirements]
+        if len(mount_slots) != len(set(mount_slots)):
+            raise ValueError("slot mount requirements must be unique")
+        if any(slot not in dict(self.slots) or not isinstance(mount, str) or not mount.strip() for slot, mount in self.slot_mount_requirements):
+            raise ValueError("slot mount requirements must reference known slots")
 
     def expected_kind(self, slot: str) -> str | None:
         return dict(self.slots).get(slot)
@@ -107,6 +148,7 @@ class ResolvedPlatformSpawnPlan:
     identity_digest: str
     module_digests: tuple[tuple[str, str], ...] = ()
     native_module_refs: tuple[tuple[str, str], ...] = ()
+    module_physical_parameters: tuple[tuple[str, float | None, float | None, tuple[str, ...]], ...] = ()
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -120,6 +162,15 @@ class ResolvedPlatformSpawnPlan:
             "identity_digest": self.identity_digest,
             "module_digests": dict(self.module_digests),
             "native_module_refs": dict(self.native_module_refs),
+            "module_physical_parameters": [
+                {
+                    "slot": slot,
+                    "mass_kg": mass,
+                    "power_draw_kw": power,
+                    "mount_classes": list(mounts),
+                }
+                for slot, mass, power, mounts in self.module_physical_parameters
+            ],
         }
 
 
@@ -181,6 +232,31 @@ def resolve_platform_assembly(
         f"platform.required_capability_missing:capabilities.{capability}"
         for capability in missing_capabilities
     )
+    mount_requirements = dict(blueprint.slot_mount_requirements)
+    if blueprint.mass_limit_kg is not None:
+        missing_mass = sorted(slot for slot, module in selected.items() if module.mass_kg is None)
+        errors.extend(f"platform.physical_metadata_missing:modules.{slot}:physical.mass_kg" for slot in missing_mass)
+        if not missing_mass:
+            total_mass_kg = _physical_total([module.mass_kg for _, module in sorted(selected.items())])
+            if total_mass_kg > blueprint.mass_limit_kg:
+                errors.append(
+                    f"platform.mass_limit_exceeded:physical.mass_kg:{total_mass_kg}>{blueprint.mass_limit_kg}"
+                )
+    if blueprint.power_budget_kw is not None:
+        missing_power = sorted(slot for slot, module in selected.items() if module.power_draw_kw is None)
+        errors.extend(f"platform.physical_metadata_missing:modules.{slot}:physical.power_draw_kw" for slot in missing_power)
+        if not missing_power:
+            total_power_draw_kw = _physical_total([module.power_draw_kw for _, module in sorted(selected.items())])
+            if total_power_draw_kw > blueprint.power_budget_kw:
+                errors.append(
+                    f"platform.power_budget_exceeded:physical.power_draw_kw:{total_power_draw_kw}>{blueprint.power_budget_kw}"
+                )
+    for slot, required_mount in mount_requirements.items():
+        module = selected.get(slot)
+        if module is not None and required_mount not in module.mount_classes:
+            errors.append(
+                f"platform.mount_class_mismatch:modules.{slot}:{required_mount}"
+            )
 
     overrides = dict(parameter_overrides or {})
     ranges = {name: (low, high) for name, low, high in blueprint.override_ranges}
@@ -208,6 +284,17 @@ def resolve_platform_assembly(
     native_module_refs = tuple(
         sorted((slot, module.native_ref) for slot, module in selected.items())
     )
+    module_physical_parameters = tuple(
+        sorted(
+            (
+                slot,
+                module.mass_kg,
+                module.power_draw_kw,
+                tuple(sorted(module.mount_classes)),
+            )
+            for slot, module in selected.items()
+        )
+    )
     identity_payload = {
         "schema_version": SCHEMA_VERSION,
         "assembly_id": assembly_id,
@@ -218,11 +305,15 @@ def resolve_platform_assembly(
         "capabilities": capabilities,
         "module_digests": module_digests,
         "native_module_refs": native_module_refs,
+        "module_physical_parameters": module_physical_parameters,
         "blueprint_contract": {
             "slots": sorted(blueprint.slots),
             "override_types": sorted(blueprint.override_types),
             "override_ranges": sorted(blueprint.override_ranges),
             "required_capabilities": sorted(blueprint.required_capabilities),
+            "mass_limit_kg": blueprint.mass_limit_kg,
+            "power_budget_kw": blueprint.power_budget_kw,
+            "slot_mount_requirements": sorted(blueprint.slot_mount_requirements),
         },
     }
     digest = hashlib.sha256(
@@ -245,6 +336,7 @@ def resolve_platform_assembly(
         identity_digest=digest,
         module_digests=module_digests,
         native_module_refs=native_module_refs,
+        module_physical_parameters=module_physical_parameters,
     )
 
 
@@ -286,6 +378,9 @@ def lower_to_legacy_unit_definition(
     for module in modules.values():
         if by_ref[f"{module.module_id}@{module.version}"] != module:
             raise PlatformAssemblyError("platform.native_module_reference_ambiguous")
+    physical_by_slot = {entry[0]: entry[1:] for entry in plan.module_physical_parameters}
+    if len(physical_by_slot) != len(plan.module_physical_parameters) or set(physical_by_slot) != set(slots):
+        raise PlatformAssemblyError("platform.native_module_physical_projection_incomplete")
 
     def assign(path: str, value: Any) -> None:
         parts = path.split(".")
@@ -309,6 +404,9 @@ def lower_to_legacy_unit_definition(
             or dict(plan.native_module_refs).get(slot) != module.native_ref
         ):
             raise PlatformAssemblyError(f"platform.native_module_identity_mismatch:modules.{slot}")
+        actual_physical = (module.mass_kg, module.power_draw_kw, tuple(sorted(module.mount_classes)))
+        if actual_physical != physical_by_slot[slot]:
+            raise PlatformAssemblyError(f"platform.native_module_physical_mismatch:modules.{slot}")
         assign(slots[slot], module.native_ref)
     for name, value in plan.parameter_overrides:
         if name not in overrides:

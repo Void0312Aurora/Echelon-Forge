@@ -19,7 +19,9 @@ from python.experiment.resolved_input_lock import (
     build_resolved_input_lock,
     compare_resolved_input_locks,
     join_run_receipt,
+    project_compiled_scenario_dependencies,
 )
+from python.scenario.compiler import ScenarioCompiler
 from python.tasking_contracts.failure_domains import (
     WorldOutcome,
     WorldState,
@@ -27,6 +29,17 @@ from python.tasking_contracts.failure_domains import (
     project_unresolved_batch_fault,
 )
 from tools.maintenance.runtime_run_receipt import build_run_receipt
+
+
+def test_input_lock_rejects_mutated_compiler_snapshot_with_unchanged_source(tmp_path):
+    path = tmp_path / "scenario.json"
+    path.write_text('{"entities": [], "meta": {"stage": "qualification"}}', encoding="utf-8")
+    compiled = ScenarioCompiler.compile_path(str(path))
+    original_mtimes = compiled.dependency_mtimes_ns
+    compiled.merged_scenario_data["meta"]["stage"] = "changed"
+    assert compiled.dependency_mtimes_ns == original_mtimes
+    with pytest.raises(InputLockError, match="dependencies_stale"):
+        project_compiled_scenario_dependencies(compiled, repo_root=tmp_path)
 
 
 def _registry() -> ExperimentRegistry:

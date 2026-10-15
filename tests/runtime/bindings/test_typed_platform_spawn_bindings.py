@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from python.runtime_bootstrap import ensure_repo_imports
 
 
@@ -132,6 +134,69 @@ def test_typed_platform_spawn_request_fails_closed_for_missing_fields() -> None:
   assert not bool(result.valid)
   assert bool(result.fail_closed)
   assert result.rejection_reason == "typed_platform_spawn_evidence_required"
+
+
+@pytest.mark.parametrize("field,value", [
+  ("implementation_ref", "drifted"),
+  ("capability_type", "drifted"),
+  ("family", "sensing"),
+  ("requires_capability_ids", ["drifted"]),
+  ("evidence_refs", ["drifted"]),
+  ("required", False),
+])
+def test_typed_platform_spawn_request_fails_closed_for_plan_bundle_capability_drift(field, value) -> None:
+  request = _valid_typed_platform_spawn_request()
+  setattr(request.resolved_spawn_plan.resolved_capabilities[0], field, value)
+
+  result = ef_py.validate_typed_platform_spawn_request(request)
+
+  assert not bool(result.valid)
+  assert bool(result.fail_closed)
+  assert result.rejection_reason == "typed_platform_spawn_resolved_plan_invalid"
+  assert any(
+    "preserve source and capability bundle identity" in error
+    for error in result.errors
+  )
+
+
+def test_rejected_plan_keeps_its_specific_reason_when_capability_payload_is_not_admitted() -> None:
+  request = _valid_typed_platform_spawn_request()
+  request.resolved_spawn_plan.admitted = False
+  request.resolved_spawn_plan.rejection_reason = "fixture.required_capability_unsupported"
+  request.resolved_spawn_plan.resolved_capabilities = []
+
+  result = ef_py.validate_typed_platform_spawn_request(request)
+
+  assert bool(result.valid)
+  request.type_name_projection_preserved = False
+  request.capability_bundle.type_name_projection_preserved = False
+  request.resolved_spawn_plan.type_name_projection_preserved = False
+  setup = ef_py.BatchWorldSetupRequest()
+  setup.seeds = [123]
+  setup.time_steps = [0.05]
+  setup.typed_platform_spawn_requests = [request]
+  maintained = ef_py.RuntimeFacade(1).apply_world_setup(setup).typed_platform_spawn_results[0]
+  assert not bool(maintained.admitted)
+  assert not bool(maintained.materialized)
+  assert maintained.rejection_reason == "typed_platform_spawn_resolved_plan_invalid"
+  assert any(
+    "fixture.required_capability_unsupported" in error
+    for error in maintained.errors
+  )
+
+
+def test_capabilities_match_by_unique_id_despite_traversal_order() -> None:
+  request = _valid_typed_platform_spawn_request()
+  mobility = _valid_platform_capability()
+  sensing = _valid_platform_capability()
+  sensing.capability_id = "sensing:F-16C_Block50"
+  sensing.family = "sensing"
+  request.capability_bundle.capabilities = [mobility, sensing]
+  request.resolved_spawn_plan.resolved_capabilities = [sensing, mobility]
+
+  assert bool(ef_py.validate_typed_platform_spawn_request(request).valid)
+  request.resolved_spawn_plan.resolved_capabilities = [mobility, mobility]
+  assert not bool(ef_py.validate_typed_platform_spawn_request(request).valid)
 
 
 def test_legacy_world_spawn_request_type_name_path_remains_python_mainline_surface() -> None:

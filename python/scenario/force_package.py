@@ -126,6 +126,7 @@ class CompiledForcePackage:
     identity_digest: str
     relationships: tuple[CompiledRelationship, ...] = ()
     package_instances: tuple[CompiledPackageInstance, ...] = ()
+    assembly_type_bindings: tuple[tuple[str, str], ...] = ()
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -134,6 +135,10 @@ class CompiledForcePackage:
             "entities": [entity.__dict__ for entity in self.entities],
             "relationships": [relationship.__dict__ for relationship in self.relationships],
             "package_instances": [instance.__dict__ for instance in self.package_instances],
+            "assembly_type_bindings": [
+                {"assembly_id": assembly_id, "native_type": native_type}
+                for assembly_id, native_type in self.assembly_type_bindings
+            ],
             "identity_digest": self.identity_digest,
         }
 
@@ -144,6 +149,7 @@ def compile_force_package(
     packages: Mapping[str, ForcePackage],
     assemblies: Mapping[str, AssemblyReference],
     role_capabilities: Mapping[str, frozenset[str]],
+    assembly_type_names: Mapping[str, str] | None = None,
 ) -> CompiledForcePackage:
     """Expand a finite package DAG before scenario/native publication."""
 
@@ -155,6 +161,7 @@ def compile_force_package(
     entities: list[FlattenedEntity] = []
     relationships: list[CompiledRelationship] = []
     instances: list[CompiledPackageInstance] = []
+    type_bindings: dict[str, str] = {}
 
     def visit(
         package: ForcePackage, path: tuple[str, ...], stack: tuple[str, ...]
@@ -200,6 +207,8 @@ def compile_force_package(
                     errors.append(
                         f"force.side_conflict:members.{'.'.join(member_path)}:child_side={child.side}"
                     )
+                if child.reference_frame != package.reference_frame or child.anchor_ref != package.anchor_ref:
+                    errors.append(f"force.frame_anchor_conflict:members.{'.'.join(member_path)}")
                 required = role_capabilities.get(member.role)
                 if required is None:
                     errors.append(f"force.role_unknown:members.{'.'.join(member_path)}")
@@ -212,6 +221,12 @@ def compile_force_package(
             if assembly is None:
                 errors.append(f"force.assembly_unknown:members.{'.'.join(member_path)}")
                 continue
+            if assembly_type_names is not None:
+                native_type = assembly_type_names.get(assembly.assembly_id)
+                if not isinstance(native_type, str) or not native_type.strip():
+                    errors.append(f"force.assembly_type_unknown:members.{'.'.join(member_path)}")
+                else:
+                    type_bindings[assembly.assembly_id] = native_type
             if assembly.side != package.side or (
                 member.side is not None and member.side != assembly.side
             ):
@@ -242,18 +257,29 @@ def compile_force_package(
         key=lambda item: (item.source, item.target, item.relationship_type, item.package_ref)
     )
     instances.sort(key=lambda item: item.instance_id)
+    sorted_type_bindings = tuple(sorted(type_bindings.items()))
     payload = {
         "schema_version": SCHEMA_VERSION,
         "package_ref": root.ref,
         "entities": [entity.__dict__ for entity in entities],
         "relationships": [relationship.__dict__ for relationship in relationships],
         "package_instances": [instance.__dict__ for instance in instances],
+        "assembly_type_bindings": [
+            {"assembly_id": assembly_id, "native_type": native_type}
+            for assembly_id, native_type in sorted_type_bindings
+        ],
     }
     digest = hashlib.sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
     return CompiledForcePackage(
-        SCHEMA_VERSION, root.ref, tuple(entities), digest, tuple(relationships), tuple(instances)
+        SCHEMA_VERSION,
+        root.ref,
+        tuple(entities),
+        digest,
+        tuple(relationships),
+        tuple(instances),
+        sorted_type_bindings,
     )
 
 

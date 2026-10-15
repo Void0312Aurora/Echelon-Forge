@@ -71,6 +71,33 @@ def _sample_scenario() -> dict:
   }
 
 
+def test_compiled_scenario_detects_mutated_semantic_snapshot_and_rebuilds_cached_path(tmp_path):
+  source = tmp_path / "snapshot.json"
+  raw = _sample_scenario()
+  source.write_text(json.dumps(raw), encoding="utf-8")
+  first = ScenarioCompiler.compile_path(str(source))
+  assert first.is_fresh()
+  clone = first.instantiate()
+  clone["entities"][0]["pos"][0] += 10.0
+  assert first.is_fresh()
+  first.merged_scenario_data["entities"][0]["pos"][0] += 10.0
+  assert not first.is_fresh()
+  second = ScenarioCompiler.compile_path(str(source))
+  assert second is not first
+  assert second.is_fresh()
+  assert second.semantic_digest == first.semantic_digest
+  assert second.merged_scenario_data["entities"][0]["pos"] == raw["entities"][0]["pos"]
+  second.merged_scenario_data["entities"][0]["pos"][0] = math.nan
+  assert not second.is_fresh()
+
+
+def test_compiled_scenario_semantic_identity_is_independent_of_mapping_order():
+  raw = _sample_scenario()
+  left = ScenarioCompiler.compile_data(raw)
+  right = ScenarioCompiler.compile_data(dict(reversed(list(raw.items()))))
+  assert left.semantic_digest == right.semantic_digest
+
+
 def _sample_route_template_scenario() -> dict:
   return {
     "scenario_name": "scenario_compiler_route_template_test",
