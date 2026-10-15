@@ -8,13 +8,13 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/simulation_failure_domain_adr.md`
 Owner: `architecture/failure-contracts`
-Last verified: `2026-10-13`
+Last verified: `2026-10-15`
 
 **Status:** proposed contract; no new host, transaction engine or production
 cutover is authorized. The upstream `main` line is not treated as enforcing
-this whole contract. The qualification branch carries a local #210 owner
-implementation and its evidence only; that branch evidence must not be
-reported as a mainline or production guarantee.
+this whole contract. Its bounded native #210 owner repair is integrated into
+`main` by PR #278 and re-verified at `main@ed9e476be4b57831001e0ef8e42d500989933e0e`;
+the broader recovery and supervisor contract remains proposed and unadmitted.
 
 ## Decision
 
@@ -30,10 +30,10 @@ and an unknown/untrusted state unless reliable per-world evidence exists;
 callers may not transparently retry. Reset/recreate is explicit and is the
 only default recovery for unknown mutation. Read-only operations, idempotent
 setup, reset, irreversible step and issued command have separate retry rules.
-On this qualification branch, the local #210 port exercises that target for
-the tested `WorldBatchRuntime` path. The upstream production path remains an
-open integration gate until the owner repair is delivered and re-verified on
-its ancestry.
+The bounded native #210 owner repair exercises that target for the tested
+`WorldBatchRuntime` path on `main`. The broader production path remains an open
+integration gate because supervisor isolation, per-world commit truth, rollback,
+and transactional semantics are not established by this repair.
 
 ## Current state and transition matrix
 
@@ -90,9 +90,9 @@ evidence and exact index coverage for every `completed` result; the default empt
 scope cannot be used to bypass that invariant. Skipped/unknown outcomes cannot
 masquerade as completion, and aggregate faults project all affected
 worlds as unknown without inferring rollback from clocks. The #210 owner repair
-from PR #230 has been ported locally onto the qualification branch's current
-interfaces, including the
-new composition-evidence export guard. See the existing
+from PR #230 was historically ported onto the qualification branch's interfaces,
+including the new composition-evidence export guard, and is now integrated on
+`main` through PR #278. See the existing
 [WorldBatch failure contract](world_batch_failure_contract.md).
 
 Native 3/4-world serial/parallel proofs exercise mixed world advancement, a setup
@@ -114,7 +114,7 @@ with all affected worlds unknown and generation termination required; it does
 not claim to provide the supervisor or isolate a blocked native call.
 The native batch proof also injects a worker-launch failure and checks that joined
 workers, guarded exports, failed recovery and explicit reset remain fail-closed.
-These local changes are not an upstream #210 closure. The running-system probe
+These bounded changes do not close the broader #210 contract. The running-system probe
 mutates native ECS state before throwing; it verifies that unfinished pipeline
 scopes reject reset and raw step, while the batch owner reports
 `batch_requires_host_recreate()`. Python translates that native decision into

@@ -8,13 +8,16 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/standards/world_batch_failure_contract.md`
 Owner: `architecture/runtime-workflow`
-Last verified: `2026-10-13`
+Last verified: `2026-10-15`
 
 `WorldBatchRuntime` 不承诺对状态修改失败进行事务回滚。一个 world 可能已经推进或修改，
 另一个 world 才报告异常。
 
-本页描述的是资格分支验证的 maintained owner 契约。上游 `main` 尚未接收下面所述的本地
-#210 移植，因此在 owner 修复交付并按主线祖先验证前，不能把本分支证据报告为生产保证。
+本页描述的 maintained owner 契约已通过 PR #278（合并提交
+`9edcb14dacd1127442efe0504bfee7c487a53628`）进入 `main`，并在最终 RFC 堆栈的
+`main@ed9e476be4b57831001e0ef8e42d500989933e0e` 上重新验证。这是有界的 native
+fail-closed 行为；不表示 #251 ADR 已批准，也不建立生产 supervisor 隔离、per-world
+commit 真值、回滚或事务语义。
 
 现有 fail-closed 契约要求：
 
@@ -40,7 +43,7 @@ native 资格测试通过私有 test accessor，在实际 3/4-world batch 中注
 故障状态，以及成功 reset 后恢复操作。时钟观察仍只是诊断；Python 聚合投影继续报告
 未知的 per-world commit 状态。
 
-本地集成从 `7989800d284484c76ccd0aed77cca32300fb2dda` 移植 PR #230 的 #210 owner 实现到
-资格分支的 `de19c3dbd69e9feb330b1291e84a210c53bfd09f` 接口基线，保留当前 maintained command
-接口和 broadphase 类型，同时保护后来新增的组合证据导出和
-resize 操作。移植保留在资格验证分支，上游 #210 仍然 open，此分支不代表已交付 main。
+实现起源于 PR #230 的 #210 owner 修复（`7989800d284484c76ccd0aed77cca32300fb2dda`），
+并在资格验证阶段从历史的 `de19c3dbd69e9feb330b1291e84a210c53bfd09f` 接口基线完成适配。
+历史分支和 SHA 继续保留用于溯源；maintained owner 修复现已进入 `main`。#210 仍为更宽的
+契约与验收工作保持 open。后来新增的组合证据导出和 resize 操作同样会拒绝 unhealthy generation。
