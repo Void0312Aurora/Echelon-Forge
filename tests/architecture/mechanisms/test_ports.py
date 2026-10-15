@@ -343,6 +343,7 @@ def test_instantaneous_cycles_are_rejected_but_delayed_feedback_is_explicitly_al
         outputs=(PortSpec("out", "Scalar.v1"),),
         stateful=True,
         clock="per_second",
+        delay_windows=1,
     )
     instant = compile_mechanism_graph(
         "cycle",
@@ -353,7 +354,10 @@ def test_instantaneous_cycles_are_rejected_but_delayed_feedback_is_explicitly_al
     delayed = compile_mechanism_graph(
         "feedback",
         {"a": node, "b": node},
-        (GraphEdge("a", "out", "b", "in"), GraphEdge("b", "out", "a", "in", delayed=True)),
+        (
+            GraphEdge("a", "out", "b", "in"),
+            GraphEdge("b", "out", "a", "in", delayed=True, delay_windows=1, state_owner="b"),
+        ),
     )
     assert delayed.valid
 
@@ -365,16 +369,119 @@ def test_external_inputs_cover_required_ports() -> None:
     assert graph.valid
 
 
+def test_delayed_feedback_requires_positive_window_and_source_state_owner() -> None:
+    stateless = MechanismSpec(
+        "stateless",
+        "1",
+        inputs=(PortSpec("in", "Scalar.v1"),),
+        outputs=(PortSpec("out", "Scalar.v1"),),
+    )
+    graph = compile_mechanism_graph(
+        "invalid-feedback",
+        {"a": stateless, "b": stateless},
+        (
+            GraphEdge("a", "out", "b", "in"),
+            GraphEdge("b", "out", "a", "in", delayed=True),
+        ),
+    )
+    assert not graph.valid
+    assert {
+        "mechanism.delayed_edge_window_missing",
+        "mechanism.delayed_edge_state_owner_missing",
+    } <= {item.code for item in graph.diagnostics}
+
+    owner_mismatch = compile_mechanism_graph(
+        "owner-mismatch",
+        {
+            "a": MechanismSpec(
+                "stateful-a",
+                "1",
+                inputs=(PortSpec("in", "Scalar.v1"),),
+                outputs=(PortSpec("out", "Scalar.v1"),),
+                stateful=True,
+                delay_windows=1,
+            ),
+            "b": stateless,
+        },
+        (
+            GraphEdge("a", "out", "b", "in"),
+            GraphEdge("b", "out", "a", "in", delayed=True, delay_windows=1, state_owner="a"),
+        ),
+    )
+    assert not owner_mismatch.valid
+    assert "mechanism.delayed_edge_state_owner_mismatch" in {
+        item.code for item in owner_mismatch.diagnostics
+    }
+
+    owner_not_stateful = compile_mechanism_graph(
+        "owner-not-stateful",
+        {"a": stateless, "b": stateless},
+        (
+            GraphEdge("a", "out", "b", "in"),
+            GraphEdge("b", "out", "a", "in", delayed=True, delay_windows=1, state_owner="b"),
+        ),
+    )
+    assert not owner_not_stateful.valid
+    assert "mechanism.delayed_edge_state_owner_not_stateful" in {
+        item.code for item in owner_not_stateful.diagnostics
+    }
+
+
+def test_composite_preserves_declared_delay_window() -> None:
+    node = MechanismSpec(
+        "stateful",
+        "1",
+        inputs=(PortSpec("in", "Scalar.v1"),),
+        outputs=(PortSpec("out", "Scalar.v1"),),
+        stateful=True,
+        delay_windows=2,
+    )
+    graph = compile_mechanism_graph(
+        "delayed-composite",
+        {"node": node},
+        (),
+        external_inputs=frozenset({"node.in"}),
+    )
+    composite = compose_graph_as_mechanism(
+        graph,
+        mechanism_id="community.delayed",
+        version="1",
+        inputs=(PortSpec("in", "Scalar.v1"),),
+        outputs=(PortSpec("out", "Scalar.v1"),),
+        input_bindings={"in": "node.in"},
+        output_bindings={"out": "node.out"},
+    )
+    assert composite.delay_windows == 2
+    assert composite.clock_policy["delay_windows"] == 2
+
+
 def test_identity_changes_when_semantic_edge_changes() -> None:
     graph_a = compile_mechanism_graph(
         "g",
         {"sensor": _sensor(), "tracker": _tracker()},
         (GraphEdge("sensor", "measurements", "tracker", "measurements"),),
     )
+    delayed_sensor = MechanismSpec(
+        "builtin.radar",
+        "1",
+        outputs=(PortSpec("measurements", "Measurement3D.v1", "meter", "enu"),),
+        stateful=True,
+        delay_windows=1,
+    )
     graph_b = compile_mechanism_graph(
         "g",
-        {"sensor": _sensor(), "tracker": _tracker()},
-        (GraphEdge("sensor", "measurements", "tracker", "measurements", delayed=True),),
+        {"sensor": delayed_sensor, "tracker": _tracker()},
+        (
+            GraphEdge(
+                "sensor",
+                "measurements",
+                "tracker",
+                "measurements",
+                delayed=True,
+                delay_windows=1,
+                state_owner="sensor",
+            ),
+        ),
     )
     assert graph_a.identity_digest != graph_b.identity_digest
 

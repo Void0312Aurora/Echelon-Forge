@@ -98,6 +98,8 @@ class GraphEdge:
     target_node: str
     target_port: str
     delayed: bool = False
+    delay_windows: int = 0
+    state_owner: str | None = None
 
     def __post_init__(self) -> None:
         if not all(
@@ -107,6 +109,18 @@ class GraphEdge:
             raise ValueError("graph edge node and port names are required")
         if not isinstance(self.delayed, bool):
             raise TypeError("delayed must be a bool")
+        if (
+            isinstance(self.delay_windows, bool)
+            or not isinstance(self.delay_windows, int)
+            or self.delay_windows < 0
+        ):
+            raise ValueError("edge delay_windows must be a non-negative integer")
+        if self.state_owner is not None and (
+            not isinstance(self.state_owner, str) or not self.state_owner.strip()
+        ):
+            raise ValueError("state_owner must be a non-empty string when supplied")
+        if not self.delayed and (self.delay_windows or self.state_owner is not None):
+            raise ValueError("non-delayed edges cannot declare delay or state ownership")
 
 
 @dataclass(frozen=True)
@@ -488,6 +502,8 @@ def _identity_payload(
                     item.target_node,
                     item.target_port,
                     item.delayed,
+                    item.delay_windows,
+                    item.state_owner or "",
                 ),
             )
         ],
@@ -671,6 +687,47 @@ def compile_mechanism_graph(
                 )
             )
         incoming.setdefault((edge.target_node, edge.target_port), []).append(edge)
+        if edge.delayed:
+            if edge.delay_windows <= 0:
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.delayed_edge_window_missing",
+                        f"{path}.delay_windows",
+                        "delayed feedback must declare a positive delay window",
+                    )
+                )
+            if edge.state_owner is None:
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.delayed_edge_state_owner_missing",
+                        f"{path}.state_owner",
+                        "delayed feedback must name its state owner",
+                    )
+                )
+            elif edge.state_owner != edge.source_node:
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.delayed_edge_state_owner_mismatch",
+                        f"{path}.state_owner",
+                        "the delayed edge state owner must be its source node",
+                    )
+                )
+            elif not source.stateful:
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.delayed_edge_state_owner_not_stateful",
+                        f"{path}.state_owner",
+                        "the delayed edge source must declare stateful=True",
+                    )
+                )
+            elif source.delay_windows < edge.delay_windows:
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.delayed_edge_window_exceeds_owner",
+                        f"{path}.delay_windows",
+                        "delay window exceeds the source state owner's declared window",
+                    )
+                )
         if not edge.delayed:
             adjacency[edge.source_node].append(edge.target_node)
 
@@ -849,13 +906,28 @@ def compose_graph_as_mechanism(
         outputs=outputs,
         stateful=any(spec.stateful for _, spec in graph.nodes),
         clock=next(iter(clocks)),
-        delay_windows=0,
+        delay_windows=max(
+            [
+                *(spec.delay_windows for _, spec in graph.nodes),
+                *(edge.delay_windows for edge in graph.edges),
+            ],
+            default=0,
+        ),
         implementation_ref=f"composite:{composite_identity}",
         required_capabilities=tuple(
             sorted({cap for _, spec in graph.nodes for cap in spec.required_capabilities})
         ),
         backend_ref=next(iter(backends)),
-        clock_policy={"derived_from_graph": graph.identity_digest},
+        clock_policy={
+            "derived_from_graph": graph.identity_digest,
+            "delay_windows": max(
+                [
+                    *(spec.delay_windows for _, spec in graph.nodes),
+                    *(edge.delay_windows for edge in graph.edges),
+                ],
+                default=0,
+            ),
+        },
     )
 
 

@@ -51,7 +51,8 @@ The minimum semantic table is: physical unit and frame are checked at the port
 edge; per-second values are integrated by the owning stateful model while
 per-tick values are explicitly marked; sampling/freshness is part of the port
 contract; state writes become visible only at the owning publication/commit
-barrier; delayed feedback names its delay window and state owner. These checks
+barrier; a delayed edge names a positive delay window and its source node as
+the state owner, whose declared state window covers that edge. These checks
 do not prove numerical calibration or timestep invariance.
 
 ## Compatibility and recursion
@@ -63,7 +64,8 @@ qualification artifact: each schema entry names its owner reference, and the
 vocabulary digest participates in the graph identity. Explicit conversion or
 estimation nodes are required when a connection would otherwise fabricate
 information. Instantaneous same-window cycles are rejected; delayed/stateful
-feedback must declare its delay and state owner. A composite exports a typed
+feedback must declare its positive edge delay and source-owned state boundary.
+A composite preserves the maximum declared node/edge delay window and exports a typed
 public port set and state/effect contract, so it can be validated as a node in
 a parent graph.
 
