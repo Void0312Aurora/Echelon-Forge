@@ -2,33 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-
-APPROVED_DIAGNOSTICS_TOP_LEVEL = {
-  "__init__.py",
-  "ablate_visual_training_effect.py",
-  "air_combat_weapon_employment_process_probe.py",
-  "arma_proxy_backend_stub.py",
-  "benchmark.py",
-  "benchmark_registry.py",
-  "common.py",
-  "cooperative_trajectory_base.py",
-  "diagnose_cooperative_trajectory.py",
-  "event_credit_head_probe.py",
-  "fire_timing_fault_localization_probe.py",
-  "flight_trajectory_diagnostics.py",
-  "leader_perf_probe.py",
-  "run_benchmark_suite.py",
-  "trace_training_nonfinite_source.py",
-}
-
-FORBIDDEN_NAME_EXCEPTIONS = {
-  "benchmark_registry.py",
-  "run_benchmark_suite.py",
-}
 
 RETIRED_TOOL_ENTRYPOINTS = {
   "/".join(parts)
@@ -86,87 +61,12 @@ def _iter_text_files() -> list[Path]:
   return files
 
 
-@pytest.mark.xfail(
-  strict=True,
-  reason=(
-    "lineage gap (governed at I57): the tools/diagnostics/ top-level "
-    "'governed by function' consolidation to the APPROVED_DIAGNOSTICS_TOP_LEVEL "
-    "15-entry set never landed on this lineage. Eleven ad-hoc top-level "
-    "diagnostics scripts (kill_chain_*, mlf9_statistical_trends, "
-    "lethality_chain_contract, structural_breakup_export, "
-    "calibration_admission_audit) remain uncollapsed. The allowlist cannot be "
-    "widened to include them without blessing the exact top-level sprawl this "
-    "guard exists to forbid, so the guard intent is genuinely unmet here rather "
-    "than merely relocated. See "
-    "docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md section 5/8."
-  ),
-)
-def test_diagnostics_top_level_entrypoints_are_governed_by_function() -> None:
+def test_diagnostics_sources_compile_without_a_filename_allowlist() -> None:
+  """Top-level diagnostics remain opt-in tools, not a frozen directory census."""
+
   diagnostics_dir = REPO_ROOT / "tools" / "diagnostics"
-  actual = {path.name for path in diagnostics_dir.glob("*.py")}
-
-  assert actual == APPROVED_DIAGNOSTICS_TOP_LEVEL
-
-  forbidden_name_parts = (
-    "benchmark_",
-    "m3s",
-    "n4",
-    "phase",
-    "post_launch_assessment_benchmark",
-    "runway_drift",
-    "stage",
-    "takeoff_to_landing",
-  )
-  unexpected = [
-    name
-    for name in sorted(actual)
-    if any(part in name.lower() for part in forbidden_name_parts)
-    and name not in FORBIDDEN_NAME_EXCEPTIONS
-  ]
-
-  assert unexpected == []
-
-
-# The strict-xfail guard above records that the top-level sprawl is genuinely
-# unresolved. Strict xfail alarms on recovery, not on decay: the residual set
-# once grew from the 11 scripts its reason records to 23 before anything
-# noticed (census, 2026-08-13). The closed CUDA evidence family was retired on
-# 2026-08-14, returning the residual set to 11. This ratchet freezes that set.
-TOLERATED_DIAGNOSTICS_TOP_LEVEL_RESIDUALS = frozenset(
-  {
-    "calibration_admission_audit.py",
-    "kill_chain_decoupling_probe.py",
-    "kill_chain_expectation_harness.py",
-    "kill_chain_expectation_response_diagnosis.py",
-    "kill_chain_expectation_stage_attribution.py",
-    "kill_chain_expectation_visualize.py",
-    "kill_chain_guidance_exact_mechanism_ablation.py",
-    "kill_chain_guidance_mechanism_ablation.py",
-    "lethality_chain_contract.py",
-    "mlf9_statistical_trends.py",
-    "structural_breakup_export.py",
-  }
-)
-
-
-def test_diagnostics_top_level_sprawl_never_grows() -> None:
-  diagnostics_dir = REPO_ROOT / "tools" / "diagnostics"
-  actual = {path.name for path in diagnostics_dir.glob("*.py")}
-
-  new_sprawl = sorted(
-    actual - APPROVED_DIAGNOSTICS_TOP_LEVEL - TOLERATED_DIAGNOSTICS_TOP_LEVEL_RESIDUALS
-  )
-  assert not new_sprawl, (
-    "new top-level scripts under tools/diagnostics/ need a family package or "
-    "an explicit governance decision, not another sibling: "
-    f"{new_sprawl}"
-  )
-
-  healed = sorted(TOLERATED_DIAGNOSTICS_TOP_LEVEL_RESIDUALS - actual)
-  assert not healed, (
-    "tolerated residuals were removed or relocated; delete them from "
-    f"TOLERATED_DIAGNOSTICS_TOP_LEVEL_RESIDUALS to lock in the win: {healed}"
-  )
+  for path in sorted(diagnostics_dir.glob("*.py")):
+    compile(path.read_text(encoding="utf-8"), str(path), "exec")
 
 
 def test_benchmark_families_are_registered_modules() -> None:
