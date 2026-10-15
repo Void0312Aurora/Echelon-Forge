@@ -127,6 +127,16 @@ inline Vec3 world_los_from_relative_angles(double bearing_deg, double elevation_
                      (up * std::sin(el)));
 }
 
+// The maintained detection-to-world projection. Keep the legacy nonnegative
+// range rule here so production guidance and qualification adapters use one
+// implementation of the position reconstruction.
+inline Vec3 world_position_from_los_range(const Vec3 &los_world, double range_m,
+                                          const Transform &observer) {
+    const double distance_m = std::max(0.0, range_m);
+    return {observer.x + los_world.x * distance_m, observer.y + los_world.y * distance_m,
+            observer.z + los_world.z * distance_m};
+}
+
 inline Vec3 project_lateral(const Vec3 &acceleration, const Vec3 &velocity_dir) {
     return acceleration - velocity_dir * dot(acceleration, velocity_dir);
 }

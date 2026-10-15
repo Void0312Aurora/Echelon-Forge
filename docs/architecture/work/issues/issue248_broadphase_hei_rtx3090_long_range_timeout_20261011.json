@@ -1,0 +1,63 @@
+{
+  "benchmark": "interaction_broadphase",
+  "build": {
+    "cuda_architectures": "86",
+    "cuda_experiments": "ON",
+    "probe_commit": "0ef156cec"
+  },
+  "case_count": 1,
+  "cases": [
+    {
+      "cell_km": 1.0,
+      "cuda_built": null,
+      "cuda_device_count": null,
+      "cuda_runtime_available": null,
+      "device": null,
+      "entities_per_world": 8,
+      "exit_codes": [
+        null
+      ],
+      "gpu_exercised": false,
+      "missing_pairs": null,
+      "overflow_buckets": null,
+      "overflow_queries": null,
+      "queries_per_world": 1,
+      "queries_with_miss": null,
+      "range_km": 300.0,
+      "sample_count": 1,
+      "samples": [
+        {
+          "exit_code": null,
+          "timed_out": true,
+          "timeout_s": 10.0
+        }
+      ],
+      "seed": 8,
+      "successful_sample_count": 0,
+      "superset_ok": false,
+      "timed_out_sample_count": 1,
+      "timing_ms": {
+        "cpu_ms": {
+          "sample_count": 0
+        },
+        "gpu_device_ms": {
+          "sample_count": 0
+        },
+        "gpu_host_ms": {
+          "sample_count": 0
+        }
+      },
+      "worlds": 1
+    }
+  ],
+  "machine": {
+    "cuda_toolkit": "12.4.131",
+    "driver": "580.178.04",
+    "gpu": "NVIDIA GeForce RTX 3090 (sm_86)",
+    "host": "HEI-FRP",
+    "os": "Linux 7.0.0-38-generic"
+  },
+  "measurement_scope": "Single 300 km range / 1 km cell case, one sample, 10 s timeout; timeout is retained as a measured non-completion",
+  "probe": "/tmp/echelon-issue248-build/ef_gpu_interaction_broadphase_phase0_probe",
+  "schema_version": 2
+}

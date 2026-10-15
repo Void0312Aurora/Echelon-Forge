@@ -4,15 +4,14 @@
 #include <string>
 #include <vector>
 
-enum class SonarMode {
-    Passive = 0,
-    Active = 1
-};
+enum class SonarMode { Passive = 0, Active = 1 };
+
+enum class AcousticScanStatus { NotScanned = 0, Completed = 1, UnsupportedMode = 2 };
 
 struct Sonar {
     double max_range_m = 0.0;
     double scan_period_s = 5.0;
-    double last_scan_time_s = -1.0;
+    double last_scan_time_s = -1.0; // Last attempt; consult last_scan_status for completion.
     double detection_threshold_db = 6.0;
     double track_memory_s = 20.0;
     double bearing_noise_std_deg = 3.0;
@@ -33,6 +32,7 @@ struct Sonar {
     int mode = static_cast<int>(SonarMode::Passive);
     bool passive_only = true;
     bool bearing_only = false;
+    int last_scan_status = static_cast<int>(AcousticScanStatus::NotScanned);
 };
 
 struct SonarMount {

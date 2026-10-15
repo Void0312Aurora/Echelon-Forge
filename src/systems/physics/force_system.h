@@ -69,10 +69,16 @@ inline void register_force_system(flecs::world &ecs) {
                     const ResolvedAirControlInput control_input = resolve_air_control_input(
                         it.entity(i).get<PilotAction>(),
                         it.entity(i).get<MissionCommandControlState>(), nullptr);
-                    if (!control_input.has_primary_flight_control_input) continue;
-
                     double m = mass[i].get_total_kg();
                     if (!physics_runtime::valid_mass(m)) continue;
+
+                    // Gravity is a physical participation effect, not a command effect.  An
+                    // admitted body keeps its downward force even when no pilot or mission
+                    // control input is currently available.
+                    forces[i].add_force(0.0, 0.0, -m * kGravity);
+
+                    // Thrust remains command-dependent; do not synthesize privileged input.
+                    if (!control_input.has_primary_flight_control_input) continue;
 
                     // Current speed
                     double vx = velocity[i].vx;
@@ -81,11 +87,7 @@ inline void register_force_system(flecs::world &ecs) {
                     double speed_sq = vx * vx + vy * vy + vz * vz;
                     double speed = std::sqrt(speed_sq);
 
-                    // === 1. GRAVITY ===
-                    // Always acts downward in world frame
-                    forces[i].add_force(0.0, 0.0, -m * kGravity);
-
-                    // === 2. THRUST ===
+                    // === 1. THRUST ===
                     // Acts along nose direction
                     double yaw_rad = Math::to_radians(90.0 - transform[i].heading);
                     double pitch_rad = Math::to_radians(transform[i].pitch);

@@ -30,8 +30,7 @@ world_spawn_request_from_type_name_projection(const TypedPlatformSpawnRequest &r
 std::uint64_t spawn_world_request_through_type_name_projection(IWorldBatchBackend &runtime,
                                                                const WorldSpawnRequest &request) {
     const ::runtime::backend::SetupResult result = runtime.setup(::runtime::backend::SetupRequest{
-        .kind = ::runtime::backend::SetupKind::WorldSpawn,
-        .world_spawn_request = &request,
+        .operation = ::runtime::backend::WorldSpawnSetup{.request = &request},
     });
     return result.entity_ids.empty() ? 0U : result.entity_ids.front();
 }
@@ -40,8 +39,7 @@ std::uint64_t
 spawn_typed_request_through_maintained_path(IWorldBatchBackend &runtime,
                                             const TypedPlatformSpawnRequest &request) {
     const ::runtime::backend::SetupResult result = runtime.setup(::runtime::backend::SetupRequest{
-        .kind = ::runtime::backend::SetupKind::TypedPlatformSpawn,
-        .typed_platform_spawn_request = &request,
+        .operation = ::runtime::backend::TypedPlatformSpawnSetup{.request = &request},
     });
     return result.entity_ids.empty() ? 0U : result.entity_ids.front();
 }
@@ -334,36 +332,41 @@ std::vector<uint64_t> RuntimeFacade::apply_world_setup_batch(
     const std::vector<WorldMaritimeAssignment> &maritime_assignments) {
     return runtime_
         ->setup(runtime::backend::SetupRequest{
-            .kind = runtime::backend::SetupKind::Batch,
-            .seeds = seeds,
-            .terrain_assignments = terrain_assignments,
-            .wind_assignments = wind_assignments,
-            .zones = zones,
-            .spawn_requests = requests,
-            .time_steps = time_steps,
-            .sun_assignments = sun_assignments,
-            .geodetic_anchor_assignments = geodetic_anchor_assignments,
-            .maritime_assignments = maritime_assignments,
+            .operation =
+                runtime::backend::BatchSetup{
+                    .seeds = seeds,
+                    .terrain_assignments = terrain_assignments,
+                    .wind_assignments = wind_assignments,
+                    .zones = zones,
+                    .spawn_requests = requests,
+                    .time_steps = time_steps,
+                    .sun_assignments = sun_assignments,
+                    .geodetic_anchor_assignments = geodetic_anchor_assignments,
+                    .maritime_assignments = maritime_assignments,
+                },
         })
         .entity_ids;
 }
 
 BatchWorldSetupResult RuntimeFacade::apply_world_setup(const BatchWorldSetupRequest &request) {
     BatchWorldSetupResult result{};
-    result.entity_ids = runtime_
-                            ->setup(runtime::backend::SetupRequest{
-                                .kind = runtime::backend::SetupKind::Batch,
-                                .seeds = request.seeds,
-                                .terrain_assignments = request.terrain_assignments,
-                                .wind_assignments = request.wind_assignments,
-                                .zones = request.zones,
-                                .spawn_requests = request.spawn_requests,
-                                .time_steps = request.time_steps,
-                                .sun_assignments = request.sun_assignments,
-                                .geodetic_anchor_assignments = request.geodetic_anchor_assignments,
-                                .maritime_assignments = request.maritime_assignments,
-                            })
-                            .entity_ids;
+    result.entity_ids =
+        runtime_
+            ->setup(runtime::backend::SetupRequest{
+                .operation =
+                    runtime::backend::BatchSetup{
+                        .seeds = request.seeds,
+                        .terrain_assignments = request.terrain_assignments,
+                        .wind_assignments = request.wind_assignments,
+                        .zones = request.zones,
+                        .spawn_requests = request.spawn_requests,
+                        .time_steps = request.time_steps,
+                        .sun_assignments = request.sun_assignments,
+                        .geodetic_anchor_assignments = request.geodetic_anchor_assignments,
+                        .maritime_assignments = request.maritime_assignments,
+                    },
+            })
+            .entity_ids;
     result.typed_platform_spawn_results.reserve(request.typed_platform_spawn_requests.size());
     for (std::size_t request_index = 0;
          request_index < request.typed_platform_spawn_requests.size(); ++request_index) {
@@ -378,29 +381,32 @@ RuntimeWorldLayoutResult
 RuntimeFacade::apply_world_layout(const RuntimeWorldLayoutRequest &request) {
     RuntimeWorldLayoutResult result{};
     result.world_index = request.world_index;
-    result.entity_ids = runtime_
-                            ->setup(runtime::backend::SetupRequest{
-                                .kind = runtime::backend::SetupKind::Layout,
-                                .zones = request.zones,
-                                .spawn_requests = request.spawn_requests,
-                                .time_steps = request.time_steps,
-                                .world_index = static_cast<std::size_t>(request.world_index),
-                                .seed = request.seed,
-                                .terrain_type = &request.terrain_type,
-                                .wind_speed_mps = request.wind_speed_mps,
-                                .wind_dir_from_deg = request.wind_dir_from_deg,
-                                .wind_shear_mps_per_km = request.wind_shear_mps_per_km,
-                                .maritime_configured = request.maritime_configured,
-                                .sea_state = request.sea_state,
-                                .wave_heading_deg = request.wave_heading_deg,
-                                .wave_period_s = request.wave_period_s,
-                                .sun_azimuth_deg = request.sun_azimuth_deg,
-                                .sun_elevation_deg = request.sun_elevation_deg,
-                                .anchor_latitude_deg = request.anchor_latitude_deg,
-                                .anchor_longitude_deg = request.anchor_longitude_deg,
-                                .anchor_height_m = request.anchor_height_m,
-                            })
-                            .entity_ids;
+    result.entity_ids =
+        runtime_
+            ->setup(runtime::backend::SetupRequest{
+                .operation =
+                    runtime::backend::LayoutSetup{
+                        .world_index = static_cast<std::size_t>(request.world_index),
+                        .seed = request.seed,
+                        .terrain_type = &request.terrain_type,
+                        .wind_speed_mps = request.wind_speed_mps,
+                        .wind_dir_from_deg = request.wind_dir_from_deg,
+                        .wind_shear_mps_per_km = request.wind_shear_mps_per_km,
+                        .maritime_configured = request.maritime_configured,
+                        .sea_state = request.sea_state,
+                        .wave_heading_deg = request.wave_heading_deg,
+                        .wave_period_s = request.wave_period_s,
+                        .sun_azimuth_deg = request.sun_azimuth_deg,
+                        .sun_elevation_deg = request.sun_elevation_deg,
+                        .anchor_latitude_deg = request.anchor_latitude_deg,
+                        .anchor_longitude_deg = request.anchor_longitude_deg,
+                        .anchor_height_m = request.anchor_height_m,
+                        .zones = request.zones,
+                        .spawn_requests = request.spawn_requests,
+                        .time_steps = request.time_steps,
+                    },
+            })
+            .entity_ids;
     return result;
 }
 

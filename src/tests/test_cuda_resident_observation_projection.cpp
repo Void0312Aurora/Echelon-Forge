@@ -72,10 +72,12 @@ TEST_CASE("CUDA observation projection produces host export and a lease-scoped d
     const std::vector<WorldSpawnRequest> spawns = make_spawns();
     const std::vector<double> time_steps = {0.05, 0.125};
     const auto setup = backend.setup({
-        .kind = runtime::backend::SetupKind::Batch,
-        .seeds = seeds,
-        .spawn_requests = spawns,
-        .time_steps = time_steps,
+        .operation =
+            runtime::backend::BatchSetup{
+                .seeds = seeds,
+                .spawn_requests = spawns,
+                .time_steps = time_steps,
+            },
     });
     const auto actions = make_actions(setup.entity_ids);
     backend.inject({.pilot_actions = actions});

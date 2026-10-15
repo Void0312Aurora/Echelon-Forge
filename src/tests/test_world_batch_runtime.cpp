@@ -1,11 +1,18 @@
 #include "core/engine/world_batch_runtime.h"
+#include "core/engine/parallel_for_index.h"
+#include "core/engine/testing/world_batch_runtime_test_access.h"
+#include "components/basic/common.h"
 #include "components/basic/stable_identity.h"
-#include "core/engine/world_batch_visual_binding_compatibility_helper.h"
+#include "components/command/common/mission_command_control_state.h"
+#include "components/visual/visual_sensor.h"
+#include "gpu/gpu_world_batch_visual_binding_compatibility.h"
 #include "runtime/facade/runtime_facade.h"
 
 #include <doctest/doctest.h>
 
+#include <atomic>
 #include <cmath>
+#include <functional>
 #include <stdexcept>
 #include <limits>
 #include <type_traits>
@@ -14,6 +21,222 @@ static_assert(!std::is_polymorphic_v<WorldBatchRuntime>,
               "WorldBatchRuntime compatibility ABI must remain non-polymorphic");
 
 TEST_SUITE("world_batch_runtime") {
+
+    TEST_CASE("world batch applies gravity without an active command") {
+        WorldBatchRuntime runtime(1);
+        BatchWorldSetupRequest setup{};
+        setup.seeds = {42};
+        setup.time_steps = {0.05};
+        WorldSpawnRequest spawn{};
+        spawn.world_index = 0;
+        spawn.side = Side::Blue;
+        spawn.type_name = "Aircraft";
+        spawn.entity_name = "GravityNoCommand";
+        spawn.is_agent = false;
+        spawn.z = 1000.0;
+        setup.spawn_requests = {spawn};
+        const auto entity_ids = runtime.apply_world_setup_batch(
+            setup.seeds, {}, {{0, 0.0, 0.0, 0.0}}, {}, setup.spawn_requests, setup.time_steps);
+        REQUIRE(entity_ids.size() == 1);
+
+        // Use the quarantine seam only to prepare the missing-input fixture;
+        // WorldBatchRuntime remains the execution and observation owner.
+        auto &kernel = runtime.world_raw_quarantine(0);
+        {
+            auto lease = kernel.acquire_world_lease();
+            const auto entity = lease.world().entity(entity_ids.front());
+            REQUIRE(entity.is_valid());
+            auto *control = entity.get_mut<MissionCommandControlState>();
+            REQUIRE(control != nullptr);
+            *control = MissionCommandControlState{};
+        }
+        constexpr double gravity = 9.80665;
+        constexpr double dt = 0.05;
+        runtime.step_batch();
+        const auto observations = runtime.get_agent_observations_batch({{0, entity_ids.front()}});
+        REQUIRE(observations.size() == 1);
+        CHECK(observations.front().vz == doctest::Approx(-gravity * dt));
+        CHECK(observations.front().z == doctest::Approx(1000.0 - 0.5 * gravity * dt * dt));
+    }
+
+    TEST_CASE("factory plan query uses the native owner without mutation") {
+        WorldBatchRuntime runtime(1);
+
+        const auto aircraft = runtime.resolve_factory_platform_spawn_plan(0, "Aircraft");
+        CHECK(aircraft.admitted);
+        CHECK(aircraft.source_type_name == "Aircraft");
+        CHECK(aircraft.type_name_projection_preserved);
+        CHECK(
+            runtime::platform_capabilities::validate_resolved_platform_spawn_plan(aircraft).valid);
+
+        const auto missing = runtime.resolve_factory_platform_spawn_plan(0, "Missing_Type");
+        CHECK_FALSE(missing.admitted);
+        CHECK(missing.rejection_reason == "resolved_platform_spawn_plan_type_name_not_found");
+        CHECK(runtime.batch_healthy());
+    }
+
+    TEST_CASE("maintained stage manifest query returns the native owner snapshot") {
+        WorldBatchRuntime runtime(1);
+
+        const auto manifests = runtime.maintained_stage_node_manifests();
+        REQUIRE(manifests.size() >= 3);
+        CHECK(std::none_of(manifests.begin(), manifests.end(), [](const auto &manifest) {
+            return manifest.facade_visibility ==
+                       runtime::scheduler::kFacadeVisibilityAdapterProjection ||
+                   manifest.facade_visibility ==
+                       runtime::scheduler::kFacadeVisibilityDiagnosticsOnly;
+        }));
+        const auto it = std::find_if(manifests.begin(), manifests.end(), [](const auto &manifest) {
+            return manifest.node_id == "fire_control_launch.v1";
+        });
+        REQUIRE(it != manifests.end());
+        CHECK(it->owner_module == "src/core/engine/simulation_kernel_weapon_api.cpp");
+        CHECK(runtime::scheduler::validate_stage_node_manifest_registry(manifests).valid);
+        CHECK(runtime.batch_healthy());
+    }
+
+    TEST_CASE("batch worker launch failure fences exports and failed recovery until reset") {
+        for (const std::size_t world_count : {std::size_t{3}, std::size_t{4}}) {
+            for (const std::size_t failed_launch : {std::size_t{0}, std::size_t{1}}) {
+                WorldBatchRuntime batch(world_count);
+                batch.set_worker_threads(world_count);
+                std::atomic<std::size_t> launch_count{0};
+                std::atomic<std::size_t> finished_count{0};
+                auto clock = [&](std::size_t index) {
+                    auto lease = batch.world_raw_quarantine(index).acquire_world_lease();
+                    return ecs_get_world_info(lease.world().c_ptr())->world_time_total;
+                };
+                WorldBatchRuntimeTestAccess::set_worker_thread_factory(
+                    batch, [&](std::function<void()> task) -> std::jthread {
+                        if (launch_count.fetch_add(1) == failed_launch) {
+                            throw std::runtime_error("injected batch worker launch failure");
+                        }
+                        return std::jthread([&, task = std::move(task)] {
+                            task();
+                            finished_count.fetch_add(1);
+                        });
+                    });
+                CHECK_THROWS_WITH(batch.step_batch(), "injected batch worker launch failure");
+                CHECK(launch_count.load() == failed_launch + 1);
+                CHECK(finished_count.load() == failed_launch);
+                CHECK_FALSE(batch.batch_healthy());
+                const auto failed_generation = batch.batch_generation();
+                CHECK(batch.batch_failure_reason() == "injected batch worker launch failure");
+                CHECK((clock(0) > 0.0) == (failed_launch == 1));
+                for (std::size_t index = 1; index < world_count; ++index) {
+                    CHECK(clock(index) == 0.0);
+                }
+                // Clocks are diagnostics, never per-world commit/rollback evidence.
+                CHECK_THROWS_AS(batch.step_batch(), std::logic_error);
+                CHECK_THROWS_AS((void)batch.composition_diagnostics(), std::logic_error);
+                CHECK_THROWS_AS(batch.get_agent_observations_batch({}), std::logic_error);
+                CHECK(launch_count.load() == failed_launch + 1);
+                // A recovery launch exception also leaves the generation fenced.
+                WorldBatchRuntimeTestAccess::set_worker_thread_factory(
+                    batch, [](std::function<void()>) -> std::jthread {
+                        throw std::runtime_error("injected recovery launch failure");
+                    });
+                CHECK_THROWS_WITH(batch.reset_batch({31}), "injected recovery launch failure");
+                CHECK_FALSE(batch.batch_healthy());
+                CHECK_THROWS_AS(batch.step_batch(), std::logic_error);
+                WorldBatchRuntimeTestAccess::set_worker_thread_factory(batch, {});
+                REQUIRE_NOTHROW(batch.reset_batch({31}));
+                CHECK(batch.batch_healthy());
+                CHECK(batch.batch_generation() == failed_generation + 1);
+                CHECK(batch.batch_failure_reason().empty());
+                for (std::size_t index = 0; index < world_count; ++index) {
+                    CHECK(clock(index) == 0.0);
+                }
+                CHECK_NOTHROW(batch.step_batch());
+                CHECK_NOTHROW((void)batch.composition_diagnostics());
+            }
+        }
+    }
+
+    TEST_CASE("worker launch failure joins already started workers before propagating") {
+        std::atomic<std::size_t> launch_count{0};
+        std::atomic<bool> worker_finished{false};
+        auto thread_factory = [&](std::function<void()> task) -> std::jthread {
+            if (launch_count.fetch_add(1) == 1) {
+                throw std::runtime_error("injected worker launch failure");
+            }
+            return std::jthread(std::move(task));
+        };
+
+        CHECK_THROWS_AS(
+            runtime::detail::parallel_for_index(
+                4, 4, [&](std::size_t) { worker_finished.store(true, std::memory_order_release); },
+                thread_factory),
+            std::runtime_error);
+        CHECK(worker_finished.load(std::memory_order_acquire));
+        CHECK(launch_count.load() == 2);
+    }
+
+    TEST_CASE("state-mutating batch failure is fail-closed until reset") {
+        for (const std::size_t worker_threads : {std::size_t{1}, std::size_t{2}}) {
+            WorldBatchRuntime runtime(2);
+            runtime.set_worker_threads(worker_threads);
+            runtime.world_raw_quarantine(1).begin_exact_stage_trace_frame();
+
+            CHECK(runtime.batch_healthy());
+            CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
+            CHECK_FALSE(runtime.batch_healthy());
+            const auto failed_generation = runtime.batch_generation();
+            CHECK(runtime.batch_failure_reason().find("exact-stage trace frame") !=
+                  std::string::npos);
+
+            // The failed batch cannot be retried as if all worlds had advanced.
+            CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
+
+            runtime.world_raw_quarantine(1).end_exact_stage_trace_frame();
+            CHECK_NOTHROW(runtime.reset_batch({11, 17}));
+            CHECK(runtime.batch_healthy());
+            CHECK(runtime.batch_generation() == failed_generation + 1);
+            CHECK(runtime.batch_failure_reason().empty());
+            CHECK_NOTHROW(runtime.step_batch());
+        }
+    }
+
+    TEST_CASE("mixed world advancement remains diagnostic until explicit generation reset") {
+        for (const std::size_t world_count : {std::size_t{3}, std::size_t{4}}) {
+            for (const std::size_t worker_threads : {std::size_t{1}, std::size_t{2}, world_count}) {
+                WorldBatchRuntime runtime(world_count);
+                runtime.set_worker_threads(worker_threads);
+                auto clock = [&](std::size_t index) {
+                    auto lease = runtime.world_raw_quarantine(index).acquire_world_lease();
+                    return ecs_get_world_info(lease.world().c_ptr())->world_time_total;
+                };
+                runtime.world_raw_quarantine(1).begin_exact_stage_trace_frame();
+                // The trace probe opens a Flecs frame and advances its clock.
+                // Isolate that probe mutation from the subsequent batch call.
+                const double fault_world_clock_before_step = clock(1);
+                CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
+                CHECK_FALSE(runtime.batch_healthy());
+                // The first chunk advances world 0 before world 1 throws. Other
+                // chunks finish in parallel; serial execution leaves 2+ skipped.
+                CHECK(clock(0) > 0.0);
+                CHECK(clock(1) == fault_world_clock_before_step);
+                for (std::size_t index = 2; index < world_count; ++index) {
+                    CHECK((clock(index) > 0.0) == (worker_threads > 1));
+                }
+                // None of these clock observations proves effect commit or
+                // rollback. Maintained exports must not publish a valid batch.
+                CHECK_THROWS_AS((void)runtime.composition_diagnostics(), std::logic_error);
+                CHECK_THROWS_AS(runtime.get_agent_observations_batch({}), std::logic_error);
+                CHECK_THROWS_AS(runtime.resize(world_count + 1), std::logic_error);
+                CHECK(runtime.world_count() == world_count);
+                CHECK_THROWS_AS(runtime.reset_batch({11, 17}), std::invalid_argument);
+                CHECK_FALSE(runtime.batch_healthy());
+                runtime.world_raw_quarantine(1).end_exact_stage_trace_frame();
+                REQUIRE_NOTHROW(runtime.reset_batch({23}));
+                CHECK(runtime.batch_healthy());
+                for (std::size_t index = 0; index < world_count; ++index) {
+                    CHECK(clock(index) == 0.0);
+                }
+                CHECK_NOTHROW(runtime.step_batch());
+            }
+        }
+    }
 
     TEST_CASE("batch reset and setup resolve documented effective seeds") {
         WorldBatchRuntime runtime(4);
@@ -105,6 +328,36 @@ TEST_SUITE("world_batch_runtime") {
         CHECK_THROWS_AS(runtime.apply_world_setup_batch({}, {}, {}, {}, {}, {0.1, 0.2, 0.3}),
                         std::invalid_argument);
         CHECK(entity.is_alive());
+    }
+
+    TEST_CASE("layout failure after timestep mutation fail-closes the batch") {
+        WorldBatchRuntime runtime(1);
+        runtime.apply_world_setup_batch({11}, {}, {}, {}, {}, {0.2});
+
+        CHECK_THROWS_AS(runtime.apply_world_layout(0, 17, "not-a-terrain", 0.0, 0.0, 0.0, false,
+                                                   0.0, 0.0, 8.0, {}, {}, {0.1}),
+                        std::invalid_argument);
+        CHECK_FALSE(runtime.batch_healthy());
+        CHECK(runtime.batch_failure_reason().find("Unknown terrain_type") != std::string::npos);
+        CHECK(runtime.world_raw_quarantine(0).get_time_step() == 0.1);
+        CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
+
+        runtime.reset_batch({23});
+        CHECK(runtime.batch_healthy());
+        CHECK_NOTHROW(runtime.step_batch());
+    }
+
+    TEST_CASE("invalid layout world index preserves healthy batch") {
+        WorldBatchRuntime runtime(1);
+        runtime.apply_world_setup_batch({11}, {}, {}, {}, {}, {0.2});
+
+        CHECK_THROWS_AS(runtime.apply_world_layout(99, 17, "flat", 0.0, 0.0, 0.0, false, 0.0, 0.0,
+                                                   8.0, {}, {}, {0.1}),
+                        std::out_of_range);
+        CHECK(runtime.batch_healthy());
+        CHECK(runtime.batch_failure_reason().empty());
+        CHECK(runtime.world_time_step(0) == 0.2);
+        CHECK_NOTHROW(runtime.step_batch());
     }
 
     TEST_CASE("batch setup applies maritime overrides and clears absent worlds") {
@@ -256,6 +509,51 @@ TEST_SUITE("world_batch_runtime") {
         CHECK_THROWS_AS(runtime.try_set_entity_kinematics(bad_world_ref, state), std::out_of_range);
     }
 
+    TEST_CASE("mutation callback failure poisons the batch after a partial kinematics write") {
+        WorldBatchRuntime runtime(1);
+        WorldSpawnRequest spawn{};
+        spawn.world_index = 0;
+        spawn.side = Side::Blue;
+        spawn.type_name = "Aircraft";
+        spawn.z = 1000.0;
+        const auto entity_ids = runtime.apply_world_setup_batch({}, {}, {}, {}, {spawn});
+        REQUIRE(entity_ids.size() == 1);
+
+        WorldBatchRuntimeTestAccess::set_mutation_hook(
+            runtime, [] { throw std::runtime_error("injected velocity callback failure"); });
+        WorldEntityKinematics state{};
+        state.x = 17.0;
+        state.vx = 3.0;
+        const WorldEntityRef ref{0, entity_ids.front()};
+        CHECK_THROWS_AS(runtime.try_set_entity_kinematics(ref, state), std::runtime_error);
+        CHECK_FALSE(runtime.batch_healthy());
+        CHECK(runtime.batch_failure_reason().find("injected velocity callback failure") !=
+              std::string::npos);
+        CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
+        WorldBatchRuntimeTestAccess::set_mutation_hook(runtime, {});
+        CHECK_NOTHROW(runtime.reset_batch());
+        CHECK(runtime.batch_healthy());
+    }
+
+    TEST_CASE("direct native spawn callback failure poisons the batch") {
+        WorldBatchRuntime runtime(1);
+        TypedPlatformSpawnRequest request{};
+        request.world_index = 0;
+        request.side = Side::Blue;
+        request.request_id = "direct-spawn-failure";
+        request.source_type_name = "Aircraft";
+        request.entity_name = "DirectSpawnFailure";
+        request.z = 1000.0;
+        WorldBatchRuntimeTestAccess::set_mutation_hook(
+            runtime, [] { throw std::runtime_error("injected direct spawn callback failure"); });
+        CHECK_THROWS_AS(runtime.spawn_typed_platform_unit(request), std::runtime_error);
+        CHECK_FALSE(runtime.batch_healthy());
+        CHECK(runtime.batch_failure_reason().find("injected direct spawn callback failure") !=
+              std::string::npos);
+        CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
+        WorldBatchRuntimeTestAccess::set_mutation_hook(runtime, {});
+    }
+
     TEST_CASE("complete world setup with missing wind resets calm") {
         WorldBatchRuntime runtime(1);
         auto &world = runtime.world_raw_quarantine(0);
@@ -323,13 +621,13 @@ TEST_SUITE("world_batch_runtime") {
         CHECK(scenes.front().request.out_width == arb::ARB_WIDTH / 4);
 
         const auto before_shutdown =
-            world_batch_visual_binding_compatibility::render_scenes_batch(scenes, false);
+            gpu::render_world_batch_visual_binding_compatibility(scenes, false);
         CHECK(before_shutdown.batch_size == 1);
 
         world.shutdown();
         WorldBatchVisualObservationCompatibilityExport rendered{};
-        CHECK_NOTHROW(rendered = world_batch_visual_binding_compatibility::render_scenes_batch(
-                          scenes, false));
+        CHECK_NOTHROW(rendered =
+                          gpu::render_world_batch_visual_binding_compatibility(scenes, false));
         CHECK(rendered.batch_size == 1);
         CHECK(rendered.flat.size() == rendered.frame_size);
         CHECK(rendered.flat == before_shutdown.flat);

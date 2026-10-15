@@ -35,7 +35,10 @@
       "test_parallelism": 1,
       "ctest_labels": ["qualification", "p5b"],
       "selected_ctest_labels": ["p5b"],
-      "pytest_entries": ["tests/architecture/composition/test_runtime_run_receipt.py"],
+      "pytest_entries": [
+        "tests/architecture/composition/test_runtime_run_receipt.py",
+        "tests/architecture/composition/test_native_failure_qualification.py"
+      ],
       "contract_suites": [],
       "run_mode": "native-and-python"
     },

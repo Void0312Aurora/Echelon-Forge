@@ -1,0 +1,19 @@
+{
+  "schema_version": "echelon_forge.air_perception_qualification.v1",
+  "implementation_version": "1",
+  "backend_ref": "cpu_exact.reference",
+  "clock_policy": {
+    "publication_clock": "window",
+    "numerical_rate": "per_second",
+    "time_unit": "second",
+    "measurement_epochs": "monotonic_seconds",
+    "publication": "after_tracker_update",
+    "lane": "qualification_only"
+  },
+  "tracker_parameters": {
+    "alpha": 0.2,
+    "beta": 0.02,
+    "minimum_velocity_baseline_s": 0.5,
+    "maximum_speed_mps": 2000.0
+  }
+}

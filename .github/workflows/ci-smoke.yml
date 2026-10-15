@@ -90,7 +90,8 @@ jobs:
         run: >-
           cmake --build build-p5b-windows --config Release --parallel 2
           --target ef_runtime_run_recorder_test ef_runtime_kernel_candidate_test
-          ef_runtime_kernel_candidate_parity_test
+          ef_runtime_kernel_candidate_parity_test ef_py
+          ef_native_system_fault_probe
 
       - name: Run P5-B native qualification gates
         run: >-
@@ -101,6 +102,14 @@ jobs:
         run: >-
           python -m pytest -q --confcutdir=tests/architecture
           tests/architecture/composition/test_runtime_run_receipt.py
+
+      - name: Run native fault qualification gates
+        env:
+          CMO_BUILD_DIR: build-p5b-windows
+          PYTHONPATH: build-p5b-windows/Release
+        run: >-
+          python -m pytest -q --confcutdir=tests/architecture
+          tests/architecture/composition/test_native_failure_qualification.py
 
   build-and-test:
     name: release / Linux facade and wheel
@@ -198,7 +207,7 @@ jobs:
         run: |
           ./.venv/bin/python tools/maintenance/simulation_composition_contract.py check
           ./.venv/bin/python tools/maintenance/runtime_composition_evidence_contract.py check
-          ./.venv/bin/python -m pytest tests/architecture/composition tests/architecture/runtime_facade/test_backend_provider_migration.py tests/architecture/runtime_facade/test_design_boundary_gates.py -q
+          ./.venv/bin/python -m pytest tests/architecture/composition --ignore=tests/architecture/composition/test_native_failure_qualification.py tests/architecture/runtime_facade/test_backend_provider_migration.py tests/architecture/runtime_facade/test_design_boundary_gates.py -q
           ./.venv/bin/python -m pytest tests/runtime/facade/test_runtime_composition_evidence.py -q
 
       - name: Validate repo environment

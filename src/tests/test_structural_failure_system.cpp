@@ -40,6 +40,22 @@ void set_component_damage(ComponentDamageState &damage, const std::string &name,
     }
 }
 
+void activate_tg_p7_profile(ComponentDamageState &damage) {
+    damage.structural_topology_profile = std::string(kTgP7SplitSurfaceTopologyProfile);
+    for (const char *name : {
+             "engine_core_afterburner_segment",
+             "engine_core_hot_section_segment",
+             "engine_core_forward_compressor_segment",
+             "wing_spar_center_left_inner_wing_segment",
+             "wing_spar_center_left_root_segment",
+             "wing_spar_center_carrythrough_segment",
+             "wing_spar_center_right_root_segment",
+             "wing_spar_center_right_inner_wing_segment",
+         }) {
+        set_component_damage(damage, name, 1.0, "none");
+    }
+}
+
 struct CapturingStructuralRecorder final : IEngagementEventRecorder {
     std::vector<StructuralBreakupEvent> structural_events;
     std::vector<PlatformConsequenceEvent> platform_consequence_events;
@@ -156,6 +172,56 @@ StructuralStepResult run_single_aircraft_structural_step(const ComponentDamageSt
 
 TEST_SUITE("structural_failure_state") {
 
+    TEST_CASE("intact airframe starts bounded envelope damage only beyond q or Mach limits") {
+        AircraftDamageBaseline baseline{};
+        AircraftDamageState in_envelope{};
+        AeroState in_envelope_aero{};
+        in_envelope_aero.dynamic_pressure = baseline.flutter_dynamic_pressure_pa * 0.90;
+        in_envelope_aero.mach_number = baseline.flutter_mach * 0.90;
+
+        accumulate_aircraft_structural_envelope_damage(baseline, in_envelope_aero, 1.0,
+                                                       in_envelope);
+
+        CHECK(in_envelope.structural_integrity == doctest::Approx(1.0));
+        CHECK(in_envelope.flutter_exposure == doctest::Approx(0.0));
+        CHECK(in_envelope.structural_overstress == doctest::Approx(0.0));
+
+        AircraftDamageState intact{};
+        AeroState excessive_aero{};
+        excessive_aero.dynamic_pressure = baseline.flutter_dynamic_pressure_pa * 2.0;
+        excessive_aero.mach_number = baseline.flutter_mach * 1.30;
+
+        accumulate_aircraft_structural_envelope_damage(baseline, excessive_aero, 1.0, intact);
+
+        CHECK(intact.structural_integrity < 1.0);
+        CHECK(intact.flutter_exposure > 0.0);
+        CHECK(intact.structural_overstress > 0.0);
+    }
+
+    TEST_CASE("envelope damage is finite, timestep-aware and preserves damaged amplification") {
+        AircraftDamageBaseline baseline{};
+        AeroState excessive_aero{};
+        excessive_aero.dynamic_pressure = baseline.flutter_dynamic_pressure_pa * 1.8;
+        excessive_aero.mach_number = baseline.flutter_mach * 1.25;
+
+        AircraftDamageState short_step{};
+        AircraftDamageState long_step{};
+        accumulate_aircraft_structural_envelope_damage(baseline, excessive_aero, 0.1, short_step);
+        accumulate_aircraft_structural_envelope_damage(baseline, excessive_aero, 0.2, long_step);
+
+        CHECK(long_step.flutter_exposure == doctest::Approx(2.0 * short_step.flutter_exposure));
+        CHECK(long_step.structural_overstress ==
+              doctest::Approx(2.0 * short_step.structural_overstress));
+        CHECK(long_step.structural_integrity < short_step.structural_integrity);
+
+        AircraftDamageState pre_damaged{};
+        pre_damaged.structural_integrity = 0.98;
+        accumulate_aircraft_structural_envelope_damage(baseline, excessive_aero, 0.1, pre_damaged);
+        CHECK(pre_damaged.flutter_exposure > short_step.flutter_exposure);
+        CHECK(pre_damaged.structural_overstress > short_step.structural_overstress);
+        CHECK(pre_damaged.structural_integrity >= 0.0);
+    }
+
     TEST_CASE("functional component failure does not trigger structural breakup") {
         ComponentDamageState damage{};
         set_component_damage(damage, "center_fuselage_fuel_cell", 0.10, "fuel_leak");
@@ -216,6 +282,7 @@ TEST_SUITE("structural_failure_state") {
 
     TEST_CASE("TG-P7 split receivers select split mapping without parent components") {
         ComponentDamageState damage{};
+        activate_tg_p7_profile(damage);
         set_component_damage(damage, "wing_spar_center_left_inner_wing_segment", 0.20, "cut");
         set_component_damage(damage, "engine_core_afterburner_segment", 0.10,
                              "structural_weakening");
@@ -232,8 +299,22 @@ TEST_SUITE("structural_failure_state") {
         CHECK(structural_breakup_has_mode(state, StructuralBreakMode::EngineDetach));
     }
 
+    TEST_CASE("incomplete TG-P7 profile is explicitly downgraded to shared-spar fallback") {
+        ComponentDamageState damage{};
+        damage.structural_topology_profile = std::string(kTgP7SplitSurfaceTopologyProfile);
+        set_component_damage(damage, "wing_spar_center_left_inner_wing_segment", 0.20, "cut");
+
+        CHECK(structural_failure::structural_topology_admission(damage) ==
+              structural_failure::StructuralTopologyAdmission::TgP7IncompleteFallback);
+        const StructuralBreakupState state =
+            structural_failure::evaluate_structural_breakup_state(damage);
+        CHECK(state.breakup_state == StructuralBreakupPhase::Intact);
+        CHECK_FALSE(structural_breakup_has_group(state, StructuralBreakGroup::WingLeft));
+    }
+
     TEST_CASE("TG-P7 near-field cumulative wing damage produces wing_loss") {
         ComponentDamageState damage{};
+        activate_tg_p7_profile(damage);
         set_component_damage(damage, "wing_spar_center_left_inner_wing_segment", 1.00, "none");
         set_component_damage(damage, "left_aileron_actuator", 0.94, "cut");
         set_component_damage(damage, "left_wing_fuel_cell", 0.915, "cut");
@@ -250,6 +331,7 @@ TEST_SUITE("structural_failure_state") {
 
     TEST_CASE("TG-P7 rod cut severity produces wing_loss despite high component integrity") {
         ComponentDamageState damage{};
+        activate_tg_p7_profile(damage);
         set_component_damage(damage, "wing_spar_center_left_inner_wing_segment", 1.00, "none");
         set_component_damage(damage, "left_aileron_actuator", 0.986, "cut", 0.31);
         set_component_damage(damage, "left_wing_fuel_cell", 0.992, "cut", 0.27);
@@ -832,6 +914,31 @@ TEST_SUITE("structural_failure_break_modes") {
         CHECK(result.events[0].break_mode == "tail_loss");
         CHECK(result.events[0].detached_part_ref == "left_stabilator");
         CHECK(result.events[0].detached_part_count == 1);
+    }
+
+    TEST_CASE("stabilator actuator failure does not detach the lifting surface") {
+        ComponentDamageState damage{};
+        set_component_damage(damage, "left_stabilator_actuator", 0.10, "cut");
+
+        const StructuralBreakupState state =
+            structural_failure::evaluate_structural_breakup_state(damage);
+
+        CHECK(state.breakup_state == StructuralBreakupPhase::Intact);
+        CHECK_FALSE(structural_breakup_has_group(state, StructuralBreakGroup::TailLeft));
+        CHECK_FALSE(structural_breakup_has_mode(state, StructuralBreakMode::TailLoss));
+    }
+
+    TEST_CASE("stabilator surface structural failure detaches the admitted surface") {
+        ComponentDamageState damage{};
+        set_component_damage(damage, "left_stabilator_surface", 0.10, "structural_weakening");
+
+        const StructuralBreakupState state =
+            structural_failure::evaluate_structural_breakup_state(damage);
+
+        CHECK(state.breakup_state == StructuralBreakupPhase::PartialDetachment);
+        CHECK(structural_breakup_has_group(state, StructuralBreakGroup::TailLeft));
+        CHECK(structural_breakup_has_mode(state, StructuralBreakMode::TailLoss));
+        CHECK(state.detached_part_count == 1u);
     }
 
     TEST_CASE("controlled engine core failure produces engine_detach event") {

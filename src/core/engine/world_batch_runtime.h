@@ -3,15 +3,20 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
+#include <functional>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "components/physics/instruments.h"
 #include "core/engine/simulation_kernel.h"
 #include "core/engine/world_batch_visual_binding_compatibility_types.h"
 #include "core/interfaces/observation.h"
+#include "runtime/contracts/stage_node_manifest_registry.h"
 #include "runtime/contracts/world_batch_contracts.h"
+#include "runtime/contracts/platform_capability_contracts.h"
 
 struct WorldEntityKinematics {
     double x = 0.0;
@@ -48,6 +53,24 @@ class WorldBatchRuntime {
     void set_worker_threads(size_t worker_threads) noexcept { worker_threads_ = worker_threads; }
     size_t worker_threads() const noexcept { return worker_threads_; }
     size_t effective_worker_threads() const noexcept;
+
+    // A state-mutating batch failure fail-closes this runtime generation. Raw
+    // quarantine access remains available for diagnostics, but maintained batch
+    // operations reject retries until reset_batch completes successfully. An
+    // unfinished native pipeline requires host process recreation instead.
+    [[nodiscard]] bool batch_healthy() const noexcept { return batch_healthy_; }
+    [[nodiscard]] std::string batch_failure_reason() const;
+    // An unfinished Flecs callback scope is terminal for its host process.
+    // This diagnostic remains readable through the failed-generation fence.
+    [[nodiscard]] bool batch_requires_host_recreate() const;
+    // Native-owned batch generation. A failed batch retains its generation;
+    // successful reset_batch creates the next generation.
+    [[nodiscard]] std::uint64_t batch_generation() const noexcept { return batch_generation_; }
+    [[nodiscard]] runtime::platform_capabilities::ResolvedPlatformSpawnPlan
+    resolve_factory_platform_spawn_plan(std::size_t world_index,
+                                        const std::string &type_name) const;
+    [[nodiscard]] std::vector<runtime::scheduler::StageNodeManifest>
+    maintained_stage_node_manifests() const;
 
     std::uint64_t spawn_unit_from_world_spawn_request(const WorldSpawnRequest &request);
     std::uint64_t spawn_typed_platform_unit(const TypedPlatformSpawnRequest &request);
@@ -93,7 +116,6 @@ class WorldBatchRuntime {
     void set_command_links_batch(const std::vector<WorldCommandLinkAssignment> &assignments);
     std::vector<LaunchEvent>
     apply_launch_requests_batch(const std::vector<LaunchRequest> &requests);
-    void set_mission_commands_batch(const std::vector<WorldMissionCommandAssignment> &assignments);
     void set_mission_commands_maintained_batch(
         const std::vector<WorldMissionCommandMaintainedAssignment> &assignments);
     std::vector<MissionCommandMaintainedBatchContract>
@@ -102,12 +124,10 @@ class WorldBatchRuntime {
         const std::vector<WorldTaskOrderMaintainedAssignment> &assignments);
     std::vector<TaskOrderMaintainedBatchContract>
     get_task_orders_maintained_batch(const std::vector<WorldEntityRef> &refs) const;
-    void set_leader_intents_batch(const std::vector<WorldLeaderIntentAssignment> &assignments);
     void set_leader_intents_maintained_batch(
         const std::vector<WorldLeaderIntentMaintainedAssignment> &assignments);
     std::vector<LeaderIntentMaintainedBatchContract>
     get_leader_intents_maintained_batch(const std::vector<WorldEntityRef> &refs) const;
-    void set_pilot_reports_batch(const std::vector<WorldPilotReportAssignment> &assignments);
     void set_pilot_reports_maintained_batch(
         const std::vector<WorldPilotReportMaintainedAssignment> &assignments);
     std::vector<PilotReportMaintainedBatchContract>
@@ -146,6 +166,13 @@ class WorldBatchRuntime {
                                                       int downsample, bool use_gpu = false) const;
 
   private:
+    friend class WorldBatchRuntimeTestAccess;
+    void execute_for_index(size_t task_count, size_t requested_threads,
+                           std::function<void(size_t)> fn) const;
+    void parallel_for_index(size_t task_count, size_t requested_threads,
+                            std::function<void(size_t)> fn) const;
+    void ensure_batch_healthy() const;
+    void record_batch_failure(std::exception_ptr failure) const noexcept;
     size_t resolve_worker_threads(size_t task_count) const noexcept;
     static InstrumentState safe_get_instrument_state(const SimulationKernel &world,
                                                      uint64_t entity_id);
@@ -154,4 +181,10 @@ class WorldBatchRuntime {
 
     std::vector<std::unique_ptr<SimulationKernel>> worlds_;
     size_t worker_threads_ = 1;
+    mutable bool batch_healthy_ = true;
+    mutable std::exception_ptr batch_failure_;
+    std::uint64_t batch_generation_ = 1;
+    // Private native test seam; static storage avoids changing object layout.
+    static std::function<std::jthread(std::function<void()>)> worker_thread_factory_for_test_;
+    static std::function<void()> mutation_hook_for_test_;
 };

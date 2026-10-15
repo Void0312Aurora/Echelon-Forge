@@ -43,6 +43,12 @@ struct RuntimeKernelCandidateConfig {
     // observed/terminal facts from recorder-owned state.
     std::string run_receipt_template_json;
     RuntimeExecutionProvenanceSources run_execution_sources;
+    // Opt-in run evidence from the existing kernel topology owner. This is
+    // observed at shutdown, separate from the immutable composition seal.
+    bool persist_realized_cpu_topology = false;
+    // Export the single native world's association to the existing receipt
+    // identity. This is evidence, not a per-world batch commit certificate.
+    bool persist_world_scope_binding = false;
 };
 
 struct RuntimeCandidateCompositionSnapshot {
@@ -105,6 +111,7 @@ class RuntimeKernelCandidate final {
     [[nodiscard]] RuntimeHostStatus initialize_candidate();
     [[nodiscard]] std::optional<std::vector<std::uint8_t>> observed_state_bytes() const;
     [[nodiscard]] std::optional<std::string> observed_state_sha256() const;
+    [[nodiscard]] std::string observed_world_binding_json() const;
     [[nodiscard]] bool record_mutation(std::string_view operation,
                                        std::string_view arguments_json = "{}");
     [[nodiscard]] bool record_outcome(std::string_view operation, bool success,
@@ -129,6 +136,8 @@ class RuntimeKernelCandidate final {
     std::optional<std::uint64_t> admitted_time_step_ns_;
     std::optional<std::vector<std::uint8_t>> terminal_state_bytes_;
     std::optional<std::string> terminal_state_sha256_;
+    std::optional<std::string> terminal_cpu_topology_json_;
+    std::optional<std::string> terminal_world_scope_json_;
     std::string journal_path_;
     RuntimeIncarnationRef incarnation_;
     std::uint64_t world_generation_ = 1;

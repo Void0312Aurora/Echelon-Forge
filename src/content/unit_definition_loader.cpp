@@ -698,8 +698,8 @@ Sonar make_default_sonar_definition() {
     return sonar;
 }
 
-void parse_sonar_json_fields(const nlohmann::json &s, Sonar *out_sonar) {
-    if (!out_sonar || !s.is_object()) return;
+bool parse_sonar_json_fields(const nlohmann::json &s, Sonar *out_sonar, std::string *error) {
+    if (!out_sonar || !s.is_object()) return true;
     Sonar sonar = *out_sonar;
     sonar.max_range_m = s.value("max_range_m", sonar.max_range_m);
     sonar.scan_period_s = s.value("scan_period_s", sonar.scan_period_s);
@@ -730,9 +730,25 @@ void parse_sonar_json_fields(const nlohmann::json &s, Sonar *out_sonar) {
     sonar.confirm_window_n = s.value("confirm_window_n", sonar.confirm_window_n);
     sonar.passive_only = s.value("passive_only", sonar.passive_only);
     sonar.bearing_only = s.value("bearing_only", sonar.bearing_only);
-    const std::string mode_str = s.value("mode", sonar.passive_only ? "Passive" : "Active");
+    std::string mode_str = sonar.passive_only ? "Passive" : "Active";
+    if (s.contains("mode")) {
+        if (!s["mode"].is_string()) {
+            if (error) {
+                *error = "sonar.mode must be either 'Passive' or 'Active'";
+            }
+            return false;
+        }
+        mode_str = s["mode"].get<std::string>();
+    }
+    if (mode_str != "Passive" && mode_str != "Active") {
+        if (error) {
+            *error = "sonar.mode must be either 'Passive' or 'Active'";
+        }
+        return false;
+    }
     sonar.mode = static_cast<int>(mode_str == "Active" ? SonarMode::Active : SonarMode::Passive);
     *out_sonar = sonar;
+    return true;
 }
 
 bool parse_unit_type(const std::string &value, UnitType *out_type) {
@@ -986,7 +1002,8 @@ void parse_health_json_fields(const nlohmann::json &entry, UnitDefinition &def) 
     }
 }
 
-void parse_sensor_and_sonar_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
+bool parse_sensor_and_sonar_json_fields(const nlohmann::json &entry, UnitDefinition &def,
+                                        std::string *error) {
     def.has_sensor = false;
     def.sensor = make_unit_definition_default_sensor();
     def.mounted_sensors.mounts.clear();
@@ -1029,7 +1046,7 @@ void parse_sensor_and_sonar_json_fields(const nlohmann::json &entry, UnitDefinit
 
     if (entry.contains("sonar") && entry["sonar"].is_object()) {
         def.has_sonar = true;
-        parse_sonar_json_fields(entry["sonar"], &def.sonar);
+        if (!parse_sonar_json_fields(entry["sonar"], &def.sonar, error)) return false;
     }
     if (entry.contains("mounted_sonars") && entry["mounted_sonars"].is_array()) {
         for (const auto &mount_json : entry["mounted_sonars"]) {
@@ -1038,11 +1055,14 @@ void parse_sensor_and_sonar_json_fields(const nlohmann::json &entry, UnitDefinit
             mount.label = mount_json.value("label", "");
             mount.sonar = make_default_sonar_definition();
             if (mount_json.contains("sonar") && mount_json["sonar"].is_object()) {
-                parse_sonar_json_fields(mount_json["sonar"], &mount.sonar);
+                if (!parse_sonar_json_fields(mount_json["sonar"], &mount.sonar, error)) {
+                    return false;
+                }
             }
             def.mounted_sonars.mounts.push_back(mount);
         }
     }
+    return true;
 }
 
 void parse_flight_model_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
@@ -1255,8 +1275,28 @@ void parse_damage_component_dependencies_json_fields(const nlohmann::json &compo
     }
 }
 
-void parse_damage_component_thresholds_and_failure_modes_json_fields(
-    const nlohmann::json &component_json, DamageComponent &component) {
+bool parse_damage_component_thresholds_and_failure_modes_json_fields(
+    const nlohmann::json &component_json, DamageComponent &component, const std::string &unit_name,
+    std::size_t hitbox_index, std::size_t component_index, std::string *error) {
+    const std::string context = "unit '" + unit_name + "', damage_model.hitboxes[" +
+                                std::to_string(hitbox_index) + "].components[" +
+                                std::to_string(component_index) + "] ('" +
+                                damage_component_key(component) + "')";
+    const auto invalid = [&](const std::string &field, const nlohmann::json &value,
+                             const std::string &reason) {
+        if (error) {
+            *error = context + "." + field + " " + reason + ": " + value.dump();
+        }
+        return false;
+    };
+    const auto validate_mode = [&](const std::string &field, const std::string &mode,
+                                   const nlohmann::json &value) {
+        if (!is_known_part_failure_mode(mode)) {
+            return invalid(field, value, "names unknown failure mode '" + mode + "'");
+        }
+        return true;
+    };
+
     if (component_json.contains("mechanism_thresholds") &&
         component_json["mechanism_thresholds"].is_object()) {
         for (const auto &[family, value] : component_json["mechanism_thresholds"].items()) {
@@ -1268,45 +1308,64 @@ void parse_damage_component_thresholds_and_failure_modes_json_fields(
     if (component_json.contains("failure_modes")) {
         const auto &failure_modes_json = component_json["failure_modes"];
         if (failure_modes_json.is_array()) {
+            std::size_t mode_index = 0;
             for (const auto &mode_json : failure_modes_json) {
                 if (!mode_json.is_string()) {
-                    continue;
+                    return invalid("failure_modes[" + std::to_string(mode_index) + "]", mode_json,
+                                   "must be a string failure mode");
                 }
                 const std::string mode = canonical_part_failure_mode(mode_json.get<std::string>());
-                if (is_known_part_failure_mode(mode)) {
-                    component.failure_mode_weights[mode] =
-                        std::max(component.failure_mode_weights[mode], 1.0);
+                if (!validate_mode("failure_modes[" + std::to_string(mode_index) + "]", mode,
+                                   mode_json)) {
+                    return false;
                 }
+                component.failure_mode_weights[mode] =
+                    std::max(component.failure_mode_weights[mode], 1.0);
+                ++mode_index;
             }
         } else if (failure_modes_json.is_object()) {
             for (const auto &[mode_key, value] : failure_modes_json.items()) {
                 if (!value.is_number()) {
-                    continue;
+                    return invalid("failure_modes[\"" + mode_key + "\"]", value,
+                                   "must have a numeric weight");
                 }
                 const std::string mode = canonical_part_failure_mode(mode_key);
-                if (is_known_part_failure_mode(mode)) {
-                    component.failure_mode_weights[mode] =
-                        std::clamp(value.get<double>(), 0.0, 2.0);
+                if (!validate_mode("failure_modes[\"" + mode_key + "\"]", mode,
+                                   nlohmann::json(mode_key))) {
+                    return false;
                 }
-            }
-        }
-    }
-    if (component_json.contains("failure_mode_weights") &&
-        component_json["failure_mode_weights"].is_object()) {
-        for (const auto &[mode_key, value] : component_json["failure_mode_weights"].items()) {
-            if (!value.is_number()) {
-                continue;
-            }
-            const std::string mode = canonical_part_failure_mode(mode_key);
-            if (is_known_part_failure_mode(mode)) {
                 component.failure_mode_weights[mode] = std::clamp(value.get<double>(), 0.0, 2.0);
             }
+        } else {
+            return invalid("failure_modes", failure_modes_json, "must be an array or object");
         }
     }
+
+    if (component_json.contains("failure_mode_weights")) {
+        if (!component_json["failure_mode_weights"].is_object()) {
+            return invalid("failure_mode_weights", component_json["failure_mode_weights"],
+                           "must be an object");
+        }
+        for (const auto &[mode_key, value] : component_json["failure_mode_weights"].items()) {
+            if (!value.is_number()) {
+                return invalid("failure_mode_weights[\"" + mode_key + "\"]", value,
+                               "must have a numeric weight");
+            }
+            const std::string mode = canonical_part_failure_mode(mode_key);
+            if (!validate_mode("failure_mode_weights[\"" + mode_key + "\"]", mode,
+                               nlohmann::json(mode_key))) {
+                return false;
+            }
+            component.failure_mode_weights[mode] = std::clamp(value.get<double>(), 0.0, 2.0);
+        }
+    }
+    return true;
 }
 
 bool parse_damage_component_json_fields(const nlohmann::json &component_json, const Hitbox &hb,
-                                        DamageComponent &component) {
+                                        DamageComponent &component, const std::string &unit_name,
+                                        std::size_t hitbox_index, std::size_t component_index,
+                                        std::string *error) {
     component.name = component_json.value("name", "");
     component.system = component_json.value("system", component.name);
     component.redundancy_group_id = component_json.value("redundancy_group_id", "");
@@ -1336,7 +1395,10 @@ bool parse_damage_component_json_fields(const nlohmann::json &component_json, co
     }
     component.armor_mm = component_json.value("armor", hb.armor_mm);
     component.threshold_scale = component_json.value("threshold_scale", component.threshold_scale);
-    parse_damage_component_thresholds_and_failure_modes_json_fields(component_json, component);
+    if (!parse_damage_component_thresholds_and_failure_modes_json_fields(
+            component_json, component, unit_name, hitbox_index, component_index, error)) {
+        return false;
+    }
     component.redundancy_group =
         component_json.value("redundancy_group", component.redundancy_group);
     component.redundancy_weight =
@@ -1355,7 +1417,9 @@ bool parse_damage_component_json_fields(const nlohmann::json &component_json, co
     return true;
 }
 
-void parse_damage_hitbox_json_fields(const nlohmann::json &hb_json, Hitbox &hb) {
+bool parse_damage_hitbox_json_fields(const nlohmann::json &hb_json, Hitbox &hb,
+                                     const std::string &unit_name, std::size_t hitbox_index,
+                                     std::string *error) {
     if (hb_json.contains("offset") && hb_json["offset"].is_array() &&
         hb_json["offset"].size() >= 3) {
         hb.offset_x = hb_json["offset"][0];
@@ -1377,17 +1441,22 @@ void parse_damage_hitbox_json_fields(const nlohmann::json &hb_json, Hitbox &hb) 
         }
     }
     if (hb_json.contains("components") && hb_json["components"].is_array()) {
+        std::size_t component_index = 0;
         for (const auto &component_json : hb_json["components"]) {
             if (!component_json.is_object()) {
+                ++component_index;
                 continue;
             }
             DamageComponent component{};
-            if (!parse_damage_component_json_fields(component_json, hb, component)) {
-                continue;
+            if (!parse_damage_component_json_fields(component_json, hb, component, unit_name,
+                                                    hitbox_index, component_index, error)) {
+                return false;
             }
             hb.components.push_back(component);
+            ++component_index;
         }
     }
+    return true;
 }
 
 void parse_aircraft_vulnerability_json_fields(
@@ -1460,22 +1529,43 @@ void parse_aircraft_vulnerability_json_fields(
     }
 }
 
-void parse_damage_model_json_fields(
+bool parse_damage_model_json_fields(
     const nlohmann::json &entry, UnitDefinition &def,
-    const VulnerabilityEvidenceDescriptorMap *vulnerability_descriptors) {
+    const VulnerabilityEvidenceDescriptorMap *vulnerability_descriptors, std::string *error) {
     if (entry.contains("damage_model") && entry["damage_model"].is_object()) {
         const auto &dm = entry["damage_model"];
+        if (dm.contains("structural_topology_profile")) {
+            const auto &profile = dm["structural_topology_profile"];
+            if (!profile.is_string()) {
+                if (error) {
+                    *error = "damage_model.structural_topology_profile must be a string";
+                }
+                return false;
+            }
+            def.damage_model.structural_topology_profile = profile.get<std::string>();
+        }
+        if (def.damage_model.structural_topology_profile != kDefaultStructuralTopologyProfile &&
+            def.damage_model.structural_topology_profile != kTgP7SplitSurfaceTopologyProfile) {
+            if (error) {
+                *error = "unknown damage_model.structural_topology_profile: " +
+                         def.damage_model.structural_topology_profile;
+            }
+            return false;
+        }
         if (dm.contains("hitboxes") && dm["hitboxes"].is_array()) {
             int hb_idx = 0;
             for (const auto &hb_json : dm["hitboxes"]) {
                 Hitbox hb;
                 hb.id = hb_idx++;
-                parse_damage_hitbox_json_fields(hb_json, hb);
+                if (!parse_damage_hitbox_json_fields(hb_json, hb, def.name, hb_idx - 1, error)) {
+                    return false;
+                }
                 def.damage_model.hitboxes.push_back(hb);
             }
         }
         parse_aircraft_vulnerability_json_fields(dm, def, vulnerability_descriptors);
     }
+    return true;
 }
 
 void parse_ammo_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
@@ -1925,7 +2015,9 @@ bool parse_unit_json(
     parse_engine_json_fields(entry, def);
     parse_hardpoints_and_loadout_json_fields(entry, def);
     parse_health_json_fields(entry, def);
-    parse_sensor_and_sonar_json_fields(entry, def);
+    if (!parse_sensor_and_sonar_json_fields(entry, def, error)) {
+        return false;
+    }
 
     def.has_flight_model = entry.value("has_flight_model", false);
     parse_flight_model_json_fields(entry, def);
@@ -1991,7 +2083,9 @@ bool parse_unit_json(
     parse_naval_logistics_json_fields(entry, def);
     parse_naval_weapon_system_json_fields(entry, def);
     parse_embarked_air_ops_json_fields(entry, def);
-    parse_damage_model_json_fields(entry, def, vulnerability_descriptors);
+    if (!parse_damage_model_json_fields(entry, def, vulnerability_descriptors, error)) {
+        return false;
+    }
 
     def.has_ammo = entry.value("has_ammo", false);
     parse_ammo_json_fields(entry, def);

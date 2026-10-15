@@ -34,6 +34,7 @@
 #include "core/interfaces/observation.h"
 #include "core/interfaces/environment_model.h"
 #include "core/interfaces/weapon_release_service.h"
+#include "runtime/contracts/platform_capability_contracts.h"
 
 class IUnitFactory;
 class IEffectsModel;
@@ -156,6 +157,10 @@ class SimulationKernel {
     // Reset the simulation to initial state with a specific random seed
     void reset(unsigned int seed);
 
+    // Diagnostic only; unfinished Flecs scopes after a callback exception
+    // cannot be repaired by episode reset.
+    [[nodiscard]] bool has_unfinished_native_pipeline() const;
+
     // Advance the simulation by one fixed time step
     void step();
     std::vector<ExactStepStageDescriptor> exact_gpu_migration_stage_inventory() const;
@@ -187,6 +192,8 @@ class SimulationKernel {
     [[nodiscard]] std::array<std::uint64_t, 5> composition_scope_generations() const noexcept;
     [[nodiscard]] std::string executable_composition_graph_sha256() const;
     [[nodiscard]] std::string realized_cpu_scheduler_topology_json() const;
+    [[nodiscard]] runtime::platform_capabilities::ResolvedPlatformSpawnPlan
+    resolve_platform_spawn_plan_for_type_name(const std::string &type_name) const;
     // Configuration
     bool load_database(const std::string &path);
     void clear_zones();

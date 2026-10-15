@@ -1,4 +1,5 @@
 #include "core/engine/world_batch_runtime.h"
+#include "core/engine/parallel_for_index.h"
 
 #include "components/systems/data_link.h"
 #include "components/systems/sensor.h"
@@ -6,75 +7,19 @@
 #include "core/engine/simulation_kernel_command_surface.h"
 #include "core/engine/world_batch_setup_helper.h"
 #include "core/engine/world_batch_visual_binding_compatibility_helper.h"
-#include "gpu/gpu_interaction_broadphase_runtime.h"
+#include "core/interfaces/world_batch_gpu_compatibility.h"
 #include "runtime/contracts/composition/resolved_execution_plan.v1.generated.h"
 
-#include <algorithm>
 #include <bit>
-#include <atomic>
 #include <cmath>
 #include <exception>
-#include <mutex>
+#include <limits>
 #include <stdexcept>
-#include <thread>
 
 namespace {
 
-size_t hardware_thread_count() noexcept {
-    const unsigned int hc = std::thread::hardware_concurrency();
-    return hc == 0U ? 1U : static_cast<size_t>(hc);
-}
-
-template <typename Fn>
-void parallel_for_index(size_t task_count, size_t requested_threads, Fn &&fn) {
-    if (task_count == 0) {
-        return;
-    }
-    const size_t thread_count =
-        std::min(task_count, requested_threads == 0 ? hardware_thread_count()
-                                                    : std::max<size_t>(1, requested_threads));
-    if (thread_count <= 1) {
-        for (size_t i = 0; i < task_count; ++i) {
-            fn(i);
-        }
-        return;
-    }
-
-    const size_t chunk_size = (task_count + thread_count - 1) / thread_count;
-    std::vector<std::thread> workers;
-    workers.reserve(thread_count - 1);
-
-    std::exception_ptr first_exception;
-    std::mutex exception_mutex;
-
-    auto run_range = [&](size_t begin, size_t end) {
-        for (size_t i = begin; i < end; ++i) {
-            try {
-                fn(i);
-            } catch (...) {
-                std::lock_guard<std::mutex> lock(exception_mutex);
-                if (first_exception == nullptr) {
-                    first_exception = std::current_exception();
-                }
-                break;
-            }
-        }
-    };
-
-    size_t begin = 0;
-    for (size_t worker_idx = 1; worker_idx < thread_count; ++worker_idx) {
-        const size_t end = std::min(task_count, begin + chunk_size);
-        workers.emplace_back(run_range, begin, end);
-        begin = end;
-    }
-    run_range(begin, task_count);
-    for (auto &worker : workers) {
-        worker.join();
-    }
-    if (first_exception != nullptr) {
-        std::rethrow_exception(first_exception);
-    }
-}
+using runtime::detail::hardware_thread_count;
+using runtime::detail::parallel_for_index;
 
 template <typename Item>
 std::vector<std::vector<size_t>> group_item_indices_by_world(size_t world_count,
@@ -133,12 +78,13 @@ double entity_bounding_radius_m(flecs::entity entity, UnitType fallback_type) {
     return default_bounding_radius_m(fallback_type);
 }
 
-gpu::InteractionBroadphaseConfig
-make_interaction_broadphase_config(std::size_t max_entities_per_world, double range_hint_m) {
-    gpu::InteractionBroadphaseConfig config{};
+WorldBatchInteractionConfig make_interaction_broadphase_config(std::size_t max_entities_per_world,
+                                                               double range_hint_m,
+                                                               double max_entity_radius_m) {
+    WorldBatchInteractionConfig config{};
     config.entities_per_world = static_cast<int>(std::max<std::size_t>(1, max_entities_per_world));
     config.cell_size_m = std::clamp(range_hint_m, 1000.0, 10000.0);
-    config.max_entity_radius_m = 250.0;
+    config.max_entity_radius_m = std::max(0.0, max_entity_radius_m);
 
     std::size_t bucket_count = 256;
     const std::size_t target = std::max<std::size_t>(512, max_entities_per_world * 8);
@@ -150,12 +96,11 @@ make_interaction_broadphase_config(std::size_t max_entities_per_world, double ra
     return config;
 }
 
-std::vector<std::vector<uint64_t>>
-decode_broadphase_candidate_ids(const std::vector<std::uint32_t> &words,
-                                const std::vector<gpu::InteractionQueryPacked> &queries,
-                                const std::vector<std::vector<uint64_t>> &ids_by_world,
-                                int entities_per_world) {
-    const std::size_t words_per_query = gpu::interaction_broadphase_word_count(entities_per_world);
+std::vector<std::vector<uint64_t>> decode_broadphase_candidate_ids(
+    const std::vector<std::uint32_t> &words, const std::vector<WorldBatchInteractionQuery> &queries,
+    const std::vector<std::vector<uint64_t>> &ids_by_world, int entities_per_world) {
+    const std::size_t words_per_query =
+        world_batch_interaction_broadphase_word_count(entities_per_world);
     std::vector<std::vector<uint64_t>> out(queries.size());
     if (queries.empty() || words.empty()) {
         return out;
@@ -186,14 +131,13 @@ decode_broadphase_candidate_ids(const std::vector<std::uint32_t> &words,
 }
 
 std::vector<std::vector<uint64_t>>
-run_interaction_broadphase_candidate_ids(const std::vector<gpu::InteractionEntityPacked> &entities,
-                                         const std::vector<gpu::InteractionQueryPacked> &queries,
+run_interaction_broadphase_candidate_ids(const std::vector<WorldBatchInteractionEntity> &entities,
+                                         const std::vector<WorldBatchInteractionQuery> &queries,
                                          const std::vector<std::vector<uint64_t>> &ids_by_world,
-                                         const gpu::InteractionBroadphaseConfig &config,
-                                         bool use_gpu) {
+                                         const WorldBatchInteractionConfig &config, bool use_gpu) {
     auto words =
-        use_gpu ? gpu::build_interaction_broadphase_experiment_batch(entities, queries, config)
-                : gpu::build_interaction_broadphase_reference_cpu_batch(entities, queries, config);
+        use_gpu ? world_batch_interaction_broadphase_experiment_batch(entities, queries, config)
+                : world_batch_interaction_broadphase_reference_cpu_batch(entities, queries, config);
     return decode_broadphase_candidate_ids(words, queries, ids_by_world, config.entities_per_world);
 }
 
@@ -227,11 +171,16 @@ uint64_t spawn_from_request(SimulationKernel &world, const WorldSpawnRequest &re
 
 } // namespace
 
+std::function<std::jthread(std::function<void()>)>
+    WorldBatchRuntime::worker_thread_factory_for_test_{};
+std::function<void()> WorldBatchRuntime::mutation_hook_for_test_{};
+
 WorldBatchRuntime::WorldBatchRuntime(size_t world_count) {
     resize(world_count);
 }
 
 void WorldBatchRuntime::resize(size_t world_count) {
+    ensure_batch_healthy();
     const size_t existing_count = worlds_.size();
     if (world_count < existing_count) {
         worlds_.resize(world_count);
@@ -267,6 +216,7 @@ const SimulationKernel &WorldBatchRuntime::world_raw_quarantine(size_t index) co
 }
 
 std::vector<WorldCompositionDiagnostics> WorldBatchRuntime::composition_diagnostics() const {
+    ensure_batch_healthy();
     std::vector<WorldCompositionDiagnostics> diagnostics;
     diagnostics.reserve(worlds_.size());
     for (std::size_t index = 0; index < worlds_.size(); ++index) {
@@ -296,24 +246,118 @@ size_t WorldBatchRuntime::effective_worker_threads() const noexcept {
     return resolve_worker_threads(worlds_.size());
 }
 
+void WorldBatchRuntime::record_batch_failure(std::exception_ptr failure) const noexcept {
+    batch_healthy_ = false;
+    batch_failure_ = std::move(failure);
+}
+
+void WorldBatchRuntime::ensure_batch_healthy() const {
+    if (!batch_healthy_) {
+        if (batch_requires_host_recreate()) {
+            throw std::logic_error(
+                "WorldBatchRuntime batch is failed-closed; recreate the host process");
+        }
+        throw std::logic_error(
+            "WorldBatchRuntime batch is failed-closed; call reset_batch before retrying");
+    }
+}
+
+bool WorldBatchRuntime::batch_requires_host_recreate() const {
+    return !batch_healthy_ && std::any_of(worlds_.begin(), worlds_.end(), [](const auto &world) {
+        return world->has_unfinished_native_pipeline();
+    });
+}
+
+std::string WorldBatchRuntime::batch_failure_reason() const {
+    if (batch_healthy_ || batch_failure_ == nullptr) {
+        return {};
+    }
+    try {
+        std::rethrow_exception(batch_failure_);
+    } catch (const std::exception &error) {
+        return error.what();
+    } catch (...) {
+        return "non-standard batch operation failure";
+    }
+}
+
+runtime::platform_capabilities::ResolvedPlatformSpawnPlan
+WorldBatchRuntime::resolve_factory_platform_spawn_plan(std::size_t world_index,
+                                                       const std::string &type_name) const {
+    ensure_batch_healthy();
+    return checked_world(world_index).resolve_platform_spawn_plan_for_type_name(type_name);
+}
+
+std::vector<runtime::scheduler::StageNodeManifest>
+WorldBatchRuntime::maintained_stage_node_manifests() const {
+    ensure_batch_healthy();
+    std::vector<runtime::scheduler::StageNodeManifest> manifests;
+    for (const auto *manifest : runtime::scheduler::enumerate_maintained_stage_node_manifests()) {
+        manifests.push_back(*manifest);
+    }
+    return manifests;
+}
+
+void WorldBatchRuntime::parallel_for_index(size_t task_count, size_t requested_threads,
+                                           std::function<void(size_t)> fn) const {
+    ensure_batch_healthy();
+    try {
+        execute_for_index(task_count, requested_threads, std::move(fn));
+    } catch (...) {
+        record_batch_failure(std::current_exception());
+        throw;
+    }
+}
+
+void WorldBatchRuntime::execute_for_index(size_t task_count, size_t requested_threads,
+                                          std::function<void(size_t)> fn) const {
+    if (worker_thread_factory_for_test_) {
+        runtime::detail::parallel_for_index(task_count, requested_threads, std::move(fn),
+                                            worker_thread_factory_for_test_);
+    } else {
+        runtime::detail::parallel_for_index(task_count, requested_threads, std::move(fn));
+    }
+}
+
 std::uint64_t
 WorldBatchRuntime::spawn_unit_from_world_spawn_request(const WorldSpawnRequest &request) {
+    ensure_batch_healthy();
     const auto world_index = static_cast<size_t>(request.world_index);
-    return spawn_from_request(checked_world(world_index), request);
+    auto &world = checked_world(world_index);
+    try {
+        const auto entity_id = spawn_from_request(world, request);
+        if (mutation_hook_for_test_) {
+            mutation_hook_for_test_();
+        }
+        return entity_id;
+    } catch (...) {
+        record_batch_failure(std::current_exception());
+        throw;
+    }
 }
 
 std::uint64_t
 WorldBatchRuntime::spawn_typed_platform_unit(const TypedPlatformSpawnRequest &request) {
+    ensure_batch_healthy();
     const auto world_index = static_cast<size_t>(request.world_index);
     auto &world = checked_world(world_index);
-    const auto entity = world.spawn_unit(request.side, request.source_type_name, request.x,
-                                         request.y, request.z, request.heading, request.pitch,
-                                         request.roll, request.vx, request.vy, request.vz);
-    return entity.id();
+    try {
+        const auto entity = world.spawn_unit(request.side, request.source_type_name, request.x,
+                                             request.y, request.z, request.heading, request.pitch,
+                                             request.roll, request.vx, request.vy, request.vz);
+        if (mutation_hook_for_test_) {
+            mutation_hook_for_test_();
+        }
+        return entity.id();
+    } catch (...) {
+        record_batch_failure(std::current_exception());
+        throw;
+    }
 }
 
 bool WorldBatchRuntime::try_get_entity_kinematics(const WorldEntityRef &ref,
                                                   WorldEntityKinematics *state) const {
+    ensure_batch_healthy();
     if (state == nullptr) {
         return false;
     }
@@ -346,6 +390,7 @@ bool WorldBatchRuntime::try_get_entity_kinematics(const WorldEntityRef &ref,
 
 bool WorldBatchRuntime::try_set_entity_kinematics(const WorldEntityRef &ref,
                                                   const WorldEntityKinematics &state) {
+    ensure_batch_healthy();
     const auto world_index = static_cast<size_t>(ref.world_index);
     auto &world = checked_world(world_index);
     auto world_lease = world.acquire_world_lease();
@@ -360,32 +405,52 @@ bool WorldBatchRuntime::try_set_entity_kinematics(const WorldEntityRef &ref,
         return false;
     }
 
-    entity.set<Transform>(Transform{
-        .x = state.x,
-        .y = state.y,
-        .z = state.z,
-        .heading = state.heading,
-        .pitch = state.pitch,
-        .roll = state.roll,
-    });
-    entity.set<Velocity>(Velocity{
-        .vx = state.vx,
-        .vy = state.vy,
-        .vz = state.vz,
-    });
+    try {
+        entity.set<Transform>(Transform{
+            .x = state.x,
+            .y = state.y,
+            .z = state.z,
+            .heading = state.heading,
+            .pitch = state.pitch,
+            .roll = state.roll,
+        });
+        if (mutation_hook_for_test_) {
+            mutation_hook_for_test_();
+        }
+        entity.set<Velocity>(Velocity{
+            .vx = state.vx,
+            .vy = state.vy,
+            .vz = state.vz,
+        });
+    } catch (...) {
+        record_batch_failure(std::current_exception());
+        throw;
+    }
     return true;
 }
 
 RecentEngagementEvents
 WorldBatchRuntime::export_recent_engagement_events(size_t world_index) const {
+    ensure_batch_healthy();
     return checked_world(world_index).export_recent_engagement_events();
 }
 
 void WorldBatchRuntime::reset_batch(const std::vector<uint32_t> &seeds) {
     world_batch_setup::validate_reset_seeds(worlds_.size(), seeds);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t i) {
-        worlds_[i]->reset(world_batch_setup::resolve_reset_seed(i, worlds_.size(), seeds));
-    });
+    try {
+        if (batch_generation_ == std::numeric_limits<std::uint64_t>::max()) {
+            throw std::overflow_error("WorldBatchRuntime batch generation exhausted");
+        }
+        execute_for_index(worlds_.size(), worker_threads_, [&](size_t i) {
+            worlds_[i]->reset(world_batch_setup::resolve_reset_seed(i, worlds_.size(), seeds));
+        });
+        ++batch_generation_;
+        batch_healthy_ = true;
+        batch_failure_ = nullptr;
+    } catch (...) {
+        record_batch_failure(std::current_exception());
+        throw;
+    }
 }
 
 void WorldBatchRuntime::step_batch() {
@@ -519,44 +584,54 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_layout(
     const std::vector<WorldZoneDefinition> &zones, const std::vector<WorldSpawnRequest> &requests,
     const std::vector<double> &time_steps, double sun_azimuth_deg, double sun_elevation_deg,
     const WorldGeodeticAnchorAssignment &geodetic_anchor) {
+    ensure_batch_healthy();
     world_batch_setup::validate_time_steps(worlds_.size(), time_steps);
+    // An invalid world index is a preflight input error. Resolve it before the
+    // poisoning catch so a request that cannot have mutated a world does not
+    // invalidate the entire batch generation.
     auto &world = checked_world(world_index);
-    world_batch_setup::apply_setup_time_step(world, world_index, time_steps);
-    world.set_terrain_type(terrain_type.empty() ? WorldTerrainAssignment{}.terrain_type
-                                                : terrain_type);
-    world.set_wind(wind_speed_mps, wind_dir_from_deg, wind_shear_mps_per_km);
-    world.set_sun_direction(sun_azimuth_deg, sun_elevation_deg);
-    world.set_geodetic_anchor(geodetic_anchor.latitude_deg, geodetic_anchor.longitude_deg,
-                              geodetic_anchor.height_m);
-    if (maritime_configured) {
-        world.set_maritime_state(sea_state, wave_heading_deg, wave_period_s);
-    } else {
-        world.clear_maritime_state();
-    }
-    world_batch_setup::replace_zones(world, zones, [&]() {
-        std::vector<std::size_t> grouped;
-        grouped.reserve(zones.size());
-        for (std::size_t item_index = 0; item_index < zones.size(); ++item_index) {
-            if (static_cast<std::size_t>(zones[item_index].world_index) == world_index) {
-                grouped.push_back(item_index);
+    try {
+        world_batch_setup::apply_setup_time_step(world, world_index, time_steps);
+        world.set_terrain_type(terrain_type.empty() ? WorldTerrainAssignment{}.terrain_type
+                                                    : terrain_type);
+        world.set_wind(wind_speed_mps, wind_dir_from_deg, wind_shear_mps_per_km);
+        world.set_sun_direction(sun_azimuth_deg, sun_elevation_deg);
+        world.set_geodetic_anchor(geodetic_anchor.latitude_deg, geodetic_anchor.longitude_deg,
+                                  geodetic_anchor.height_m);
+        if (maritime_configured) {
+            world.set_maritime_state(sea_state, wave_heading_deg, wave_period_s);
+        } else {
+            world.clear_maritime_state();
+        }
+        world_batch_setup::replace_zones(world, zones, [&]() {
+            std::vector<std::size_t> grouped;
+            grouped.reserve(zones.size());
+            for (std::size_t item_index = 0; item_index < zones.size(); ++item_index) {
+                if (static_cast<std::size_t>(zones[item_index].world_index) == world_index) {
+                    grouped.push_back(item_index);
+                }
             }
-        }
-        return grouped;
-    }());
-    world.reset(seed);
+            return grouped;
+        }());
+        world.reset(seed);
 
-    std::vector<uint64_t> out;
-    out.reserve(requests.size());
-    for (const auto &request : requests) {
-        if (static_cast<std::size_t>(request.world_index) != world_index) {
-            continue;
+        std::vector<uint64_t> out;
+        out.reserve(requests.size());
+        for (const auto &request : requests) {
+            if (static_cast<std::size_t>(request.world_index) != world_index) {
+                continue;
+            }
+            out.push_back(spawn_from_request(world, request));
         }
-        out.push_back(spawn_from_request(world, request));
+        return out;
+    } catch (...) {
+        record_batch_failure(std::current_exception());
+        throw;
     }
-    return out;
 }
 
 double WorldBatchRuntime::world_time_step(std::size_t world_index) const {
+    ensure_batch_healthy();
     return checked_world(world_index).get_time_step();
 }
 
@@ -655,19 +730,6 @@ WorldBatchRuntime::apply_launch_requests_batch(const std::vector<LaunchRequest> 
     return events;
 }
 
-void WorldBatchRuntime::set_mission_commands_batch(
-    const std::vector<WorldMissionCommandAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        SimulationKernelCommandSurface commands(world);
-        for (const size_t item_index : grouped[world_index]) {
-            const auto &item = assignments[item_index];
-            commands.set_mission_command(item.entity_id, item.command);
-        }
-    });
-}
-
 void WorldBatchRuntime::set_mission_commands_maintained_batch(
     const std::vector<WorldMissionCommandMaintainedAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
@@ -698,19 +760,6 @@ void WorldBatchRuntime::set_task_orders_maintained_batch(
     });
 }
 
-void WorldBatchRuntime::set_leader_intents_batch(
-    const std::vector<WorldLeaderIntentAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        SimulationKernelCommandSurface commands(world);
-        for (const size_t item_index : grouped[world_index]) {
-            const auto &item = assignments[item_index];
-            commands.set_leader_intent(item.entity_id, item.intent);
-        }
-    });
-}
-
 void WorldBatchRuntime::set_leader_intents_maintained_batch(
     const std::vector<WorldLeaderIntentMaintainedAssignment> &assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
@@ -722,19 +771,6 @@ void WorldBatchRuntime::set_leader_intents_maintained_batch(
             commands.set_leader_intent(
                 item.entity_id, leader_intent_compatibility_shell_from_maintained_batch_contract(
                                     item.leader_intent));
-        }
-    });
-}
-
-void WorldBatchRuntime::set_pilot_reports_batch(
-    const std::vector<WorldPilotReportAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        SimulationKernelCommandSurface commands(world);
-        for (const size_t item_index : grouped[world_index]) {
-            const auto &item = assignments[item_index];
-            commands.set_pilot_report(item.entity_id, item.report);
         }
     });
 }
@@ -891,12 +927,14 @@ WorldBatchRuntime::get_pilot_reports_maintained_batch(
 std::vector<std::vector<uint64_t>>
 WorldBatchRuntime::get_sensor_candidate_ids_batch(const std::vector<WorldEntityRef> &refs,
                                                   bool use_gpu) const {
-    std::vector<gpu::InteractionEntityPacked> entities;
+    ensure_batch_healthy();
+    std::vector<WorldBatchInteractionEntity> entities;
     std::vector<std::vector<uint64_t>> ids_by_world(worlds_.size());
-    std::vector<gpu::InteractionQueryPacked> queries;
+    std::vector<WorldBatchInteractionQuery> queries;
     queries.reserve(refs.size());
 
     double range_hint_m = 5000.0;
+    double max_entity_radius_m = 0.0;
     std::size_t max_entities_per_world = 0;
     for (std::size_t world_index = 0; world_index < worlds_.size(); ++world_index) {
         const auto &world = checked_world(world_index);
@@ -904,13 +942,14 @@ WorldBatchRuntime::get_sensor_candidate_ids_batch(const std::vector<WorldEntityR
         auto query = world_lease.world().query<const KeyEntity, const Transform>();
         int local_index = 0;
         query.each([&](flecs::entity entity, const KeyEntity &key, const Transform &transform) {
-            gpu::InteractionEntityPacked packed{};
+            WorldBatchInteractionEntity packed{};
             packed.world_index = static_cast<int>(world_index);
             packed.local_index = local_index++;
             packed.x = transform.x;
             packed.y = transform.y;
             packed.z = transform.z;
             packed.bounding_radius_m = entity_bounding_radius_m(entity, key.type);
+            max_entity_radius_m = std::max(max_entity_radius_m, packed.bounding_radius_m);
             entities.push_back(packed);
             ids_by_world[world_index].push_back(entity.id());
         });
@@ -918,7 +957,7 @@ WorldBatchRuntime::get_sensor_candidate_ids_batch(const std::vector<WorldEntityR
     }
 
     for (const auto &ref : refs) {
-        gpu::InteractionQueryPacked query{};
+        WorldBatchInteractionQuery query{};
         query.world_index = static_cast<int>(ref.world_index);
         const auto &world = checked_world(static_cast<size_t>(ref.world_index));
         auto world_lease = world.acquire_world_lease();
@@ -937,7 +976,8 @@ WorldBatchRuntime::get_sensor_candidate_ids_batch(const std::vector<WorldEntityR
         queries.push_back(query);
     }
 
-    const auto config = make_interaction_broadphase_config(max_entities_per_world, range_hint_m);
+    const auto config = make_interaction_broadphase_config(max_entities_per_world, range_hint_m,
+                                                           max_entity_radius_m);
     auto out =
         run_interaction_broadphase_candidate_ids(entities, queries, ids_by_world, config, use_gpu);
     for (std::size_t idx = 0; idx < refs.size(); ++idx) {
@@ -951,12 +991,14 @@ WorldBatchRuntime::get_sensor_candidate_ids_batch(const std::vector<WorldEntityR
 std::vector<std::vector<uint64_t>>
 WorldBatchRuntime::get_visual_candidate_ids_batch(const std::vector<WorldEntityRef> &refs,
                                                   double range_m, bool use_gpu) const {
-    std::vector<gpu::InteractionEntityPacked> entities;
+    ensure_batch_healthy();
+    std::vector<WorldBatchInteractionEntity> entities;
     std::vector<std::vector<uint64_t>> ids_by_world(worlds_.size());
-    std::vector<gpu::InteractionQueryPacked> queries;
+    std::vector<WorldBatchInteractionQuery> queries;
     queries.reserve(refs.size());
 
     const double range_hint_m = std::max(1000.0, range_m);
+    double max_entity_radius_m = 0.0;
     std::size_t max_entities_per_world = 0;
     for (std::size_t world_index = 0; world_index < worlds_.size(); ++world_index) {
         const auto &world = checked_world(world_index);
@@ -964,13 +1006,14 @@ WorldBatchRuntime::get_visual_candidate_ids_batch(const std::vector<WorldEntityR
         auto query = world_lease.world().query<const KeyEntity, const Transform>();
         int local_index = 0;
         query.each([&](flecs::entity entity, const KeyEntity &key, const Transform &transform) {
-            gpu::InteractionEntityPacked packed{};
+            WorldBatchInteractionEntity packed{};
             packed.world_index = static_cast<int>(world_index);
             packed.local_index = local_index++;
             packed.x = transform.x;
             packed.y = transform.y;
             packed.z = transform.z;
             packed.bounding_radius_m = entity_bounding_radius_m(entity, key.type);
+            max_entity_radius_m = std::max(max_entity_radius_m, packed.bounding_radius_m);
             entities.push_back(packed);
             ids_by_world[world_index].push_back(entity.id());
         });
@@ -978,7 +1021,7 @@ WorldBatchRuntime::get_visual_candidate_ids_batch(const std::vector<WorldEntityR
     }
 
     for (const auto &ref : refs) {
-        gpu::InteractionQueryPacked query{};
+        WorldBatchInteractionQuery query{};
         query.world_index = static_cast<int>(ref.world_index);
         const auto &world = checked_world(static_cast<size_t>(ref.world_index));
         auto world_lease = world.acquire_world_lease();
@@ -994,7 +1037,8 @@ WorldBatchRuntime::get_visual_candidate_ids_batch(const std::vector<WorldEntityR
         queries.push_back(query);
     }
 
-    const auto config = make_interaction_broadphase_config(max_entities_per_world, range_hint_m);
+    const auto config = make_interaction_broadphase_config(max_entities_per_world, range_hint_m,
+                                                           max_entity_radius_m);
     auto out =
         run_interaction_broadphase_candidate_ids(entities, queries, ids_by_world, config, use_gpu);
     for (std::size_t idx = 0; idx < refs.size(); ++idx) {
@@ -1008,9 +1052,10 @@ WorldBatchRuntime::get_visual_candidate_ids_batch(const std::vector<WorldEntityR
 std::vector<std::vector<uint64_t>>
 WorldBatchRuntime::get_comm_candidate_ids_batch(const std::vector<WorldEntityRef> &refs,
                                                 bool use_gpu) const {
-    std::vector<gpu::InteractionEntityPacked> entities;
+    ensure_batch_healthy();
+    std::vector<WorldBatchInteractionEntity> entities;
     std::vector<std::vector<uint64_t>> ids_by_world(worlds_.size());
-    std::vector<gpu::InteractionQueryPacked> queries;
+    std::vector<WorldBatchInteractionQuery> queries;
     queries.reserve(refs.size());
 
     double range_hint_m = 10000.0;
@@ -1024,7 +1069,7 @@ WorldBatchRuntime::get_comm_candidate_ids_batch(const std::vector<WorldEntityRef
             if (!link.active) {
                 return;
             }
-            gpu::InteractionEntityPacked packed{};
+            WorldBatchInteractionEntity packed{};
             packed.world_index = static_cast<int>(world_index);
             packed.local_index = local_index++;
             packed.x = transform.x;
@@ -1039,7 +1084,7 @@ WorldBatchRuntime::get_comm_candidate_ids_batch(const std::vector<WorldEntityRef
     }
 
     for (const auto &ref : refs) {
-        gpu::InteractionQueryPacked query{};
+        WorldBatchInteractionQuery query{};
         query.world_index = static_cast<int>(ref.world_index);
         const auto &world = checked_world(static_cast<size_t>(ref.world_index));
         auto world_lease = world.acquire_world_lease();
@@ -1057,7 +1102,8 @@ WorldBatchRuntime::get_comm_candidate_ids_batch(const std::vector<WorldEntityRef
         queries.push_back(query);
     }
 
-    const auto config = make_interaction_broadphase_config(max_entities_per_world, range_hint_m);
+    const auto config =
+        make_interaction_broadphase_config(max_entities_per_world, range_hint_m, 0.0);
     auto out =
         run_interaction_broadphase_candidate_ids(entities, queries, ids_by_world, config, use_gpu);
     for (std::size_t idx = 0; idx < refs.size(); ++idx) {
@@ -1097,6 +1143,7 @@ std::vector<WorldBatchVisualBindingCompatibilityScene>
 WorldBatchRuntime::collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(
     const std::vector<WorldEntityRef> &refs, int downsample,
     const std::vector<std::vector<uint64_t>> &candidate_ids_batch) const {
+    ensure_batch_healthy();
     std::vector<WorldBatchVisualBindingCompatibilityScene> out(refs.size());
     for (std::size_t idx = 0; idx < refs.size(); ++idx) {
         const auto &ref = refs[idx];
@@ -1115,6 +1162,7 @@ WorldBatchRuntime::collect_visual_binding_compatibility_scenes_from_candidate_id
 std::vector<WorldBatchVisualBindingCompatibilityScene>
 WorldBatchRuntime::collect_visual_binding_compatibility_scenes_batch(
     const std::vector<WorldEntityRef> &refs, int downsample, bool use_gpu) const {
+    ensure_batch_healthy();
     const auto visual_candidate_ids = get_visual_candidate_ids_batch(refs, 25000.0, use_gpu);
     return collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(
         refs, downsample, visual_candidate_ids);

@@ -105,6 +105,10 @@ Frozen experimental GPU helper phase-0 probes:
   - C++ phase-0 GPU probe for communication candidate generation built on the retained broadphase helper.
 - [ef_gpu_visual_candidate_phase0_probe](../../src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp)
   - C++ phase-0 GPU probe for visual-object candidate generation built on the retained broadphase helper.
+- [interaction_broadphase.py](benchmarks/interaction_broadphase.py)
+  - Reproducible CPU/GPU broadphase matrix runner. It records hardware facts,
+    timings, overflow counters, and CPU-subset-of-GPU results without treating
+    a CPU fallback as a CUDA measurement.
 
 ## GPU Phase 0 Build
 
@@ -192,6 +196,27 @@ Show family-specific help:
 ./build-gpu/ef_gpu_comm_candidate_phase0_probe --worlds 16 --nodes 1024 --networks 2 --cell-size 10000 --bucket-count 32768 --bucket-capacity 64
 ./build-gpu/ef_gpu_visual_candidate_phase0_probe --worlds 16 --objects 1024 --cameras 64 --far-range 25000 --cell-size 5000 --bucket-count 32768 --bucket-capacity 64
 ```
+
+Run the reproducible long-range broadphase matrix:
+
+```bash
+python tools/diagnostics/benchmarks/interaction_broadphase.py \
+  --probe build-gpu/ef_gpu_interaction_broadphase_phase0_probe \
+  --output artifacts/interaction_broadphase_matrix.json \
+  --repetitions 3 --timeout-s 10 \
+  --require-cuda
+```
+
+The checked-in matrix definition is
+`examples/config/diagnostics/interaction_broadphase_benchmark_matrix.json`.
+Each matrix cell records sample count, mean, min, max, and population standard
+deviation for CPU, host-readback, and device-resident timings. A timeout is
+recorded as an incomplete cell so a sparse long-range scan cannot be mistaken
+for a successful measurement.
+The retained HEI-FRP RTX 3090 smoke evidence is in
+`docs/architecture/work/issues/issue248_broadphase_hei_rtx3090_20261011.json`;
+the separate 300 km / 1 km timeout observation is in
+`docs/architecture/work/issues/issue248_broadphase_hei_rtx3090_long_range_timeout_20261011.json`.
 
 Maintenance note:
 

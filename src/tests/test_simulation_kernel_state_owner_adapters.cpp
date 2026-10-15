@@ -3,16 +3,21 @@
 
 #include "components/command/common/comm_message.h"
 #include "components/combat/health.h"
+#include "components/combat/common/damage_common.h"
 #include "components/combat/scoring.h"
+#include "components/basic/tags.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "components/domains/naval/command/mission_command_naval.h"
 #include "components/domains/naval/platform/ship_platform.h"
+#include "components/domains/naval/platform/submarine_platform.h"
 #include "components/physics/forces.h"
 #include "components/physics/instruments.h"
 #include "components/systems/track_management.h"
+#include "components/systems/sonar.h"
 #include "components/systems/ew.h"
 #include "content/unit_definition.h"
 #include "core/engine/simulation_kernel.h"
+#include "core/interfaces/environment_model.h"
 #include "systems/system_contribution_registry.h"
 
 #include <doctest/doctest.h>
@@ -160,6 +165,73 @@ class KernelReplacementControl final : public host::RuntimeInstanceControl {
 } // namespace
 
 TEST_SUITE("simulation_kernel_state_owner_adapters") {
+
+    TEST_CASE("opt-in bathymetry policy and diagnostic provenance survive native world restore") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        SimulationKernel source;
+        SimulationKernel target;
+        source.reset(271);
+        target.reset(999);
+        SubmarineBathymetryPolicy policy{};
+        policy.enabled = true;
+        policy.min_keel_clearance_m = 5.25;
+        policy.hull_reference_to_keel_m = 8.5;
+        policy.horizontal_frame = "local_xy";
+        policy.vertical_datum = "MSL";
+        policy.last_status = SubmarineDepthConstraintStatus::LimitedBySeabed;
+        policy.last_requested_depth_m = 100.0;
+        policy.last_allowed_depth_m = 66.25;
+        policy.last_availability =
+            static_cast<std::uint8_t>(IEnvironmentModel::BathymetryAvailability::Valid);
+        policy.last_source = "synthetic_shoal.v1";
+        {
+            auto lease = source.acquire_world_lease();
+            lease.world()
+                .entity("BathymetryRestore")
+                .add<SimObject>()
+                .set<Transform>({0.0, 0.0, -20.0, 0.0, 0.0, 0.0})
+                .set<Velocity>({0.0, 0.0, 0.0})
+                .set<SubmarinePlatform>({})
+                .set<SubmarineBathymetryPolicy>(policy);
+        }
+        const auto serialized = Bridge::serialize_world(source);
+        REQUIRE(Bridge::restore_world(target, {serialized.begin(), serialized.end()}));
+        {
+            auto lease = target.acquire_world_lease();
+            auto restored = lease.world().lookup("BathymetryRestore");
+            REQUIRE(restored.is_alive());
+            const auto *actual = restored.get<SubmarineBathymetryPolicy>();
+            REQUIRE(actual != nullptr);
+            CHECK(actual->enabled == policy.enabled);
+            CHECK(actual->min_keel_clearance_m == policy.min_keel_clearance_m);
+            CHECK(actual->hull_reference_to_keel_m == policy.hull_reference_to_keel_m);
+            CHECK(actual->horizontal_frame == policy.horizontal_frame);
+            CHECK(actual->vertical_datum == policy.vertical_datum);
+            CHECK(actual->last_status == policy.last_status);
+            CHECK(actual->last_requested_depth_m == policy.last_requested_depth_m);
+            CHECK(actual->last_allowed_depth_m == policy.last_allowed_depth_m);
+            CHECK(actual->last_availability == policy.last_availability);
+            CHECK(actual->last_source == policy.last_source);
+        }
+        // The default environment has no bathymetry. Both resumed and source
+        // worlds must take the same conservative path without inventing data.
+        source.step();
+        target.step();
+        {
+            auto lease = target.acquire_world_lease();
+            const auto *actual =
+                lease.world().lookup("BathymetryRestore").get<SubmarineBathymetryPolicy>();
+            REQUIRE(actual != nullptr);
+            CHECK(actual->last_status == SubmarineDepthConstraintStatus::UnknownBathymetry);
+            CHECK(
+                actual->last_availability ==
+                static_cast<std::uint8_t>(IEnvironmentModel::BathymetryAvailability::Unavailable));
+            CHECK(actual->last_source.empty());
+        }
+        const bool resumed_world_matches = nlohmann::json::parse(Bridge::serialize_world(target)) ==
+                                           nlohmann::json::parse(Bridge::serialize_world(source));
+        CHECK(resumed_world_matches);
+    }
 
     TEST_CASE("real SimulationKernel owner registry exports and imports all twelve rows") {
         SimulationKernel source;
@@ -1427,6 +1499,117 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         const auto invalid_wire = document.dump();
         CHECK_FALSE(Bridge::restore_world(target, {invalid_wire.begin(), invalid_wire.end()}));
         CHECK(Bridge::serialize_world(target) == before);
+    }
+
+    TEST_CASE("sonar scan outcomes survive inline and mounted state transfer") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        SimulationKernel source;
+        SimulationKernel target;
+        SimulationKernel legacy_target;
+        source.reset(51);
+        target.reset(52);
+        legacy_target.reset(53);
+        const auto aircraft =
+            source.spawn_unit(Side::Blue, "Aircraft", 0, 0, 3000, 0, 0, 0, 150, 0, 0);
+        REQUIRE(aircraft.is_valid());
+        Sonar inline_sonar{};
+        inline_sonar.mode = static_cast<int>(SonarMode::Active);
+        inline_sonar.last_scan_status = static_cast<int>(AcousticScanStatus::UnsupportedMode);
+        inline_sonar.last_scan_time_s = 4.5;
+        Sonar mounted_sonar{};
+        mounted_sonar.last_scan_status = static_cast<int>(AcousticScanStatus::Completed);
+        mounted_sonar.last_scan_time_s = 5.0;
+        {
+            auto lease = source.acquire_world_lease();
+            lease.world()
+                .entity(aircraft.id())
+                .set_name("SonarStateUnit")
+                .set(inline_sonar)
+                .set<MountedSonars>({{{mounted_sonar, "PassiveMount"}}});
+        }
+        auto document = json::parse(Bridge::serialize_world(source));
+        auto &components = document["results"][0]["components"];
+        CHECK(components["Sonar"]["last_scan_status"] == inline_sonar.last_scan_status);
+        CHECK(components["MountedSonars"]["mounts"][0]["sonar"]["last_scan_status"] ==
+              mounted_sonar.last_scan_status);
+        const auto wire = document.dump();
+        REQUIRE(Bridge::restore_world(target, {wire.begin(), wire.end()}));
+        {
+            auto lease = target.acquire_world_lease();
+            const auto entity = lease.world().lookup("SonarStateUnit");
+            REQUIRE(entity.is_valid());
+            REQUIRE(entity.get<Sonar>() != nullptr);
+            REQUIRE(entity.get<MountedSonars>() != nullptr);
+            CHECK(entity.get<Sonar>()->last_scan_status == inline_sonar.last_scan_status);
+            CHECK(entity.get<Sonar>()->last_scan_time_s == inline_sonar.last_scan_time_s);
+            const auto &mounted = entity.get<MountedSonars>()->mounts;
+            REQUIRE(mounted.size() == 1);
+            CHECK(mounted.front().sonar.last_scan_status == mounted_sonar.last_scan_status);
+            CHECK(mounted.front().sonar.last_scan_time_s == mounted_sonar.last_scan_time_s);
+        }
+        // Historical attempts did not encode whether their provider completed.
+        // Preserve the attempt time, but never invent a successful scan outcome.
+        components["Sonar"].erase("last_scan_status");
+        components["MountedSonars"]["mounts"][0]["sonar"].erase("last_scan_status");
+        const auto legacy_wire = document.dump();
+        REQUIRE(Bridge::restore_world(legacy_target, {legacy_wire.begin(), legacy_wire.end()}));
+        auto lease = legacy_target.acquire_world_lease();
+        const auto entity = lease.world().lookup("SonarStateUnit");
+        REQUIRE(entity.is_valid());
+        CHECK(entity.get<Sonar>()->last_scan_status ==
+              static_cast<int>(AcousticScanStatus::NotScanned));
+        CHECK(entity.get<MountedSonars>()->mounts.front().sonar.last_scan_status ==
+              static_cast<int>(AcousticScanStatus::NotScanned));
+    }
+
+    TEST_CASE("ComponentDamageState codec preserves topology and migrates v2 default") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        SimulationKernel source;
+        SimulationKernel target;
+        SimulationKernel legacy_target;
+        source.reset(51);
+        target.reset(52);
+        legacy_target.reset(53);
+        const auto aircraft =
+            source.spawn_unit(Side::Blue, "Aircraft", 0, 0, 3000, 0, 0, 0, 150, 0, 0);
+        REQUIRE(aircraft.is_valid());
+        {
+            auto lease = source.acquire_world_lease();
+            ComponentDamageState damage;
+            damage.structural_topology_profile = std::string(kTgP7SplitSurfaceTopologyProfile);
+            lease.world().entity(aircraft.id()).set_name("TopologyAircraft").set(damage);
+        }
+
+        auto document = json::parse(Bridge::serialize_world(source));
+        auto &encoded = document["results"][0]["components"]["ComponentDamageState"];
+        REQUIRE(encoded["schema"] == "component-damage-state.v3");
+        CHECK(encoded["structural_topology_profile"].get<std::string>() ==
+              kTgP7SplitSurfaceTopologyProfile);
+        const auto wire = document.dump();
+        REQUIRE(Bridge::restore_world(target, {wire.begin(), wire.end()}));
+        {
+            auto lease = target.acquire_world_lease();
+            const auto entity = lease.world().lookup("TopologyAircraft");
+            REQUIRE(entity.is_valid());
+            REQUIRE(entity.get<ComponentDamageState>() != nullptr);
+            CHECK(entity.get<ComponentDamageState>()->structural_topology_profile ==
+                  kTgP7SplitSurfaceTopologyProfile);
+        }
+
+        auto legacy_document = document;
+        auto &legacy_encoded = legacy_document["results"][0]["components"]["ComponentDamageState"];
+        legacy_encoded["schema"] = "component-damage-state.v2";
+        legacy_encoded.erase("structural_topology_profile");
+        const auto legacy_wire = legacy_document.dump();
+        REQUIRE(Bridge::restore_world(legacy_target, {legacy_wire.begin(), legacy_wire.end()}));
+        auto lease = legacy_target.acquire_world_lease();
+        const auto entity = lease.world().lookup("TopologyAircraft");
+        REQUIRE(entity.is_valid());
+        REQUIRE(entity.get<ComponentDamageState>() != nullptr);
+        CHECK(entity.get<ComponentDamageState>()->structural_topology_profile ==
+              kDefaultStructuralTopologyProfile);
     }
 
     TEST_CASE("generation-4 ground stance imports commits and recovers after journal reopen") {

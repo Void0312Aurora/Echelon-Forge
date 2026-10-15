@@ -2,5 +2,14 @@
   "schema_version": "python_dependency_transition.v1",
   "description": "Exact, attributed cross-layer Python imports that are retained while neutral contracts and runtime inversion points are implemented. Each entry is a ratchet: it may not grow and becomes stale when the edge is removed.",
   "entries": [
+    {
+      "kind": "python_import",
+      "source": "python.experiment.resolved_input_lock",
+      "target": "tools.maintenance.runtime_run_receipt",
+      "owner": "RFC-239 qualification boundary",
+      "reason": "The qualification-only input-lock adapter validates an existing host-owned RunReceipt without becoming a production receipt authority.",
+      "exit_condition": "Replace the tool import with a runtime/facade-owned receipt validation protocol before production admission.",
+      "max_sites": 1
+    }
   ]
 }

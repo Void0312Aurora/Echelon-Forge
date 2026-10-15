@@ -3,9 +3,9 @@
   "contract_version": "echelon_forge.artifact_ledger_contract.v1",
   "authoritative": false,
   "production_activation_enabled": false,
-  "inventory_sha256": "450422ea693c40f697e2ebc0e2616bfd0646449fde99e1570b7f508c189befbf",
-  "release_manifest_blob_sha256": "230e57646dd3e376974b22790ffcd031a14f64f4257420de03df1e0ff9eb91cc",
-  "active_plan_blob_sha256": "409cb7c070b9b468ab0777ac2c1c04b11135182047bd2ebc87fd8a30bb83d84c",
+  "inventory_sha256": "ff9511b58889d2313481b01ea72eba5146034a6015263558f3e31258909aa804",
+  "release_manifest_blob_sha256": "90d7ccd0685ff73ad8c1b116da766a99114c713b279cd28ba925ccdf98e5a99f",
+  "active_plan_blob_sha256": "f4cdfb67ca249dfc5cc75ad6aa1e57ee4eb152d998f4a6052f62b9b6033c850e",
   "admissions_open": true,
   "writer_advancement_frozen": false,
   "kill_switch_record_sha256": "",
@@ -35,10 +35,10 @@
       "decision_id": "decision-1",
       "decision_sequence": "0",
       "irreversible_write_boundary": "none",
-      "manifest_sha256": "973756d5369a6b0881f793f663c8742733a1c544ce88fbe9cac121876588fca3",
+      "manifest_sha256": "ffef15010249cc3384649adcfc5e18c85eff93059db01c1718c954ef2041adf2",
       "plan_reader_generation_max": "2",
       "plan_reader_generation_min": "1",
-      "plan_sha256": "79d3265c06182a68256fcccac7eafb70f3711d91141c394612d8aff6903ab0da",
+      "plan_sha256": "3e5da57f53fcc7f87314743f9f7f94d07b2a80cc7db6025f22cf83a809c711f3",
       "predecessor_decision_id": "",
       "release_id": "release-2026-08-25",
       "rollback_deadline": "2026-09-01T00:00:00Z",
@@ -47,7 +47,7 @@
       "writer_generation": "1",
       "writer_role": "release_controller"
     },
-    "payload_sha256": "256b4ff34558617bce2544eb51d73ed9bd985164963e8ecff4aeac49ca2c1b45",
+    "payload_sha256": "4665f5a7b2cda9859c59626486c701b055f0d3adec584a92bf6e1f35f079c1e0",
     "signatures": []
   }
 }

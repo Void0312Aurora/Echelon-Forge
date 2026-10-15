@@ -5,6 +5,7 @@
 #include <doctest/doctest.h>
 
 #include <cstdint>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -323,6 +324,196 @@ std::string run_header_for_run(
 } // namespace
 
 TEST_SUITE("runtime_kernel_candidate") {
+
+    // Invoked explicitly by the bounded Python process test with temporary
+    // paths. Ordinary native suites do not depend on environment-provided data.
+    TEST_CASE("RFC239 native candidate publishes an input-lock-bound receipt" * doctest::skip()) {
+        const char *lock_path = std::getenv("EF_RFC_INPUT_LOCK_PATH");
+        const char *output_path = std::getenv("EF_RFC_OUTPUT_DIR");
+        const char *mode_value = std::getenv("EF_RFC_RECEIPT_MODE");
+        REQUIRE(lock_path != nullptr);
+        REQUIRE(output_path != nullptr);
+        const std::string mode = mode_value == nullptr ? "complete" : mode_value;
+        REQUIRE((mode == "complete" || mode == "drift" || mode == "missing" ||
+                 mode == "audit_missing_blob" || mode == "audit_missing_topology" ||
+                 mode == "audit_corrupt_topology" || mode == "audit_missing_world_scope" ||
+                 mode == "audit_corrupt_world_scope"));
+        const auto root = std::filesystem::path(output_path) / "ledger";
+        if (mode.starts_with("audit_")) {
+            runtime::host::RuntimeFileArtifactLedgerStore reader(
+                root, {runtime::host::RuntimeArtifactLedgerRole::ReadOnlyAuditor, "rfc239-audit"});
+            std::string bytes, detail;
+            CHECK_FALSE(reader.read_receipt("run-rfc239", bytes, detail));
+            if (mode == "audit_missing_blob")
+                CHECK(detail.find("resolved input lock blob is not durable") != std::string::npos);
+            else if (mode == "audit_missing_topology" || mode == "audit_missing_world_scope")
+                CHECK(detail == "native ArtifactLedger referenced blob is absent");
+            else
+                CHECK(detail == "native ArtifactLedger referenced blob integrity failure");
+            return;
+        }
+        // Host identity initialization can load the platform RNG module. Do it
+        // before sealing process provenance, with no kernel or published world.
+        runtime::host::RuntimeHostCandidate identity_bootstrap({
+            .host_id = {.high = 0x524643323339ULL, .low = 2},
+        });
+        auto sources = execution_sources();
+        sources.owner_facts.build_dirty = true; // Qualification build-owner declaration.
+        sources.resolved_input_lock_path = lock_path;
+        const auto lock_bytes = file_bytes(lock_path);
+        const auto lock_digest = runtime::authority_contracts::sha256_hex(lock_bytes);
+        std::string detail, digest, location;
+        {
+            runtime::host::RuntimeFileArtifactLedgerStore compiler(
+                root, {runtime::host::RuntimeArtifactLedgerRole::PlanCompiler, "rfc239-compiler"});
+            REQUIRE(compiler.put_artifact(
+                file_bytes(EF_RESOLVED_EXECUTION_PLAN_PATH),
+                "application/vnd.echelon-forge.resolved-execution-plan.v1+json", "active-release",
+                digest, location, detail));
+            REQUIRE(compiler.put_artifact(
+                runtime::authority_contracts::canonical_authority_json(
+                    file_bytes(EF_RUNTIME_COMPOSITION_REQUEST_PATH))
+                    .value(),
+                "application/vnd.echelon-forge.runtime-composition-request.v1+json",
+                "active-release", digest, location, detail));
+            if (mode != "missing") {
+                REQUIRE(compiler.put_artifact(
+                    lock_bytes, "application/vnd.echelon-forge.resolved-input-lock.v1+json",
+                    "active-release", digest, location, detail));
+                REQUIRE(digest == lock_digest);
+            }
+        }
+        nlohmann::json evidence;
+        {
+            runtime::host::RuntimeFileArtifactLedgerStore store(
+                root, {runtime::host::RuntimeArtifactLedgerRole::RuntimeHost, "rfc239-host"});
+            auto config = runtime::host::integration::RuntimeKernelCandidateConfig{
+                .host_id = {.high = 0x524643323339ULL, .low = 1},
+                .run_recorder_store = &store,
+                .run_id = "run-rfc239",
+                .run_writer_id = "writer-rfc239",
+                .run_header_json = run_header_for_run("run-rfc239", {}, sources),
+                .run_receipt_template_json = receipt_template_for_run("run-rfc239", {}, sources),
+                .run_execution_sources = sources,
+                .persist_realized_cpu_topology = true,
+                .persist_world_scope_binding = true,
+            };
+            if (mode == "missing") {
+                CHECK_THROWS_WITH_AS(
+                    RuntimeKernelCandidate{config},
+                    doctest::Contains(
+                        "native ArtifactLedger admitted resolved input lock blob is absent"),
+                    std::invalid_argument);
+                std::string absent;
+                CHECK_FALSE(store.read_receipt("run-rfc239", absent, detail));
+                return;
+            }
+            RuntimeKernelCandidate candidate(config);
+            REQUIRE(candidate.start());
+            REQUIRE(candidate
+                        .spawn_unit(candidate.world_ref(),
+                                    {
+                                        .world_index = 0,
+                                        .side = Side::Blue,
+                                        .type_name = "Aircraft",
+                                        .z = 3000.0,
+                                    })
+                        .has_value());
+            for (unsigned step = 0; step < 3; ++step) {
+                REQUIRE(candidate.step(candidate.world_ref()));
+            }
+            const auto composition = candidate.composition_snapshot();
+            evidence = {
+                {"resolved_manifest_sha256", composition.resolved_manifest_sha256},
+                {"executable_graph_sha256", composition.executable_graph_sha256},
+                {"host_mode", "dark"},
+                {"qualification_scope", "receipt_reference_only"},
+                {"steps_completed", 3},
+                {"input_lock_semantics_executed", false},
+            };
+            if (mode == "drift") {
+                std::ofstream changed(lock_path, std::ios::binary | std::ios::trunc);
+                changed << "{}";
+                REQUIRE(changed.good());
+            }
+            const auto shutdown = candidate.shutdown(1, 10);
+            INFO(shutdown.status.detail);
+            REQUIRE(shutdown.status);
+        }
+        // Reopen through the ledger owner after releasing the writer handle.
+        // A raw receipt file alone cannot establish durable journal/blob state.
+        runtime::host::RuntimeFileArtifactLedgerStore reader(
+            root, {runtime::host::RuntimeArtifactLedgerRole::ReadOnlyAuditor, "rfc239-reader"});
+        std::string receipt_bytes;
+        REQUIRE(reader.read_receipt("run-rfc239", receipt_bytes, detail));
+        const auto receipt = nlohmann::json::parse(receipt_bytes);
+        CHECK(receipt.at("payload").at("inputs").at("artifacts").at("resolved_input_lock") ==
+              lock_digest);
+        CHECK(receipt.at("payload").at("terminal_state") ==
+              (mode == "drift" ? "failed" : "completed"));
+        CHECK(receipt.at("payload").at("completion").at("durable_ack") == true);
+        if (mode == "complete") {
+            bool found_topology = false;
+            bool found_world_scope = false;
+            for (const auto &artifact :
+                 receipt.at("payload").at("results").at("output_artifacts")) {
+                if (artifact.at("name") == "runtime-world-scope-binding") {
+                    REQUIRE_FALSE(found_world_scope);
+                    found_world_scope = true;
+                    const auto blob_path =
+                        root / "blobs" / (artifact.at("digest").get<std::string>() + ".data");
+                    const auto bytes = file_bytes(blob_path.string().c_str());
+                    REQUIRE(runtime::authority_contracts::sha256_hex(bytes) ==
+                            artifact.at("digest").get<std::string>());
+                    const auto scope = nlohmann::json::parse(bytes);
+                    REQUIRE(scope.at("schema_version") ==
+                            "echelon_forge.runtime_world_scope_binding.v1");
+                    REQUIRE(scope.at("world_bindings").size() == 1);
+                    const auto &binding = scope.at("world_bindings").front();
+                    const auto &payload = receipt.at("payload");
+                    CHECK(binding.at("world_index") == 0);
+                    CHECK(binding.at("world_id") ==
+                          payload.at("execution_scope").at("world_ids").front());
+                    CHECK(binding.at("world_epoch") ==
+                          payload.at("execution_scope").at("epochs").at("world"));
+                    CHECK(binding.at("host_boot_id") == payload.at("host_boot_id"));
+                    CHECK(binding.at("incarnation_epoch") == payload.at("incarnation_epoch"));
+                    evidence["receipt_world_bindings"] = scope.at("world_bindings");
+                    evidence["world_scope_artifact_digest"] = artifact.at("digest");
+                    continue;
+                }
+                if (artifact.at("name") != "runtime-cpu-scheduler-topology") continue;
+                REQUIRE_FALSE(found_topology);
+                found_topology = true;
+                CHECK(artifact.at("media_type") ==
+                      "application/vnd.echelon-forge.runtime-cpu-scheduler-topology.v1+json");
+                const auto blob_path =
+                    root / "blobs" / (artifact.at("digest").get<std::string>() + ".data");
+                const auto bytes = file_bytes(blob_path.string().c_str());
+                REQUIRE(runtime::authority_contracts::sha256_hex(bytes) ==
+                        artifact.at("digest").get<std::string>());
+                const auto observed = nlohmann::json::parse(bytes);
+                REQUIRE(observed.at("topology").at("contract") ==
+                        "echelon_forge.cpu_scheduler_topology.v1");
+                REQUIRE_FALSE(observed.at("topology").at("nodes").empty());
+                REQUIRE_FALSE(observed.at("active_pipeline_order").empty());
+                evidence["realized_topology_digest"] = observed.at("sha256");
+                evidence["topology_artifact_digest"] = artifact.at("digest");
+            }
+            REQUIRE(found_topology);
+            REQUIRE(found_world_scope);
+        } else {
+            CHECK(receipt.at("payload").at("results").at("output_artifacts").empty());
+        }
+        std::ofstream receipt_output(std::filesystem::path(output_path) / "receipt.json",
+                                     std::ios::binary | std::ios::trunc);
+        receipt_output << receipt_bytes;
+        REQUIRE(receipt_output.good());
+        std::ofstream evidence_output(std::filesystem::path(output_path) / "native.json",
+                                      std::ios::binary | std::ios::trunc);
+        evidence_output << evidence.dump();
+        REQUIRE(evidence_output.good());
+    }
 
     TEST_CASE("P5-B recorder admission and mutation ACKs gate the real candidate") {
         CandidateRunStore tampered_authority_store;
@@ -854,12 +1045,14 @@ TEST_SUITE("runtime_kernel_candidate") {
                 .run_header_json = run_header_for_run("run-cancelled"),
                 .run_receipt_template_json = receipt_template_for_run("run-cancelled"),
                 .run_execution_sources = execution_sources(),
+                .persist_world_scope_binding = true,
             });
         }
         REQUIRE(store.finalized);
         CHECK(store.final_receipt.at("payload").at("terminal_state") == "cancelled");
         CHECK(store.final_receipt.at("payload").at("terminal_reason") ==
               "candidate closed before start");
+        CHECK(store.final_receipt.at("payload").at("results").at("output_artifacts").empty());
     }
 
 } // TEST_SUITE("runtime_kernel_candidate")

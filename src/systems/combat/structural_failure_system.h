@@ -49,7 +49,15 @@ inline double structural_near_field_mode_loss(std::string_view mode, double seve
     return 0.0;
 }
 
-inline bool has_tg_p7_split_surface(const ComponentDamageState &component_damage) {
+enum class StructuralTopologyAdmission : std::uint8_t {
+    DefaultSharedSpar,
+    TgP7SplitSurface,
+    TgP7IncompleteFallback,
+    UnknownFallback,
+};
+
+inline StructuralTopologyAdmission
+structural_topology_admission(const ComponentDamageState &component_damage) {
     static constexpr std::array<std::string_view, 8> kSplitReceivers = {
         "engine_core_afterburner_segment",        "engine_core_hot_section_segment",
         "engine_core_forward_compressor_segment", "wing_spar_center_left_inner_wing_segment",
@@ -57,10 +65,24 @@ inline bool has_tg_p7_split_surface(const ComponentDamageState &component_damage
         "wing_spar_center_right_root_segment",    "wing_spar_center_right_inner_wing_segment",
     };
 
-    return std::any_of(kSplitReceivers.begin(), kSplitReceivers.end(), [&](std::string_view name) {
-        return component_damage.component_integrity.find(std::string(name)) !=
-               component_damage.component_integrity.end();
-    });
+    if (component_damage.structural_topology_profile == kDefaultStructuralTopologyProfile) {
+        return StructuralTopologyAdmission::DefaultSharedSpar;
+    }
+    if (component_damage.structural_topology_profile != kTgP7SplitSurfaceTopologyProfile) {
+        return StructuralTopologyAdmission::UnknownFallback;
+    }
+    const bool complete =
+        std::all_of(kSplitReceivers.begin(), kSplitReceivers.end(), [&](std::string_view name) {
+            return component_damage.component_integrity.find(std::string(name)) !=
+                   component_damage.component_integrity.end();
+        });
+    return complete ? StructuralTopologyAdmission::TgP7SplitSurface
+                    : StructuralTopologyAdmission::TgP7IncompleteFallback;
+}
+
+inline bool has_tg_p7_split_surface(const ComponentDamageState &component_damage) {
+    return structural_topology_admission(component_damage) ==
+           StructuralTopologyAdmission::TgP7SplitSurface;
 }
 
 inline bool component_failed_at(const ComponentDamageState &component_damage, std::string_view name,
@@ -248,9 +270,11 @@ inline std::vector<std::string> component_names_for_group(StructuralBreakGroup g
                 "right_leading_edge_flap_actuator",
                 "right_wing_fuel_cell"};
     case StructuralBreakGroup::TailLeft:
-        return {"left_horizontal_tail_actuator_or_surface_component"};
+        return {"left_stabilator_surface", "left_stabilator_hinge",
+                "left_horizontal_tail_actuator_or_surface_component"};
     case StructuralBreakGroup::TailRight:
-        return {"right_horizontal_tail_actuator_or_surface_component"};
+        return {"right_stabilator_surface", "right_stabilator_hinge",
+                "right_horizontal_tail_actuator_or_surface_component"};
     case StructuralBreakGroup::VerticalTail:
         return {"rudder_actuator"};
     case StructuralBreakGroup::EngineRight:
@@ -263,6 +287,28 @@ inline std::vector<std::string> component_names_for_group(StructuralBreakGroup g
         break;
     }
     return {};
+}
+
+inline bool component_present(const ComponentDamageState &component_damage, std::string_view name) {
+    return component_damage.component_integrity.find(std::string(name)) !=
+           component_damage.component_integrity.end();
+}
+
+inline bool stabilator_structural_detachment_at(const ComponentDamageState &component_damage,
+                                                std::string_view surface_name,
+                                                std::string_view hinge_name,
+                                                std::string_view legacy_name) {
+    const bool has_split_semantics = component_present(component_damage, surface_name) ||
+                                     component_present(component_damage, hinge_name);
+    if (has_split_semantics) {
+        // Actuator/control-linkage receivers are intentionally absent here:
+        // losing control authority does not itself detach the stabilator.
+        return component_failed_at(component_damage, surface_name, 0.20) ||
+               component_failed_at(component_damage, hinge_name, 0.20);
+    }
+    // Legacy combined receivers remain supported during content migration,
+    // but only their structurally damaging modes can detach the surface.
+    return component_failed_at(component_damage, legacy_name, 0.20);
 }
 
 inline StructuralBreakupState
@@ -382,12 +428,14 @@ evaluate_structural_breakup_state(const ComponentDamageState &component_damage,
     }
 
     add_group_if(newly_failed_groups,
-                 component_failed_at(component_damage,
-                                     "left_horizontal_tail_actuator_or_surface_component", 0.20),
+                 stabilator_structural_detachment_at(
+                     component_damage, "left_stabilator_surface", "left_stabilator_hinge",
+                     "left_horizontal_tail_actuator_or_surface_component"),
                  StructuralBreakGroup::TailLeft);
     add_group_if(newly_failed_groups,
-                 component_failed_at(component_damage,
-                                     "right_horizontal_tail_actuator_or_surface_component", 0.20),
+                 stabilator_structural_detachment_at(
+                     component_damage, "right_stabilator_surface", "right_stabilator_hinge",
+                     "right_horizontal_tail_actuator_or_surface_component"),
                  StructuralBreakGroup::TailRight);
     add_group_if(newly_failed_groups,
                  component_failed_at(component_damage, "rudder_actuator", 0.25),
@@ -395,7 +443,8 @@ evaluate_structural_breakup_state(const ComponentDamageState &component_damage,
     add_group_if(
         newly_failed_groups,
         component_failed_at(component_damage, "center_fuselage_fuel_cell", 0.30) ||
-            component_failed_at(component_damage, "dedicated_intake_lip_or_duct_component", 0.20),
+            component_failed_at(component_damage, "dedicated_intake_lip_or_duct_component", 0.20) ||
+            component_failed_at(component_damage, "wing_spar_center_carrythrough_segment", 0.20),
         StructuralBreakGroup::Fuselage);
 
     StructuralBreakupState next = prior;

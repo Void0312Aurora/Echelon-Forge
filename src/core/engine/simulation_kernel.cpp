@@ -178,9 +178,24 @@ void SimulationKernel::set_missile_tuning(const MissileTuning &tuning) {
     world_state_mutated_ = true;
 }
 
+bool SimulationKernel::has_unfinished_native_pipeline() const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("has_unfinished_native_pipeline");
+    return ecs.is_readonly() || ecs.is_deferred();
+}
+
 void SimulationKernel::reset(unsigned int seed) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("reset");
+    // C++ exceptions escaping a Flecs callback can bypass its C cleanup and
+    // leave a readonly world or an open defer scope. Clearing episode entities
+    // cannot repair those pipeline/iterator internals. Keep this world fenced;
+    // its hosting process must be retired instead of certifying a reset.
+    if (ecs.is_readonly() || ecs.is_deferred()) {
+        throw std::logic_error(
+            "SimulationKernel::reset cannot recover an unfinished native pipeline; "
+            "recreate the host process");
+    }
     if (IEngagementEventStore *store = engagement_event_store()) {
         store->clear();
     }
@@ -210,6 +225,11 @@ void SimulationKernel::step() {
     if (exact_stage_trace_frame_active_) {
         throw std::logic_error(
             "SimulationKernel::step() cannot run while an exact-stage trace frame is active");
+    }
+    if (ecs.is_readonly() || ecs.is_deferred()) {
+        throw std::logic_error(
+            "SimulationKernel::step cannot resume an unfinished native pipeline; "
+            "recreate the host process");
     }
     // Fixed timestep update
     // We pass the fixed delta_time to progress
@@ -559,6 +579,25 @@ std::string SimulationKernel::requested_composition_sha256() const {
 std::string SimulationKernel::resolved_composition_sha256() const {
     auto composition_lock = acquire_composition_operation();
     return composition_ ? composition_->resolved_manifest_sha256() : std::string{};
+}
+
+runtime::platform_capabilities::ResolvedPlatformSpawnPlan
+SimulationKernel::resolve_platform_spawn_plan_for_type_name(const std::string &type_name) const {
+    auto composition_lock = acquire_composition_operation();
+    ensure_active("resolve_platform_spawn_plan_for_type_name");
+    IUnitFactory *factory = unit_factory();
+    if (factory == nullptr) {
+        runtime::platform_capabilities::ResolvedPlatformSpawnPlan plan{};
+        plan.source_request_kind = std::string(
+            runtime::platform_capabilities::kPlatformSpawnRequestKindTypeNameProjection);
+        plan.source_type_name = type_name;
+        plan.type_name_projection_preserved = true;
+        plan.admitted = false;
+        plan.rejection_reason = "resolved_platform_spawn_plan_unit_factory_unavailable";
+        plan.diagnostics_reason = plan.rejection_reason;
+        return plan;
+    }
+    return factory->resolve_platform_spawn_plan_for_type_name(type_name);
 }
 
 std::uint64_t SimulationKernel::world_composition_generation() const noexcept {

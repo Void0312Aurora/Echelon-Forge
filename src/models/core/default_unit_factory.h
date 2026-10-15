@@ -16,6 +16,7 @@
 #include "components/command/command_link_qos.h"
 #include "components/command/default_factory_spawn_command_projection.h"
 #include "components/basic/common.h"
+#include "components/basic/tags.h"
 #include "core/interfaces/stable_entity_identity.h"
 #include "components/combat/health.h"
 #include "components/physics/performance.h"
@@ -604,7 +605,7 @@ class DefaultUnitFactory : public IUnitFactory {
     }
 
     [[nodiscard]] ResolvedPlatformSpawnPlan
-    resolve_platform_spawn_plan_for_type_name(std::string_view type_name) const {
+    resolve_platform_spawn_plan_for_type_name(std::string_view type_name) const override {
         using namespace runtime::platform_capabilities;
         using namespace default_unit_factory_detail;
 
@@ -1539,6 +1540,8 @@ class DefaultUnitFactory : public IUnitFactory {
             }
             e.set<SystemHealth>(initial_health);
             ComponentDamageState component_damage;
+            component_damage.structural_topology_profile =
+                def.damage_model.structural_topology_profile;
             for (const auto &hb : def.damage_model.hitboxes) {
                 for (const auto &component : hb.components) {
                     const std::string component_key = damage_component_key(component);

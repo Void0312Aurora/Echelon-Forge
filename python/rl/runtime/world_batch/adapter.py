@@ -93,6 +93,42 @@ class RuntimeFacadeAdapterCapabilities:
     has_set_pilot_reports_maintained_batch: bool
     has_set_command_links_batch: bool
 
+    @property
+    def missing_required(self) -> tuple[str, ...]:
+        return tuple(
+            field
+            for field in REQUIRED_FACADE_CAPABILITIES
+            if not bool(getattr(self, field))
+        )
+
+    @property
+    def missing_optional(self) -> tuple[str, ...]:
+        return tuple(
+            field
+            for field in OPTIONAL_FACADE_CAPABILITIES
+            if not bool(getattr(self, field))
+        )
+
+
+# Required fields are the maintained production ABI. Unit-message reads are
+# optional because they are a bounded communication query family; requesting
+# that family still fails closed when a binding does not expose it.
+REQUIRED_FACADE_CAPABILITIES = (
+    "has_runtime_window_api",
+    "has_observation_batch_request",
+    "has_export_observation_packet",
+    "has_get_task_orders_maintained_batch",
+    "has_get_leader_intents_maintained_batch",
+    "has_get_pilot_reports_maintained_batch",
+    "has_apply_launch_requests_batch",
+    "has_set_mission_commands_maintained_batch",
+    "has_set_task_orders_maintained_batch",
+    "has_set_leader_intents_maintained_batch",
+    "has_set_pilot_reports_maintained_batch",
+    "has_set_command_links_batch",
+)
+OPTIONAL_FACADE_CAPABILITIES = ("has_get_unit_messages_batch",)
+
 
 def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAdapterCapabilities:
     return RuntimeFacadeAdapterCapabilities(
@@ -532,6 +568,20 @@ class RuntimeFacadeAdapter:
 
     def _batch_target(self):
         return self.facade
+
+    def _require_capability(
+        self,
+        field: str,
+        surface: str,
+        *,
+        missing_message: str | None = None,
+    ) -> None:
+        if field not in REQUIRED_FACADE_CAPABILITIES and field not in OPTIONAL_FACADE_CAPABILITIES:
+            raise ValueError(f"unknown RuntimeFacadeAdapter capability field: {field}")
+        if not bool(getattr(self.capabilities, field)):
+            if missing_message is not None:
+                raise RuntimeError(missing_message)
+            raise RuntimeError(f"{surface} requires maintained facade bindings ({field})")
 
     def _scenario_loader_runtime(self, index: int) -> _ScenarioLoaderRuntimeProxy:
         return _ScenarioLoaderRuntimeProxy(self, int(index))
@@ -1048,36 +1098,37 @@ class RuntimeFacadeAdapter:
         return list(self._batch_target().get_mission_commands_maintained_batch(list(refs)))
 
     def get_task_orders_maintained_batch(self, refs: Sequence[Any]) -> list[Any]:
-        batch_target = self._batch_target()
-        if self.capabilities.has_get_task_orders_maintained_batch:
-            return list(batch_target.get_task_orders_maintained_batch(list(refs)))
-        return []
+        self._require_capability(
+            "has_get_task_orders_maintained_batch",
+            "RuntimeFacadeAdapter.get_task_orders_maintained_batch",
+        )
+        return list(self._batch_target().get_task_orders_maintained_batch(list(refs)))
 
     def get_leader_intents_maintained_batch(self, refs: Sequence[Any]) -> list[Any]:
         """Read maintained leader-intent contracts through the facade batch seam."""
 
-        if not self.capabilities.has_get_leader_intents_maintained_batch:
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.get_leader_intents_maintained_batch requires maintained facade bindings"
-            )
+        self._require_capability(
+            "has_get_leader_intents_maintained_batch",
+            "RuntimeFacadeAdapter.get_leader_intents_maintained_batch",
+        )
         return list(self._batch_target().get_leader_intents_maintained_batch(list(refs)))
 
     def get_pilot_reports_maintained_batch(self, refs: Sequence[Any]) -> list[Any]:
         """Read maintained pilot-report contracts through the facade batch seam."""
 
-        if not self.capabilities.has_get_pilot_reports_maintained_batch:
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.get_pilot_reports_maintained_batch requires maintained facade bindings"
-            )
+        self._require_capability(
+            "has_get_pilot_reports_maintained_batch",
+            "RuntimeFacadeAdapter.get_pilot_reports_maintained_batch",
+        )
         return list(self._batch_target().get_pilot_reports_maintained_batch(list(refs)))
 
     def get_unit_messages_batch(self, refs: Sequence[Any]) -> list[list[Any]]:
         """Read communication packets through the maintained facade batch seam."""
 
-        if not self.capabilities.has_get_unit_messages_batch:
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.get_unit_messages_batch requires maintained facade bindings"
-            )
+        self._require_capability(
+            "has_get_unit_messages_batch",
+            "RuntimeFacadeAdapter.get_unit_messages_batch",
+        )
         return [list(messages) for messages in self._batch_target().get_unit_messages_batch(list(refs))]
 
     def set_pilot_actions_batch(self, assignments: Sequence[Any]) -> None:
@@ -1090,10 +1141,10 @@ class RuntimeFacadeAdapter:
 
         self._require_current_production_admission()
         self._last_window_evidence = None
-        if not self.capabilities.has_set_command_links_batch:
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.set_command_links_batch requires maintained facade bindings"
-            )
+        self._require_capability(
+            "has_set_command_links_batch",
+            "RuntimeFacadeAdapter.set_command_links_batch",
+        )
         self._batch_target().set_command_links_batch(list(assignments))
 
     def next_launch_request_id(self) -> int:
@@ -1105,11 +1156,10 @@ class RuntimeFacadeAdapter:
         self._require_current_production_admission()
         self._last_window_evidence = None
         batch_target = self._batch_target()
-        if not self.capabilities.has_apply_launch_requests_batch:
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.apply_launch_requests_batch requires maintained "
-                "LaunchRequest batch bindings"
-            )
+        self._require_capability(
+            "has_apply_launch_requests_batch",
+            "RuntimeFacadeAdapter.apply_launch_requests_batch",
+        )
         return list(batch_target.apply_launch_requests_batch(list(requests)))
 
     def step_batch(self) -> None:
@@ -1129,51 +1179,51 @@ class RuntimeFacadeAdapter:
     def set_mission_commands_maintained_batch(self, assignments: Sequence[Any]) -> None:
         self._require_current_production_admission()
         batch_target = self._batch_target()
-        if self.capabilities.has_set_mission_commands_maintained_batch:
-            batch_target.set_mission_commands_maintained_batch(list(assignments))
-            return
-        raise RuntimeError(
-            _maintained_command_chain_write_required_message(
+        self._require_capability(
+            "has_set_mission_commands_maintained_batch",
+            "RuntimeFacadeAdapter.set_mission_commands_maintained_batch",
+            missing_message=_maintained_command_chain_write_required_message(
                 "RuntimeFacadeAdapter.set_mission_commands_maintained_batch"
-            )
+            ),
         )
+        batch_target.set_mission_commands_maintained_batch(list(assignments))
 
     def set_task_orders_maintained_batch(self, assignments: Sequence[Any]) -> None:
         self._require_current_production_admission()
         batch_target = self._batch_target()
         materialized_assignments = list(assignments)
-        if self.capabilities.has_set_task_orders_maintained_batch:
-            batch_target.set_task_orders_maintained_batch(materialized_assignments)
-            return
-        raise RuntimeError(
-            _maintained_task_order_write_required_message(
+        self._require_capability(
+            "has_set_task_orders_maintained_batch",
+            "RuntimeFacadeAdapter.set_task_orders_maintained_batch",
+            missing_message=_maintained_task_order_write_required_message(
                 "RuntimeFacadeAdapter.set_task_orders_maintained_batch"
-            )
+            ),
         )
+        batch_target.set_task_orders_maintained_batch(materialized_assignments)
 
     def set_leader_intents_maintained_batch(self, assignments: Sequence[Any]) -> None:
         self._require_current_production_admission()
         batch_target = self._batch_target()
-        if self.capabilities.has_set_leader_intents_maintained_batch:
-            batch_target.set_leader_intents_maintained_batch(list(assignments))
-            return
-        raise RuntimeError(
-            _maintained_command_chain_write_required_message(
+        self._require_capability(
+            "has_set_leader_intents_maintained_batch",
+            "RuntimeFacadeAdapter.set_leader_intents_maintained_batch",
+            missing_message=_maintained_command_chain_write_required_message(
                 "RuntimeFacadeAdapter.set_leader_intents_maintained_batch"
-            )
+            ),
         )
+        batch_target.set_leader_intents_maintained_batch(list(assignments))
 
     def set_pilot_reports_maintained_batch(self, assignments: Sequence[Any]) -> None:
         self._require_current_production_admission()
         batch_target = self._batch_target()
-        if self.capabilities.has_set_pilot_reports_maintained_batch:
-            batch_target.set_pilot_reports_maintained_batch(list(assignments))
-            return
-        raise RuntimeError(
-            _maintained_command_chain_write_required_message(
+        self._require_capability(
+            "has_set_pilot_reports_maintained_batch",
+            "RuntimeFacadeAdapter.set_pilot_reports_maintained_batch",
+            missing_message=_maintained_command_chain_write_required_message(
                 "RuntimeFacadeAdapter.set_pilot_reports_maintained_batch"
-            )
+            ),
         )
+        batch_target.set_pilot_reports_maintained_batch(list(assignments))
 
 
 __all__ = ["RuntimeFacadeAdapter", "RuntimeFacadeAdapterCapabilities"]

@@ -285,7 +285,7 @@ def test_ecs_migration_digest_tracks_every_previous_generation_decoder() -> None
             r'schema == "([^"]+)"', _cpp_function_source(adapter_source, name)
         ))) > 1
     }
-    assert previous_generation_decoders == {"decode_missile"}
+    assert previous_generation_decoders == {"decode_missile", "decode_component_damage"}
     # Include the field tables used by the custom Missile codec and reflected
     # serialized truth. Later stack layers extending ECS fields must repin.
     missile_field_tables = adapter_source.split("// clang-format off", 1)[1].split(
@@ -293,6 +293,7 @@ def test_ecs_migration_digest_tracks_every_previous_generation_decoder() -> None
     )[0]
     canonical = "\n".join([
         *(_cpp_function_source(adapter_source, name) for name in ECS_MIGRATION_FUNCTIONS),
+        _cpp_function_source(adapter_source, "decode_component_damage"),
         " ".join(missile_field_tables.split()),
         " ".join(COMPONENT_REFLECTION.read_text(encoding="utf-8").split()),
     ])

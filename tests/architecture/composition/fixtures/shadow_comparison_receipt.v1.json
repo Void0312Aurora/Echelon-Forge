@@ -3,9 +3,9 @@
   "contract_version": "echelon_forge.artifact_ledger_contract.v1",
   "receipt_id": "shadow-1",
   "authoritative": false,
-  "plan_sha256": "79d3265c06182a68256fcccac7eafb70f3711d91141c394612d8aff6903ab0da",
-  "release_manifest_sha256": "973756d5369a6b0881f793f663c8742733a1c544ce88fbe9cac121876588fca3",
-  "rollout_decision_sha256": "256b4ff34558617bce2544eb51d73ed9bd985164963e8ecff4aeac49ca2c1b45",
+  "plan_sha256": "3e5da57f53fcc7f87314743f9f7f94d07b2a80cc7db6025f22cf83a809c711f3",
+  "release_manifest_sha256": "ffef15010249cc3384649adcfc5e18c85eff93059db01c1718c954ef2041adf2",
+  "rollout_decision_sha256": "4665f5a7b2cda9859c59626486c701b055f0d3adec584a92bf6e1f35f079c1e0",
   "comparison_kind": "cpu-exact-result",
   "outcome": "match",
   "evidence_sha256": "9999999999999999999999999999999999999999999999999999999999999999"

@@ -1,6 +1,7 @@
 #include "interfaces/python/binding_utils.h"
 
 #include <algorithm>
+#include "components/visual/visual_sensor.h"
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
