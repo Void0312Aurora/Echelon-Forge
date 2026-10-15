@@ -604,6 +604,11 @@ def generate_before_report(
       declared_effect_radius_m=declared_effect_radius_m,
     )
   ]
+  completion_audit = (
+    decoupling_probe.kill_chain_completion_audit(probe_report)
+    if probe_report
+    else {}
+  )
   report = {
     "schema_version": SCHEMA_VERSION,
     "status": (
@@ -637,9 +642,7 @@ def generate_before_report(
       "status": probe_report.get("status", ""),
       "guidance_case_count": int(probe_report.get("guidance_case_count", 0) or 0),
       "proximity_case_count": int(probe_report.get("proximity_case_count", 0) or 0),
-      "completion_audit_goal_complete": bool(
-        dict(probe_report.get("completion_audit", {}) or {}).get("goal_complete")
-      ),
+      "completion_audit_goal_complete": bool(completion_audit.get("goal_complete")),
     },
   }
   if include_raw_probe:
