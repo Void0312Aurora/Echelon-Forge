@@ -4,17 +4,17 @@ Document kind: `work`
 Lifecycle: `active`
 Canonical: `docs/architecture/work/issues/rfc_qualified_composition_implementation.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-10-13`
+Last verified: `2026-10-15`
 
 ## Scope and source
 
-This qualification integration began at branch point
-`main@de19c3dbd69e9feb330b1291e84a210c53bfd09f` and now includes the current
-upstream `main@81bf21f093a34baff64d43c01f7975e15fb09dc1` through merge commit
-`0f18684eda439aa5f35c6ec22ddc0b3f93f9ae46`.
+This qualification integration began at the historical branch point
+`main@de19c3dbd69e9feb330b1291e84a210c53bfd09f`; the maintained upstream
+baseline is now `main@ed9e476be4b57831001e0ef8e42d500989933e0e` after the final
+RFC stack merge `#287`.
 It carries the proposed ADRs and prototypes from PRs #256–#261 into an isolated
 worktree. It does not mark the RFCs accepted or enable a production profile.
-The continuation also ports the existing #210 owner repair from PR #230,
+The continuation historically ported the existing #210 owner repair from PR #230,
 `7989800d284484c76ccd0aed77cca32300fb2dda`, onto the branch-point interfaces.
 Only its failure guards, recovery behavior, bindings and tests were carried;
 obsolete command setters and older broadphase code were excluded. The branch-point
@@ -29,6 +29,16 @@ composition diagnostics and resize operation received the same failure guard.
 | #239 input lock | #260 | `897d29f02b98212e8a4431ae02721f0bcf90a62c` |
 | #251 failure domains | #261 | `f8403b3ea13a47796f792053e142b4f6c1b44dbb` |
 
+## Current integration status (2026-10-15)
+
+PRs #278–#287 merged the qualification stack into `main`; the final stack
+commit is `ed9e476be4b57831001e0ef8e42d500989933e0e`. The #210 native owner
+repair is therefore integrated and is no longer branch-only. The six proposed
+ADRs remain `Lifecycle: proposed`, and qualification evidence remains bounded
+and opt-in. This document does not claim production profile admission,
+per-world commit truth, rollback, transactional semantics or supervisor
+isolation.
+
 ## Implemented and measured
 
 | RFC | Implemented in this checkpoint | Evidence and limits |
@@ -38,7 +48,8 @@ composition diagnostics and resize operation received the same failure guard.
 | #237 | Relationships survive compilation and hashing with instance-scoped endpoints; reused packages expand independently; nested role capability requirements are checked; frame/anchor/provenance references survive in package-instance evidence. A qualification adapter now binds one compiled package to an existing CSG group by explicit entity-name and assembly-type maps, carries the compiled relationship digest, records CSG schema, scenario, geometry and embarked-inventory digests, and delegates the complete qualified snapshot to the existing loader. The loader requires an independently supplied compiled-package scope and rechecks package and relationship identity before delegation. Malformed group metadata and missing guide-frame evidence now fail closed with explicit qualification errors. | Recursive, full named/mirror CSG, loader and negative fixtures. Both full S0 fixtures bind all seven surface hulls per group; native loader positions and 241 replay frames match. In-memory coordinate, inventory, geometry, runtime-metadata, compiled-package and relationship drift is rejected before loading. CSG still owns coordinate expansion, geodesy, embarked inventory and native scenario materialization. It does not install task authority or replace the CSG compiler. |
 | #238 | Field provenance/frame checks, explicit optional defaults with preserved field order, action bounds/timing checks, deterministic policy selection, a legacy-kind compatibility gate and an admitted binding through `DecisionRuntimeAgent`. An owner-issued `PolicyCheckpoint` metadata contract now checks artifact digest, policy/version and observation/action contract identity before binding. Verified checkpoint bytes can now pass through an explicit owner-loader seam, and `PolicyRuntimeBinding.from_checkpoint_artifact` verifies bytes before constructing the existing binding; the contract layer verifies the model lifecycle protocol without deserializing a framework. Runtime binding now rejects a caller-constructed admitted DTO and accepts only the marker produced by `admit_policy()`. The marker is field-bound, so resealing a rejected admission with `dataclasses.replace()` cannot turn it into an admitted binding. The binding supports an owner action-authorizer after generic value/timing checks and before the owner action projector, so current mask, authority and expiry remain native/domain-owner decisions. Admission can consume the maintained owner `ObservationViewSpec`, fail closed on invalid identity/schema/layers, compare the selected view against the policy contract, and carry the admitted view identity/version into the existing model context. | Basic mission fields come from the mission packet owner, action dimensions from the existing native action adapter, and action bounds from the existing Gym space. The binding preserves the existing model reset/decide/close lifecycle, carries verified checkpoint provenance when supplied, validates produced actions and delegates live authorization plus final action projection to owner callbacks. Focused tests cover digest rejection before owner loading, owner protocol rejection, binding-factory loading, action projection, maintained-view binding/provenance, direct and resealed caller-constructed admission rejection and a real `DecisionRuntimeAgent` path that rejects an expired action before projection. An external JSON stand-in checkpoint now runs through PolicyRuntimeBinding and DecisionRuntimeAgent into the existing native facade action endpoint; live native mission updates change model output and observed throttle with direct-action state parity. Production checkpoint quality, selection/profile admission and authorization-provider wiring remain open. |
 | #239 | Deeply immutable canonical input identity, semantic freshness checks on compiled scenario snapshots, ScenarioCompiler dependency projection, separate observed native manifest/graph/topology identity, and a host receipt binding join to the existing RunReceipt validator. A file-bound join now reads a host-published canonical receipt, verifies its bytes and delegates to the same owner validator without synthesizing a receipt. Completed comparison now requires the exact structural evidence shape emitted by that join, including a completed outcome, receipt digest/binding and durable acknowledgement. The comparator also checks receipt binding identity fields and digest-shaped native evidence before treating completion evidence as comparable. | One existing Air matrix entry produces a static candidate with explicit effective seeds. Source changes and in-memory semantic snapshot changes reject. The join preserves receipt/run/host/generation, backend graph, native validator evidence and durable acknowledgement, and the file-bound path rejects noncanonical or unreadable host output. Receipt/comparability fixtures remain synthetic owner-contract vectors rather than durable production run records. A bounded native dark-host subprocess now publishes an actual receipt referencing the Air input lock and reopens it through the native file ledger. It checks admission with a missing lock blob, source drift and later blob loss. This reference-only run explicitly reports unexecuted input-lock semantics and remains incomparable; matching host mode and owner-observed semantic execution are required for ordinary comparisons. An opt-in native shutdown capture now persists the same-run CPU scheduler topology as a receipt-bound output artifact; ledger reopening and the file-bound join reject missing, corrupted or mismatched topology evidence. A separate opt-in native world-scope artifact binds outcome indexes to receipt world IDs, boot, incarnation and world epoch. Missing associations remain unknown; file-bound associations require matching receipt-referenced bytes. A string `status=completed` or arbitrary truthy evidence cannot establish comparability. |
-| #251 | Exact completion coverage and conservative aggregate-fault projection; local #210 native failure fence, guarded exports and explicit reset recovery. The Python projection now reads native `batch_healthy()`/`batch_failure_reason()` and binds the supplied generation reference to native `batch_generation()` before emitting all-unknown outcomes. Direct execution outcomes also require an explicit expected-world scope, so failed or partial records cannot omit the affected batch. `WorldBatchRuntime` now issues a native-owned batch generation ID that changes only after successful reset. A host-fault projection accepts an independent process-survival observation and terminates the generation without inventing per-world commit state. Actual 3/4-world launch-failure injection remains private to native test access. A test-only native subprocess now injects a running Flecs callback fault after ECS mutation; unfinished readonly/defer scopes reject reset and raw step, and native `batch_requires_host_recreate()` projects terminal recovery into Python. | Native 3/4-world serial/parallel mixed-advancement, post-timestep setup faults and first/later worker-launch failures, invalid recovery input, blocked retry/export and successful reset. The state matrix distinguishes `healthy`, `failed/untrusted` and reset-created `healthy`; generation identity is checked against the native owner, while per-world commit, rollback and cancellation remain unestablished. Running-system exceptions, process-fatal abort and nontermination now have bounded local subprocess controls with verified replacement-process startup; production supervisor isolation and availability remain unestablished. Upstream `main` has not received this local #210 port. |
+| #251 | Exact completion coverage and conservative aggregate-fault projection; local #210 native failure fence, guarded exports and explicit reset recovery. The Python projection now reads native `batch_healthy()`/`batch_failure_reason()` and binds the supplied generation reference to native `batch_generation()` before emitting all-unknown outcomes. Direct execution outcomes also require an explicit expected-world scope, so failed or partial records cannot omit the affected batch. `WorldBatchRuntime` now issues a native-owned batch generation ID that changes only after successful reset. A host-fault projection accepts an independent process-survival observation and terminates the generation without inventing per-world commit state. Actual 3/4-world launch-failure injection remains private to native test access. A test-only native subprocess now injects a running Flecs callback fault after ECS mutation; unfinished readonly/defer scopes reject reset and raw step, and native `batch_requires_host_recreate()` projects terminal recovery into Python. | Native 3/4-world serial/parallel mixed-advancement, post-timestep setup faults and first/later worker-launch failures, invalid recovery input, blocked retry/export and successful reset. The state matrix distinguishes `healthy`, `failed/untrusted` and reset-created `healthy`; generation identity is checked against the native owner, while per-world commit, rollback and cancellation remain unestablished. Running-system exceptions, process-fatal abort and nontermination now have bounded local subprocess controls with verified replacement-process startup; production supervisor isolation and availability remain unestablished. The #210 owner repair is integrated on `main` via PR #278; the proposed #251 contract and stronger supervisor, per-world and rollback gates remain open. |
+| #251 | Exact completion coverage and conservative aggregate-fault projection; local #210 native failure fence, guarded exports and explicit reset recovery. The Python projection now reads native `batch_healthy()`/`batch_failure_reason()` and binds the supplied generation reference to native `batch_generation()` before emitting all-unknown outcomes. Direct execution outcomes also require an explicit expected-world scope, so failed or partial records cannot omit the affected batch. `WorldBatchRuntime` now issues a native-owned batch generation ID that changes only after successful reset. A host-fault projection accepts an independent process-survival observation and terminates the generation without inventing per-world commit state. Actual 3/4-world launch-failure injection remains private to native test access. A test-only native subprocess now injects a running Flecs callback fault after ECS mutation; unfinished readonly/defer scopes reject reset and raw step, and native `batch_requires_host_recreate()` projects terminal recovery into Python. | Native 3/4-world serial/parallel mixed-advancement, post-timestep setup faults and first/later worker-launch failures, invalid recovery input, blocked retry/export and successful reset. The state matrix distinguishes `healthy`, `failed/untrusted` and reset-created `healthy`; generation identity is checked against the native owner, while per-world commit, rollback and cancellation remain unestablished. Running-system exceptions, process-fatal abort and nontermination now have bounded local subprocess controls with verified replacement-process startup; production supervisor isolation and availability remain unestablished. The #210 owner repair is integrated on `main` via PR #278; the proposed #251 contract and stronger supervisor, per-world and rollback gates remain open. |
 
 ## Single-owner integration map
 
@@ -268,8 +279,9 @@ merge into main, accept the proposed ADRs or close RFC issues.
    missing bytes and source drift. This is reference-only publication; full Air
    execution/admission, production signatures and
    external durable availability remain open.
-7. **#251 fault gates.** The existing #210 lineage is locally ported and verified
-   against this branch's interface baseline; upstream main still lacks it. The
+7. **#251 fault gates.** The existing #210 lineage was historically ported and
+   verified against the qualification branch's interface baseline; the bounded
+   owner repair is now integrated on `main` via PR #278. The
    native `WorldBatchRuntime` proof injects worker-launch and running-system
    failures through a private test executable, verifies native ECS mutation before
    the exception, joined workers, failed-generation export fencing and stable
@@ -446,11 +458,11 @@ production contract; broader unit compatibility remains open.
 
 The qualification modules, catalogue helpers, tests and proposed documents remain
 opt-in. Configuration formats, native scheduling, production profiles and
-DecisionModel registrations are unchanged. The native #210 port intentionally
-changes post-exception retry/export behavior to fail-closed; healthy default Air
-paths retain the measured parity. Reverting that owner repair is separate from
-removing the qualification frontend. Branch publication does not imply delivery
-to main, production admission or RFC issue closure.
+DecisionModel registrations are unchanged. The native #210 owner repair
+intentionally changes post-exception retry/export behavior to fail-closed;
+healthy default Air paths retain the measured parity. Reverting that owner repair
+is separate from removing the qualification frontend. Mainline integration does
+not imply production admission or RFC issue closure.
 
 ## 2026-10-13 receipt-bound same-run CPU topology
 

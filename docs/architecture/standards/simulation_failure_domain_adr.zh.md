@@ -8,11 +8,12 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/simulation_failure_domain_adr.md`
 Owner: `architecture/failure-contracts`
-Last verified: `2026-10-13`
+Last verified: `2026-10-15`
 
 **状态：** 待评审的契约设计；不授权新增 host、事务引擎或生产切换。
-上游 `main` 不被视为已经执行了完整契约；资格分支只携带本地 #210 owner
-实现和相应证据，不能把它报告为主线或生产保证。
+上游 `main` 不被视为已经执行了完整契约；其中有界的 native #210 owner 修复已通过
+PR #278 进入 `main`，并在 `main@ed9e476be4b57831001e0ef8e42d500989933e0e` 上重新验证；
+更宽的恢复和 supervisor 契约仍为 proposed，尚未准入。
 
 使用分层 outcome 词汇区分 admission、mechanism/stage、单 world、batch 与 host/process 故障。
 各层报告观察事实，native world/ECS truth 仍负责状态有效性；facade/Python 只能翻译，不得从
@@ -20,8 +21,9 @@ exception 推断 rollback。
 
 目标 CPU/facade 策略是 fail-closed：preflight 拒绝不发布；mid-step 或 worker 故障产生明确
 generation fence，除非有可靠的 per-world 证据，否则状态为 unknown/untrusted；禁止透明重试，
-只能显式 reset/recreate。本资格分支在受测 `WorldBatchRuntime` 路径上验证了本地 #210 移植；
-上游生产路径仍须等待 owner 修复交付并按主线祖先重新验证。部分完成 batch 不得报告为同步成功；
+只能显式 reset/recreate。已进入 `main` 的有界 native #210 owner 修复在受测
+`WorldBatchRuntime` 路径上验证了该目标；但 supervisor 隔离、per-world commit 真值、回滚和
+事务语义仍未建立，因此更宽的生产路径仍是开放的集成门槛。部分完成 batch 不得报告为同步成功；
 abort、死锁和阻塞 native code
 不属于同进程恢复能力，需在受限 subprocess 中验证。#209/#210 保留各自实现所有权，现有
 RunReceipt/evidence 和 #239 投影继续作为证据权威。
@@ -50,15 +52,15 @@ generation ID，也不会伪造 reset 结果；native generation identity 仍由
 
 公开 `BatchOperationOutcome` 构造在任何 `completed` 结果上都要求非空的 expected-world
 证据并精确覆盖全部 world index；默认空范围不能绕过这个不变量。skipped/unknown 不能冒充完成，
-aggregate fault 保守投影为全部受影响 world 未知，不从时钟推断回滚。PR #230 中的 #210 owner 修复已局部
-移植到当前 main 接口，并保护新增的组合证据导出；参见
+aggregate fault 保守投影为全部受影响 world 未知，不从时钟推断回滚。PR #230 中的 #210 owner 修复
+历史上曾移植到资格分支接口，并保护新增的组合证据导出；现已通过 PR #278 进入 `main`；参见
 [WorldBatch 故障契约](world_batch_failure_contract.zh.md)。
 
 native 3/4-world 串并行证明覆盖不同 world 的推进差异、时间步已改变后的 setup 异常、
 导出/重试保护、无效恢复输入及显式 reset；Python 和 maintained facade 复用同一 native
 fence。全部 world 未知时结果为 `failed`，要求显式 reset/recreate，不推断 per-world commit。
-机制子故障证明单独观察到内部状态改变、外部 packet 尚未发布。这些本地变更不代表上游
-#210 关闭；native batch 另注入 worker 启动失败，验证已启动 worker 汇合、导出封锁、失败
+机制子故障证明单独观察到内部状态改变、外部 packet 尚未发布。这些有界变更不关闭更宽的
+#210 契约；native batch 另注入 worker 启动失败，验证已启动 worker 汇合、导出封锁、失败
 恢复封锁和显式 reset 的 fail-closed 行为。新的 native system 探针在修改 ECS 状态后抛异常，
 验证未结束的 pipeline 会拒绝 reset 和 raw step，native owner 的
 `batch_requires_host_recreate()` 由 Python 转译为 `terminate_generation`。
