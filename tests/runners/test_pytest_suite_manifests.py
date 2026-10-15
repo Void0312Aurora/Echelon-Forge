@@ -89,6 +89,16 @@ def test_ci_smoke_uses_nodeids_for_broad_runtime_facade_layering_guard() -> None
   assert all("::" in entry for entry in selected_nodes)
 
 
+def test_ci_smoke_owns_rfc_static_admission_negative_fixtures() -> None:
+  suite = _load_json(PYTEST_SUITE_MANIFESTS[0])
+  entries = suite["paths"]
+  assert "tests/smoke/test_rfc_static_admission.py" in entries
+  controls = suite["control_lifecycle"]["controls"]
+  control = next(item for item in controls if item["id"] == "rfc_static_admission_smoke")
+  assert "tests/smoke/test_rfc_static_admission.py" in control["coverage"]
+  assert "tests/suites/architecture_guard_suite.json" in control["coverage"]
+
+
 def test_ci_smoke_takes_no_governance_audit_files_wholesale() -> None:
   """Audit-tier files may contribute hand-picked node ids to the smoke
   suite, but never whole files: the suite runner applies no marker filter,
