@@ -1,5 +1,7 @@
 from .ports import (
     CompiledMechanismGraph,
+    FreshnessVocabulary,
+    FreshnessVocabularyEntry,
     GraphDiagnostic,
     GraphEdge,
     MechanismGraphError,

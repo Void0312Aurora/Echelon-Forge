@@ -5,6 +5,8 @@ from dataclasses import replace
 from types import SimpleNamespace
 
 from python.mechanisms.ports import (
+    FreshnessVocabulary,
+    FreshnessVocabularyEntry,
     GraphEdge,
     MechanismGraphError,
     MechanismSchemaVocabulary,
@@ -252,6 +254,63 @@ def test_freshness_is_part_of_edge_and_composite_compatibility() -> None:
         PortSpec("invalid", "Track.v1", freshness="")
 
 
+def test_owner_freshness_vocabulary_rejects_unknown_labels_and_binds_identity() -> None:
+    vocabulary = FreshnessVocabulary(
+        vocabulary_id="test.owner.freshness",
+        version="1",
+        entries=(
+            FreshnessVocabularyEntry("per_window", "native.window_owner"),
+            FreshnessVocabularyEntry("per_tick", "native.tick_owner"),
+        ),
+    )
+    producer = MechanismSpec(
+        "producer",
+        "1",
+        outputs=(PortSpec("out", "Track.v1", freshness="per_window"),),
+    )
+    consumer = MechanismSpec(
+        "consumer",
+        "1",
+        inputs=(PortSpec("in", "Track.v1", freshness="per_window"),),
+    )
+    graph = compile_mechanism_graph(
+        "owned-freshness",
+        {"p": producer, "c": consumer},
+        (GraphEdge("p", "out", "c", "in"),),
+        freshness_vocabulary=vocabulary,
+    )
+    assert graph.valid
+    assert graph.freshness_vocabulary_ref == vocabulary.vocabulary_id
+    assert graph.freshness_vocabulary_version == vocabulary.version
+    assert graph.freshness_vocabulary_digest == vocabulary.identity_digest
+    assert graph.as_dict()["freshness_vocabulary"]["identity_digest"] == vocabulary.identity_digest
+
+    unknown = compile_mechanism_graph(
+        "owned-freshness",
+        {"p": replace(producer, outputs=(PortSpec("out", "Track.v1", freshness="per_frame"),)), "c": consumer},
+        (GraphEdge("p", "out", "c", "in"),),
+        freshness_vocabulary=vocabulary,
+    )
+    assert ("mechanism.freshness_unknown", "nodes.p.outputs.out") in {
+        (item.code, item.path) for item in unknown.diagnostics
+    }
+
+    changed = replace(
+        vocabulary,
+        entries=(
+            FreshnessVocabularyEntry("per_window", "native.window_owner.v2"),
+            FreshnessVocabularyEntry("per_tick", "native.tick_owner"),
+        ),
+    )
+    changed_graph = compile_mechanism_graph(
+        "owned-freshness",
+        {"p": producer, "c": consumer},
+        (GraphEdge("p", "out", "c", "in"),),
+        freshness_vocabulary=changed,
+    )
+    assert changed_graph.identity_digest != graph.identity_digest
+
+
 def test_unknown_required_input_and_truth_boundary_fail_closed() -> None:
     source = MechanismSpec(
         "source", "1", outputs=(PortSpec("truth", "TrackCollection.v1", None, "enu", "truth"),)
@@ -463,6 +522,7 @@ def test_strict_stage_manifest_admission_rejects_shard_conflicts() -> None:
         "sync_policy": "host_owned",
         "required_barriers": ["window_commit"],
         "diagnostic_trace_obligations": ["trace_id"],
+        "allowed_same_window_edges": ["stage.a->stage.b"],
         "facade_visibility": "internal",
         "native_system": "NativeSystem",
         "write_state_shards": ["shared"],
@@ -478,6 +538,48 @@ def test_strict_stage_manifest_admission_rejects_shard_conflicts() -> None:
         require_native_contract=True,
     )
     assert "mechanism.native_stage_write_shard_conflict" in {item.code for item in diagnostics}
+
+
+def test_strict_stage_manifest_admission_rejects_malformed_owner_fields_and_publish_claims() -> None:
+    graph = compile_mechanism_graph(
+        "native-qualification-shape",
+        {"node": replace(_sensor(), implementation_ref="native.node")},
+        (),
+    )
+    manifest = {
+        "node_id": "stage.node",
+        "semantic_stage": ["P8"],
+        "owner_module": "native.owner",
+        "input_packets": "InputPacket",
+        "output_packets": ["ObservationEvent"],
+        "read_state_shards": ["state"],
+        "write_state_shards": [],
+        "read_snapshot_policy": "committed",
+        "write_commit_policy": "stage_publish",
+        "clock_domain": "window",
+        "latency_policy": "same_window",
+        "sync_policy": "host_owned",
+        "allowed_same_window_edges": [],
+        "required_barriers": ["window_commit"],
+        "event_families_emitted": [],
+        "diagnostic_trace_obligations": ["trace_id"],
+        "facade_visibility": "internal",
+        "adapter_projection_allowed": False,
+        "native_system": "NativeSystem",
+    }
+    diagnostics = validate_stage_manifest_bindings(
+        graph,
+        node_stage_bindings={"node": "stage.node"},
+        stage_manifests={"stage.node": manifest},
+        require_native_contract=True,
+    )
+    codes = {item.code for item in diagnostics}
+    assert {
+        "mechanism.native_stage_contract_field_invalid",
+        "mechanism.native_stage_same_window_edges_missing",
+        "mechanism.native_stage_publish_barrier_missing",
+        "mechanism.native_stage_event_families_missing",
+    } <= codes
 
 
 def test_stage_manifest_projection_emits_stable_owner_bound_qualification_only_artifact() -> None:
@@ -501,6 +603,7 @@ def test_stage_manifest_projection_emits_stable_owner_bound_qualification_only_a
         "clock_domain": "window",
         "latency_policy": "same_window",
         "sync_policy": "host_owned",
+        "allowed_same_window_edges": ["stage.sensor->stage.tracker"],
         "required_barriers": ["window_commit"],
         "diagnostic_trace_obligations": ["trace_id"],
         "facade_visibility": "internal",

@@ -7,7 +7,7 @@ module does not import Gym/SB3 or alter the legacy DecisionModel lifecycle.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import math
 import string
@@ -186,6 +186,18 @@ def load_policy_checkpoint(
 
 
 @dataclass(frozen=True)
+class _AdmissionValidationToken:
+    """Private snapshot binding an admission marker to its validated fields."""
+
+    admitted: bool
+    policy_id: str
+    diagnostics: tuple[str, ...]
+    checkpoint: PolicyCheckpoint | None
+    observation_view_ref: str | None
+    observation_view_schema_version: str | None
+
+
+@dataclass(frozen=True)
 class PolicyDescriptor:
     policy_id: str
     version: str
@@ -244,6 +256,9 @@ class PolicyAdmission:
     checkpoint: PolicyCheckpoint | None = None
     observation_view_ref: str | None = None
     observation_view_schema_version: str | None = None
+    _validation_marker: _AdmissionValidationToken | None = field(
+        default=None, repr=False, compare=False
+    )
 
     def as_dict(self) -> dict[str, object]:
         return {
@@ -282,6 +297,16 @@ class PolicyRuntimeBinding:
     ) -> None:
         if not admission.admitted or admission.policy_id != policy.policy_id:
             raise ValueError("policy.runtime_binding_not_admitted")
+        expected_validation_token = _AdmissionValidationToken(
+            admitted=admission.admitted,
+            policy_id=admission.policy_id,
+            diagnostics=admission.diagnostics,
+            checkpoint=admission.checkpoint,
+            observation_view_ref=admission.observation_view_ref,
+            observation_view_schema_version=admission.observation_view_schema_version,
+        )
+        if admission._validation_marker != expected_validation_token:
+            raise ValueError("policy.runtime_binding_admission_not_owner_validated")
         if admission.checkpoint != policy.checkpoint:
             raise ValueError("policy.runtime_binding_checkpoint_mismatch")
         if not all(callable(getattr(model, name, None)) for name in ("reset", "decide", "close")):
@@ -604,13 +629,23 @@ def admit_policy(
         and action_timings.get(policy.action.interface_ref) != policy.action.timing
     ):
         diagnostics.append("policy.action_timing_mismatch:action.timing")
+    admitted = not diagnostics
+    admitted_checkpoint = checkpoint if checkpoint == policy.checkpoint else None
     return PolicyAdmission(
-        not diagnostics,
+        admitted,
         policy.policy_id,
         tuple(diagnostics),
-        checkpoint=checkpoint if checkpoint == policy.checkpoint else None,
+        checkpoint=admitted_checkpoint,
         observation_view_ref=admitted_view_ref,
         observation_view_schema_version=admitted_view_schema_version,
+        _validation_marker=_AdmissionValidationToken(
+            admitted=admitted,
+            policy_id=policy.policy_id,
+            diagnostics=tuple(diagnostics),
+            checkpoint=admitted_checkpoint,
+            observation_view_ref=admitted_view_ref,
+            observation_view_schema_version=admitted_view_schema_version,
+        ),
     )
 
 

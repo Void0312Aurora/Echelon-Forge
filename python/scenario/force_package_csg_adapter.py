@@ -35,6 +35,7 @@ class CsgForcePackageQualification:
     scenario_digest: str
     embarked_inventory_digest: str
     geometry_digest: str
+    compiled_relationships_digest: str
     evidence_refs: tuple[str, ...]
 
 
@@ -61,6 +62,40 @@ def _csg_entities(compiled_scenario: CompiledScenario, group_id: str) -> dict[st
     if not result:
         raise ForcePackageError("force.csg_entities_required")
     return result
+
+
+def _csg_groups(csg_meta: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    groups = csg_meta.get("groups")
+    if not isinstance(groups, list) or not groups:
+        raise ForcePackageError("force.csg_groups_required")
+    result: dict[str, dict[str, Any]] = {}
+    for group in groups:
+        if not isinstance(group, dict):
+            raise ForcePackageError("force.csg_group_metadata_invalid")
+        group_id = group.get("group_id")
+        if not isinstance(group_id, str) or not group_id.strip():
+            raise ForcePackageError("force.csg_group_metadata_invalid")
+        if group_id in result:
+            raise ForcePackageError("force.csg_group_unknown_or_duplicate:groups")
+        result[group_id] = group
+    return result
+
+
+def _csg_guide_frame(guide: Mapping[str, Any]) -> str:
+    # The compiler preserves the source ``geo`` guide and adds the derived
+    # local ``pos`` for replay.  ``geo`` therefore takes precedence when both
+    # are present; a snapshot with neither frame is malformed.
+    if "geo" in guide:
+        return "geodetic"
+    if "pos" in guide:
+        return "local_enu"
+    if not guide:
+        raise ForcePackageError("force.csg_guide_frame_ambiguous")
+    raise ForcePackageError("force.csg_guide_frame_ambiguous")
+
+
+def _compiled_relationships_digest(compiled: CompiledForcePackage) -> str:
+    return _digest([relationship.__dict__ for relationship in compiled.relationships])
 
 
 def qualify_force_package_against_csg(
@@ -96,10 +131,10 @@ def qualify_force_package_against_csg(
         raise ForcePackageError("force.csg_schema_not_maintained")
     if scenario.runtime_metadata.meta_config.get("csg") != csg_meta:
         raise ForcePackageError("force.csg_runtime_metadata_mismatch")
-    groups = [group for group in csg_meta.get("groups", []) if isinstance(group, dict) and group.get("group_id") == group_id]
-    if len(groups) != 1:
+    groups = _csg_groups(csg_meta)
+    group = groups.get(group_id)
+    if group is None:
         raise ForcePackageError(f"force.csg_group_unknown_or_duplicate:groups.{group_id}")
-    group = groups[0]
     if group.get("side") != package.side:
         raise ForcePackageError("force.csg_group_side_mismatch")
     guide = group.get("guide")
@@ -114,7 +149,7 @@ def qualify_force_package_against_csg(
         for name in row.get("entity_names", [])
         if isinstance(name, str) and name.strip()
     }
-    frame = "geodetic" if "geo" in group["guide"] else "local_enu"
+    frame = _csg_guide_frame(guide)
     for instance in compiled.package_instances:
         if instance.reference_frame != frame or instance.anchor_ref != group_id:
             raise ForcePackageError(f"force.csg_frame_anchor_mismatch:packages.{instance.instance_id}")
@@ -161,6 +196,7 @@ def qualify_force_package_against_csg(
 
     geometry = csg_meta.get("geometry", {})
     scenario_digest = _digest(scenario.merged_scenario_data)
+    relationships_digest = _compiled_relationships_digest(compiled)
     sorted_bindings = tuple(sorted(entity_bindings.items()))
     return CsgForcePackageQualification(
         package_ref=compiled.package_ref,
@@ -173,9 +209,11 @@ def qualify_force_package_against_csg(
         scenario_digest=scenario_digest,
         embarked_inventory_digest=_digest(group.get("embarked_inventory", [])),
         geometry_digest=_digest(geometry),
+        compiled_relationships_digest=relationships_digest,
         evidence_refs=(
             f"force.package:{compiled.package_ref}",
             f"force.identity:{compiled.identity_digest}",
+            f"force.relationships:{relationships_digest}",
             "scenario.csg.group_composition.v2",
             f"scenario.identity:{scenario_digest}",
             f"scenario.csg.geometry:{_digest(geometry)}",
@@ -193,7 +231,8 @@ def load_qualified_csg_scenario(
 ) -> Any:
     """Validate the qualified snapshot, then delegate to the maintained loader.
 
-    Every CSG group must have a qualification result. No positions, entities,
+    Every CSG group must have a qualification result bound to the independently
+    compiled package identity supplied by the caller. No positions, entities,
     inventories or relationship authority are synthesized by this bridge.
     """
     if not scenario.is_fresh():
@@ -206,12 +245,14 @@ def load_qualified_csg_scenario(
         raise ForcePackageError("force.csg_schema_not_maintained")
     if scenario.runtime_metadata.meta_config.get("csg") != csg_meta:
         raise ForcePackageError("force.csg_runtime_metadata_mismatch")
-    groups = {group["group_id"]: group for group in csg_meta["groups"]}
+    groups = _csg_groups(csg_meta)
     qualified_ids = [qualification.group_id for qualification in qualifications]
     if not qualified_ids or len(set(qualified_ids)) != len(qualified_ids) or set(qualified_ids) != set(groups):
         raise ForcePackageError("force.csg_qualification_scope_mismatch")
+    if not isinstance(compiled_packages, Mapping) or not compiled_packages:
+        raise ForcePackageError("force.csg_compiled_package_scope_required")
     package_refs = {qualification.package_ref for qualification in qualifications}
-    if not isinstance(compiled_packages, Mapping) or set(compiled_packages) != package_refs:
+    if set(compiled_packages) != package_refs:
         raise ForcePackageError("force.csg_compiled_package_scope_mismatch")
     scenario_digest = _digest(scenario.merged_scenario_data)
     geometry_digest = _digest(csg_meta["geometry"])
@@ -223,6 +264,8 @@ def load_qualified_csg_scenario(
             not isinstance(compiled, CompiledForcePackage)
             or compiled.package_ref != qualification.package_ref
             or compiled.identity_digest != qualification.package_identity_digest
+            or _compiled_relationships_digest(compiled)
+            != qualification.compiled_relationships_digest
         ):
             raise ForcePackageError("force.csg_compiled_package_identity_mismatch")
         compiled_entities = {entity.entity_id: entity for entity in compiled.entities}

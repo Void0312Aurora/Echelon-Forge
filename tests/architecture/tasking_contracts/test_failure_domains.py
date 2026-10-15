@@ -120,7 +120,7 @@ def test_omitted_expected_world_cannot_be_reported_as_completed() -> None:
 
 
 def test_direct_completed_constructor_default_scope_is_rejected() -> None:
-    with pytest.raises(ValueError, match="complete expected world scope"):
+    with pytest.raises(ValueError, match="expected world scope"):
         BatchOperationOutcome(
             batch_generation_ref="g1",
             operation_ref="op1",
@@ -128,6 +128,18 @@ def test_direct_completed_constructor_default_scope_is_rejected() -> None:
             domain=FailureDomain.BATCH,
             result=BatchResult.COMPLETED,
             worlds=(_world(0, WorldState.COMPLETED, True),),
+        )
+
+
+def test_direct_failed_constructor_requires_expected_world_scope() -> None:
+    with pytest.raises(ValueError, match="expected world scope"):
+        BatchOperationOutcome(
+            batch_generation_ref="g1",
+            operation_ref="op1",
+            operation="step",
+            domain=FailureDomain.BATCH,
+            result=BatchResult.FAILED,
+            worlds=(_world(0, WorldState.UNKNOWN_AFTER_FAULT, None),),
         )
 
 
@@ -180,9 +192,12 @@ def test_native_fault_projection_requires_observed_unhealthy_owner() -> None:
         def batch_failure_reason(self) -> str:
             return "worker_exception"
 
+        def batch_generation(self) -> int:
+            return 1
+
     result = project_native_batch_fault(
         runtime=FakeRuntime(),
-        batch_generation_ref="native.g1",
+        batch_generation_ref="1",
         operation_ref="step.1",
         operation="step_batch",
         expected_world_indices=frozenset({0, 1}),
@@ -202,6 +217,15 @@ def test_native_fault_projection_requires_observed_unhealthy_owner() -> None:
     with pytest.raises(ValueError, match="unhealthy runtime"):
         project_native_batch_fault(
             runtime=HealthyRuntime(),
+            batch_generation_ref="1",
+            operation_ref="step.1",
+            operation="step_batch",
+            expected_world_indices=frozenset({0}),
+        )
+
+    with pytest.raises(ValueError, match="does not match native"):
+        project_native_batch_fault(
+            runtime=FakeRuntime(),
             batch_generation_ref="native.g1",
             operation_ref="step.1",
             operation="step_batch",

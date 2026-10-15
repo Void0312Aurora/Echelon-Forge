@@ -35,7 +35,7 @@ def test_native_partial_setup_failure_is_fenced_and_projects_unknown(world_count
         runtime.get_agent_observations_batch([])
     outcome = project_native_batch_fault(
         runtime=runtime,
-        batch_generation_ref="qualification.native.failed",
+        batch_generation_ref=str(runtime.batch_generation()),
         operation_ref="setup.1",
         operation="apply_world_setup_batch",
         expected_world_indices=frozenset(range(world_count)),

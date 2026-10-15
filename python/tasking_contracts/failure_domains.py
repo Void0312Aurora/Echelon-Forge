@@ -54,6 +54,8 @@ class NativeBatchHealth(Protocol):
 
     def batch_failure_reason(self) -> str: ...
 
+    def batch_generation(self) -> int: ...
+
 
 @dataclass(frozen=True)
 class WorldOutcome:
@@ -136,6 +138,8 @@ class BatchOperationOutcome:
             for index in self.expected_world_indices
         ):
             raise ValueError("expected world indexes must be non-negative integers")
+        if self.result is not BatchResult.REJECTED and not self.expected_world_indices:
+            raise ValueError("execution outcome requires expected world scope")
         if self.expected_world_indices and not set(indexes).issubset(self.expected_world_indices):
             raise ValueError("world outcome is outside the expected world scope")
         if self.result is BatchResult.REJECTED and self.worlds:
@@ -319,9 +323,11 @@ def project_native_batch_fault(
 
     The native owner remains authoritative for health and failure reason. This
     adapter only copies that observation into the conservative all-unknown
-    outcome; it does not expose a generation ID, infer rollback, or perform a
-    reset. A healthy runtime is rejected so callers cannot create a failure
-    record detached from an observed native fault.
+    outcome; it does not infer rollback or perform a reset. The supplied
+    generation reference must match the native-owned generation, so callers
+    cannot create a failure record detached from the observed native batch.
+    A healthy runtime is rejected so callers cannot create a failure record
+    detached from an observed native fault.
     """
 
     if runtime.batch_healthy():
@@ -331,6 +337,15 @@ def project_native_batch_fault(
     reason = runtime.batch_failure_reason()
     if not isinstance(reason, str) or not reason.strip():
         raise ValueError("unhealthy native runtime must provide a failure reason")
+    native_generation = runtime.batch_generation()
+    if (
+        isinstance(native_generation, bool)
+        or not isinstance(native_generation, int)
+        or native_generation < 0
+    ):
+        raise TypeError("native batch generation must be a non-negative integer")
+    if batch_generation_ref != str(native_generation):
+        raise ValueError("batch generation reference does not match native batch generation")
     if not expected_world_indices:
         raise ValueError("expected_world_indices are required for a batch execution")
     return build_batch_outcome(

@@ -311,6 +311,62 @@ SchemaVocabulary = MechanismSchemaVocabulary | MechanismSchemaVocabularyRegistry
 
 
 @dataclass(frozen=True)
+class FreshnessVocabularyEntry:
+    """One owner-declared sampling/freshness label."""
+
+    freshness: str
+    owner_ref: str
+
+    def __post_init__(self) -> None:
+        for field_name in ("freshness", "owner_ref"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+
+
+@dataclass(frozen=True)
+class FreshnessVocabulary:
+    """Immutable owner vocabulary for port sampling/freshness semantics."""
+
+    vocabulary_id: str
+    version: str
+    entries: tuple[FreshnessVocabularyEntry, ...]
+
+    def __post_init__(self) -> None:
+        for field_name in ("vocabulary_id", "version"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+        entries = tuple(self.entries)
+        if not entries:
+            raise ValueError("entries must not be empty")
+        if any(not isinstance(entry, FreshnessVocabularyEntry) for entry in entries):
+            raise TypeError("entries must contain FreshnessVocabularyEntry values")
+        freshness_names = [entry.freshness for entry in entries]
+        if len(set(freshness_names)) != len(freshness_names):
+            raise ValueError("freshness vocabulary entries must use unique labels")
+        object.__setattr__(self, "entries", entries)
+
+    @property
+    def freshness_names(self) -> frozenset[str]:
+        return frozenset(entry.freshness for entry in self.entries)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "vocabulary_id": self.vocabulary_id,
+            "version": self.version,
+            "entries": [
+                {"freshness": entry.freshness, "owner_ref": entry.owner_ref}
+                for entry in sorted(self.entries, key=lambda item: item.freshness)
+            ],
+        }
+
+    @property
+    def identity_digest(self) -> str:
+        return _digest(self.as_dict())
+
+
+@dataclass(frozen=True)
 class CompiledMechanismGraph:
     graph_id: str
     nodes: tuple[tuple[str, MechanismSpec], ...]
@@ -322,6 +378,9 @@ class CompiledMechanismGraph:
     schema_vocabulary_ref: str | None = None
     schema_vocabulary_version: str | None = None
     schema_vocabulary_digest: str | None = None
+    freshness_vocabulary_ref: str | None = None
+    freshness_vocabulary_version: str | None = None
+    freshness_vocabulary_digest: str | None = None
 
     @property
     def valid(self) -> bool:
@@ -360,6 +419,15 @@ class CompiledMechanismGraph:
                     "identity_digest": self.schema_vocabulary_digest,
                 }
             ),
+            "freshness_vocabulary": (
+                None
+                if self.freshness_vocabulary_ref is None
+                else {
+                    "vocabulary_id": self.freshness_vocabulary_ref,
+                    "version": self.freshness_vocabulary_version,
+                    "identity_digest": self.freshness_vocabulary_digest,
+                }
+            ),
             "diagnostics": [diagnostic.__dict__ for diagnostic in self.diagnostics],
             "identity_digest": self.identity_digest,
         }
@@ -388,6 +456,7 @@ def _identity_payload(
     *,
     external_inputs: frozenset[str],
     schema_vocabulary: SchemaVocabulary | None = None,
+    freshness_vocabulary: FreshnessVocabulary | None = None,
 ) -> dict[str, Any]:
     payload = {
         "schema_version": SCHEMA_VERSION,
@@ -430,6 +499,12 @@ def _identity_payload(
             "version": schema_vocabulary.version,
             "identity_digest": schema_vocabulary.identity_digest,
         }
+    if freshness_vocabulary is not None:
+        payload["freshness_vocabulary"] = {
+            "vocabulary_id": freshness_vocabulary.vocabulary_id,
+            "version": freshness_vocabulary.version,
+            "identity_digest": freshness_vocabulary.identity_digest,
+        }
     return payload
 
 
@@ -448,6 +523,7 @@ def compile_mechanism_graph(
     external_inputs: frozenset[str] = frozenset(),
     known_schemas: frozenset[str] | None = None,
     schema_vocabulary: SchemaVocabulary | None = None,
+    freshness_vocabulary: FreshnessVocabulary | None = None,
 ) -> CompiledMechanismGraph:
     """Validate a graph and return a non-published qualification artifact."""
 
@@ -457,6 +533,10 @@ def compile_mechanism_graph(
         raise MechanismGraphError("at least one mechanism node is required")
     if known_schemas is not None and schema_vocabulary is not None:
         raise MechanismGraphError("known_schemas and schema_vocabulary are mutually exclusive")
+    if freshness_vocabulary is not None and not isinstance(
+        freshness_vocabulary, FreshnessVocabulary
+    ):
+        raise TypeError("freshness_vocabulary must be a FreshnessVocabulary")
     diagnostics: list[GraphDiagnostic] = []
     normalized_external_inputs = frozenset(external_inputs)
     effective_schemas = (
@@ -472,6 +552,22 @@ def compile_mechanism_graph(
                                 "mechanism.schema_unknown",
                                 f"nodes.{node_id}.{side}.{port.name}",
                                 f"schema is not present in the owner vocabulary: {port.schema}",
+                            )
+                        )
+    if freshness_vocabulary is not None:
+        for node_id, spec in nodes.items():
+            for side, ports in (("inputs", spec.inputs), ("outputs", spec.outputs)):
+                for port in ports:
+                    if (
+                        port.freshness is not None
+                        and port.freshness not in freshness_vocabulary.freshness_names
+                    ):
+                        diagnostics.append(
+                            GraphDiagnostic(
+                                "mechanism.freshness_unknown",
+                                f"nodes.{node_id}.{side}.{port.name}",
+                                "freshness is not present in the owner vocabulary: "
+                                + port.freshness,
                             )
                         )
     for external_ref in sorted(normalized_external_inputs):
@@ -635,6 +731,7 @@ def compile_mechanism_graph(
         edges,
         external_inputs=normalized_external_inputs,
         schema_vocabulary=schema_vocabulary,
+        freshness_vocabulary=freshness_vocabulary,
     )
     return CompiledMechanismGraph(
         graph_id=graph_id,
@@ -646,6 +743,15 @@ def compile_mechanism_graph(
         schema_vocabulary_ref=(schema_vocabulary.vocabulary_id if schema_vocabulary else None),
         schema_vocabulary_version=(schema_vocabulary.version if schema_vocabulary else None),
         schema_vocabulary_digest=(schema_vocabulary.identity_digest if schema_vocabulary else None),
+        freshness_vocabulary_ref=(
+            freshness_vocabulary.vocabulary_id if freshness_vocabulary else None
+        ),
+        freshness_vocabulary_version=(
+            freshness_vocabulary.version if freshness_vocabulary else None
+        ),
+        freshness_vocabulary_digest=(
+            freshness_vocabulary.identity_digest if freshness_vocabulary else None
+        ),
     )
 
 
@@ -978,6 +1084,31 @@ def validate_stage_manifest_bindings(
             "diagnostic_trace_obligations",
         }
     )
+    sequence_fields = frozenset(
+        {
+            "semantic_stage",
+            "input_packets",
+            "output_packets",
+            "read_state_shards",
+            "write_state_shards",
+            "allowed_same_window_edges",
+            "required_barriers",
+            "event_families_emitted",
+            "diagnostic_trace_obligations",
+        }
+    )
+    string_fields = frozenset(
+        {
+            "node_id",
+            "owner_module",
+            "read_snapshot_policy",
+            "write_commit_policy",
+            "clock_domain",
+            "latency_policy",
+            "sync_policy",
+            "facade_visibility",
+        }
+    )
     for node_id, spec in graph.nodes:
         stage_id = node_stage_bindings[node_id]
         manifest = stage_manifests.get(stage_id)
@@ -998,26 +1129,113 @@ def validate_stage_manifest_bindings(
                 GraphDiagnostic("mechanism.native_stage_manifest_incomplete", path, stage_id)
             )
         if require_native_contract:
-            missing = [
-                field_name
-                for field_name in required_native_fields
-                if _manifest_field(manifest, field_name) is None
-                or (
-                    isinstance(_manifest_field(manifest, field_name), str)
-                    and not _manifest_field(manifest, field_name).strip()
+            missing = []
+            for field_name in required_native_fields:
+                value = _manifest_field(manifest, field_name)
+                if value is None:
+                    missing.append(field_name)
+                    continue
+                if field_name in string_fields and (
+                    not isinstance(value, str) or not value.strip()
+                ):
+                    diagnostics.append(
+                        GraphDiagnostic(
+                            "mechanism.native_stage_contract_field_invalid",
+                            f"{path}.{field_name}",
+                            "owner field must be a non-empty string",
+                        )
+                    )
+                    continue
+                if field_name in sequence_fields:
+                    if not isinstance(value, (list, tuple)) or any(
+                        not isinstance(item, str) or not item.strip() for item in value
+                    ):
+                        diagnostics.append(
+                            GraphDiagnostic(
+                                "mechanism.native_stage_contract_field_invalid",
+                                f"{path}.{field_name}",
+                                "owner field must be a sequence of non-empty strings",
+                            )
+                        )
+                        continue
+                    if field_name in required_nonempty_sequences and not value:
+                        missing.append(field_name)
+            adapter_projection_allowed = _manifest_field(manifest, "adapter_projection_allowed")
+            if adapter_projection_allowed is not None and type(adapter_projection_allowed) is not bool:
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.native_stage_contract_field_invalid",
+                        f"{path}.adapter_projection_allowed",
+                        "owner field must be a bool",
+                    )
                 )
-                or (
-                    field_name in required_nonempty_sequences
-                    and isinstance(_manifest_field(manifest, field_name), (list, tuple))
-                    and not _manifest_field(manifest, field_name)
-                )
-            ]
             if missing:
                 diagnostics.append(
                     GraphDiagnostic(
                         "mechanism.native_stage_contract_incomplete",
                         path,
                         "missing owner fields: " + ", ".join(missing),
+                    )
+                )
+            write_policy = _manifest_field(manifest, "write_commit_policy")
+            latency_policy = _manifest_field(manifest, "latency_policy")
+            required_barriers = _manifest_field(manifest, "required_barriers", ())
+            if (
+                isinstance(write_policy, str)
+                and isinstance(latency_policy, str)
+                and isinstance(required_barriers, (list, tuple))
+                and (
+                    write_policy == "stage_publish"
+                    or "same_window" in latency_policy
+                    or "stage_publish" in required_barriers
+                )
+                and not _manifest_field(manifest, "allowed_same_window_edges")
+            ):
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.native_stage_same_window_edges_missing",
+                        path,
+                        "same-window publish claims require allowed_same_window_edges",
+                    )
+                )
+            if (
+                write_policy == "stage_publish"
+                and isinstance(required_barriers, (list, tuple))
+                and "stage_publish" not in required_barriers
+            ):
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.native_stage_publish_barrier_missing",
+                        path,
+                        "stage_publish manifests must declare the stage_publish barrier",
+                    )
+                )
+            if (
+                _manifest_field(manifest, "facade_visibility") == "adapter_projection"
+                and adapter_projection_allowed is not True
+            ):
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.native_stage_projection_not_allowed",
+                        path,
+                        "adapter_projection visibility requires adapter_projection_allowed",
+                    )
+                )
+            output_packets = _manifest_field(manifest, "output_packets", ())
+            if (
+                isinstance(output_packets, (list, tuple))
+                and any(
+                    isinstance(packet, str)
+                    and (packet.endswith("Event") or packet.endswith("Report"))
+                    for packet in output_packets
+                )
+                and not _manifest_field(manifest, "event_families_emitted")
+            ):
+                diagnostics.append(
+                    GraphDiagnostic(
+                        "mechanism.native_stage_event_families_missing",
+                        path,
+                        "event-emitting manifests must declare event_families_emitted",
                     )
                 )
         if _manifest_field(manifest, "facade_visibility") in {
@@ -1078,6 +1296,8 @@ def validate_stage_manifest_bindings(
 
 __all__ = [
     "CompiledMechanismGraph",
+    "FreshnessVocabulary",
+    "FreshnessVocabularyEntry",
     "GraphDiagnostic",
     "GraphEdge",
     "MechanismGraphError",

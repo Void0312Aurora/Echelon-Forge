@@ -38,6 +38,9 @@ _RECEIPT_BINDING_FIELDS = (
     "native_validation_evidence_sha256",
     "durable_ack",
 )
+_COMPLETION_EVIDENCE_FIELDS = frozenset(
+    {"receipt_id", "receipt_sha256", "terminal_state", "outcome", "receipt_binding"}
+)
 
 
 class InputLockError(ValueError):
@@ -71,6 +74,34 @@ def canonical_json_bytes(value: Any) -> bytes:
 
 def _digest(value: Any) -> str:
     return hashlib.sha256(canonical_json_bytes(value)).hexdigest()
+
+
+def _completion_evidence_is_structurally_complete(value: Any) -> bool:
+    """Check the exact shape emitted by ``join_run_receipt``.
+
+    This is deliberately a structural gate. Receipt schema validation and
+    host durability remain owned by ``validate_run_receipt`` and the runtime
+    host; the comparator must nevertheless reject an arbitrary truthy mapping
+    supplied by a caller as completed evidence.
+    """
+
+    if not isinstance(value, Mapping) or set(value) != _COMPLETION_EVIDENCE_FIELDS:
+        return False
+    if not isinstance(value["receipt_id"], str) or not value["receipt_id"].strip():
+        return False
+    if not isinstance(value["receipt_sha256"], str) or re.fullmatch(
+        r"[0-9a-f]{64}", value["receipt_sha256"]
+    ) is None:
+        return False
+    if value["terminal_state"] != "completed":
+        return False
+    outcome = value["outcome"]
+    if not isinstance(outcome, Mapping) or outcome.get("result") != "completed":
+        return False
+    binding = value["receipt_binding"]
+    if not isinstance(binding, Mapping) or set(binding) != set(_RECEIPT_BINDING_FIELDS):
+        return False
+    return binding.get("durable_ack") is True
 
 
 def _scenario_projection(experiment: Experiment, repo_root: str | Path | None) -> dict[str, Any]:
@@ -382,7 +413,9 @@ def compare_resolved_input_locks(
         return ComparisonResult(False, ("status",), "only completed runs are ordinarily comparable")
     left_data = left.as_dict()
     right_data = right.as_dict()
-    if not left_data.get("completion_evidence") or not right_data.get("completion_evidence"):
+    if not _completion_evidence_is_structurally_complete(
+        left_data.get("completion_evidence")
+    ) or not _completion_evidence_is_structurally_complete(right_data.get("completion_evidence")):
         return ComparisonResult(
             False,
             ("completion_evidence",),

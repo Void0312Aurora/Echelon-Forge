@@ -12,6 +12,7 @@ from python.tasking_contracts.policy import (
     ObservationContract,
     PolicyCheckpoint,
     PolicyCheckpointLoadError,
+    PolicyAdmission,
     PolicyDescriptor,
     PolicyRuntimeBinding,
     admit_policy,
@@ -545,6 +546,41 @@ def test_admitted_policy_binds_existing_model_lifecycle_and_action_owner() -> No
     assert model.observations[0][1]["policy_id"] == policy.policy_id
     runtime.close()
     assert model.closed
+
+
+def test_runtime_binding_rejects_caller_constructed_admission() -> None:
+    policy = _policy()
+    forged = PolicyAdmission(True, policy.policy_id, ())
+    with pytest.raises(ValueError, match="not_owner_validated"):
+        PolicyRuntimeBinding(
+            policy,
+            forged,
+            _BoundModel(),
+            bounds=((-1, 1),) * 4,
+            timing="window",
+        )
+
+
+def test_runtime_binding_rejects_resealed_owner_admission() -> None:
+    policy = _policy()
+    rejected = admit_policy(
+        policy,
+        _binding(),
+        field_catalogue=_catalogue(),
+        observation_version=(1, 1),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 3},
+    )
+    assert not rejected.admitted
+    resealed = replace(rejected, admitted=True, diagnostics=())
+    with pytest.raises(ValueError, match="not_owner_validated"):
+        PolicyRuntimeBinding(
+            policy,
+            resealed,
+            _BoundModel(),
+            bounds=((-1, 1),) * 4,
+            timing="window",
+        )
 
 
 def test_policy_runtime_binding_rejects_owner_action_before_projection() -> None:

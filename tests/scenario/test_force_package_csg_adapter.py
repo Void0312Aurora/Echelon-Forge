@@ -11,12 +11,14 @@ ensure_repo_imports()
 
 from python.scenario.force_package import (
     AssemblyReference,
+    CompiledRelationship,
     ForcePackage,
     ForcePackageError,
     PackageMember,
     compile_force_package,
 )
 from python.scenario.force_package_csg_adapter import (
+    _digest,
     load_qualified_csg_scenario,
     qualify_force_package_against_csg,
 )
@@ -99,6 +101,16 @@ def _full_package(group):
     return package, assemblies, role_capabilities, bindings, {member.ref: member.ref for member in members}
 
 
+def _compile_package(package, assemblies, role_capabilities, assembly_type_names=None):
+    return compile_force_package(
+        package,
+        packages={},
+        assemblies=assemblies,
+        role_capabilities=role_capabilities,
+        assembly_type_names=assembly_type_names,
+    )
+
+
 def test_force_package_projection_matches_existing_csg_entity_identity_and_geometry() -> None:
     package, assemblies = _package()
     scenario = _compiled_scenario()
@@ -128,10 +140,7 @@ def test_full_csg_qualification_preserves_native_geometry_inventory_and_replay(s
     compiled_packages = {}
     for group in snapshot["meta"]["csg"]["groups"]:
         package, assemblies, role_capabilities, bindings, type_names = _full_package(group)
-        compiled = compile_force_package(
-            package, packages={}, assemblies=assemblies, role_capabilities=role_capabilities,
-            assembly_type_names=type_names,
-        )
+        compiled = _compile_package(package, assemblies, role_capabilities, type_names)
         compiled_packages[compiled.package_ref] = compiled
         results.append(qualify_force_package_against_csg(
             package=package, packages={}, assemblies=assemblies, role_capabilities=role_capabilities,
@@ -144,7 +153,11 @@ def test_full_csg_qualification_preserves_native_geometry_inventory_and_replay(s
     assert adapter.load_database(resolve_repo_path("examples", "config", "database"))
     loader = adapter.make_scenario_loader(0)
     assert load_qualified_csg_scenario(
-        loader, scenario=scenario, qualifications=results, compiled_packages=compiled_packages, seed=3
+        loader,
+        scenario=scenario,
+        qualifications=results,
+        compiled_packages=compiled_packages,
+        seed=3,
     ) is None
     assert {key: loader.scenario_data[key] for key in snapshot} == snapshot
     assert loader._compiled_runtime_metadata.meta_config["csg"] == snapshot["meta"]["csg"]
@@ -194,10 +207,8 @@ def _minimal_qualification(scenario):
 
 def _minimal_compiled_package():
     package, assemblies = _package()
-    return compile_force_package(
-        package, packages={}, assemblies=assemblies,
-        role_capabilities={"carrier": frozenset({"mobility"})},
-        assembly_type_names={SHIP_TYPE: SHIP_TYPE},
+    return _compile_package(
+        package, assemblies, {"carrier": frozenset({"mobility"})}, {SHIP_TYPE: SHIP_TYPE}
     )
 
 
@@ -213,6 +224,7 @@ class _RecordingLoader:
 def test_csg_snapshot_drift_rejects_before_loader_mutation(target) -> None:
     scenario = _compiled_scenario()
     qualification = _minimal_qualification(scenario)
+    compiled = _minimal_compiled_package()
     loader = _RecordingLoader()
     if target == "position":
         scenario.merged_scenario_data["entities"][0]["pos"][0] += 100.0
@@ -224,8 +236,10 @@ def test_csg_snapshot_drift_rejects_before_loader_mutation(target) -> None:
         scenario.runtime_metadata.meta_config["csg"]["groups"][0]["side"] = "Red"
     with pytest.raises(ForcePackageError, match="csg_scenario_stale|csg_runtime_metadata_mismatch"):
         load_qualified_csg_scenario(
-            loader, scenario=scenario, qualifications=[qualification],
-            compiled_packages={qualification.package_ref: _minimal_compiled_package()},
+            loader,
+            scenario=scenario,
+            qualifications=[qualification],
+            compiled_packages={compiled.package_ref: compiled},
         )
     assert loader.calls == []
 
@@ -233,17 +247,59 @@ def test_csg_snapshot_drift_rejects_before_loader_mutation(target) -> None:
 def test_csg_load_requires_complete_qualification_and_same_snapshot() -> None:
     scenario = _compiled_scenario()
     qualification = _minimal_qualification(scenario)
+    compiled = _minimal_compiled_package()
     loader = _RecordingLoader()
     for results in ([], [qualification, qualification]):
         with pytest.raises(ForcePackageError, match="qualification_scope_mismatch"):
             load_qualified_csg_scenario(
-                loader, scenario=scenario, qualifications=results,
-                compiled_packages={qualification.package_ref: _minimal_compiled_package()},
+                loader,
+                scenario=scenario,
+                qualifications=results,
+                compiled_packages={compiled.package_ref: compiled},
             )
     with pytest.raises(ForcePackageError, match="qualification_snapshot_mismatch"):
         load_qualified_csg_scenario(
-            loader, scenario=scenario, qualifications=[replace(qualification, scenario_digest="0" * 64)],
-            compiled_packages={qualification.package_ref: _minimal_compiled_package()},
+            loader,
+            scenario=scenario,
+            qualifications=[replace(qualification, scenario_digest="0" * 64)],
+            compiled_packages={compiled.package_ref: compiled},
+        )
+    assert loader.calls == []
+
+
+def test_csg_load_rejects_compiled_package_identity_or_relationship_drift() -> None:
+    scenario = _compiled_scenario()
+    qualification = _minimal_qualification(scenario)
+    compiled = _minimal_compiled_package()
+    loader = _RecordingLoader()
+
+    with pytest.raises(ForcePackageError, match="compiled_package_identity_mismatch"):
+        load_qualified_csg_scenario(
+            loader,
+            scenario=scenario,
+            qualifications=[qualification],
+            compiled_packages={
+                compiled.package_ref: replace(compiled, identity_digest="0" * 64)
+            },
+        )
+
+    relationship_drift = replace(
+        compiled,
+        relationships=(
+            CompiledRelationship(
+                "communication",
+                "qualification.csg/BLUE_CSG12__cvn78",
+                "qualification.csg/BLUE_CSG12__cvn78",
+                compiled.package_ref,
+            ),
+        ),
+    )
+    with pytest.raises(ForcePackageError, match="compiled_package_identity_mismatch"):
+        load_qualified_csg_scenario(
+            loader,
+            scenario=scenario,
+            qualifications=[qualification],
+            compiled_packages={compiled.package_ref: relationship_drift},
         )
     assert loader.calls == []
 
@@ -272,10 +328,8 @@ def test_csg_binding_permutation_rejects_before_loader_mutation() -> None:
             scenario=scenario,
             qualifications=[replace(qualification, entity_bindings=tuple(pairs))],
             compiled_packages={
-                qualification.package_ref: compile_force_package(
-                    package, packages={}, assemblies=assemblies,
-                    role_capabilities=role_capabilities,
-                    assembly_type_names=type_names,
+                qualification.package_ref: _compile_package(
+                    package, assemblies, role_capabilities, type_names
                 )
             },
             seed=3,
@@ -298,10 +352,7 @@ def test_csg_correlated_binding_tamper_rejects_against_compiled_package() -> Non
         entity_bindings=bindings,
         assembly_type_names=type_names,
     )
-    compiled = compile_force_package(
-        package, packages={}, assemblies=assemblies, role_capabilities=role_capabilities,
-        assembly_type_names=type_names,
-    )
+    compiled = _compile_package(package, assemblies, role_capabilities, type_names)
     pairs = list(qualification.entity_bindings)
     projection = list(qualification.entity_binding_projection)
     first, second = projection[0], projection[1]
@@ -311,7 +362,7 @@ def test_csg_correlated_binding_tamper_rejects_against_compiled_package() -> Non
     tampered = replace(
         qualification,
         entity_bindings=tuple(pairs),
-        entity_bindings_digest=_digest_for_test(tuple(pairs)),
+        entity_bindings_digest=_digest(tuple(pairs)),
         entity_binding_projection=tuple(projection),
     )
     loader = _RecordingLoader()
@@ -324,15 +375,6 @@ def test_csg_correlated_binding_tamper_rejects_against_compiled_package() -> Non
             seed=3,
         )
     assert loader.calls == []
-
-
-def _digest_for_test(value):
-    import hashlib
-    import json
-
-    return hashlib.sha256(
-        json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()
-    ).hexdigest()
 
 
 def test_csg_same_role_different_type_tamper_rejects_against_compiled_package() -> None:
@@ -353,10 +395,7 @@ def test_csg_same_role_different_type_tamper_rejects_against_compiled_package() 
             entity_bindings=bindings,
             assembly_type_names=type_names,
         )
-        compiled = compile_force_package(
-            package, packages={}, assemblies=assemblies,
-            role_capabilities=role_capabilities, assembly_type_names=type_names,
-        )
+        compiled = _compile_package(package, assemblies, role_capabilities, type_names)
         compiled_packages[compiled.package_ref] = compiled
         if group["group_id"] == "RED_CV18":
             projection = list(qualification.entity_binding_projection)
@@ -371,7 +410,7 @@ def test_csg_same_role_different_type_tamper_rejects_against_compiled_package() 
             qualification = replace(
                 qualification,
                 entity_bindings=tuple(sorted(pairs.items())),
-                entity_bindings_digest=_digest_for_test(tuple(sorted(pairs.items()))),
+                entity_bindings_digest=_digest(tuple(sorted(pairs.items()))),
                 entity_binding_projection=tuple(projection),
             )
         qualifications.append(qualification)
@@ -398,3 +437,39 @@ def test_csg_group_metadata_conflicts_reject_before_qualification() -> None:
         scenario = ScenarioCompiler.compile_data(data)
         with pytest.raises(ForcePackageError, match=expected):
             _minimal_qualification(scenario)
+
+
+def test_csg_qualification_rejects_ambiguous_guide_frame() -> None:
+    scenario = _compiled_scenario()
+    scenario.merged_scenario_data["meta"]["csg"]["groups"][0]["guide"].clear()
+    scenario.runtime_metadata.meta_config["csg"]["groups"][0]["guide"].clear()
+    scenario = replace(scenario, semantic_digest="")
+    with pytest.raises(ForcePackageError, match="csg_guide_frame_ambiguous"):
+        _minimal_qualification(scenario)
+
+
+def test_csg_qualification_rejects_malformed_group_container() -> None:
+    scenario = _compiled_scenario()
+    scenario.merged_scenario_data["meta"]["csg"]["groups"] = {}
+    scenario.runtime_metadata.meta_config["csg"]["groups"] = {}
+    scenario = replace(scenario, semantic_digest="")
+    with pytest.raises(ForcePackageError, match="csg_groups_required"):
+        _minimal_qualification(scenario)
+
+
+def test_csg_loader_rejects_malformed_group_metadata_before_loader_mutation() -> None:
+    scenario = _compiled_scenario()
+    qualification = _minimal_qualification(scenario)
+    compiled = _minimal_compiled_package()
+    scenario.merged_scenario_data["meta"]["csg"]["groups"][0].pop("group_id")
+    scenario.runtime_metadata.meta_config["csg"]["groups"][0].pop("group_id")
+    scenario = replace(scenario, semantic_digest="")
+    loader = _RecordingLoader()
+    with pytest.raises(ForcePackageError, match="csg_group_metadata_invalid"):
+        load_qualified_csg_scenario(
+            loader,
+            scenario=scenario,
+            qualifications=[qualification],
+            compiled_packages={compiled.package_ref: compiled},
+        )
+    assert loader.calls == []
