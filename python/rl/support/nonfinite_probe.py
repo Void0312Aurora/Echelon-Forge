@@ -59,10 +59,12 @@ def _to_numpy(value: Any) -> np.ndarray:
 
 def _summary_for_value(value: Any) -> dict[str, Any]:
     if isinstance(value, dict):
+        items = {str(key): _summary_for_value(item) for key, item in value.items()}
         return {
             "kind": "dict",
             "keys": list(value.keys()),
-            "items": {str(key): _summary_for_value(item) for key, item in value.items()},
+            "items": items,
+            "finite": all(bool(item.get("finite", True)) for item in items.values()),
         }
 
     arr = np.asarray(_to_numpy(value))

@@ -4,6 +4,7 @@ import unittest
 from collections import deque
 from tempfile import gettempdir
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import numpy as np
 import torch as th
@@ -41,6 +42,90 @@ from tests.support.auxiliary_policy_updates import (
 )
 
 class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
+  def test_nonfinite_recorders_recurse_into_dict_observations(self) -> None:
+    import numpy as np
+
+    from python.rl.support.nonfinite_probe import (
+      NonFiniteProbeError,
+      TraceRecorder,
+      _summary_for_named_tensors,
+    )
+    from tools.diagnostics.trace_training_nonfinite_source import (
+      NonFiniteTraceError,
+      TraceRecorder as StandaloneTraceRecorder,
+      _summary_for_named_tensors as standalone_summary_for_named_tensors,
+    )
+
+    payload = [("observations", {"mission": np.asarray([np.nan])})]
+    self.assertFalse(_summary_for_named_tensors(payload)["finite"])
+    self.assertFalse(standalone_summary_for_named_tensors(payload)["finite"])
+
+    with self.assertRaises(NonFiniteProbeError) as probe_error:
+      TraceRecorder().check_named_tensors("rollout.environment", payload)
+    self.assertEqual(probe_error.exception.report["stage"], "rollout.environment")
+
+    with self.assertRaises(NonFiniteTraceError) as trace_error:
+      StandaloneTraceRecorder().check_named_tensors("rollout.environment", payload)
+    self.assertEqual(trace_error.exception.report["stage"], "rollout.environment")
+
+  def test_nonfinite_probe_observes_overflowed_kl_before_early_stop(self) -> None:
+    from python.rl.support.nonfinite_probe import NonFiniteProbeError
+
+    env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
+    model = AdaptiveKLPPO(
+      HierarchicalMoEExecutionPolicy,
+      env,
+      learning_rate=_WarmupSchedule(),
+      n_steps=4,
+      batch_size=2,
+      n_epochs=1,
+      gamma=0.99,
+      gae_lambda=0.95,
+      normalize_advantage=False,
+      target_kl=0.1,
+      policy_kwargs={
+        "net_arch": {"pi": [32], "vf": [32]},
+        "hybrid_action_spec": "air_combat_hybrid_v1",
+        "hybrid_event_head_lr_scale": 10.0,
+      },
+    )
+    model.set_logger(configure(format_strings=[]))
+    model._last_obs = env.reset()
+    model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+    model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+    model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+    callback = _NoopCallback()
+    callback.init_callback(model)
+    self.assertTrue(
+      model.collect_rollouts(
+        env,
+        callback,
+        model.rollout_buffer,
+        n_rollout_steps=model.n_steps,
+      )
+    )
+
+    probe = NonFiniteTrainingProbe(
+      report_path=f"{gettempdir()}/overflowed_kl_nonfinite_probe_regression.json",
+      history_limit=32,
+      enabled=True,
+    )
+    probe.install(model)
+
+    def overflowed_evaluate_actions(obs, actions):
+      count = int(actions.shape[0])
+      device = model.device
+      return (
+        th.zeros((count,), dtype=th.float32, device=device),
+        th.full((count,), 100.0, dtype=th.float32, device=device),
+        th.zeros((count,), dtype=th.float32, device=device),
+      )
+
+    with patch.object(model.policy, "evaluate_actions", side_effect=overflowed_evaluate_actions):
+      with self.assertRaises(NonFiniteProbeError) as error:
+        model.train()
+    self.assertEqual(error.exception.report["stage"], "train.losses")
+
   def _make_first_event_label_model(self) -> AdaptiveKLPPO:
     model = object.__new__(AdaptiveKLPPO)
     model.device = th.device("cpu")

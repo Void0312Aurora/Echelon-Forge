@@ -1137,18 +1137,6 @@ class AdaptiveKLPPO(
                 elif separate_credit_loss is not None:
                     stats.append_first_event_credit_stats(separate_credit_loss)
 
-                # Early stopping based on observed KL (same criterion as SB3 PPO)
-                with th.no_grad():
-                    approx_kl_div = float(approx_kl.detach().cpu().numpy())
-                stats.approx_kl_divs.append(approx_kl_div)
-                if self.target_kl is not None and approx_kl_div > 1.5 * float(self.target_kl):
-                    continue_training = False
-                    if self.verbose >= 1:
-                        print(
-                            f"Early stopping at epoch {epoch} due to reaching max kl: {approx_kl_div:.4f}"
-                        )
-                    break
-
                 self._observe_training(
                     "train.losses",
                     named_tensors=[
@@ -1167,6 +1155,18 @@ class AdaptiveKLPPO(
                     num_timesteps=int(self.num_timesteps),
                     update_index=int(self._n_updates),
                 )
+
+                # Early stopping based on observed KL (same criterion as SB3 PPO)
+                with th.no_grad():
+                    approx_kl_div = float(approx_kl.detach().cpu().numpy())
+                stats.approx_kl_divs.append(approx_kl_div)
+                if self.target_kl is not None and approx_kl_div > 1.5 * float(self.target_kl):
+                    continue_training = False
+                    if self.verbose >= 1:
+                        print(
+                            f"Early stopping at epoch {epoch} due to reaching max kl: {approx_kl_div:.4f}"
+                        )
+                    break
 
                 # Optimization step
                 self.policy.optimizer.zero_grad()
