@@ -8,10 +8,12 @@ are intentionally not treated as a compatibility ABI.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -148,13 +150,25 @@ def _run_help(argv: list[str]) -> subprocess.CompletedProcess[str]:
     )
 
 
-def test_help_invocations_preserve_option_contracts() -> None:
+def _help_contains_option(help_text: str, option: str) -> bool:
+    return re.search(
+        rf"(?<![A-Za-z0-9_-]){re.escape(option)}(?![A-Za-z0-9_-])",
+        help_text,
+    ) is not None
+
+
+def test_help_option_contracts_cover_all_invocations() -> None:
     assert {name for name, _ in INVOCATIONS} == set(HELP_OPTION_CONTRACTS)
-    for name, argv in INVOCATIONS:
-        proc = _run_help(argv)
-        assert proc.returncode == 0, proc.stdout + proc.stderr
-        assert proc.stderr == ""
-        assert "usage:" in proc.stdout
-        assert "-h, --help" in proc.stdout
-        for option in HELP_OPTION_CONTRACTS[name]:
-            assert option in proc.stdout, f"{name} no longer advertises {option}"
+
+
+@pytest.mark.parametrize("name,argv", INVOCATIONS)
+def test_help_invocation_preserves_option_contract(name: str, argv: list[str]) -> None:
+    proc = _run_help(argv)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert proc.stderr == ""
+    assert "usage:" in proc.stdout
+    assert "-h, --help" in proc.stdout
+    for option in HELP_OPTION_CONTRACTS[name]:
+        assert _help_contains_option(proc.stdout, option), (
+            f"{name} no longer advertises option token {option}"
+        )
