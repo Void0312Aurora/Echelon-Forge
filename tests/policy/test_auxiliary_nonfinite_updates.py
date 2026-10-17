@@ -31,6 +31,12 @@ from stable_baselines3.common.logger import configure
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 
+from tests.support.auxiliary_policy_fixtures import (
+  _make_first_event_label_model,
+  _make_policy_margin_model,
+  _shadow_projection_rollout_data,
+)
+
 from tests.support.auxiliary_policy_updates import (
   _NoopCallback,
   _TinyA6HybridAirCombatEnv,
@@ -161,73 +167,23 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     model.event_policy_separate_update_steps = 1
     return model
 
-  def _make_policy_margin_model(
-    self,
-    *,
-    separate_update: bool,
-  ) -> tuple[AdaptiveKLPPO, DummyVecEnv]:
-    env = DummyVecEnv([_TinyA7ProjectionHybridAirCombatEnv])
-    model = AdaptiveKLPPO(
-      HierarchicalMoEExecutionPolicy,
-      env,
-      learning_rate=_WarmupSchedule(),
-      n_steps=2,
-      batch_size=2,
-      n_epochs=1,
-      gamma=0.99,
-      gae_lambda=0.95,
-      normalize_advantage=False,
-      event_credit_value_coef=0.0,
-      event_credit_delta_align_coef=0.0,
-      event_credit_legal_projection_enabled=True,
-      event_credit_positive_mass_cap=1.0,
-      event_credit_negative_mass_cap=1.0,
-      event_policy_margin_coef=0.35,
-      event_policy_margin=2.0,
-      event_policy_projection_margin_coef=0.15,
-      event_policy_separate_update_enabled=separate_update,
-      event_policy_separate_update_max_grad_norm=0.5,
-      event_policy_separate_update_steps=1,
-      policy_kwargs={
-        "net_arch": {"pi": [32], "vf": [32]},
-        "hybrid_action_spec": "air_combat_hybrid_v1",
-        "hybrid_event_head_lr_scale": 10.0,
-        "hybrid_event_credit_head_lr_scale": 6.0,
-      },
-    )
-    model.set_logger(configure(format_strings=[]))
-    with th.no_grad():
-      model.policy.action_net.weight[9].fill_(0.01)
-      model.policy.action_net.weight[11].fill_(-0.01)
-    return model, env
+  def test_shared_policy_fixture_builders_are_independent(self) -> None:
+    first_model, first_env = _make_policy_margin_model(separate_update=False)
+    second_model, second_env = _make_policy_margin_model(separate_update=False)
+    first_rollout = _shadow_projection_rollout_data(first_model, first_env)
+    second_rollout = _shadow_projection_rollout_data(second_model, second_env)
 
-  def _shadow_projection_rollout_data(self, model: AdaptiveKLPPO, env: DummyVecEnv):
-    obs = env.reset()
-    obs_t = {
-      key: th.as_tensor(value, device=model.device)
-      for key, value in obs.items()
-    }
-    batch_size = int(next(iter(obs_t.values())).shape[0])
-    active = th.ones((batch_size,), dtype=th.bool, device=model.device)
-    target = th.ones((batch_size,), dtype=th.float32, device=model.device)
-    weight = th.ones((batch_size,), dtype=th.float32, device=model.device)
-    source = th.full(
-      (batch_size,),
-      int(FIRST_EVENT_SOURCE_SHADOW_QUALITY),
-      dtype=th.long,
-      device=model.device,
+    with th.no_grad():
+      first_model.policy.action_net.bias[0].add_(1.0)
+    first_rollout.observations["mission"][0, 0] = 99.0
+
+    self.assertFalse(th.equal(first_model.policy.action_net.bias, second_model.policy.action_net.bias))
+    self.assertNotEqual(
+      float(first_rollout.observations["mission"][0, 0]),
+      float(second_rollout.observations["mission"][0, 0]),
     )
-    window_id = th.zeros((batch_size,), dtype=th.long, device=model.device)
-    return SimpleNamespace(
-      observations=obs_t,
-      **{
-        FIRST_EVENT_FIELD_ACTIVE: active,
-        FIRST_EVENT_FIELD_TARGET: target,
-        FIRST_EVENT_FIELD_WEIGHT: weight,
-        FIRST_EVENT_FIELD_SOURCE: source,
-        FIRST_EVENT_FIELD_WINDOW_ID: window_id,
-      },
-    )
+
+
 
   def test_nonfinite_probe_preserves_event_window_training_path(self) -> None:
     env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
@@ -572,8 +528,8 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     self.assertTrue(credit_changed)
 
   def test_policy_margin_loss_projects_shadow_rows_into_policy_path(self) -> None:
-    model, env = self._make_policy_margin_model(separate_update=False)
-    rollout_data = self._shadow_projection_rollout_data(model, env)
+    model, env = _make_policy_margin_model(separate_update=False)
+    rollout_data = _shadow_projection_rollout_data(model, env)
 
     margin_loss = model._first_event_policy_margin_loss(rollout_data)
     self.assertIsNotNone(margin_loss)
@@ -598,8 +554,8 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     )
 
   def test_separate_policy_margin_update_only_writes_event_policy_path(self) -> None:
-    model, env = self._make_policy_margin_model(separate_update=True)
-    rollout_data = self._shadow_projection_rollout_data(model, env)
+    model, env = _make_policy_margin_model(separate_update=True)
+    rollout_data = _shadow_projection_rollout_data(model, env)
     before = {
       name: param.detach().clone()
       for name, param in model.policy.named_parameters()
