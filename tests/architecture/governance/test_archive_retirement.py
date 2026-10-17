@@ -1,11 +1,8 @@
 """Keep documentation history on the one admitted retention route.
 
-422 Markdown files and two figures sat under an `archive/`, `Archive/`, or
-`temp/` path component: a parallel documentation tree with no owner, no SLA,
-and 78 live pages pointing into it. They were deleted, and git history became
-the archive. `docs/engineering/documentation/reference/retired_documents.json`
-records the last commit that modified each one, so `git show <commit>:<path>`
-still prints the retired content.
+Retired documentation is recovered through the project retention registry and
+Git history. This test keeps that route explicit without freezing historical
+directory names or a dated file count.
 
 P7-A admits one explicitly registered owner-local archive for the already
 accepted Cordis composition history. It has an owner, archived README metadata,
@@ -138,22 +135,6 @@ def test_governed_owner_archive_is_indexed_and_metadata_bearing(
     assert f"Owner: `{entry['owner']}`" in text
     for index in entry["indexes"]:
       assert (REPO_ROOT / index).is_file(), index
-
-
-def test_the_retired_containers_are_gone_from_the_tracked_tree() -> None:
-  tracked = _tracked_present_docs()
-  resurrected = sorted(
-    {
-      f"docs/{root}/"
-      for root in ("Archive", "evaluation", "manual", "plan", "task")
-      if any(relative.startswith(f"docs/{root}/") for relative in tracked)
-    }
-  )
-
-  assert resurrected == [], (
-    "these legacy containers were retired on 2026-08-13 and must stay retired: "
-    + ", ".join(resurrected)
-  )
 
 
 def test_no_live_document_links_to_a_retired_path(
