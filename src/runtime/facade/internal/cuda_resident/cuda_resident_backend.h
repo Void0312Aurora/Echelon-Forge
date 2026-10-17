@@ -66,6 +66,7 @@ class CudaResidentBackend final : public IWorldBatchBackend {
     CudaResidentBackend &operator=(CudaResidentBackend &&) = delete;
 
     runtime::backend::Configuration configuration() const noexcept override;
+    runtime::backend::BatchFailureStatus failure_status() const override;
     void configure(const runtime::backend::ConfigureRequest &request) override;
     runtime::backend::ContentResult
     load_content(const runtime::backend::ContentRequest &request) override;

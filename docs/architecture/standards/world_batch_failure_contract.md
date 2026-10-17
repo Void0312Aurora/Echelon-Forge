@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/standards/world_batch_failure_contract.md`
 Owner: `architecture/runtime-workflow`
-Last verified: `2026-10-15`
+Last verified: `2026-10-17`
 
 `WorldBatchRuntime` does not promise transactional rollback when a state-mutating
 operation fails. A worker may have advanced or otherwise changed one world before
@@ -31,6 +31,14 @@ The maintained contract is fail-closed:
    only when native pipeline scopes are complete, otherwise retire the host process;
 5. only a successful reset clears the unhealthy state and permits another batch operation.
 
+The maintained `RuntimeFacade` exposes the same native-owned snapshot through
+`batch_failure_status()`.  Its `healthy`, `generation`, `failure_reason`, and
+`requires_host_recreate` fields are a projection of the active backend; the
+facade and Python bindings do not reconstruct recovery state from exceptions or
+clock observations.  The CPU exact backend is the production implementation of
+this contract.  Candidate backends may report only the failure information they
+own and must not be treated as proof of CPU or host parity.
+
 `reset_batch()` is a recovery boundary, not a rollback. It reinitializes all worlds
 using the requested seeds. Raw `world_raw_quarantine()` access remains a diagnostic
 escape hatch and is not a synchronized recovery API. Callers must not continue a
@@ -42,8 +50,11 @@ step reject that state before mutation; failed reset keeps the batch unhealthy
 and its generation unchanged. The native recovery diagnostic remains readable
 through the fence, and Python projects `terminate_generation` when the native
 owner requires host recreation. This does not certify in-process world teardown.
-The test-only `ef_native_system_fault_probe` verifies this path, fatal/nontermination
-bounds and fresh process startup; it does not deploy a production supervisor.
+The test-only `ef_native_system_fault_probe` constructs the maintained
+`RuntimeFacade` and invokes its reset, step, snapshot and guarded-export
+operations while a private accessor installs the disposable ECS fault fixture.
+It verifies this path, fatal/nontermination bounds and fresh process startup; it
+does not deploy a production supervisor.
 
 Input validation that fails before any world operation, such as an invalid seed
 vector or timestep vector, does not poison the batch. Runtime task failures and

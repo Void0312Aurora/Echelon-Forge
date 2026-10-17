@@ -94,6 +94,16 @@ RuntimeBatchConfig RuntimeFacade::batch_config() const noexcept {
     };
 }
 
+RuntimeBatchFailureStatus RuntimeFacade::batch_failure_status() const {
+    const runtime::backend::BatchFailureStatus status = runtime_->failure_status();
+    return {
+        .healthy = status.healthy,
+        .generation = status.generation,
+        .requires_host_recreate = status.requires_host_recreate,
+        .failure_reason = status.failure_reason,
+    };
+}
+
 RuntimeCapabilities RuntimeFacade::capabilities() const noexcept {
     return RuntimeCapabilities{
         .supports_batch_runtime = runtime_ != nullptr,

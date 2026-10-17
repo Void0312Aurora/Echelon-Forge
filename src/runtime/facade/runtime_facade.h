@@ -12,6 +12,9 @@ class IWorldBatchBackend;
 struct RuntimeFacadeIdentity;
 struct WorldBatchVisualBindingCompatibilityScene;
 struct RecentEngagementEvents;
+namespace runtime::facade::testing {
+class RuntimeFacadeTestAccess;
+}
 
 #if defined(_WIN32)
 #if defined(EF_FACADE_BACKEND_BUILD)
@@ -39,6 +42,7 @@ class EF_RUNTIME_FACADE_API RuntimeFacade {
 
     void configure_batch(const RuntimeBatchConfig &config);
     RuntimeBatchConfig batch_config() const noexcept;
+    [[nodiscard]] RuntimeBatchFailureStatus batch_failure_status() const;
     RuntimeCapabilities capabilities() const noexcept;
     [[nodiscard]] RuntimeCompositionEvidenceResult export_composition_evidence() const;
     [[nodiscard]] RuntimeCompositionEvidenceComparison
@@ -120,6 +124,7 @@ class EF_RUNTIME_FACADE_API RuntimeFacade {
     RuntimeWindowResult run_window(const RuntimeWindowRequest &request);
 
   private:
+    friend class runtime::facade::testing::RuntimeFacadeTestAccess;
     RecentEngagementEvents export_recent_engagement_events_for_world(std::size_t world_index) const;
     std::vector<WorldBatchVisualBindingCompatibilityScene>
     collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(

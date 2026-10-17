@@ -42,9 +42,12 @@ owner 提供仅在成功 reset 后递增的 batch generation ID。运行中 syst
 受限子进程控制验证 fatal 退出、非终止 callback 的超时终止及回收、替代宿主进程正常启动。
 这些证据尚不证明生产 supervisor 隔离、可靠的 per-world 提交、回滚、取消或受损 Flecs world 的安全析构。
 
-Python 资格 adapter 现在先读取 native owner 的 `batch_healthy()` 和
-`batch_failure_reason()`，再投影全部未知结果；健康 runtime 会被拒绝，adapter 不会创建
-generation ID，也不会伪造 reset 结果；native generation identity 仍由 owner 提供。
+维护的 `RuntimeFacade` 现在通过不可变的 `batch_failure_status()` 快照暴露 native
+backend 的状态。CPU backend 原样投影 `WorldBatchRuntime` 的健康、generation、宿主重建和
+原因字段；候选 backend 只报告自己实际拥有的有限事实。Python 资格 adapter 优先读取这份
+快照，仅为 raw `WorldBatchRuntime` 调用者保留四个旧 getter 的兼容路径。健康 runtime 会被
+拒绝，adapter 不会创建 generation ID，也不会伪造 reset 结果；generation identity 仍由
+native owner 提供。
 
 ## 方案比较与实现检查点
 

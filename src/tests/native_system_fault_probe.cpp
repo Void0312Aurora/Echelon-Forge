@@ -1,4 +1,5 @@
 #include "core/engine/world_batch_runtime.h"
+#include "runtime/facade/internal/testing/runtime_facade_test_access.h"
 
 #include <atomic>
 #include <chrono>
@@ -54,12 +55,15 @@ int main(int argc, char **argv) {
         std::vector<std::atomic<unsigned>> visits(world_count);
         std::atomic<bool> inject{true};
         {
-            WorldBatchRuntime batch(world_count);
+            RuntimeFacade facade(world_count);
+            WorldBatchRuntime &batch =
+                runtime::facade::testing::RuntimeFacadeTestAccess::world_batch_runtime(facade);
             batch.set_worker_threads(threads);
             if (mode == "healthy") {
-                batch.reset_batch();
-                batch.step_batch();
-                require(batch.batch_healthy(), "replacement process batch is unhealthy");
+                facade.reset_batch();
+                facade.step_batch();
+                require(facade.batch_failure_status().healthy,
+                        "replacement process facade batch is unhealthy");
                 std::cout << "REPLACEMENT_PROCESS_HEALTHY" << std::endl;
                 return 0;
             }
@@ -89,7 +93,7 @@ int main(int argc, char **argv) {
                     });
             }
             try {
-                batch.step_batch();
+                facade.step_batch();
                 throw std::runtime_error("native fault was not propagated");
             } catch (const std::runtime_error &error) {
                 require(std::string(error.what()) == "injected running native system failure",
@@ -105,13 +109,14 @@ int main(int argc, char **argv) {
                 std::cout << "FAULT_WORLD " << index << " " << clock << " " << visits[index]
                           << std::endl;
             }
-            require(!batch.batch_healthy(), "native callback failure was not fenced");
-            require(batch.batch_requires_host_recreate(),
+            const auto failure_status = facade.batch_failure_status();
+            require(!failure_status.healthy, "native callback failure was not fenced");
+            require(failure_status.requires_host_recreate,
                     "native owner allowed unsafe reset recovery");
-            require(batch.batch_generation() == generation, "failed generation changed");
-            require_fenced([&] { batch.step_batch(); });
-            require_fenced([&] { batch.get_agent_observations_batch({}); });
-            require_fenced([&] { (void)batch.composition_diagnostics(); });
+            require(failure_status.generation == generation, "failed generation changed");
+            require_fenced([&] { facade.step_batch(); });
+            require_fenced([&] { (void)facade.export_composition_evidence(); });
+            require_fenced([&] { (void)facade.get_agent_observations_batch({}); });
             std::cout << "FAULT_FENCED" << std::endl;
             inject = false;
             {
@@ -125,19 +130,21 @@ int main(int argc, char **argv) {
             }
             for (unsigned attempt = 0; attempt < 2; ++attempt) {
                 try {
-                    batch.reset_batch();
+                    facade.reset_batch();
                     throw std::runtime_error("reset certified an unfinished pipeline");
                 } catch (const std::logic_error &error) {
                     require(std::string(error.what()).find("recreate the host process") !=
                                 std::string::npos,
                             "unexpected reset rejection");
                 }
-                require(!batch.batch_healthy(), "failed reset reopened the batch");
-                require(batch.batch_requires_host_recreate(),
+                const auto failed_reset_status = facade.batch_failure_status();
+                require(!failed_reset_status.healthy, "failed reset reopened the batch");
+                require(failed_reset_status.requires_host_recreate,
                         "failed reset cleared terminal recovery");
-                require(batch.batch_generation() == generation, "failed reset changed generation");
-                require_fenced([&] { batch.step_batch(); });
-                require_fenced([&] { batch.get_agent_observations_batch({}); });
+                require(failed_reset_status.generation == generation,
+                        "failed reset changed generation");
+                require_fenced([&] { facade.step_batch(); });
+                require_fenced([&] { (void)facade.export_composition_evidence(); });
             }
             try {
                 batch.world_raw_quarantine(1).step();

@@ -11,10 +11,17 @@
 
 void bind_runtime_facade(nb::module_ &m) {
     // Maintained runtime facade surface for frontend-facing batch use cases.
+    nb::class_<RuntimeBatchFailureStatus>(m, "RuntimeBatchFailureStatus")
+        .def_ro("healthy", &RuntimeBatchFailureStatus::healthy)
+        .def_ro("generation", &RuntimeBatchFailureStatus::generation)
+        .def_ro("requires_host_recreate", &RuntimeBatchFailureStatus::requires_host_recreate)
+        .def_ro("failure_reason", &RuntimeBatchFailureStatus::failure_reason);
+
     nb::class_<RuntimeFacade>(m, "RuntimeFacade")
         .def(nb::init<size_t>(), nb::arg("world_count") = 0)
         .def(nb::init<const RuntimeBatchConfig &>(), nb::arg("config"))
         .def("batch_config", &RuntimeFacade::batch_config)
+        .def("batch_failure_status", &RuntimeFacade::batch_failure_status)
         .def("capabilities", &RuntimeFacade::capabilities)
         .def("export_composition_evidence", &RuntimeFacade::export_composition_evidence)
         .def("compare_composition_evidence", &RuntimeFacade::compare_composition_evidence,
