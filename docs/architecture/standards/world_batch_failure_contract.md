@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/standards/world_batch_failure_contract.md`
 Owner: `architecture/runtime-workflow`
-Last verified: `2026-10-15`
+Last verified: `2026-10-17`
 
 `WorldBatchRuntime` does not promise transactional rollback when a state-mutating
 operation fails. A worker may have advanced or otherwise changed one world before
@@ -50,8 +50,11 @@ step reject that state before mutation; failed reset keeps the batch unhealthy
 and its generation unchanged. The native recovery diagnostic remains readable
 through the fence, and Python projects `terminate_generation` when the native
 owner requires host recreation. This does not certify in-process world teardown.
-The test-only `ef_native_system_fault_probe` verifies this path, fatal/nontermination
-bounds and fresh process startup; it does not deploy a production supervisor.
+The test-only `ef_native_system_fault_probe` constructs the maintained
+`RuntimeFacade` and invokes its reset, step, snapshot and guarded-export
+operations while a private accessor installs the disposable ECS fault fixture.
+It verifies this path, fatal/nontermination bounds and fresh process startup; it
+does not deploy a production supervisor.
 
 Input validation that fails before any world operation, such as an invalid seed
 vector or timestep vector, does not poison the batch. Runtime task failures and

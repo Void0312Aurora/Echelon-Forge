@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/standards/world_batch_failure_contract.md`
 Owner: `architecture/runtime-workflow`
-Last verified: `2026-10-15`
+Last verified: `2026-10-17`
 
 `WorldBatchRuntime` 不承诺对状态修改失败进行事务回滚。一个 world 可能已经推进或修改，
 另一个 world 才报告异常。
@@ -40,8 +40,10 @@ runtime task/worker 启动异常会使其失效。只读 batch 导出同样受�
 Flecs callback 内的 C++ 异常可能留下未结束的 readonly/defer 和 iterator 状态，episode reset
 无法修复这些内部状态。reset 和 raw step 会在修改前拒绝执行；失败 reset 保持 batch unhealthy，
 generation 不变。恢复诊断仍可穿过故障 fence 读取；当 native owner 要求重建宿主时，Python
-投影为 `terminate_generation`。此规则不证明同进程 world 析构安全。仅测试用的
-`ef_native_system_fault_probe` 验证该路径、fatal/非终止时间上限和新进程启动，不部署生产 supervisor。
+投影为 `terminate_generation`。此规则不证明同进程 world 析构安全。
+仅测试用的 `ef_native_system_fault_probe` 构造 maintained `RuntimeFacade`，通过其
+reset、step、快照和受保护导出操作运行；私有 accessor 只负责安装一次性的 ECS 故障夹具。
+它验证该路径、fatal/非终止时间上限和新进程启动，不部署生产 supervisor。
 
 native 资格测试通过私有 test accessor，在实际 3/4-world batch 中注入首个或后续 worker
 启动失败，验证已启动 worker 在异常返回前汇合、导出和重试被封锁、恢复启动失败仍保留

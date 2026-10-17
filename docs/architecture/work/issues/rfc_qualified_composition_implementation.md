@@ -4,7 +4,7 @@ Document kind: `work`
 Lifecycle: `active`
 Canonical: `docs/architecture/work/issues/rfc_qualified_composition_implementation.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-10-15`
+Last verified: `2026-10-17`
 
 ## Scope and source
 
@@ -361,6 +361,16 @@ derive process survival from the child process handle, and project terminal,
 all-unknown host outcomes. Each fault case starts a separate replacement native
 process and verifies normal reset/step and clean exit. The parent test process
 continues. These are local acceptance probes, not deployed production isolation.
+
+The current probe drives the running-system exception, reset rejection and
+guarded-export checks through `RuntimeFacade`; its private native accessor is
+limited to installing the disposable Flecs callback and reading fixture state.
+The Release qualification run on `codex/issue210-recovery-contract` passed the
+Facade failure regression (**3 cases / 34 assertions**), the batch regression
+(**15 cases / 270 assertions**), native failure qualification (**17 Python
+tests**) and failure-domain contracts (**15 Python tests**). These counts are
+focused evidence for the producing SHA, not a full repository or production
+admission pass.
 
 Reproduce with `CMO_BUILD_DIR=build-rfc-mainline`, build the Release targets
 `ef_native_system_fault_probe`, `ef_test` and `ef_py`, then run
