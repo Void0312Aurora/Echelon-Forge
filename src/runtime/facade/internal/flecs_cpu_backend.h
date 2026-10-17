@@ -48,5 +48,6 @@ class FlecsCpuBackend final : public IWorldBatchBackend, public IWorldBatchCompa
         const std::vector<std::vector<std::uint64_t>> &candidate_ids_batch) const override;
 
   private:
+    friend class runtime::facade::testing::RuntimeFacadeTestAccess;
     WorldBatchRuntime runtime_;
 };

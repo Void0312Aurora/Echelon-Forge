@@ -622,6 +622,9 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_layout(
                 continue;
             }
             out.push_back(spawn_from_request(world, request));
+            if (mutation_hook_for_test_) {
+                mutation_hook_for_test_();
+            }
         }
         return out;
     } catch (...) {
