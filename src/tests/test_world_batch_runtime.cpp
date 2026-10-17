@@ -440,6 +440,36 @@ TEST_SUITE("world_batch_runtime") {
         CHECK_FALSE(scenes[1].environment_snapshot.maritime_state_configured);
     }
 
+    TEST_CASE("facade exposes the native batch failure status and reset boundary") {
+        RuntimeFacade facade(2);
+        const auto initial = facade.batch_failure_status();
+        CHECK(initial.healthy);
+        CHECK(initial.generation == 1);
+        CHECK_FALSE(initial.requires_host_recreate);
+        CHECK(initial.failure_reason.empty());
+
+        RuntimeWorldLayoutRequest request{};
+        request.world_index = 1;
+        request.terrain_type = "qualification.invalid_terrain";
+        request.time_steps = {0.1};
+        CHECK_THROWS_AS(facade.apply_world_layout(request), std::invalid_argument);
+
+        const auto failed = facade.batch_failure_status();
+        CHECK_FALSE(failed.healthy);
+        CHECK(failed.generation == initial.generation);
+        CHECK_FALSE(failed.requires_host_recreate);
+        CHECK(failed.failure_reason.find("Unknown terrain_type") != std::string::npos);
+        CHECK_THROWS_AS(facade.step_batch(), std::logic_error);
+
+        facade.reset_batch();
+        const auto recovered = facade.batch_failure_status();
+        CHECK(recovered.healthy);
+        CHECK(recovered.generation == initial.generation + 1);
+        CHECK_FALSE(recovered.requires_host_recreate);
+        CHECK(recovered.failure_reason.empty());
+        CHECK_NOTHROW(facade.step_batch());
+    }
+
     TEST_CASE("worker thread controls clamp to available batch work") {
         WorldBatchRuntime runtime(3);
 

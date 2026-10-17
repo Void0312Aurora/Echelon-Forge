@@ -59,6 +59,15 @@ runtime::backend::Configuration FlecsCpuBackend::configuration() const noexcept 
     };
 }
 
+runtime::backend::BatchFailureStatus FlecsCpuBackend::failure_status() const {
+    return {
+        .healthy = runtime_.batch_healthy(),
+        .generation = runtime_.batch_generation(),
+        .requires_host_recreate = runtime_.batch_requires_host_recreate(),
+        .failure_reason = runtime_.batch_failure_reason(),
+    };
+}
+
 void FlecsCpuBackend::configure(const runtime::backend::ConfigureRequest &request) {
     if (request.world_count.has_value()) {
         runtime_.resize(*request.world_count);

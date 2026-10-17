@@ -42,6 +42,17 @@ struct Configuration {
     std::size_t effective_worker_threads = 1;
 };
 
+// Backend-owned failure truth.  Maintained facade callers may project this
+// record, but they must not infer recovery from an exception alone.  A
+// generation remains unusable until the backend reports a successful reset;
+// host recreation is terminal when the native owner cannot safely reset.
+struct BatchFailureStatus {
+    bool healthy = true;
+    std::uint64_t generation = 0;
+    bool requires_host_recreate = false;
+    std::string failure_reason;
+};
+
 struct ConfigureRequest {
     std::optional<std::size_t> world_count;
     std::optional<std::size_t> worker_threads;
@@ -225,6 +236,7 @@ class IWorldBatchBackend {
     virtual ~IWorldBatchBackend() = default;
 
     virtual runtime::backend::Configuration configuration() const noexcept = 0;
+    virtual runtime::backend::BatchFailureStatus failure_status() const = 0;
     virtual void configure(const runtime::backend::ConfigureRequest &request) = 0;
     virtual runtime::backend::ContentResult
     load_content(const runtime::backend::ContentRequest &request) = 0;

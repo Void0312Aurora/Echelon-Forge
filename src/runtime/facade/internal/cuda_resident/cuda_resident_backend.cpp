@@ -192,6 +192,23 @@ runtime::backend::Configuration CudaResidentBackend::configuration() const noexc
     };
 }
 
+runtime::backend::BatchFailureStatus CudaResidentBackend::failure_status() const {
+    const CudaWorldStoreDiagnostics diagnostics = store_.diagnostics();
+    const bool ready = diagnostics.state == CudaWorldStoreState::ready;
+    std::string failure_reason = diagnostics.last_error;
+    if ((!ready || !failure_reason.empty()) && failure_reason.empty()) {
+        failure_reason = diagnostics.state == CudaWorldStoreState::unconfigured
+                             ? "CUDA resident backend is not configured"
+                             : "CUDA resident backend is unavailable";
+    }
+    return {
+        .healthy = ready && diagnostics.last_error.empty(),
+        .generation = diagnostics.reset_generation,
+        .requires_host_recreate = false,
+        .failure_reason = std::move(failure_reason),
+    };
+}
+
 void CudaResidentBackend::configure(const runtime::backend::ConfigureRequest &request) {
     if (request.worker_threads.has_value()) {
         worker_threads_ = *request.worker_threads;

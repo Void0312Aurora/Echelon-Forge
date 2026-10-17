@@ -31,6 +31,14 @@ The maintained contract is fail-closed:
    only when native pipeline scopes are complete, otherwise retire the host process;
 5. only a successful reset clears the unhealthy state and permits another batch operation.
 
+The maintained `RuntimeFacade` exposes the same native-owned snapshot through
+`batch_failure_status()`.  Its `healthy`, `generation`, `failure_reason`, and
+`requires_host_recreate` fields are a projection of the active backend; the
+facade and Python bindings do not reconstruct recovery state from exceptions or
+clock observations.  The CPU exact backend is the production implementation of
+this contract.  Candidate backends may report only the failure information they
+own and must not be treated as proof of CPU or host parity.
+
 `reset_batch()` is a recovery boundary, not a rollback. It reinitializes all worlds
 using the requested seeds. Raw `world_raw_quarantine()` access remains a diagnostic
 escape hatch and is not a synchronized recovery API. Callers must not continue a

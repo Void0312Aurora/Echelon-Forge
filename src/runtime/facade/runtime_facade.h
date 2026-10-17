@@ -39,6 +39,7 @@ class EF_RUNTIME_FACADE_API RuntimeFacade {
 
     void configure_batch(const RuntimeBatchConfig &config);
     RuntimeBatchConfig batch_config() const noexcept;
+    [[nodiscard]] RuntimeBatchFailureStatus batch_failure_status() const;
     RuntimeCapabilities capabilities() const noexcept;
     [[nodiscard]] RuntimeCompositionEvidenceResult export_composition_evidence() const;
     [[nodiscard]] RuntimeCompositionEvidenceComparison

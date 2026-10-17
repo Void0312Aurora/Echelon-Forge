@@ -44,11 +44,19 @@ class RecoveryAdmission(str, Enum):
 
 
 class NativeBatchHealth(Protocol):
-    """Small read-only seam exposed by the native batch owner.
+    """Read-only native failure state used by the projection adapter.
 
     This deliberately omits reset and mutation methods. The projection may
     observe the native fence, but it cannot clear it or invent recovery truth.
+    Maintained facades provide one `batch_failure_status()` snapshot. Raw
+    WorldBatchRuntime callers may still provide the four legacy observations.
     """
+
+    def batch_failure_status(self) -> Any: ...
+
+
+class LegacyNativeBatchHealth(Protocol):
+    """Legacy read-only WorldBatchRuntime observations."""
 
     def batch_healthy(self) -> bool: ...
 
@@ -314,7 +322,7 @@ def project_unresolved_batch_fault(
 
 def project_native_batch_fault(
     *,
-    runtime: NativeBatchHealth,
+    runtime: NativeBatchHealth | LegacyNativeBatchHealth,
     batch_generation_ref: str,
     operation_ref: str,
     operation: str,
@@ -334,14 +342,27 @@ def project_native_batch_fault(
     Python does not reinterpret an unfinished pipeline as reset recoverable.
     """
 
-    if runtime.batch_healthy():
+    status_reader = getattr(runtime, "batch_failure_status", None)
+    if callable(status_reader):
+        native_status = status_reader()
+        healthy = native_status.healthy
+        reason = native_status.failure_reason
+        native_generation = native_status.generation
+        requires_host_recreate = native_status.requires_host_recreate
+    else:
+        healthy = runtime.batch_healthy()
+        reason = runtime.batch_failure_reason()
+        native_generation = runtime.batch_generation()
+        requires_host_recreate = runtime.batch_requires_host_recreate()
+
+    if not isinstance(healthy, bool):
+        raise TypeError("native batch health must be a bool observation")
+    if healthy:
         raise ValueError("native batch fault projection requires an unhealthy runtime")
     if not isinstance(error_code, str) or not error_code.strip():
         raise ValueError("error_code must be a non-empty string")
-    reason = runtime.batch_failure_reason()
     if not isinstance(reason, str) or not reason.strip():
         raise ValueError("unhealthy native runtime must provide a failure reason")
-    native_generation = runtime.batch_generation()
     if (
         isinstance(native_generation, bool)
         or not isinstance(native_generation, int)
@@ -352,7 +373,6 @@ def project_native_batch_fault(
         raise ValueError("batch generation reference does not match native batch generation")
     if not expected_world_indices:
         raise ValueError("expected_world_indices are required for a batch execution")
-    requires_host_recreate = runtime.batch_requires_host_recreate()
     if not isinstance(requires_host_recreate, bool):
         raise TypeError("native host recreation requirement must be a bool observation")
     outcome = build_batch_outcome(
