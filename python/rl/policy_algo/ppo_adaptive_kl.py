@@ -565,6 +565,25 @@ class AdaptiveKLPPO(
             return values.detach().float().cpu().numpy().reshape(-1)
         return np.asarray(values, dtype=np.float32).reshape(-1)
 
+    def _observe_training(
+        self,
+        stage: str,
+        *,
+        value=None,
+        named_tensors=None,
+        **context,
+    ) -> None:
+        """Publish optional training observations without changing the hot path."""
+        observer = getattr(self, "_training_observer", None)
+        if observer is None:
+            return
+        observer.observe(
+            str(stage),
+            value=value,
+            named_tensors=named_tensors,
+            context=context,
+        )
+
     def collect_rollouts(
         self,
         env: VecEnv,
@@ -573,6 +592,12 @@ class AdaptiveKLPPO(
         n_rollout_steps: int,
     ) -> bool:
         assert self._last_obs is not None, "No previous observation was provided"
+        self._observe_training(
+            "rollout.start",
+            phase="rollout",
+            num_timesteps=int(self.num_timesteps),
+            update_index=int(self._n_updates),
+        )
         self.policy.set_training_mode(False)
         set_training_progress = getattr(self.policy, "set_hmoe_training_progress", None)
         if callable(set_training_progress):
@@ -628,6 +653,19 @@ class AdaptiveKLPPO(
             with th.no_grad():
                 obs_tensor = self._get_policy_obs_tensor(env, self._last_obs)
                 actions_tensor, values, log_probs = self.policy(obs_tensor)
+            self._observe_training(
+                "rollout.policy",
+                named_tensors=[
+                    ("observations", obs_tensor),
+                    ("actions", actions_tensor),
+                    ("values", values),
+                    ("log_probs", log_probs),
+                ],
+                rollout_step=int(n_steps),
+                phase="rollout",
+                num_timesteps=int(self.num_timesteps),
+                update_index=int(self._n_updates),
+            )
             policy_fire_mask = (
                 self._first_event_policy_fire_mask_from_obs(obs_tensor, env.num_envs)
                 if collect_first_event
@@ -662,6 +700,18 @@ class AdaptiveKLPPO(
 
             new_obs, rewards, dones, infos = env.step(clipped_actions)
             self.num_timesteps += env.num_envs
+            self._observe_training(
+                "rollout.environment",
+                named_tensors=[
+                    ("rewards", rewards),
+                    ("dones", dones.astype(np.float32)),
+                    ("observations", new_obs),
+                ],
+                rollout_step=int(n_steps),
+                phase="rollout",
+                num_timesteps=int(self.num_timesteps),
+                update_index=int(self._n_updates),
+            )
 
             if collect_first_event:
                 for env_idx, info in enumerate(infos):
@@ -707,6 +757,14 @@ class AdaptiveKLPPO(
                     with th.no_grad():
                         terminal_value = self.policy.predict_values(terminal_obs)[0]  # type: ignore[arg-type]
                     rewards[idx] += self.gamma * terminal_value
+                    self._observe_training(
+                        "rollout.terminal_value",
+                        value=terminal_value,
+                        rollout_step=int(n_steps),
+                        phase="rollout",
+                        num_timesteps=int(self.num_timesteps),
+                        update_index=int(self._n_updates),
+                    )
 
             rollout_buffer.add(
                 obs_tensor if self._is_device_rollout_buffer(rollout_buffer) else self._last_obs,  # type: ignore[arg-type]
@@ -730,6 +788,13 @@ class AdaptiveKLPPO(
 
         with th.no_grad():
             values = self.policy.predict_values(self._get_policy_obs_tensor(env, new_obs))  # type: ignore[arg-type]
+        self._observe_training(
+            "rollout.last_values",
+            value=values,
+            phase="rollout",
+            num_timesteps=int(self.num_timesteps),
+            update_index=int(self._n_updates),
+        )
 
         if collect_first_event:
             self._first_event_env_episode_id = env_episode_id
@@ -753,6 +818,20 @@ class AdaptiveKLPPO(
                     launch_window_open=launch_window_open,
                 )
         rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
+        self._observe_training(
+            "rollout.buffer",
+            named_tensors=[
+                ("observations", rollout_buffer.observations),
+                ("actions", rollout_buffer.actions),
+                ("values", rollout_buffer.values),
+                ("log_probs", rollout_buffer.log_probs),
+                ("advantages", rollout_buffer.advantages),
+                ("returns", rollout_buffer.returns),
+            ],
+            phase="rollout",
+            num_timesteps=int(self.num_timesteps),
+            update_index=int(self._n_updates),
+        )
 
         callback.update_locals(locals())
         callback.on_rollout_end()
@@ -884,6 +963,13 @@ class AdaptiveKLPPO(
         # optimization loop appends to ``stats.*`` and the per-subdomain
         # ``_record_*_logs`` mixin methods read from it.
         stats = _TrainEpochStats()
+        self._observe_training(
+            "train.start",
+            named_tensors=[("params", param.data) for param in self.policy.parameters()],
+            phase="train",
+            num_timesteps=int(self.num_timesteps),
+            update_index=int(self._n_updates),
+        )
         continue_training = True
         window_classifier_loss: _WindowClassifierLoss | None = None
         fire_boundary_loss: _FireBoundaryLoss | None = None
@@ -894,6 +980,22 @@ class AdaptiveKLPPO(
         for epoch in range(self.n_epochs):
             # Do a complete pass on the rollout buffer
             for rollout_data in self.rollout_buffer.get(self.batch_size):
+                self._observe_training(
+                    "train.minibatch",
+                    named_tensors=[
+                        ("observations", rollout_data.observations),
+                        ("actions", rollout_data.actions),
+                        ("old_values", rollout_data.old_values),
+                        ("old_log_prob", rollout_data.old_log_prob),
+                        ("advantages", rollout_data.advantages),
+                        ("returns", rollout_data.returns),
+                    ],
+                    phase="train",
+                    epoch=int(epoch),
+                    minibatch=int(len(stats.pg_losses)),
+                    num_timesteps=int(self.num_timesteps),
+                    update_index=int(self._n_updates),
+                )
                 separate_policy_margin_loss, separate_policy_margin_grad_norm = (
                     self._first_event_policy_margin_separate_update(rollout_data)
                     if self.event_policy_separate_update_enabled
@@ -914,6 +1016,19 @@ class AdaptiveKLPPO(
                     rollout_data.observations, actions
                 )
                 values = values.flatten()
+                self._observe_training(
+                    "train.policy",
+                    named_tensors=[
+                        ("values", values),
+                        ("log_prob", log_prob),
+                        ("entropy", entropy) if entropy is not None else ("entropy", th.zeros(1)),
+                    ],
+                    phase="train",
+                    epoch=int(epoch),
+                    minibatch=int(len(stats.pg_losses)),
+                    num_timesteps=int(self.num_timesteps),
+                    update_index=int(self._n_updates),
+                )
 
                 # Normalize advantage
                 advantages = rollout_data.advantages
@@ -1022,6 +1137,25 @@ class AdaptiveKLPPO(
                 elif separate_credit_loss is not None:
                     stats.append_first_event_credit_stats(separate_credit_loss)
 
+                self._observe_training(
+                    "train.losses",
+                    named_tensors=[
+                        ("advantages", advantages),
+                        ("ratio", ratio),
+                        ("policy_loss", policy_loss),
+                        ("values_pred", values_pred),
+                        ("value_loss", value_loss),
+                        ("entropy_loss", entropy_loss),
+                        ("approx_kl", approx_kl),
+                        ("loss", loss),
+                    ],
+                    phase="train",
+                    epoch=int(epoch),
+                    minibatch=int(len(stats.pg_losses) - 1),
+                    num_timesteps=int(self.num_timesteps),
+                    update_index=int(self._n_updates),
+                )
+
                 # Early stopping based on observed KL (same criterion as SB3 PPO)
                 with th.no_grad():
                     approx_kl_div = float(approx_kl.detach().cpu().numpy())
@@ -1037,8 +1171,30 @@ class AdaptiveKLPPO(
                 # Optimization step
                 self.policy.optimizer.zero_grad()
                 loss.backward()
+                self._observe_training(
+                    "train.gradients",
+                    named_tensors=[
+                        (name, param.grad)
+                        for name, param in self.policy.named_parameters()
+                        if param.grad is not None
+                    ],
+                    phase="train",
+                    epoch=int(epoch),
+                    minibatch=int(len(stats.pg_losses) - 1),
+                    num_timesteps=int(self.num_timesteps),
+                    update_index=int(self._n_updates),
+                )
                 th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
                 self.policy.optimizer.step()
+                self._observe_training(
+                    "train.params.post_step",
+                    named_tensors=[("params", param.data) for param in self.policy.parameters()],
+                    phase="train",
+                    epoch=int(epoch),
+                    minibatch=int(len(stats.pg_losses) - 1),
+                    num_timesteps=int(self.num_timesteps),
+                    update_index=int(self._n_updates),
+                )
 
             self._n_updates += 1
             if not continue_training:
@@ -1052,6 +1208,13 @@ class AdaptiveKLPPO(
         explained_var = explained_variance(
             self._to_numpy_flat(self.rollout_buffer.values),
             self._to_numpy_flat(self.rollout_buffer.returns),
+        )
+        self._observe_training(
+            "train.end",
+            value=np.asarray([explained_var], dtype=np.float32),
+            phase="train",
+            num_timesteps=int(self.num_timesteps),
+            update_index=int(self._n_updates),
         )
 
         mean_kl = float(np.mean(stats.approx_kl_divs)) if len(stats.approx_kl_divs) > 0 else None
