@@ -43,6 +43,15 @@ class RecoveryAdmission(str, Enum):
     TERMINATE_GENERATION = "terminate_generation"
 
 
+class NativeBatchFailureStatus(Protocol):
+    """One native-owned batch health snapshot exposed by a maintained facade."""
+
+    healthy: bool
+    generation: int
+    requires_host_recreate: bool
+    failure_reason: str
+
+
 class NativeBatchHealth(Protocol):
     """Read-only native failure state used by the projection adapter.
 
@@ -52,7 +61,7 @@ class NativeBatchHealth(Protocol):
     WorldBatchRuntime callers may still provide the four legacy observations.
     """
 
-    def batch_failure_status(self) -> Any: ...
+    def batch_failure_status(self) -> NativeBatchFailureStatus: ...
 
 
 class LegacyNativeBatchHealth(Protocol):
@@ -440,6 +449,7 @@ __all__ = [
     "BatchOperationOutcome",
     "BatchResult",
     "FailureDomain",
+    "NativeBatchFailureStatus",
     "NativeBatchHealth",
     "RecoveryAdmission",
     "SCHEMA_VERSION",
