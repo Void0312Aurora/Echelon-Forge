@@ -507,8 +507,9 @@ TEST_SUITE("world_batch_runtime") {
     TEST_CASE("facade mutation failure fences setup exports until reset") {
         RuntimeFacade facade(1);
         WorldBatchRuntime test_access_anchor(0);
-        WorldBatchRuntimeTestAccess::set_mutation_hook(
-            test_access_anchor, [] { throw std::runtime_error("injected facade mutation failure"); });
+        WorldBatchRuntimeTestAccess::set_mutation_hook(test_access_anchor, [] {
+            throw std::runtime_error("injected facade mutation failure");
+        });
 
         RuntimeWorldLayoutRequest request{};
         request.terrain_type = "flat";
@@ -517,8 +518,7 @@ TEST_SUITE("world_batch_runtime") {
         spawn.type_name = "Aircraft";
         spawn.entity_name = "FacadeMutationFault";
         request.spawn_requests = {spawn};
-        CHECK_THROWS_WITH(facade.apply_world_layout(request),
-                          "injected facade mutation failure");
+        CHECK_THROWS_WITH(facade.apply_world_layout(request), "injected facade mutation failure");
         WorldBatchRuntimeTestAccess::set_mutation_hook(test_access_anchor, {});
 
         const auto failed = facade.batch_failure_status();
