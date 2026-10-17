@@ -73,10 +73,37 @@ def test_facade_keeps_native_failure_fence_and_explicit_reset_recovery():
     request.terrain_type = "qualification.invalid_terrain"
     with pytest.raises(ValueError, match="Unknown terrain_type"):
         facade.apply_world_layout(request)
+    status = facade.batch_failure_status()
+    assert not status.healthy
+    assert status.generation == 1
+    assert not status.requires_host_recreate
+    assert "Unknown terrain_type" in status.failure_reason
+    outcome = project_native_batch_fault(
+        runtime=facade,
+        batch_generation_ref=str(status.generation),
+        operation_ref="layout.1",
+        operation="apply_world_layout",
+        expected_world_indices=frozenset(range(4)),
+        error_code="native.layout.exception",
+    )
+    assert outcome.result is BatchResult.FAILED
+    assert outcome.recovery_admission is RecoveryAdmission.REQUIRE_EXPLICIT_RESET_OR_RECREATE
+    assert any(
+        diagnostic.startswith("native.batch.failure_reason:Unknown terrain_type")
+        for diagnostic in outcome.diagnostics
+    )
+    assert all(
+        row.state is WorldState.UNKNOWN_AFTER_FAULT and row.step_committed is None
+        for row in outcome.worlds
+    )
     for operation in (facade.step_batch, facade.export_composition_evidence):
         with pytest.raises(RuntimeError, match="failed-closed"):
             operation()
     facade.reset_batch()
+    recovered = facade.batch_failure_status()
+    assert recovered.healthy
+    assert recovered.generation == 2
+    assert not recovered.failure_reason
     facade.step_batch()
     assert facade.export_composition_evidence().available
 

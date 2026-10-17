@@ -27,6 +27,11 @@ commit 真值、回滚或事务语义。
 4. 调用者通过 `batch_healthy()`、`batch_failure_reason()` 和 `batch_requires_host_recreate()` 获取诊断；仅在 native pipeline 已正常结束时允许 reset，否则退役宿主进程。
 5. 只有成功完成的 reset 才清除故障状态。
 
+maintained `RuntimeFacade` 通过 `batch_failure_status()` 暴露同一份 native-owned 快照，
+字段包括 `healthy`、`generation`、`failure_reason` 和 `requires_host_recreate`。Facade
+及 Python binding 不从异常或时钟观察自行重建恢复状态。CPU exact backend 是当前生产契约的
+实现；候选 backend 只能报告自身拥有的故障信息，不能据此声称 CPU 或宿主 parity。
+
 reset 使用指定 seed 重新初始化全部 world；它不是回滚。`world_raw_quarantine()` 仅用于诊断，
 不属于同步恢复接口。无效 seed/time-step 等在 world 操作前被拒绝的输入不会使 batch 失效；
 runtime task/worker 启动异常会使其失效。只读 batch 导出同样受保护，不能把失败 generation

@@ -25,6 +25,15 @@ struct RuntimeBatchConfig {
 #include "runtime/facade/detail/runtime/runtime_batch_config.inc"
 };
 
+// Native-owned failure state for the active backend generation.  This is a
+// diagnostic snapshot: it does not claim rollback or per-world commit truth.
+struct RuntimeBatchFailureStatus {
+    bool healthy = true;
+    std::uint64_t generation = 0;
+    bool requires_host_recreate = false;
+    std::string failure_reason;
+};
+
 using RuntimeCompositionEvidence =
     runtime::composition_evidence_contracts::RuntimeCompositionEvidence;
 using RuntimeCompositionEvidenceResult =
