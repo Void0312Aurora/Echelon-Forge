@@ -1130,7 +1130,7 @@ target_include_directories(ef_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 # Faults inside a running Flecs callback must be exercised in a disposable
 # process. This probe is a test executable, never a runtime provider or binding.
 add_executable(ef_native_system_fault_probe src/tests/native_system_fault_probe.cpp)
-target_link_libraries(ef_native_system_fault_probe PRIVATE ef_core)
+target_link_libraries(ef_native_system_fault_probe PRIVATE ef_facade)
 target_include_directories(ef_native_system_fault_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 if (MSVC)
     target_compile_definitions(ef_test PRIVATE _USE_MATH_DEFINES)
