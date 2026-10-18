@@ -440,6 +440,101 @@ TEST_SUITE("world_batch_runtime") {
         CHECK_FALSE(scenes[1].environment_snapshot.maritime_state_configured);
     }
 
+    TEST_CASE("facade exposes the native batch failure status and reset boundary") {
+        RuntimeFacade facade(2);
+        const auto initial = facade.batch_failure_status();
+        CHECK(initial.healthy);
+        CHECK(initial.generation == 1);
+        CHECK_FALSE(initial.requires_host_recreate);
+        CHECK(initial.failure_reason.empty());
+
+        RuntimeWorldLayoutRequest request{};
+        request.world_index = 1;
+        request.terrain_type = "qualification.invalid_terrain";
+        request.time_steps = {0.1};
+        CHECK_THROWS_AS(facade.apply_world_layout(request), std::invalid_argument);
+
+        const auto failed = facade.batch_failure_status();
+        CHECK_FALSE(failed.healthy);
+        CHECK(failed.generation == initial.generation);
+        CHECK_FALSE(failed.requires_host_recreate);
+        CHECK(failed.failure_reason.find("Unknown terrain_type") != std::string::npos);
+        CHECK_THROWS_AS(facade.step_batch(), std::logic_error);
+
+        facade.reset_batch();
+        const auto recovered = facade.batch_failure_status();
+        CHECK(recovered.healthy);
+        CHECK(recovered.generation == initial.generation + 1);
+        CHECK_FALSE(recovered.requires_host_recreate);
+        CHECK(recovered.failure_reason.empty());
+        CHECK_NOTHROW(facade.step_batch());
+    }
+
+    TEST_CASE("facade worker launch failure fences the native generation") {
+        RuntimeFacade facade(3);
+        facade.set_worker_threads(3);
+        WorldBatchRuntime test_access_anchor(0);
+        std::atomic<std::size_t> launch_count{0};
+        std::atomic<std::size_t> finished_count{0};
+        WorldBatchRuntimeTestAccess::set_worker_thread_factory(
+            test_access_anchor, [&](std::function<void()> task) -> std::jthread {
+                if (launch_count.fetch_add(1) == 1) {
+                    throw std::runtime_error("injected facade worker launch failure");
+                }
+                return std::jthread([&, task = std::move(task)] {
+                    task();
+                    finished_count.fetch_add(1);
+                });
+            });
+
+        CHECK_THROWS_WITH(facade.step_batch(), "injected facade worker launch failure");
+        CHECK(launch_count.load() == 2);
+        CHECK(finished_count.load() == 1);
+        const auto failed = facade.batch_failure_status();
+        CHECK_FALSE(failed.healthy);
+        CHECK_FALSE(failed.requires_host_recreate);
+        CHECK(failed.failure_reason == "injected facade worker launch failure");
+        CHECK_THROWS_AS(facade.step_batch(), std::logic_error);
+
+        WorldBatchRuntimeTestAccess::set_worker_thread_factory(test_access_anchor, {});
+        facade.reset_batch();
+        const auto recovered = facade.batch_failure_status();
+        CHECK(recovered.healthy);
+        CHECK(recovered.generation == failed.generation + 1);
+        CHECK_NOTHROW(facade.step_batch());
+    }
+
+    TEST_CASE("facade mutation failure fences setup exports until reset") {
+        RuntimeFacade facade(1);
+        WorldBatchRuntime test_access_anchor(0);
+        WorldBatchRuntimeTestAccess::set_mutation_hook(test_access_anchor, [] {
+            throw std::runtime_error("injected facade mutation failure");
+        });
+
+        RuntimeWorldLayoutRequest request{};
+        request.terrain_type = "flat";
+        WorldSpawnRequest spawn{};
+        spawn.world_index = 0;
+        spawn.type_name = "Aircraft";
+        spawn.entity_name = "FacadeMutationFault";
+        request.spawn_requests = {spawn};
+        CHECK_THROWS_WITH(facade.apply_world_layout(request), "injected facade mutation failure");
+        WorldBatchRuntimeTestAccess::set_mutation_hook(test_access_anchor, {});
+
+        const auto failed = facade.batch_failure_status();
+        CHECK_FALSE(failed.healthy);
+        CHECK_FALSE(failed.requires_host_recreate);
+        CHECK(failed.failure_reason == "injected facade mutation failure");
+        CHECK_THROWS_AS(facade.step_batch(), std::logic_error);
+        CHECK_THROWS_AS((void)facade.export_composition_evidence(), std::logic_error);
+
+        facade.reset_batch();
+        const auto recovered = facade.batch_failure_status();
+        CHECK(recovered.healthy);
+        CHECK(recovered.generation == failed.generation + 1);
+        CHECK_NOTHROW(facade.step_batch());
+    }
+
     TEST_CASE("worker thread controls clamp to available batch work") {
         WorldBatchRuntime runtime(3);
 

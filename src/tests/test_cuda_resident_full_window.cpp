@@ -84,6 +84,8 @@ class FakeBackend final : public IWorldBatchBackend {
         return {.world_count = world_count_};
     }
 
+    runtime::backend::BatchFailureStatus failure_status() const override { return {}; }
+
     void configure(const runtime::backend::ConfigureRequest &request) override {
         if (request.world_count.has_value()) world_count_ = *request.world_count;
     }

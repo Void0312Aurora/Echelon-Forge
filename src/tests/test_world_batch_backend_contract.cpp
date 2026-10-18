@@ -13,6 +13,7 @@ namespace {
 class IndependentBackendProbe final : public IWorldBatchBackend {
   public:
     runtime::backend::Configuration configuration() const noexcept override { return {}; }
+    runtime::backend::BatchFailureStatus failure_status() const override { return {}; }
     void configure(const runtime::backend::ConfigureRequest &) override {}
     runtime::backend::ContentResult
     load_content(const runtime::backend::ContentRequest &) override {

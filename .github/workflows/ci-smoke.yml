@@ -77,7 +77,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install P5-B Python test dependencies
-        run: python -m pip install pytest jsonschema
+        run: python -m pip install pytest jsonschema numpy gymnasium
 
       - name: Configure P5-B Windows qualification
         run: >-

@@ -5,11 +5,13 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import subprocess
+from types import SimpleNamespace
 
 import pytest
 
 import ef_py
 
+from python.rl.runtime.world_batch.adapter import RuntimeFacadeAdapter
 from python.tasking_contracts.failure_domains import (
     BatchResult,
     RecoveryAdmission,
@@ -73,12 +75,90 @@ def test_facade_keeps_native_failure_fence_and_explicit_reset_recovery():
     request.terrain_type = "qualification.invalid_terrain"
     with pytest.raises(ValueError, match="Unknown terrain_type"):
         facade.apply_world_layout(request)
+    status = facade.batch_failure_status()
+    assert not status.healthy
+    assert status.generation == 1
+    assert not status.requires_host_recreate
+    assert "Unknown terrain_type" in status.failure_reason
+    outcome = project_native_batch_fault(
+        runtime=facade,
+        batch_generation_ref=str(status.generation),
+        operation_ref="layout.1",
+        operation="apply_world_layout",
+        expected_world_indices=frozenset(range(4)),
+        error_code="native.layout.exception",
+    )
+    assert outcome.result is BatchResult.FAILED
+    assert outcome.recovery_admission is RecoveryAdmission.REQUIRE_EXPLICIT_RESET_OR_RECREATE
+    assert any(
+        diagnostic.startswith("native.batch.failure_reason:Unknown terrain_type")
+        for diagnostic in outcome.diagnostics
+    )
+    assert all(
+        row.state is WorldState.UNKNOWN_AFTER_FAULT and row.step_committed is None
+        for row in outcome.worlds
+    )
     for operation in (facade.step_batch, facade.export_composition_evidence):
         with pytest.raises(RuntimeError, match="failed-closed"):
             operation()
     facade.reset_batch()
+    recovered = facade.batch_failure_status()
+    assert recovered.healthy
+    assert recovered.generation == 2
+    assert not recovered.failure_reason
     facade.step_batch()
     assert facade.export_composition_evidence().available
+
+
+def test_facade_adapter_projects_native_failure_and_recovers_through_owned_reset():
+    adapter = RuntimeFacadeAdapter(4)
+    layout = SimpleNamespace(
+        scenario_data={},
+        seed=23,
+        rotate_mission_heading_with_world=False,
+        world_yaw_deg=0.0,
+        world_yaw_origin_x=0.0,
+        world_yaw_origin_y=0.0,
+        time_step_s=0.1,
+        terrain_type="qualification.invalid_terrain",
+        terrain_type_source="qualification",
+        wind_speed_mps=0.0,
+        wind_dir_from_deg=0.0,
+        wind_shear_mps_per_km=0.0,
+        sun_azimuth_deg=0.0,
+        sun_elevation_deg=45.0,
+        maritime_configured=False,
+        sea_state=0.0,
+        wave_heading_deg=0.0,
+        wave_period_s=8.0,
+        zones=[],
+        spawns=[],
+        geodetic_anchor=(0.0, 0.0, 0.0),
+    )
+    with pytest.raises(ValueError, match="Unknown terrain_type"):
+        adapter.apply_world_layout(1, layout)
+
+    status = adapter.batch_failure_status()
+    assert not status.healthy
+    assert status.generation == 1
+    outcome = project_native_batch_fault(
+        runtime=adapter,
+        batch_generation_ref=str(status.generation),
+        operation_ref="adapter.layout.1",
+        operation="RuntimeFacadeAdapter.apply_world_layout",
+        expected_world_indices=frozenset(range(4)),
+        error_code="native.adapter.setup.exception",
+    )
+    assert outcome.result is BatchResult.FAILED
+    assert outcome.recovery_admission is RecoveryAdmission.REQUIRE_EXPLICIT_RESET_OR_RECREATE
+    with pytest.raises(RuntimeError, match="failed-closed"):
+        adapter.step_batch()
+
+    adapter.reset_batch()
+    recovered = adapter.batch_failure_status()
+    assert recovered.healthy
+    assert recovered.generation == 2
+    adapter.step_batch()
 
 
 @pytest.fixture(scope="module")

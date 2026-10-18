@@ -103,12 +103,14 @@ already provides that projection. All-unknown aggregate evidence reports
 `failed` with explicit reset/recreate required; it does not claim known per-world
 commit status. The mechanism child
 fault proof separately observes state mutation without outer packet publication.
-The Python qualification adapter now reads `batch_healthy()` and
-`batch_failure_reason()` from the native owner before projecting that
-all-unknown outcome; it rejects a healthy runtime and never invents a reset
-result. The native owner also exposes a batch generation ID that changes only
-after successful reset; the Python projection does not synthesize or reinterpret
-that identity. A separate `project_host_fault` projection accepts an
+The maintained `RuntimeFacade` now exposes the immutable
+`batch_failure_status()` snapshot from its native backend. The CPU backend
+projects the exact `WorldBatchRuntime` health, generation, host-recreate and
+reason fields; candidate backends report only their own bounded facts. The
+Python qualification adapter prefers this snapshot and keeps the four native
+getters only as a compatibility path for raw `WorldBatchRuntime` callers. It
+rejects a healthy runtime and never invents a reset result; generation identity
+continues to come from the native owner. A separate `project_host_fault` projection accepts an
 independent process-survival observation and emits a host-domain failed outcome
 with all affected worlds unknown and generation termination required; it does
 not claim to provide the supervisor or isolate a blocked native call.
