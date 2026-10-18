@@ -5,6 +5,7 @@
 #include <cmath>
 #include <limits>
 #include <numbers>
+#include <unordered_set>
 #include <unordered_map>
 #include <string_view>
 #include <utility>
@@ -586,6 +587,13 @@ class DefaultUnitFactory : public IUnitFactory {
         append_unique(plan.evidence_refs, plan.materialization_evidence_ref);
         plan.resolved_capabilities = bundle.capabilities;
         plan.type_name_projection_preserved = true;
+        const std::string loadout_rejection = validate_default_loadout(def);
+        if (!loadout_rejection.empty()) {
+            plan.admitted = false;
+            plan.rejection_reason = loadout_rejection;
+            plan.diagnostics_reason = loadout_rejection;
+            return plan;
+        }
         plan.admitted = bundle_validation.valid;
         if (!bundle_validation.valid) {
             plan.rejection_reason = bundle_validation.rejection_reason;
@@ -728,6 +736,44 @@ class DefaultUnitFactory : public IUnitFactory {
     }
 
   private:
+    [[nodiscard]] std::string validate_default_loadout(const UnitDefinition &def) const {
+        if (def.default_loadout.empty()) {
+            return {};
+        }
+
+        std::unordered_set<int> hardpoint_ids;
+        hardpoint_ids.reserve(def.hardpoints.size());
+        for (const auto &hardpoint : def.hardpoints) {
+            if (hardpoint.station_id <= 0) {
+                return "platform.native_hardpoint_invalid_station";
+            }
+            if (!hardpoint_ids.insert(hardpoint.station_id).second) {
+                return "platform.native_hardpoint_duplicate:" +
+                       std::to_string(hardpoint.station_id);
+            }
+        }
+
+        // Match materialization order so the first rejection is portable across
+        // standard libraries and JSON traversal order.
+        std::vector<std::pair<int, std::string>> stations(def.default_loadout.begin(),
+                                                          def.default_loadout.end());
+        std::sort(stations.begin(), stations.end(),
+                  [](const auto &lhs, const auto &rhs) { return lhs.first < rhs.first; });
+        for (const auto &[station, module_name] : stations) {
+            if (station <= 0) {
+                return "platform.native_loadout_invalid_station";
+            }
+            if (!hardpoint_ids.contains(station)) {
+                return "platform.native_loadout_hardpoint_missing:" + std::to_string(station);
+            }
+            if (module_name.empty() || definitions_.find(module_name) == definitions_.end()) {
+                return "platform.native_loadout_module_missing:" + std::to_string(station) + ":" +
+                       module_name;
+            }
+        }
+        return {};
+    }
+
     std::unordered_map<std::string, UnitDefinition> definitions_;
 
     static void resolve_spawn_orientation(const SpawnParams &params, double &heading_init,
