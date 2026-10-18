@@ -569,6 +569,26 @@ class RuntimeFacadeAdapter:
     def _batch_target(self):
         return self.facade
 
+    def batch_failure_status(self) -> Any:
+        """Return the native-owned failure snapshot for maintained callers."""
+
+        self._require_current_production_admission()
+        return self.facade.batch_failure_status()
+
+    def reset_batch(self, seeds: Sequence[int] | None = None) -> None:
+        """Reset the native generation and invalidate adapter-owned projections."""
+
+        self._require_current_production_admission()
+        if seeds is None:
+            self.facade.reset_batch()
+        else:
+            request = ef_py.BatchResetRequest()
+            request.seeds = [int(seed) for seed in seeds]
+            self.facade.reset_batch(request)
+        self._world_layouts.clear()
+        self._world_time_steps.clear()
+        self._last_window_evidence = None
+
     def _require_capability(
         self,
         field: str,
