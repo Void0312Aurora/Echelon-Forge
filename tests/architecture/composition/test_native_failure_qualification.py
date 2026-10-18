@@ -5,12 +5,12 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import subprocess
+from types import SimpleNamespace
 
 import pytest
 
 import ef_py
 
-from python.scenario.runtime.models import ScenarioWorldLayout
 from python.rl.runtime.world_batch.adapter import RuntimeFacadeAdapter
 from python.tasking_contracts.failure_domains import (
     BatchResult,
@@ -112,7 +112,7 @@ def test_facade_keeps_native_failure_fence_and_explicit_reset_recovery():
 
 def test_facade_adapter_projects_native_failure_and_recovers_through_owned_reset():
     adapter = RuntimeFacadeAdapter(4)
-    layout = ScenarioWorldLayout(
+    layout = SimpleNamespace(
         scenario_data={},
         seed=23,
         rotate_mission_heading_with_world=False,
@@ -133,6 +133,7 @@ def test_facade_adapter_projects_native_failure_and_recovers_through_owned_reset
         wave_period_s=8.0,
         zones=[],
         spawns=[],
+        geodetic_anchor=(0.0, 0.0, 0.0),
     )
     with pytest.raises(ValueError, match="Unknown terrain_type"):
         adapter.apply_world_layout(1, layout)
