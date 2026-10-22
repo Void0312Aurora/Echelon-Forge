@@ -313,8 +313,12 @@ TEST_SUITE("content_compile_passes") {
 
         const fs::path clean_path = directory / "clean.json";
         const fs::path unknown_path = directory / "unknown.json";
-        { std::ofstream(clean_path) << clean; }
-        { std::ofstream(unknown_path) << with_unknown; }
+        {
+            std::ofstream(clean_path) << clean;
+        }
+        {
+            std::ofstream(unknown_path) << with_unknown;
+        }
 
         std::vector<UnitDefinition> clean_definitions;
         std::vector<UnitDefinition> unknown_definitions;
@@ -370,7 +374,9 @@ TEST_SUITE("content_compile_passes") {
                 entry["countermeasures"] = {{field, 0.0}};
             }
             const fs::path path = directory / (field + ".json");
-            { std::ofstream(path) << entry.dump(2); }
+            {
+                std::ofstream(path) << entry.dump(2);
+            }
 
             std::vector<UnitDefinition> definitions;
             std::string error;
@@ -453,7 +459,9 @@ TEST_SUITE("content_compile_passes") {
 })json";
 
         const fs::path path = directory / "all_keys.json";
-        { std::ofstream(path) << all_keys; }
+        {
+            std::ofstream(path) << all_keys;
+        }
 
         std::vector<UnitDefinition> defs;
         std::string error;
@@ -545,7 +553,9 @@ TEST_SUITE("content_compile_passes") {
 })json";
 
         const fs::path path = directory / "merged.json";
-        { std::ofstream(path) << merged; }
+        {
+            std::ofstream(path) << merged;
+        }
 
         std::vector<UnitDefinition> defs;
         std::string error;
@@ -589,8 +599,12 @@ TEST_SUITE("content_compile_passes") {
 
         const fs::path present = directory / "present.json";
         const fs::path absent = directory / "absent.json";
-        { std::ofstream(present) << present_json; }
-        { std::ofstream(absent) << absent_json; }
+        {
+            std::ofstream(present) << present_json;
+        }
+        {
+            std::ofstream(absent) << absent_json;
+        }
 
         std::vector<UnitDefinition> present_defs;
         std::vector<UnitDefinition> absent_defs;
@@ -635,8 +649,12 @@ TEST_SUITE("content_compile_passes") {
 
         const fs::path before_data_link = directory / "before_data_link.json";
         const fs::path within_data_link = directory / "within_data_link.json";
-        { std::ofstream(before_data_link) << before_data_link_json; }
-        { std::ofstream(within_data_link) << within_data_link_json; }
+        {
+            std::ofstream(before_data_link) << before_data_link_json;
+        }
+        {
+            std::ofstream(within_data_link) << within_data_link_json;
+        }
 
         const auto thrown_message = [](const fs::path &path) {
             std::vector<UnitDefinition> defs;
@@ -727,7 +745,9 @@ TEST_SUITE("content_compile_passes") {
 })json";
 
         const fs::path path = directory / "all_keys.json";
-        { std::ofstream(path) << all_keys; }
+        {
+            std::ofstream(path) << all_keys;
+        }
 
         std::vector<UnitDefinition> defs;
         std::string error;
@@ -813,7 +833,9 @@ TEST_SUITE("content_compile_passes") {
 })json";
 
         const fs::path path = directory / "sparse.json";
-        { std::ofstream(path) << sparse; }
+        {
+            std::ofstream(path) << sparse;
+        }
 
         std::vector<UnitDefinition> defs;
         std::string error;
@@ -929,9 +951,15 @@ TEST_SUITE("content_compile_passes") {
         const fs::path full = directory / "full.json";
         const fs::path absent = directory / "absent.json";
         const fs::path partial = directory / "partial.json";
-        { std::ofstream(full) << full_json; }
-        { std::ofstream(absent) << absent_json; }
-        { std::ofstream(partial) << partial_json; }
+        {
+            std::ofstream(full) << full_json;
+        }
+        {
+            std::ofstream(absent) << absent_json;
+        }
+        {
+            std::ofstream(partial) << partial_json;
+        }
 
         std::vector<UnitDefinition> full_defs;
         std::vector<UnitDefinition> absent_defs;
@@ -1058,9 +1086,15 @@ TEST_SUITE("content_compile_passes") {
         const fs::path within_ship = directory / "within_ship.json";
         const fs::path within_submarine = directory / "within_submarine.json";
         const fs::path across_blocks = directory / "across_blocks.json";
-        { std::ofstream(within_ship) << within_ship_json; }
-        { std::ofstream(within_submarine) << within_submarine_json; }
-        { std::ofstream(across_blocks) << across_blocks_json; }
+        {
+            std::ofstream(within_ship) << within_ship_json;
+        }
+        {
+            std::ofstream(within_submarine) << within_submarine_json;
+        }
+        {
+            std::ofstream(across_blocks) << across_blocks_json;
+        }
 
         const auto thrown_message = [](const fs::path &path) {
             std::vector<UnitDefinition> defs;
@@ -1122,7 +1156,9 @@ TEST_SUITE("content_compile_passes") {
 })json";
 
         const fs::path path = directory / "all_keys.json";
-        { std::ofstream(path) << all_keys; }
+        {
+            std::ofstream(path) << all_keys;
+        }
 
         std::vector<UnitDefinition> defs;
         std::string error;
@@ -1175,7 +1211,9 @@ TEST_SUITE("content_compile_passes") {
 })json";
 
         const fs::path path = directory / "sparse.json";
-        { std::ofstream(path) << sparse; }
+        {
+            std::ofstream(path) << sparse;
+        }
 
         std::vector<UnitDefinition> defs;
         std::string error;
@@ -1222,8 +1260,12 @@ TEST_SUITE("content_compile_passes") {
 
         const fs::path enabled_before_table = directory / "enabled_before_table.json";
         const fs::path first_row_before_last = directory / "first_row_before_last.json";
-        { std::ofstream(enabled_before_table) << enabled_before_table_json; }
-        { std::ofstream(first_row_before_last) << first_row_before_last_json; }
+        {
+            std::ofstream(enabled_before_table) << enabled_before_table_json;
+        }
+        {
+            std::ofstream(first_row_before_last) << first_row_before_last_json;
+        }
 
         const auto thrown_message = [](const fs::path &path) {
             std::vector<UnitDefinition> defs;
@@ -1294,7 +1336,9 @@ TEST_SUITE("content_compile_passes") {
             {"failure_mode_weights", {{"structural-weakening", 1.5}, {"cut", 0.25}}},
         });
         const fs::path valid_path = directory / "valid.json";
-        { std::ofstream(valid_path) << valid_entry.dump(2); }
+        {
+            std::ofstream(valid_path) << valid_entry.dump(2);
+        }
 
         std::vector<UnitDefinition> valid_definitions;
         std::string error;
@@ -1330,7 +1374,9 @@ TEST_SUITE("content_compile_passes") {
 
         for (const auto &[name, component_fields] : invalid_entries) {
             const fs::path path = directory / (name + ".json");
-            { std::ofstream(path) << make_entry(component_fields).dump(2); }
+            {
+                std::ofstream(path) << make_entry(component_fields).dump(2);
+            }
             std::vector<UnitDefinition> definitions;
             std::string load_error;
             CHECK_FALSE(load_unit_definitions_json(path.string(), definitions, &load_error));
