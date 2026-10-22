@@ -17,6 +17,12 @@ from python.scenario.runtime.world_setup import apply_world_setup_request_mainta
 from python.scenario.runtime.world_setup import build_batch_world_setup_request
 from python.scenario.runtime.world_setup import build_runtime_world_layout_request
 from python.scenario.runtime.world_setup import extract_batch_world_setup_entity_ids
+from python.experiment.resolved_input_lock import (
+    InputLockError,
+    assert_run_receipt_input_lock_binding,
+    assert_run_receipt_input_lock_path,
+    load_resolved_input_lock_path,
+)
 
 from python.tasking_contracts.common.agent_contracts import MAINTAINED
 from python.tasking_contracts.common.agent_contracts import OBS_DECISION_BELIEF_PACKET
@@ -368,6 +374,7 @@ class RuntimeFacadeAdapter:
         production_plan_sha256: str | None = None,
         production_release_manifest_path: str | None = None,
         production_run_receipt_path: str | None = None,
+        production_resolved_input_lock_path: str | None = None,
         production_package_digest: str | None = None,
         production_wheel_digest: str | None = None,
         require_production_evidence_binding: bool = False,
@@ -386,6 +393,7 @@ class RuntimeFacadeAdapter:
         self._require_production_admission = bool(require_production_admission)
         self._production_release_manifest_path = production_release_manifest_path
         self._production_run_receipt_path = production_run_receipt_path
+        self._production_resolved_input_lock_path = production_resolved_input_lock_path
         self._production_package_digest = production_package_digest
         self._production_wheel_digest = production_wheel_digest
         # A caller that asks for production admission is selecting the
@@ -397,6 +405,7 @@ class RuntimeFacadeAdapter:
             require_production_evidence_binding or require_production_admission
         )
         self.rollout_evidence_binding = None
+        self.resolved_input_lock_digest: str | None = None
         if production_rollout_path is not None and production_rollout_snapshot_reader is not None:
             raise RuntimeError(
                 "RuntimeFacadeAdapter production admission accepts either a rollout path or a snapshot reader, not both"
@@ -448,7 +457,9 @@ class RuntimeFacadeAdapter:
                 "RuntimeFacadeAdapter production mode requires an admitted RolloutDecision slot"
             )
         elif self._require_production_evidence_binding or (
-            production_release_manifest_path is not None or production_run_receipt_path is not None
+            production_release_manifest_path is not None
+            or production_run_receipt_path is not None
+            or production_resolved_input_lock_path is not None
         ):
             raise RuntimeError(
                 "RuntimeFacadeAdapter production evidence binding requires an admitted RolloutDecision slot"
@@ -516,6 +527,7 @@ class RuntimeFacadeAdapter:
         paths_supplied = (
             self._production_release_manifest_path is not None
             or self._production_run_receipt_path is not None
+            or self._production_resolved_input_lock_path is not None
         )
         snapshot_supplied = self._production_rollout_snapshot_reader is not None
         if not self._require_production_evidence_binding and not paths_supplied and not snapshot_supplied:
@@ -553,6 +565,22 @@ class RuntimeFacadeAdapter:
         except RolloutEvidenceError as error:
             raise RuntimeError(f"production rollout evidence binding rejected: {error}") from error
         self.rollout_evidence_binding = binding
+        if self._production_resolved_input_lock_path is not None:
+            try:
+                candidate = load_resolved_input_lock_path(
+                    self._production_resolved_input_lock_path
+                )
+                if snapshot_supplied:
+                    assert_run_receipt_input_lock_binding(candidate, run_receipt)
+                else:
+                    assert_run_receipt_input_lock_path(
+                        candidate, self._production_run_receipt_path
+                    )
+            except (InputLockError, TypeError, ValueError) as error:
+                raise RuntimeError(
+                    f"production resolved input-lock binding rejected: {error}"
+                ) from error
+            self.resolved_input_lock_digest = candidate.digest
 
     def _require_current_production_admission(self) -> None:
         if self._require_production_admission:

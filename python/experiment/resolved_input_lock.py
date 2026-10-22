@@ -243,6 +243,37 @@ class ResolvedInputLock:
         return thaw_json_value(self.document)
 
 
+def load_resolved_input_lock_path(path: str | Path) -> ResolvedInputLock:
+    """Load one canonical lock projection without granting it runtime authority."""
+
+    source = Path(path)
+    try:
+        raw = source.read_bytes()
+        document = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputLockError(f"input_lock.document_unreadable:{source}") from exc
+    if not isinstance(document, Mapping):
+        raise InputLockError("input_lock.document_invalid")
+    if canonical_json_bytes(document) != raw:
+        raise InputLockError("input_lock.document_not_canonical")
+    required = {
+        "schema_version",
+        "status",
+        "experiment_ref",
+        "intent",
+        "input_lock",
+        "native_runtime",
+        "provenance",
+    }
+    if set(document) != required or document["schema_version"] != SCHEMA_VERSION:
+        raise InputLockError("input_lock.document_schema_invalid")
+    if document["status"] not in _LOCK_STATES:
+        raise InputLockError("input_lock.document_status_invalid")
+    if not isinstance(document["input_lock"], Mapping):
+        raise InputLockError("input_lock.document_payload_invalid")
+    return ResolvedInputLock(document, _digest(document["input_lock"]))
+
+
 def build_resolved_input_lock(
     experiment: Experiment,
     registry: ExperimentRegistry,
@@ -483,6 +514,37 @@ def join_run_receipt_path(
     return joined
 
 
+def assert_run_receipt_input_lock_binding(
+    candidate: ResolvedInputLock, receipt: Mapping[str, Any]
+) -> None:
+    """Require an existing native-owned receipt to name the candidate digest."""
+
+    from tools.maintenance.runtime_run_receipt import RunReceiptError, validate_run_receipt
+
+    try:
+        payload = validate_run_receipt(thaw_json_value(receipt))["payload"]
+    except (RunReceiptError, KeyError, TypeError, ValueError) as exc:
+        raise InputLockError("input_lock.receipt_invalid") from exc
+    if payload["inputs"]["artifacts"].get("resolved_input_lock") != candidate.digest:
+        raise InputLockError("input_lock.receipt_input_binding_mismatch")
+
+
+def assert_run_receipt_input_lock_path(
+    candidate: ResolvedInputLock, receipt_path: str | Path
+) -> None:
+    """Validate a canonical receipt file against an already loaded lock."""
+
+    source = Path(receipt_path)
+    try:
+        raw = source.read_bytes()
+        document = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputLockError(f"input_lock.receipt_unreadable:{source}") from exc
+    if not isinstance(document, Mapping) or canonical_json_bytes(document) != raw:
+        raise InputLockError("input_lock.receipt_not_canonical")
+    assert_run_receipt_input_lock_binding(candidate, document)
+
+
 def _verify_receipt_topology_artifact(
     receipt: Mapping[str, Any], native_runtime: Mapping[str, Any], source: Path
 ) -> None:
@@ -665,8 +727,11 @@ __all__ = [
     "ResolvedInputLock",
     "SCHEMA_VERSION",
     "build_resolved_input_lock",
+    "load_resolved_input_lock_path",
     "canonical_json_bytes",
     "compare_resolved_input_locks",
+    "assert_run_receipt_input_lock_binding",
+    "assert_run_receipt_input_lock_path",
     "join_run_receipt",
     "join_run_receipt_path",
     "project_compiled_scenario_dependencies",
