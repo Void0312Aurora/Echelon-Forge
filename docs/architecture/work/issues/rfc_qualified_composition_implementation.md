@@ -283,8 +283,8 @@ merge into main, accept the proposed ADRs or close RFC issues.
    and binds them to the receipt; the file ledger requires the corresponding
    durable blob. A bounded dark-host process publishes and reopens an actual
    receipt referencing the first Air matrix lock, with negative controls for
-   missing bytes and source drift. This is reference-only publication; full Air
-   execution/admission, production signatures and
+   missing bytes and source drift. This is reference-only publication; receipt-bound
+   Air execution/admission, production signatures and
    external durable availability remain open.
 7. **#251 fault gates.** The existing #210 lineage was historically ported and
    verified against the qualification branch's interface baseline; the bounded
@@ -546,15 +546,13 @@ cover omitted bytes, wrong artifact digest, wrong topology identity, blob loss
 and blob corruption. This establishes same-run topology evidence for the
 single-world, three-step dark-host probe.
 
-Full Air matrix execution remains unproven: the probe still reports
-`input_lock_semantics_executed=false` and comparison rejects it. A live local
-check reports PyTorch `2.2.0+cpu`, no CUDA build, and
-`torch.cuda.is_available()==False`; the selected matrix requires CUDA. The
-internal candidate also lacks the maintained Air world-setup, observation and
-action surfaces needed for that training run. A CPU/scripted substitution
-would change the experiment identity. Remaining acceptance includes full Air
-execution under its declared configuration, stable world-scope association
-rather than cardinality alone, production trust and external availability.
+The dark-host probe still reports `input_lock_semantics_executed=false` and
+comparison rejects it. A maintained HEI run later completed the declared
+512-step Air smoke, but the training path still does not bind the input-lock
+digest to the native RunReceipt or reopen a durable receipt. Remaining
+acceptance includes receipt-bound Air execution under the declared
+configuration, stable world-scope association rather than cardinality alone,
+production trust and external availability.
 The latest live #259/#260 reviews remain scoped to earlier repair heads; branch
 publication does not update their original PR branches or establish RFC closure.
 
@@ -593,10 +591,15 @@ and a wrong artifact digest also reject the file-bound join. Synthetic
 two-world controls reject same-count identity/index/boot/epoch mismatches and
 missing associations, and accept explicit associations independent of row order.
 These controls do not certify a production multiworld host, worker commits or
-scientific validity. Full Air input semantics remain unexecuted and the dark-host
-record remains incomparable under the existing execution gate. The local CUDA
-check was repeated: PyTorch remains `2.2.0+cpu` with no CUDA build or device
-availability.
+scientific validity. Full Air input-lock semantics remain unbound and the dark-host
+record remains incomparable under the existing execution gate. The Windows
+development checkout still has no CUDA build. A maintained HEI checkout was
+then used on 2026-10-22: it has an RTX 3090 and the declared CUDA runtime, and
+completed the registered
+`air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1` through the existing
+Python `WorldBatchVecEnv`/`RuntimeFacade` path for all 512 smoke steps. The run
+did not yet bind the input-lock digest at the native RunReceipt boundary or
+reopen a durable receipt, so it is execution evidence and not #239 closure.
 
 Focused validation passed **52 Python tests**, including the native subprocess
 artifact controls and 13 new association/comparison cases. After rebuilding the
@@ -685,3 +688,20 @@ non-empty typed views or complete Air training-matrix execution. The remaining
 qualification branch publication does not establish RFC closure.
 
 External checkpoint/native consumer implementation: `29867ea28`.
+
+## 2026-10-22 maintained Air execution probe
+
+The maintained HEI checkout was used for the registered
+`air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1` configuration. The
+existing Python `WorldBatchVecEnv`/`RuntimeFacade` path completed the full
+512-step budget with seed `239`; a second run of the same configuration also
+completed 512 steps. A controlled policy-only variant selecting the existing
+`SquashedMultiInputPolicy` completed the same 512-step budget. All three runs
+produced ordinary checkpoints and final models.
+
+These runs establish real Air execution, repeat execution, and an executable
+policy-only comparison surface on HEI. The training path still has no binding
+to the native RunReceipt boundary and no durable receipt reopen for these
+artifacts. They therefore do not satisfy #239 comparability or production
+admission; the remaining implementation is the native host/RunReceipt binding
+at the maintained training boundary.
