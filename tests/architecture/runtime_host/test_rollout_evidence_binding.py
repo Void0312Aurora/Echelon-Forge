@@ -12,6 +12,8 @@ from tools.maintenance.runtime_authority_contracts import canonical_json_bytes a
 from python.rl.runtime.rollout_gate import FileRolloutDecisionStore
 from python.rl.runtime.rollout_gate import build_rollout_decision_envelope
 from python.rl.runtime.rollout_gate import canonical_json_bytes
+from python.experiment.resolved_input_lock import canonical_json_bytes as lock_json_bytes
+from python.experiment.resolved_input_lock import load_resolved_input_lock_path
 from python.rl.runtime.rollout_evidence import RolloutEvidenceError
 from python.rl.runtime.rollout_evidence import load_rollout_evidence
 from python.rl.runtime.rollout_evidence import assert_rollout_evidence_decision_binding
@@ -238,3 +240,100 @@ def test_adapter_can_require_release_and_receipt_binding(tmp_path: Path, monkeyp
         require_production_evidence_binding=True,
     )
     assert adapter.rollout_evidence_binding is not None
+
+
+def test_adapter_binds_existing_receipt_to_resolved_input_lock(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    release_path, receipt_path, store = _write_admitted_records(tmp_path)
+    admission = store.read()
+    assert admission is not None
+    lock_document = {
+        "schema_version": "echelon_forge.resolved_experiment.v1",
+        "status": "static_candidate",
+        "experiment_ref": "air.binding.test",
+        "intent": {},
+        "input_lock": {"scenario": {"path": "scenario.json"}},
+        "native_runtime": {},
+        "provenance": {},
+    }
+    lock_path = tmp_path / "resolved-input-lock.json"
+    lock_path.write_bytes(lock_json_bytes(lock_document))
+    candidate = load_resolved_input_lock_path(lock_path)
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    receipt["payload"]["inputs"]["artifacts"]["resolved_input_lock"] = candidate.digest
+    receipt["payload_sha256"] = authority_digest_sha256(
+        "runtime.run-receipt",
+        "application/vnd.echelon-forge.run-receipt.v1+json",
+        authority_json_bytes(receipt["payload"]),
+    )
+    receipt_path.write_bytes(canonical_json_bytes(receipt))
+
+    class _Facade:
+        pass
+
+    monkeypatch.setattr(adapter_module.ef_py, "RuntimeFacade", lambda _world_count: _Facade())
+    adapter = adapter_module.RuntimeFacadeAdapter(
+        1,
+        production_rollout_path=str(store.path),
+        production_rollout_key=KEY,
+        require_production_admission=True,
+        production_release_id="release-evidence-test",
+        production_manifest_sha256=admission.envelope["payload"]["manifest_sha256"],
+        production_plan_sha256=PLAN,
+        production_release_manifest_path=str(release_path),
+        production_run_receipt_path=str(receipt_path),
+        production_resolved_input_lock_path=str(lock_path),
+        production_package_digest=PACKAGE,
+        production_wheel_digest=WHEEL,
+        require_production_evidence_binding=True,
+    )
+    assert adapter.resolved_input_lock_digest == candidate.digest
+
+
+def test_adapter_rejects_receipt_with_different_resolved_input_lock(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    release_path, receipt_path, store = _write_admitted_records(tmp_path)
+    admission = store.read()
+    assert admission is not None
+    lock_document = {
+        "schema_version": "echelon_forge.resolved_experiment.v1",
+        "status": "static_candidate",
+        "experiment_ref": "air.binding.test",
+        "intent": {},
+        "input_lock": {"scenario": {"path": "scenario.json"}},
+        "native_runtime": {},
+        "provenance": {},
+    }
+    lock_path = tmp_path / "resolved-input-lock.json"
+    lock_path.write_bytes(lock_json_bytes(lock_document))
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    receipt["payload"]["inputs"]["artifacts"]["resolved_input_lock"] = "0" * 64
+    receipt["payload_sha256"] = authority_digest_sha256(
+        "runtime.run-receipt",
+        "application/vnd.echelon-forge.run-receipt.v1+json",
+        authority_json_bytes(receipt["payload"]),
+    )
+    receipt_path.write_bytes(canonical_json_bytes(receipt))
+
+    class _Facade:
+        pass
+
+    monkeypatch.setattr(adapter_module.ef_py, "RuntimeFacade", lambda _world_count: _Facade())
+    with pytest.raises(RuntimeError, match="resolved input-lock binding rejected"):
+        adapter_module.RuntimeFacadeAdapter(
+            1,
+            production_rollout_path=str(store.path),
+            production_rollout_key=KEY,
+            require_production_admission=True,
+            production_release_id="release-evidence-test",
+            production_manifest_sha256=admission.envelope["payload"]["manifest_sha256"],
+            production_plan_sha256=PLAN,
+            production_release_manifest_path=str(release_path),
+            production_run_receipt_path=str(receipt_path),
+            production_resolved_input_lock_path=str(lock_path),
+            production_package_digest=PACKAGE,
+            production_wheel_digest=WHEEL,
+            require_production_evidence_binding=True,
+        )
