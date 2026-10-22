@@ -17,8 +17,8 @@ from python.scenario.runtime.world_setup import apply_world_setup_request_mainta
 from python.scenario.runtime.world_setup import build_batch_world_setup_request
 from python.scenario.runtime.world_setup import build_runtime_world_layout_request
 from python.scenario.runtime.world_setup import extract_batch_world_setup_entity_ids
-from python.experiment.resolved_input_lock import (
-    InputLockError,
+from python.rl.runtime.resolved_input_lock_binding import (
+    InputLockBindingError,
     assert_run_receipt_input_lock_binding,
     assert_run_receipt_input_lock_path,
     load_resolved_input_lock_path,
@@ -576,7 +576,7 @@ class RuntimeFacadeAdapter:
                     assert_run_receipt_input_lock_path(
                         candidate, self._production_run_receipt_path
                     )
-            except (InputLockError, TypeError, ValueError) as error:
+            except (InputLockBindingError, TypeError, ValueError) as error:
                 raise RuntimeError(
                     f"production resolved input-lock binding rejected: {error}"
                 ) from error
