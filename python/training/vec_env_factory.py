@@ -9,10 +9,68 @@ inline. Heavy runtime dependencies are pulled lazily through
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from typing import Any
 
 from .bootstrap import TrainingBootstrap
 from .deps import load_training_dependencies
+
+
+_PRODUCTION_EVIDENCE_FIELDS = frozenset(
+    {
+        "rollout_path",
+        "key_path",
+        "require_admission",
+        "release_id",
+        "manifest_sha256",
+        "plan_sha256",
+        "release_manifest_path",
+        "run_receipt_path",
+        "resolved_input_lock_path",
+        "package_digest",
+        "wheel_digest",
+    }
+)
+
+
+def _production_evidence_kwargs(runtime_cfg: Mapping[str, Any]) -> dict[str, Any]:
+    """Project an explicit host-owned production evidence block to the vec env.
+
+    The training layer is only a consumer of the native rollout decision and
+    its durable evidence.  It must not synthesize a receipt or silently infer
+    production admission from an ordinary training configuration.
+    """
+
+    raw = runtime_cfg.get("production_evidence")
+    if raw is None:
+        return {}
+    if not isinstance(raw, Mapping):
+        raise ValueError("runtime.production_evidence must be an object")
+    unknown = sorted(set(raw) - _PRODUCTION_EVIDENCE_FIELDS)
+    if unknown:
+        raise ValueError(
+            "runtime.production_evidence contains unsupported fields: "
+            + ", ".join(str(field) for field in unknown)
+        )
+    if not raw:
+        raise ValueError("runtime.production_evidence must not be empty")
+
+    mapping = {
+        "rollout_path": "production_rollout_path",
+        "key_path": "production_rollout_key_path",
+        "release_id": "production_release_id",
+        "manifest_sha256": "production_manifest_sha256",
+        "plan_sha256": "production_plan_sha256",
+        "release_manifest_path": "production_release_manifest_path",
+        "run_receipt_path": "production_run_receipt_path",
+        "resolved_input_lock_path": "production_resolved_input_lock_path",
+        "package_digest": "production_package_digest",
+        "wheel_digest": "production_wheel_digest",
+    }
+    kwargs = {target: raw[source] for source, target in mapping.items() if source in raw}
+    kwargs["require_production_admission"] = bool(raw.get("require_admission", True))
+    kwargs["require_production_evidence_binding"] = True
+    return kwargs
 
 
 def resolve_vec_env_spec(
@@ -237,6 +295,7 @@ def build_execution_world_batch_vec_env(bootstrap: TrainingBootstrap):
     post_launch_assessment_gamma = float(
         post_launch_assessment_cfg.get("gamma", hyper_cfg.get("gamma", 0.999))
     )
+    production_evidence_kwargs = _production_evidence_kwargs(runtime_cfg)
     vec_env = deps.WorldBatchVecEnv(
         scenario_path=bootstrap.scenario_path,
         n_envs=bootstrap.n_envs,
@@ -261,6 +320,7 @@ def build_execution_world_batch_vec_env(bootstrap: TrainingBootstrap):
         air_combat_post_launch_assessment_blue_throttle=float(
             post_launch_assessment_cfg.get("blue_throttle", 0.65)
         ),
+        **production_evidence_kwargs,
         **env_settings,
     )
     vec_env.seed(bootstrap.training_seed)
