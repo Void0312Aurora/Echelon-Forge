@@ -68,6 +68,32 @@ nlohmann::json loadout_test_platform() {
 
 TEST_SUITE("content_compile_passes") {
 
+    TEST_CASE("native loadout admission rejects a resolved non-missile module") {
+        auto platform = loadout_test_platform();
+        platform["default_loadout"] = {{"1", "Fixture_Engine"}};
+        const TemporaryLoadoutDefinitions fixture(platform);
+        const TemporaryLoadoutDefinitions module_fixture(
+            {{"name", "Fixture_Engine"}, {"type", "Engine"}, {"mil_thrust_n", 1.0}});
+
+        DefaultUnitFactory factory;
+        std::string error;
+        REQUIRE(factory.load_definitions(module_fixture.path.string(), &error));
+        REQUIRE(factory.load_definitions(fixture.path.string(), &error));
+
+        const auto plan = factory.resolve_platform_spawn_plan_for_type_name("Loadout_Aircraft");
+        CHECK_FALSE(plan.admitted);
+        CHECK(plan.rejection_reason ==
+              "platform.native_loadout_module_type_incompatible:1:Fixture_Engine");
+
+        flecs::world world;
+        runtime::systems::register_default_component_contributions(world);
+        world.set<StableIdentityState>({1, 42});
+        const SpawnParams params{Side::Blue, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        CHECK_FALSE(factory.spawn(world, "Loadout_Aircraft", params).is_valid());
+        CHECK(world.count<KeyEntity>() == 0);
+        CHECK(world.get<StableIdentityState>()->next_serial == 1);
+    }
+
     TEST_CASE("validate whitelist recognizes surveyed keys and rejects unknowns") {
         // Spot-checks across the 106 read keys, the present-but-unread keys, and
         // the underscore-annotation convention.
