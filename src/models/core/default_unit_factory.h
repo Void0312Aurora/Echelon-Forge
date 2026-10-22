@@ -766,9 +766,19 @@ class DefaultUnitFactory : public IUnitFactory {
             if (!hardpoint_ids.contains(station)) {
                 return "platform.native_loadout_hardpoint_missing:" + std::to_string(station);
             }
-            if (module_name.empty() || definitions_.find(module_name) == definitions_.end()) {
+            const auto module_it = definitions_.find(module_name);
+            if (module_name.empty() || module_it == definitions_.end()) {
                 return "platform.native_loadout_module_missing:" + std::to_string(station) + ":" +
                        module_name;
+            }
+            // The maintained materialization path creates a Missile entity for
+            // every default-loadout store and the launch service resolves the
+            // referenced definition through the Missile contract.  A named
+            // non-missile definition is therefore not a compatible loadout
+            // module even though the reference exists.
+            if (module_it->second.type != UnitType::Missile) {
+                return "platform.native_loadout_module_type_incompatible:" +
+                       std::to_string(station) + ":" + module_name;
             }
         }
         return {};
