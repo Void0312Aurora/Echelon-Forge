@@ -645,5 +645,13 @@ These runs establish real Air execution, repeat execution, and an executable
 policy-only comparison surface on HEI. The training path still has no binding
 to the native RunReceipt boundary and no durable receipt reopen for these
 artifacts. They therefore do not satisfy #239 comparability or production
-admission; the remaining implementation is the native host/RunReceipt binding
-at the maintained training boundary.
+admission. The maintained execution factory now accepts an explicit
+`runtime.production_evidence` block and forwards only host-owned rollout,
+release-manifest, RunReceipt and resolved-input-lock paths to
+`WorldBatchVecEnv`. It requires production admission and evidence binding when
+that block is present, rejects unknown fields, and never creates or rewrites a
+RunReceipt. This makes the native host/RunReceipt binding a usable training
+boundary while keeping the three existing HEI runs as pre-binding evidence.
+The remaining gate is a real host-produced receipt-bound run, durable reopen,
+two comparable repeats plus the policy-only control, measured overhead, and a
+reversible rollout.
