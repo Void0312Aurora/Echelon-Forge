@@ -67,10 +67,21 @@ file-bound evidence join 在声明 topology artifact 时要求提供对应文件
 digest、size、media、retention 及 native topology identity。这证明该单世界探针的同次
 运行证据。完整 Air 执行准入、生产 wiring 和外部持久可用性仍待验收。
 
-第一个 Air matrix smoke 要求 CUDA；当前本机为 PyTorch `2.2.0+cpu`，没有 CUDA build，
-`torch.cuda.is_available()==False`。内部 candidate 也尚未具备这项训练所需的现有 Air
-world-setup、observation 和 action 接口。改为 CPU 或 scripted 配置会产生另一个实验，
-不能作为原输入锁已执行的证明。
+第一个 Air matrix smoke 要求 CUDA；Windows 开发环境仍为无 CUDA build，但维护中的
+HEI checkout 有 RTX 3090 和声明配置所需的 PyTorch CUDA runtime。2026-10-22，HEI
+通过现有 Python `WorldBatchVecEnv`/`RuntimeFacade` 路径，完整执行了注册的
+`air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1` 512-step smoke 配置。这是实际
+Air 训练执行证据，但该运行尚未在现有 native RunReceipt 边界绑定 resolved input-lock
+digest，也尚未重新打开该训练运行的 durable RunReceipt。因此它只能证明执行链可运行，
+不能满足 #239 可比性门槛。dark candidate 仍是独立的 receipt-reference 探针，不能替代
+维护中的训练路径。
+
+同一 HEI 环境也补充了 #239 要求的首轮 repeat/A-B 证据：使用 seed `239` 再次执行同一
+注册配置并完成 512 steps；随后只替换 policy 为现有的
+`SquashedMultiInputPolicy`，完成同样的 512-step 预算。两次运行都生成了正常训练
+checkpoint 和 final model，但都没有在 native RunReceipt 上绑定，也没有重新打开 durable
+receipt。因此它们证明了执行可重复性和可执行的 policy-only 对照面，仍不能证明可比性或
+生产验收。
 
 ### 世界身份关联
 

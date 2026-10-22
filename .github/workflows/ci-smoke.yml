@@ -24,7 +24,9 @@ jobs:
           python-version: "3.11"
 
       - name: Configure fast native lane
-        run: cmake -S . -B build-fast -G Ninja -DCMAKE_BUILD_TYPE=Release
+        run: >-
+          cmake -S . -B build-fast -G Ninja -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 
       - name: Build fast native targets
         run: >-
@@ -174,7 +176,8 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -S . -B build-workshop -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build-workshop -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 
       - name: Install Cordis runtime producer dependencies
         working-directory: packages/cordis-runtime

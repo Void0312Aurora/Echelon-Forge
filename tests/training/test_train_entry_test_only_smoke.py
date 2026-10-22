@@ -77,6 +77,43 @@ SMOKE_TRAIN_CONFIG = {
 
 
 class TrainEntryTestOnlySmokeTests(unittest.TestCase):
+  def test_production_evidence_config_is_explicit_and_host_owned(self) -> None:
+    from python.training.vec_env_factory import _production_evidence_kwargs
+
+    projected = _production_evidence_kwargs(
+      {
+        "production_evidence": {
+          "rollout_path": "/evidence/slot.json",
+          "key_path": "/evidence/key.bin",
+          "release_id": "release-test",
+          "manifest_sha256": "a" * 64,
+          "plan_sha256": "b" * 64,
+          "release_manifest_path": "/evidence/release.json",
+          "run_receipt_path": "/evidence/receipt.json",
+          "resolved_input_lock_path": "/evidence/input-lock.json",
+          "package_digest": "c" * 64,
+          "wheel_digest": "d" * 64,
+        }
+      }
+    )
+    self.assertEqual(projected["production_rollout_path"], "/evidence/slot.json")
+    self.assertEqual(projected["production_run_receipt_path"], "/evidence/receipt.json")
+    self.assertTrue(projected["require_production_admission"])
+    self.assertTrue(projected["require_production_evidence_binding"])
+    self.assertNotIn("production_rollout_key", projected)
+
+  def test_production_evidence_config_rejects_unknown_fields(self) -> None:
+    from python.training.vec_env_factory import _production_evidence_kwargs
+
+    with self.assertRaisesRegex(ValueError, "unsupported fields: receipt_writer"):
+      _production_evidence_kwargs({"production_evidence": {"receipt_writer": "python"}})
+
+  def test_empty_production_evidence_config_is_not_an_admission_signal(self) -> None:
+    from python.training.vec_env_factory import _production_evidence_kwargs
+
+    with self.assertRaisesRegex(ValueError, "must not be empty"):
+      _production_evidence_kwargs({"production_evidence": {}})
+
   def test_execution_test_only_runs_world_batch_vec_env_from_factory(self) -> None:
     """`--test_only` must build the world-batch execution env via the factory and step it."""
     from stable_baselines3 import PPO
