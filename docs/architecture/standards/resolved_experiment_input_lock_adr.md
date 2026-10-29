@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/resolved_experiment_input_lock_adr.md`
 Owner: `architecture/experiment-contracts`
-Last verified: `2026-10-13`
+Last verified: `2026-10-22`
 
 **Status:** proposed static/qualification projection; native composition and
 RunReceipt authorities remain canonical.
@@ -136,11 +136,26 @@ publication and new-process loss/corruption controls are exercised; two-world
 mapping controls remain synthetic owner-contract fixtures. This is not a batch
 commit certificate, production trust proof or production multiworld admission.
 
-The first Air matrix smoke requires CUDA. The current local Python environment
-reports PyTorch `2.2.0+cpu`, no CUDA build and `torch.cuda.is_available()==False`.
-The internal candidate also lacks the maintained Air world-setup, observation
-and action surfaces needed to execute this training configuration. Replacing
-the declared configuration with a CPU or scripted run would be a distinct
-experiment; it cannot certify the original lock.
+The first Air matrix smoke requires CUDA. The Windows development environment
+still has no CUDA build, but the maintained HEI checkout has an RTX 3090 and
+the declared PyTorch CUDA runtime. On 2026-10-22, that checkout completed the
+registered `air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1` configuration
+for its full 512-step smoke budget through the existing Python
+`WorldBatchVecEnv`/`RuntimeFacade` path. This is real Air training execution,
+but it did not yet bind a resolved input-lock digest at the existing native
+RunReceipt boundary or reopen a durable RunReceipt for that training run.
+Consequently it is execution evidence only; it does not satisfy the #239
+comparability gate. The dark candidate remains a separate receipt-reference
+probe and cannot be substituted for the maintained training path.
+
+The same HEI setup also supplied the first repeat/A-B evidence requested by
+#239: a second run of the same registered configuration with seed `239`
+completed 512 steps, and a controlled policy-only variant replacing
+`HierarchicalMoEExecutionPolicy` with the existing
+`SquashedMultiInputPolicy` completed the same 512-step budget. These runs
+produced the normal training checkpoints and final models, but neither run was
+bound to a native RunReceipt or durably reopened. They therefore establish
+repeatable execution and an executable policy-only comparison surface, not
+comparability or production acceptance.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.
