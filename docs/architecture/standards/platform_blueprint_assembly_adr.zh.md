@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/platform_blueprint_assembly_adr.md`
 Owner: `architecture/content-contracts`
-Last verified: `2026-10-13`
+Last verified: `2026-10-29`
 
 **状态：** 待评审的资格验证设计；旧 unit JSON 和 native materialization 仍是权威。
 
@@ -34,6 +34,6 @@ mutation 前拒绝；稳定 ID 只由逻辑 ID、版本、解析引用和类型�
 
 方案比较以英文规范页的 Option comparison 为准。
 
-原型记录模块参数 digest 和 native ref，校验有限数值及边界，并显式映射到现有 UnitDefinition 字段。新增质量、功耗预算和槽位安装类别检查，在发布前拒绝不兼容组装。显式 hardpoint contract 与 loadout selection 现在校验安装类别、允许的 module kind、数量、容量、物理元数据和 native identity，并将这些值纳入 canonical plan identity；legacy lowering 还要求声明 loadout 写入路径及匹配证据，避免选择的 loadout 在投影时静默丢失。现有 native `UnitDefinition::default_loadout` 每个 station 只能表示一个 weapon ref，因此在 owner 增加明确的多载荷表示前，native lowering 和 typed bridge 对 `quantity != 1` 使用稳定错误 fail-closed；数量仍保留在资格 identity 和证据中。typed bridge 会把 loadout capability family 及 hardpoint/数量证据带入 maintained typed request，并将完整 legacy 定义 digest 纳入 ID；如果 lowering 会改变该快照则拒绝；同时使用 authored capability key 到 native capability family 的带版本资格映射，将映射摘要纳入 typed request identity，并在 DTO 发布前拒绝未知 key。它还会将共享的 source type 与 native factory 返回的 plan 比对，family、capability type、implementation ref 及 required/supported flags 必须一致。`WorldBatchRuntime` 还通过只读查询暴露 factory 已解析的 plan 供资格诊断使用；只有 factory 负责 materialize。现在还明确读取数据库中的 F-16 native factory plan，并在 authored capability 映射不完整时于 typed DTO 发布前拒绝。F-16 与地面步兵已验证初始化及四步后的公开观察一致性；另有 F-16 证明通过现有 typed request 路径生成，并在四步后保持观察一致。owner 批准的 mapping、更广泛的 native 单位兼容性和生产审查仍待验收。
+原型记录模块参数 digest 和 native ref，校验有限数值及边界，并显式映射到现有 UnitDefinition 字段。新增质量、功耗预算和槽位安装类别检查，在发布前拒绝不兼容组装。显式 hardpoint contract 与 loadout selection 现在校验安装类别、允许的 module kind、数量、容量、物理元数据和 native identity，并将这些值纳入 canonical plan identity；legacy lowering 仍要求声明 loadout 写入路径及匹配证据，避免选择的 loadout 在投影时静默丢失。`UnitDefinition::default_loadout` 保留旧版单字符串格式，并接受有序字符串数组表达同一 station 的多个载荷。原生 factory 在发布前校验引用、导弹类型、非空数组、有效挂点容量、载荷质量和挂点累计质量；生成时按 station 和数组顺序创建稳定命名的载荷实体，释放时按序号还原对应 weapon 定义。F-16 的两枚 AIM-120C-7 改放在 300 kg 的 2、8 号挂点，两枚 AIM-9X 留在 150 kg 翼尖挂点。现有内容审计发现 Su-35 的两处 R-73 引用无法解析，且 190 kg 的 R-77-1 超过 150 kg 翼尖挂点容量，因此维持未准入，待内容记录和挂点分配修复。typed bridge 在 native projection 与请求身份中保留数量，并将完整 legacy 定义 digest 纳入 ID；若 lowering 改变快照则拒绝。它同时使用 authored capability key 到 native capability family 的带版本资格映射，把映射摘要纳入 typed request identity，并在 DTO 发布前拒绝未知 key。source type/capability 语义仍须与原生 factory plan 一致。`WorldBatchRuntime` 通过只读查询暴露 factory 解析计划；只有 factory 负责实例化。F-16 与地面步兵已验证初始化及四步后的公开观察一致性。owner 批准的 mapping、回滚行为、更广泛的 native 单位兼容性和生产审查仍待验收。
 
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。
