@@ -45,6 +45,10 @@ BUILD_TREE_ONLY_EXPLICIT_KERNEL_CALLERS = {
 }
 MAINTAINED_EXPLICIT_KERNEL_CALLERS = {
     "src/core/engine/world_batch_runtime.cpp",
+    # Native branch children: an independent kernel built from the same
+    # generated default plan as WorldBatchRuntime, then restored from the
+    # source world, RNG and clock before it is exposed.
+    "src/runtime/facade/runtime_facade_native_owner.cpp",
 }
 SKIPPED_CALLER_DIRECTORIES = {
     ".git",
