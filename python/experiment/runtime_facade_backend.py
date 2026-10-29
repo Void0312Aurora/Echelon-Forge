@@ -127,7 +127,9 @@ class RuntimeFacadeCandidateBackend:
         self._action_applier = action_applier
         self._branch_action_applier = branch_action_applier
         self._branch_ref_factory = branch_ref_factory
-        self._identity_owner = identity_owner or RuntimeFacadeNativeIdentityOwner(runtime)
+        self._identity_owner = identity_owner or RuntimeFacadeNativeIdentityOwner(
+            runtime, world_index
+        )
         self._reward_reader = reward_reader
         try:
             agent_refs = setup_applier(runtime)
@@ -207,6 +209,12 @@ class RuntimeFacadeCandidateBackend:
             )
         self._last_facts = facts
         return facts
+
+    def current_snapshot(self) -> RuntimeSnapshotFacts:
+        return self._read_facts()
+
+    def branch_snapshot(self, handle: object) -> RuntimeSnapshotFacts:
+        return self._branch_facts(handle)
 
     def step(self, actions: tuple[tuple[str, str], ...]) -> RuntimeStepResult:
         pairs = tuple(actions)

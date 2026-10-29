@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import dataclasses
+
 import json
 from types import SimpleNamespace
 import numpy as np
@@ -23,8 +25,12 @@ from tests.experiment.test_trace_projection import _manifest
 
 
 def _projection():
+    manifest = _manifest(11)
     return project_manifests(
-        (_manifest(11),), SeedSplit(training=(11,), evaluation=(17,)), consumer="ppo"
+        (manifest,),
+        SeedSplit(training=(11,), evaluation=(17,)),
+        consumer="ppo",
+        selected_branch_digests=[trace.branch.digest for trace in manifest.branches],
     )
 
 
@@ -276,3 +282,41 @@ def test_numeric_export_writes_episode_store_and_auditable_sidecar(tmp_path) -> 
     }
     with pytest.raises(ContractError, match="existing export"):
         write_episode_store(exports, str(tmp_path / "dataset"))
+    assert all("\\" not in item["path"] for item in metadata["episodes"])
+
+
+def _exports():
+    projection = _projection()
+    return build_numeric_exports(
+        projection, _sources(projection), agent_id="pilot",
+        selected_branch_digests=[key[1] for key in _sources(projection)],
+        action_encoder=_action, reward_encoder=_reward
+    )
+
+
+def test_episode_store_refuses_a_root_that_already_has_episodes(tmp_path) -> None:
+    # A crashed earlier run can leave episodes without a sidecar; never append.
+    (tmp_path / "dataset" / "episodes").mkdir(parents=True)
+    (tmp_path / "dataset" / "episodes" / "episode_000000.npz").write_bytes(b"orphan")
+    with pytest.raises(ContractError, match="existing export"):
+        write_episode_store(_exports(), str(tmp_path / "dataset"))
+
+
+def test_episode_store_refuses_mixed_splits(tmp_path) -> None:
+    exports = _exports()
+    mixed = (exports[0], dataclasses.replace(exports[1], split="evaluation"))
+    with pytest.raises(ContractError, match="single split"):
+        write_episode_store(mixed, str(tmp_path / "dataset"))
+    assert not (tmp_path / "dataset").exists()
+
+
+def test_episode_store_leaves_nothing_behind_when_a_write_fails(tmp_path, monkeypatch) -> None:
+    from python.world_model import replay
+
+    def fail(*_args, **_kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(replay.EpisodeStore, "add", fail)
+    with pytest.raises(OSError, match="disk full"):
+        write_episode_store(_exports(), str(tmp_path / "dataset"))
+    assert list(tmp_path.iterdir()) == []

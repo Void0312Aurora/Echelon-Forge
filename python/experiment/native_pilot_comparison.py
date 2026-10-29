@@ -145,6 +145,7 @@ def compare_seed(
             (session.manifest(),),
             SeedSplit(training=TRAINING_SEEDS, evaluation=EVALUATION_SEEDS),
             consumer="ppo",
+            selected_branch_digests=[branch.digest for branch in branch_refs],
         )
         packet_sources = collect_agent_observation_sources_from_packets(
             session.agent_observation_packet_sources("pilot", branch_refs),
@@ -211,9 +212,14 @@ def build_trace_projection_summary(runs: list[dict]) -> dict:
 
     manifests = tuple(manifest_from_payload(run["manifest"]) for run in runs)
     split_spec = SeedSplit(training=TRAINING_SEEDS, evaluation=EVALUATION_SEEDS)
+    # Project the compared alternatives only; replay and warmup branches repeat
+    # or precede them and would double-count rows.
+    compared = [branch["branch_digest"] for run in runs for branch in run["branches"]]
     consumers = {}
     for consumer in CONSUMERS:
-        projection = project_manifests(manifests, split_spec, consumer=consumer)
+        projection = project_manifests(
+            manifests, split_spec, consumer=consumer, selected_branch_digests=compared
+        )
         rows_by_split = {
             split: sum(row.split == split for row in projection.rows)
             for split in ("training", "evaluation")

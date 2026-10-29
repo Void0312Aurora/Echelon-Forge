@@ -151,12 +151,46 @@ def test_native_identity_owner_reads_bound_facade_facts() -> None:
     )
 
 
+class _TwoWorldRuntime(_Runtime):
+    """Two worlds whose identity facts differ, so reading the wrong one is visible."""
+
+    def __init__(self, identity) -> None:
+        super().__init__(identity)
+        self.fact_reads: list[int] = []
+
+    def native_snapshot_facts(self, world_index: int = 0) -> object:
+        self.fact_reads.append(world_index)
+        facts = super().native_snapshot_facts(world_index)
+        if world_index == 1:
+            facts.state_digest = f"{self.identity.step + 7:064x}"
+        return facts
+
+
+def test_default_identity_owner_reads_the_selected_world() -> None:
+    runtime = _TwoWorldRuntime(_IdentityOwner())
+    backend = RuntimeFacadeCandidateBackend(
+        runtime,
+        agent_ids=AGENTS,
+        setup_applier=_setup,
+        action_applier=lambda value, actions: value.set_actions(actions),
+        reward_reader=lambda _runtime, actions, _before, _after: {
+            agent_id: 0 for agent_id, _action in actions
+        },
+        world_index=1,
+    )
+    session = _session(backend)
+    assert session.head().state_digest == f"{7:064x}"
+    assert runtime.fact_reads and set(runtime.fact_reads) == {1}
+
+
 def test_maintained_facade_rejects_external_identity_mutation() -> None:
     backend, runtime, identity = _backend()
     session = _session(backend)
     identity.step = 1
 
-    with pytest.raises(RuntimeCandidateError, match="outside the session step boundary"):
+    # The session checks live identity before delegating; the backend's own
+    # boundary check is the second line of defence. Either must stop the step.
+    with pytest.raises(RuntimeCandidateError, match="outside the session"):
         session.step(
             {"agent_0": "hold", "agent_1": "hold"},
             observation_provenance=OBS_FACADE_OBSERVATION_PACKET,

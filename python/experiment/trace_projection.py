@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from python.experiment.contracts import ContractError, content_digest
 from python.experiment.trace import TraceManifest
@@ -187,6 +187,12 @@ class TraceProjection:
             raise ContractError("rows must be a tuple of ProjectionRow")
         if any(row.manifest_digest not in self.manifest_digests for row in self.rows):
             raise ContractError("every row must belong to a declared manifest")
+        seed_owner: dict[int, str] = {}
+        for row in self.rows:
+            if row.split != self.split_spec.split_for(row.seed):
+                raise ContractError(f"seed {row.seed} row is not in its declared split")
+            if seed_owner.setdefault(row.seed, row.manifest_digest) != row.manifest_digest:
+                raise ContractError("one seed cannot produce multiple manifests")
 
     def _payload_without_digest(self) -> dict[str, Any]:
         return {
@@ -293,8 +299,23 @@ def project_manifests(
     split_spec: SeedSplit,
     *,
     consumer: str,
+    selected_branch_digests: Sequence[str],
 ) -> TraceProjection:
-    """Project manifests while enforcing seed, policy, evidence, and lineage gates."""
+    """Project selected branches while enforcing seed, policy, evidence, and lineage gates.
+
+    Only branches named in ``selected_branch_digests`` are projected. A manifest
+    also records verification replays and the warmup baseline; those repeat or
+    precede the compared data, so a consumer must not receive them by default.
+    Every selected digest must name a branch in one of the manifests.
+    """
+
+    selected = tuple(selected_branch_digests)
+    if not selected or len(set(selected)) != len(selected):
+        raise ContractError("selected_branch_digests must be non-empty and unique")
+    if any(not isinstance(value, str) or _DIGEST.fullmatch(value) is None for value in selected):
+        raise ContractError("selected_branch_digests must contain lowercase SHA-256 digests")
+    wanted = set(selected)
+    found: set[str] = set()
 
     if not isinstance(manifests, tuple) or not manifests:
         raise ContractError("manifests must be a non-empty tuple")
@@ -327,6 +348,9 @@ def project_manifests(
             raise ContractError("projection cannot mix evidence labels")
         manifest_digests.append(digest)
         for trace in manifest.branches:
+            if trace.branch.digest not in wanted:
+                continue
+            found.add(trace.branch.digest)
             for transition in trace.transitions:
                 rows.append(
                     ProjectionRow(
@@ -349,6 +373,8 @@ def project_manifests(
                         observation_provenance=transition.observation_provenance,
                     )
                 )
+    if found != wanted:
+        raise ContractError("a selected branch is not in any projected manifest")
     if not rows:
         raise ContractError("projection needs at least one transition")
     rows.sort(

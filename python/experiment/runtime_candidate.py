@@ -73,6 +73,10 @@ class RuntimeCandidateBackend(Protocol):
 
     def initial_snapshot(self) -> RuntimeSnapshotFacts: ...
 
+    def current_snapshot(self) -> RuntimeSnapshotFacts:
+        """Live native identity of the baseline world, read without side effects."""
+        ...
+
     def step(self, actions: tuple[tuple[str, str], ...]) -> RuntimeStepResult: ...
 
 
@@ -147,6 +151,12 @@ class RuntimeKernelCandidateBackend:
 
     def initial_snapshot(self) -> RuntimeSnapshotFacts:
         return self._facts(getattr(self._native, "snapshot_facts")())
+
+    def current_snapshot(self) -> RuntimeSnapshotFacts:
+        return self._facts(getattr(self._native, "snapshot_facts")())
+
+    def branch_snapshot(self, handle: object) -> RuntimeSnapshotFacts:
+        return self._facts(getattr(handle, "snapshot_facts")())
 
     @property
     def agent_ids(self) -> tuple[str, ...]:
@@ -296,6 +306,9 @@ class _BranchState:
     transitions: list[Transition]
     pending_intervention: tuple[tuple[str, str], ...] = ()
     terminated: bool = False
+    # Set when the native world advanced but the step could not be recorded;
+    # the branch's trace no longer describes its native state.
+    poisoned: str | None = None
     checkpoints: dict[str, _Checkpoint] = field(default_factory=dict)
 
 
@@ -509,6 +522,8 @@ class RuntimeCandidateSession:
         actions: Mapping[str, str],
         observation_provenance: str,
     ) -> Transition:
+        if record.poisoned is not None:
+            raise RuntimeCandidateError(f"runtime candidate branch is unusable: {record.poisoned}")
         if record.terminated:
             raise RuntimeCandidateError("runtime candidate branch has terminated")
         if observation_provenance not in POLICY_INPUT_PROVENANCE_LABELS:
@@ -521,32 +536,55 @@ class RuntimeCandidateSession:
         pairs = self._action_pairs(actions)
         if record.pending_intervention and not set(record.pending_intervention) <= set(pairs):
             raise RuntimeCandidateError("the first branch step must apply the branch intervention")
+        # The transition records ``record.head`` as its source, so the native
+        # state must still be exactly that one. A spawn or time-step change
+        # outside the session would otherwise be attributed to the wrong state.
+        live = self._current_facts(record)
+        if live is not None and live != record.facts:
+            raise RuntimeCandidateError(
+                "native state changed outside the session before this step"
+            )
         if record.handle is None:
             result = self._backend.step(pairs)
         else:
             if self._native_branch_backend is None:
                 raise RuntimeCandidateError("runtime native branch capability is unavailable")
             result = self._native_branch_backend.step_branch(record.handle, pairs)
-        if not isinstance(result, RuntimeStepResult):
-            raise RuntimeCandidateError("backend must return RuntimeStepResult")
-        target = self._snapshot_from_facts(result.snapshot, expected_step=record.head.step + 1)
-        rewards = self._reward_pairs(result.rewards)
-        transition = Transition(
-            branch_digest=record.ref.digest,
-            step=record.head.step,
-            source_snapshot_digest=record.head.digest,
-            target_snapshot_digest=target.digest,
-            actions=pairs,
-            rewards=rewards,
-            terminated=result.snapshot.terminated,
-            observation_provenance=observation_provenance,
-        )
+        # The native world has advanced from here on. Build the whole record,
+        # including every Agent observation, before changing session state; if
+        # any part fails, the branch can no longer be trusted, so poison it
+        # instead of reporting the step as not applied.
+        try:
+            if not isinstance(result, RuntimeStepResult):
+                raise RuntimeCandidateError("backend must return RuntimeStepResult")
+            target = self._snapshot_from_facts(
+                result.snapshot, expected_step=record.head.step + 1
+            )
+            rewards = self._reward_pairs(result.rewards)
+            transition = Transition(
+                branch_digest=record.ref.digest,
+                step=record.head.step,
+                source_snapshot_digest=record.head.digest,
+                target_snapshot_digest=target.digest,
+                actions=pairs,
+                rewards=rewards,
+                terminated=result.snapshot.terminated,
+                observation_provenance=observation_provenance,
+            )
+            captured = self._read_agent_observations(record)
+        except Exception as exc:
+            record.poisoned = (
+                f"step {record.head.step} advanced natively but was not recorded ({exc})"
+            )
+            raise RuntimeCandidateError(
+                f"{record.poisoned}; the branch must be discarded"
+            ) from exc
         record.head = target
         record.facts = result.snapshot
         record.terminated = result.snapshot.terminated
         record.pending_intervention = ()
         record.transitions.append(transition)
-        self._capture_agent_observation_refs(record)
+        self._record_agent_observations(record.ref.digest, captured)
         return transition
 
     def trace(self, branch: BranchRef) -> BranchTrace:
@@ -599,8 +637,7 @@ class RuntimeCandidateSession:
         """Fork from the current head or an explicitly saved native checkpoint."""
 
         record = self._fork_record(parent, snapshot, intervention, label, horizon)
-        self._capture_agent_observation_refs(record)
-        self._branches[record.ref.digest] = record
+        self._publish_branch(record)
         return record.ref
 
     def _fork_record(
@@ -689,8 +726,7 @@ class RuntimeCandidateSession:
             horizon,
             require_checkpoint=True,
         )
-        self._capture_agent_observation_refs(record)
-        self._branches[record.ref.digest] = record
+        self._publish_branch(record)
         return record.ref
 
     def replay(self, parent: BranchRef, snapshot: SnapshotRef, *, label: str) -> BranchRef:
@@ -716,17 +752,72 @@ class RuntimeCandidateSession:
             len(expected),
             require_checkpoint=True,
         )
-        self._capture_agent_observation_refs(replay)
-        for item in expected:
-            actual = self._advance(replay, dict(item.actions), item.observation_provenance)
-            if replace(actual, branch_digest=item.branch_digest) != item:
-                raise RuntimeCandidateError(f"native replay diverged at step {item.step}")
+        try:
+            self._capture_agent_observation_refs(replay)
+            for item in expected:
+                actual = self._advance(replay, dict(item.actions), item.observation_provenance)
+                if replace(actual, branch_digest=item.branch_digest) != item:
+                    raise RuntimeCandidateError(f"native replay diverged at step {item.step}")
+        except BaseException:
+            # A discarded replay must not leave observations behind: a retry
+            # with the same label has the same digest and would append to them.
+            self._discard_observations(replay.ref.digest)
+            raise
         self._branches[replay.ref.digest] = replay
         return replay.ref
 
-    def _capture_agent_observation_refs(self, record: _BranchState) -> None:
+    def _current_facts(self, record: _BranchState) -> RuntimeSnapshotFacts | None:
+        """Read the live native identity of ``record`` from its owner.
+
+        Returns ``None`` only when the owner exposes no live identity read for
+        this kind of branch; native backends implement ``current_snapshot`` and
+        ``branch_snapshot``.
+        """
+
+        if record.handle is None:
+            reader = getattr(self._backend, "current_snapshot", None)
+            args: tuple[object, ...] = ()
+        else:
+            reader = getattr(self._native_branch_backend, "branch_snapshot", None)
+            args = (record.handle,)
+        if not callable(reader):
+            return None
+        try:
+            facts = reader(*args)
+        except RuntimeCandidateError:
+            raise
+        except Exception as exc:
+            raise RuntimeCandidateError("native identity owner could not report facts") from exc
+        if not isinstance(facts, RuntimeSnapshotFacts):
+            raise RuntimeCandidateError("native identity owner returned invalid facts")
+        return facts
+
+    def _publish_branch(self, record: _BranchState) -> None:
+        """Capture the new branch's first observation, then register it."""
+
+        try:
+            self._capture_agent_observation_refs(record)
+        except BaseException:
+            self._discard_observations(record.ref.digest)
+            raise
+        self._branches[record.ref.digest] = record
+
+    def _discard_observations(self, branch_digest: str) -> None:
+        self._agent_observation_refs.pop(branch_digest, None)
+        self._agent_observation_packets.pop(branch_digest, None)
+
+    def _read_agent_observations(
+        self, record: _BranchState
+    ) -> tuple[dict[str, object], dict[str, object] | None] | None:
+        """Read every Agent's maintained ref and packet without recording them.
+
+        Returns ``None`` when the backend has no observation-ref capability. Any
+        failure raises before anything is stored, so a caller can record all
+        Agents or none.
+        """
+
         if self._agent_observation_ref_backend is None:
-            return
+            return None
         try:
             refs = self._agent_observation_ref_backend.observation_refs(record.handle)
         except Exception as exc:
@@ -739,25 +830,17 @@ class RuntimeCandidateSession:
             )
         if any(value is None for value in refs.values()):
             raise RuntimeCandidateError("maintained Agent observation ref cannot be None")
-        branch_refs = self._agent_observation_refs.setdefault(record.ref.digest, {})
         packet_reader_factory = getattr(self._backend, "observation_packet_reader", None)
-        packet_readers = None
-        if callable(packet_reader_factory):
+        if not callable(packet_reader_factory):
+            return dict(refs), None
+        packets: dict[str, object] = {}
+        for agent_id in self._spec.agent_ids:
             try:
-                packet_readers = {
-                    agent_id: packet_reader_factory(record.handle)
-                    for agent_id in self._spec.agent_ids
-                }
+                reader = packet_reader_factory(record.handle)
             except Exception as exc:
                 raise RuntimeCandidateError(
                     "maintained Agent observation packet reader failed"
                 ) from exc
-        branch_packets = self._agent_observation_packets.setdefault(record.ref.digest, {})
-        for agent_id in self._spec.agent_ids:
-            branch_refs.setdefault(agent_id, []).append(refs[agent_id])
-            if packet_readers is None:
-                continue
-            reader = packet_readers[agent_id]
             read_packet = getattr(reader, "read_observation_packet", None)
             if not callable(read_packet):
                 raise RuntimeCandidateError(
@@ -776,7 +859,28 @@ class RuntimeCandidateSession:
                 raise RuntimeCandidateError(
                     "maintained Agent observation packet capture failed"
                 ) from exc
-            branch_packets.setdefault(agent_id, []).append(packet)
+            packets[agent_id] = packet
+        return dict(refs), packets
+
+    def _record_agent_observations(
+        self,
+        branch_digest: str,
+        captured: tuple[dict[str, object], dict[str, object] | None] | None,
+    ) -> None:
+        """Append one already-read observation per Agent; cannot fail partway."""
+
+        if captured is None:
+            return
+        refs, packets = captured
+        branch_refs = self._agent_observation_refs.setdefault(branch_digest, {})
+        branch_packets = self._agent_observation_packets.setdefault(branch_digest, {})
+        for agent_id in self._spec.agent_ids:
+            branch_refs.setdefault(agent_id, []).append(refs[agent_id])
+            if packets is not None:
+                branch_packets.setdefault(agent_id, []).append(packets[agent_id])
+
+    def _capture_agent_observation_refs(self, record: _BranchState) -> None:
+        self._record_agent_observations(record.ref.digest, self._read_agent_observations(record))
 
     def _reward_pairs(self, rewards: Mapping[str, int]) -> tuple[tuple[str, int], ...]:
         if not isinstance(rewards, Mapping) or set(rewards) != set(self._spec.agent_ids):
