@@ -1,4 +1,5 @@
 #include "runtime_host_candidate.h"
+#include "runtime_branch_contract.h"
 
 #include <algorithm>
 #include <array>
@@ -198,6 +199,7 @@ struct RuntimeHostSlot {
     bool cancellation_in_progress = false;
     bool cancellation_acknowledged = false;
     std::atomic<bool> quiescence_capability_live{false};
+    std::atomic<bool> branch_in_progress{false};
 };
 
 using RuntimeCoordinatorMap =
@@ -2511,6 +2513,149 @@ RuntimeHostCandidate::open_shadow_replacement_barrier(std::uint64_t world_slot) 
     return barrier;
 }
 
+RuntimeNativeSiblingBranchResult
+RuntimeHostCandidate::execute_shadow_sibling_branch(RuntimeNativeSiblingBranchRequest request) {
+    RuntimeNativeSiblingBranchResult result;
+    if (state_ == nullptr) {
+        result.status = {.error = RuntimeStateTransferError::StaleIntent,
+                         .detail = "host state is unavailable for a native sibling branch"};
+        return result;
+    }
+
+    std::shared_ptr<RuntimeHostSlot> active;
+    std::shared_ptr<RuntimeEpisodeCoordinatorCandidate> coordinator;
+    std::shared_ptr<RuntimeStateTransferOwnerRegistry> source_registry;
+    RuntimeIdentity128 source_resource;
+    std::uint64_t lifecycle_ticket = 0;
+    std::uint64_t candidate_sequence = 0;
+    std::uint64_t mutation_fence_sequence = 0;
+    {
+        std::lock_guard<std::mutex> lock(state_->mutex);
+        active = state_->active.load(std::memory_order_acquire);
+        if (state_->host_state != RuntimeHostState::Active || active == nullptr ||
+            active->state != RuntimeSlotState::Active || !active->admission_open ||
+            active->control == nullptr || active->owner_registry == nullptr ||
+            active->truth_mutating_leases != 0 || active->read_only_result_leases != 0 ||
+            state_->native_episode_submissions_in_flight != 0 ||
+            state_->state_transfers_in_flight.load(std::memory_order_acquire) != 0) {
+            result.status = {.error = RuntimeStateTransferError::BarrierRequired,
+                             .detail =
+                                 "native sibling branch requires an idle active host boundary"};
+            return result;
+        }
+        if (active->branch_in_progress.exchange(true, std::memory_order_acq_rel)) {
+            result.status = {.error = RuntimeStateTransferError::ConcurrentMutation,
+                             .detail = "active host already has a native sibling branch"};
+            return result;
+        }
+        if (state_->state_transfers_in_flight.load(std::memory_order_acquire) ==
+            std::numeric_limits<std::size_t>::max()) {
+            active->branch_in_progress.store(false, std::memory_order_release);
+            result.status = {.error = RuntimeStateTransferError::SequenceExhausted,
+                             .detail = "native sibling branch transfer count is exhausted"};
+            return result;
+        }
+        state_->state_transfers_in_flight.fetch_add(1, std::memory_order_acq_rel);
+        if (!request.admission.parent_snapshot.episode.well_formed()) {
+            state_->state_transfers_in_flight.fetch_sub(1, std::memory_order_acq_rel);
+            active->branch_in_progress.store(false, std::memory_order_release);
+            result.status = {.error = RuntimeStateTransferError::InvalidArgument,
+                             .detail = "native sibling branch parent episode is invalid"};
+            return result;
+        }
+        const auto iterator = state_->world_coordinators.find(
+            request.admission.parent_snapshot.episode.world.world_slot);
+        if (iterator == state_->world_coordinators.end() || iterator->second == nullptr) {
+            state_->state_transfers_in_flight.fetch_sub(1, std::memory_order_acq_rel);
+            active->branch_in_progress.store(false, std::memory_order_release);
+            result.status = {.error = RuntimeStateTransferError::StaleIntent,
+                             .detail = "active host has no coordinator for the branch world"};
+            return result;
+        }
+        coordinator = iterator->second;
+        const auto current = coordinator->snapshot();
+        const bool same_parent =
+            current.episode == request.admission.parent_snapshot.episode &&
+            current.phase == request.admission.parent_snapshot.phase &&
+            current.step_sequence == request.admission.parent_snapshot.step_sequence &&
+            current.barrier_sequence == request.admission.parent_snapshot.barrier_sequence &&
+            current.snapshot_id == request.admission.parent_snapshot.snapshot_id &&
+            current.snapshot_sha256 == request.admission.parent_snapshot.snapshot_sha256;
+        if (!same_parent) {
+            state_->state_transfers_in_flight.fetch_sub(1, std::memory_order_acq_rel);
+            active->branch_in_progress.store(false, std::memory_order_release);
+            result.status = {.error = RuntimeStateTransferError::StaleIntent,
+                             .detail =
+                                 "active host parent snapshot changed before branch admission"};
+            return result;
+        }
+        if (active->plan.plan_sha256.empty() ||
+            (!request.admission.parent_plan_sha256.empty() &&
+             request.admission.parent_plan_sha256 != active->plan.plan_sha256) ||
+            request.transfer_profile.source_plan_sha256 != active->plan.plan_sha256 ||
+            request.transfer_profile.target_plan_sha256 != active->plan.plan_sha256 ||
+            request.census.source_plan_sha256 != active->plan.plan_sha256 ||
+            request.census.target_plan_sha256 != active->plan.plan_sha256) {
+            state_->state_transfers_in_flight.fetch_sub(1, std::memory_order_acq_rel);
+            active->branch_in_progress.store(false, std::memory_order_release);
+            result.status = {.error = RuntimeStateTransferError::PlanMismatch,
+                             .detail =
+                                 "native sibling branch plan must match the active admitted plan"};
+            return result;
+        }
+        if (!increment_nonzero(state_->last_transfer_fence_sequence)) {
+            state_->state_transfers_in_flight.fetch_sub(1, std::memory_order_acq_rel);
+            active->branch_in_progress.store(false, std::memory_order_release);
+            result.status = {.error = RuntimeStateTransferError::SequenceExhausted,
+                             .detail = "native sibling branch mutation fence is exhausted"};
+            return result;
+        }
+        mutation_fence_sequence = state_->last_transfer_fence_sequence;
+        source_registry = active->owner_registry;
+        source_resource = active->resource_identity;
+        lifecycle_ticket = state_->last_lifecycle_ticket;
+        candidate_sequence = active->candidate_sequence;
+    }
+
+    request.parent_coordinator = coordinator.get();
+    request.source_owner_registry = std::move(source_registry);
+    request.source_resource_identity = source_resource;
+    request.branch_authority_nonce = state_->host_instance_nonce;
+    request.lifecycle_ticket = lifecycle_ticket;
+    request.candidate_sequence = candidate_sequence;
+    request.evidence.source_final_mutation_fence_sequence = mutation_fence_sequence;
+    auto child_end_transfer = std::move(request.end_child_state_transfer);
+    const auto transfer_release = std::make_shared<std::atomic_bool>(false);
+    request.end_child_state_transfer = [state = state_, active, transfer_release,
+                                        child_end_transfer =
+                                            std::move(child_end_transfer)]() mutable {
+        bool expected = false;
+        if (!transfer_release->compare_exchange_strong(expected, true, std::memory_order_acq_rel)) {
+            return;
+        }
+        if (child_end_transfer) {
+            child_end_transfer();
+        }
+        state->state_transfers_in_flight.fetch_sub(1, std::memory_order_acq_rel);
+        active->branch_in_progress.store(false, std::memory_order_release);
+    };
+    const auto release_transfer = request.end_child_state_transfer;
+
+    try {
+        result = RuntimeNativeSiblingBranchExecutor::execute(std::move(request));
+    } catch (...) {
+        result.status = {.error = RuntimeStateTransferError::ImportTransactionAmbiguous,
+                         .detail = "native sibling branch executor raised unexpectedly"};
+    }
+    // Validation can reject before the transfer capability owns the child-end
+    // callback; clear the host admission latch on that path as well.
+    if (release_transfer) {
+        release_transfer();
+    }
+    active->branch_in_progress.store(false, std::memory_order_release);
+    return result;
+}
+
 RuntimeLeaseAdmission
 RuntimeHostCandidate::acquire_lease(const RuntimeShadowEpisodeCapability &episode,
                                     RuntimeLeaseKind kind) {
@@ -2923,6 +3068,20 @@ RuntimeHostStatus RuntimeHostCandidate::retry_quarantined_reclamation() {
                ? failure(RuntimeHostError::HostTerminal,
                          "resources were released but fail-stopped host remains terminal")
                : success();
+}
+
+RuntimeEpisodeCoordinatorSnapshot
+RuntimeHostCandidate::shadow_episode_snapshot(std::uint64_t world_slot) const {
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    const auto active = state_->active.load(std::memory_order_acquire);
+    if (state_->host_state != RuntimeHostState::Active || active == nullptr ||
+        active->state != RuntimeSlotState::Active) {
+        return {};
+    }
+    const auto iterator = state_->world_coordinators.find(world_slot);
+    return iterator == state_->world_coordinators.end() || iterator->second == nullptr
+               ? RuntimeEpisodeCoordinatorSnapshot{}
+               : iterator->second->snapshot();
 }
 
 RuntimeHostSnapshot RuntimeHostCandidate::snapshot() const {

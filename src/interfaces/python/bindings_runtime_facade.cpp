@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <spdlog/spdlog.h>
@@ -28,6 +29,17 @@ void bind_runtime_facade(nb::module_ &m) {
              nb::arg("expected"))
         .def("admit_backend_request", &RuntimeFacade::admit_backend_request, nb::arg("request"))
         .def("admit_fidelity_request", &RuntimeFacade::admit_fidelity_request, nb::arg("request"))
+        .def("native_snapshot_facts", &RuntimeFacade::native_snapshot_facts,
+             nb::arg("world_index") = 0)
+        .def(
+            "fork_native_branch",
+            [](RuntimeFacade &self, std::size_t world_index, std::string intervention_digest,
+               std::uint64_t horizon) {
+                return self.fork_native_branch(world_index, std::move(intervention_digest), horizon)
+                    .release();
+            },
+            nb::arg("world_index"), nb::arg("intervention_digest"), nb::arg("horizon") = 1,
+            nb::rv_policy::take_ownership)
         .def("world_count", &RuntimeFacade::world_count)
         .def("resize", &RuntimeFacade::resize, nb::arg("world_count"))
         .def("set_worker_threads", &RuntimeFacade::set_worker_threads, nb::arg("worker_threads"))

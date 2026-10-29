@@ -323,6 +323,8 @@ struct RuntimeShutdownResult {
 
 struct RuntimeHostSharedState;
 struct RuntimeLeaseToken;
+struct RuntimeNativeSiblingBranchRequest;
+struct RuntimeNativeSiblingBranchResult;
 
 class RuntimeInstanceLease {
   public:
@@ -399,6 +401,12 @@ class RuntimeHostCandidate {
                                     std::uint64_t expected_step_sequence);
     [[nodiscard]] RuntimeEpisodeBarrierAdmission
     open_shadow_replacement_barrier(std::uint64_t world_slot);
+    // Execute one dark/shadow native sibling branch against the active
+    // host-owned coordinator. The request supplies only child-side resources;
+    // source owner, coordinator, lifecycle, and mutation-fence bindings are
+    // taken from this host and cannot be caller-authored.
+    [[nodiscard]] RuntimeNativeSiblingBranchResult
+    execute_shadow_sibling_branch(RuntimeNativeSiblingBranchRequest request);
     [[nodiscard]] RuntimeLeaseAdmission acquire_lease(const RuntimeShadowEpisodeCapability &episode,
                                                       RuntimeLeaseKind kind);
     [[nodiscard]] RuntimeHostStatus validate_result(const RuntimeInstanceLease &lease,
@@ -408,6 +416,8 @@ class RuntimeHostCandidate {
                                                        std::uint64_t deadline_tick);
     [[nodiscard]] RuntimeHostStatus poll(std::uint64_t now_tick);
     [[nodiscard]] RuntimeHostStatus retry_quarantined_reclamation();
+    [[nodiscard]] RuntimeEpisodeCoordinatorSnapshot
+    shadow_episode_snapshot(std::uint64_t world_slot) const;
     [[nodiscard]] RuntimeHostSnapshot snapshot() const;
 
     [[nodiscard]] static std::size_t orphaned_host_count() noexcept;

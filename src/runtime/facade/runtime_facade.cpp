@@ -28,3 +28,13 @@ RuntimeFacade::RuntimeFacade(const RuntimeBatchConfig &config) : RuntimeFacade(c
 RuntimeFacade::RuntimeFacade(RuntimeFacade &&) noexcept = default;
 RuntimeFacade &RuntimeFacade::operator=(RuntimeFacade &&) noexcept = default;
 RuntimeFacade::~RuntimeFacade() = default;
+
+RuntimeNativeSnapshotFacts RuntimeFacade::native_snapshot_facts(std::size_t world_index) const {
+    return runtime_->native_snapshot_facts(world_index);
+}
+
+std::unique_ptr<RuntimeFacadeNativeBranch>
+RuntimeFacade::fork_native_branch(std::size_t world_index, std::string intervention_digest,
+                                  std::uint64_t horizon) {
+    return runtime_->fork_native_branch(world_index, std::move(intervention_digest), horizon);
+}

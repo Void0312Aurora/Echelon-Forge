@@ -1,4 +1,5 @@
 #include "runtime/host/integration/simulation_kernel_state_owner_adapters.h"
+#include "runtime/host/runtime_branch_contract.h"
 #include "runtime/host/runtime_host_candidate.h"
 
 #include "components/command/common/comm_message.h"
@@ -27,8 +28,10 @@
 #include <array>
 #include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -297,6 +300,16 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         REQUIRE(exported.status);
         CHECK(exported.artifacts.size() == host::kRuntimeStateCategoryCount);
         CHECK(exported.census.entries.size() == host::kRuntimeStateCategoryCount);
+        auto branch_barrier = barrier;
+        branch_barrier.phase = host::RuntimeEpisodePhase::BranchBarrier;
+        const auto branch_export =
+            registry->export_source(profile, integration_slot(),
+                                    {.barrier_snapshot = branch_barrier,
+                                     .source_read_only_result_leases = 0,
+                                     .cooperative_cancellation_acknowledged = true});
+        INFO(branch_export.status.detail);
+        REQUIRE(branch_export.status);
+        CHECK(branch_export.artifacts.size() == host::kRuntimeStateCategoryCount);
         const auto in_flight = std::find_if(
             exported.census.entries.begin(), exported.census.entries.end(), [](const auto &entry) {
                 return entry.category == host::RuntimeStateCategory::InFlightRequestsResults;
@@ -354,6 +367,128 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         target_registry.reset();
         std::filesystem::remove(journal_path, remove_error);
         std::filesystem::remove(target_journal_path, remove_error);
+    }
+
+    TEST_CASE("native sibling executor uses the maintained SimulationKernel owner registries") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using BranchExecutor = host::RuntimeNativeSiblingBranchExecutor;
+
+        SimulationKernel source;
+        SimulationKernel child;
+        source.reset(123);
+        child.reset(456);
+        source.step();
+
+        const RuntimeIdentity128 source_resource{.high = 700, .low = 701};
+        const RuntimeIdentity128 child_resource{.high = 702, .low = 703};
+        const auto source_journal_path =
+            std::filesystem::temp_directory_path() / "echelon_forge_routeb_real_branch_source.wal";
+        const auto child_journal_path =
+            std::filesystem::temp_directory_path() / "echelon_forge_routeb_real_branch_child.wal";
+        std::error_code remove_error;
+        std::filesystem::remove(source_journal_path, remove_error);
+        std::filesystem::remove(child_journal_path, remove_error);
+
+        auto source_registry = Bridge::create_registry({
+            .kernel = &source,
+            .journal = std::make_shared<host::RuntimeStateTransferFileJournal>(
+                source_journal_path.string()),
+            .transaction_namespace = "routeb-real-source",
+            .bound_resource_identity = source_resource,
+            .sample_tick = [] { return std::uint64_t{1}; },
+            .rederive_python_caches = [] { return true; },
+            .snapshot_python_caches = [] { return std::vector<std::uint8_t>{0}; },
+            .rollback_python_caches = [](const auto &) { return true; },
+            .recover_python_caches =
+                [](const auto &) {
+                    return host::RuntimeStateOwnerImportTransactionPhase::Committed;
+                },
+        });
+        auto child_registry = Bridge::create_registry({
+            .kernel = &child,
+            .journal = std::make_shared<host::RuntimeStateTransferFileJournal>(
+                child_journal_path.string()),
+            .transaction_namespace = "routeb-real-child",
+            .bound_resource_identity = child_resource,
+            .sample_tick = [] { return std::uint64_t{1}; },
+            .rederive_python_caches = [] { return true; },
+            .snapshot_python_caches = [] { return std::vector<std::uint8_t>{0}; },
+            .rollback_python_caches = [](const auto &) { return true; },
+            .recover_python_caches =
+                [](const auto &) {
+                    return host::RuntimeStateOwnerImportTransactionPhase::Committed;
+                },
+        });
+        REQUIRE(source_registry != nullptr);
+        REQUIRE(child_registry != nullptr);
+
+        const std::string plan_sha256 = source.resolved_composition_sha256();
+        auto profile = host::runtime_state_transfer_profile_from_decoder_matrix(
+            "simulation-kernel-native-branch.v2", 1, plan_sha256, plan_sha256);
+        auto parent = integration_barrier();
+        parent.phase = host::RuntimeEpisodePhase::Running;
+        REQUIRE(parent.barrier_sequence > 0);
+        --parent.barrier_sequence;
+
+        auto parent_created = host::RuntimeEpisodeCoordinatorCandidate::create({
+            .initial_episode = parent.episode,
+            .initial_phase = host::RuntimeEpisodePhase::Running,
+            .initial_snapshot_id = parent.snapshot_id,
+            .initial_snapshot_sha256 = parent.snapshot_sha256,
+            .initial_step_sequence = parent.step_sequence,
+            .initial_barrier_sequence = parent.barrier_sequence,
+        });
+        REQUIRE(parent_created.status);
+        auto child_episode = parent.episode;
+        child_episode.world.incarnation.incarnation_epoch += 1;
+        std::atomic<int> child_begin_count{0};
+        std::atomic<int> child_end_count{0};
+
+        host::RuntimeNativeSiblingBranchRequest request{
+            .admission = {.parent_snapshot = parent,
+                          .branch_id = {.high = 704, .low = 705},
+                          .parent_plan_sha256 = plan_sha256,
+                          .intervention_sha256 = std::string(64, 'c'),
+                          .horizon = 1},
+            .parent_coordinator = parent_created.coordinator.get(),
+            .transfer_profile = profile,
+            .census = {.profile_id = profile.profile_id,
+                       .profile_generation = profile.profile_generation,
+                       .source_slot = integration_slot(),
+                       .source_plan_sha256 = plan_sha256,
+                       .target_plan_sha256 = plan_sha256},
+            .derive_census_from_source = true,
+            .evidence = {.source_final_mutation_fence_sequence = 1},
+            .source_owner_registry = source_registry,
+            .child_owner_registry = child_registry,
+            .source_resource_identity = source_resource,
+            .child_resource_identity = child_resource,
+            .branch_authority_nonce = {.high = 706, .low = 707},
+            .child_episode = child_episode,
+            .child_snapshot_id = {.high = 708, .low = 709},
+            .child_snapshot_sha256 = std::string(64, 'd'),
+            .begin_child_state_transfer =
+                [&child_begin_count] {
+                    ++child_begin_count;
+                    return true;
+                },
+            .end_child_state_transfer = [&child_end_count] { ++child_end_count; },
+        };
+
+        const auto result = BranchExecutor::execute(std::move(request));
+        INFO(result.status.detail);
+        REQUIRE(result.status);
+        REQUIRE(result.child_coordinator != nullptr);
+        CHECK(result.parent_snapshot.phase == host::RuntimeEpisodePhase::Running);
+        CHECK(result.child_snapshot.phase == host::RuntimeEpisodePhase::Running);
+        CHECK(result.child_snapshot.episode.world.incarnation !=
+              result.parent_snapshot.episode.world.incarnation);
+        CHECK(Bridge::serialize_world(child) == Bridge::serialize_world(source));
+        CHECK(child_begin_count.load() == 1);
+        CHECK(child_end_count.load() == 1);
+
+        std::filesystem::remove(source_journal_path, remove_error);
+        std::filesystem::remove(child_journal_path, remove_error);
     }
 
     TEST_CASE("Python cache owner durably recovers failed rederive and compensates commit") {
@@ -1431,6 +1566,38 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
     }
 
     TEST_CASE(
+        "Flecs JSON numbers preserve signed exponents and reject invalid or oversized tokens") {
+        flecs::world world;
+        const std::array<std::pair<const char *, double>, 6> values{{
+            {"1e+20", 1e20},
+            {"-1E-20", -1e-20},
+            {"7.88e-308", 7.88e-308},
+            {"4.9406564584124654e-324", std::numeric_limits<double>::denorm_min()},
+            {"1.7976931348623157e+308", std::numeric_limits<double>::max()},
+            {"-0.0", -0.0},
+        }};
+        for (const auto &[encoded, expected] : values) {
+            INFO(encoded);
+            double actual = 42.0;
+            const char *end =
+                ecs_ptr_from_json(world.c_ptr(), ecs_id(ecs_f64_t), &actual, encoded, nullptr);
+            REQUIRE(end != nullptr);
+            CHECK(*end == '\0');
+            CHECK(actual == expected);
+            CHECK(std::signbit(actual) == std::signbit(expected));
+        }
+        for (const auto &encoded :
+             std::vector<std::string>{"-", "01", "1.", "1e", "1e+", "1e-", "1e+-2", "1.2.3", "1x",
+                                      std::string(300, '1')}) {
+            INFO(encoded);
+            double actual = 42.0;
+            CHECK(ecs_ptr_from_json(world.c_ptr(), ecs_id(ecs_f64_t), &actual, encoded.c_str(),
+                                    nullptr) == nullptr);
+            CHECK(actual == 42.0);
+        }
+    }
+
+    TEST_CASE(
         "ECS owner preserves current additive AeroTuning fields and rejects incomplete truth") {
         using Bridge = integration::SimulationKernelStateOwnerBridge;
         using json = nlohmann::json;
@@ -1444,6 +1611,23 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         AeroTuning tuning;
         tuning.enabled = true;
         tuning.flap_lift_coefficient_per_full_deflection = 0.45;
+        SUBCASE("ordinary double survives state transfer") {}
+        SUBCASE("small normal double survives state transfer") {
+            tuning.flap_lift_coefficient_per_full_deflection = 7.88e-308;
+        }
+        SUBCASE("smallest subnormal double survives state transfer") {
+            tuning.flap_lift_coefficient_per_full_deflection =
+                std::numeric_limits<double>::denorm_min();
+        }
+        SUBCASE("largest finite double survives state transfer") {
+            tuning.flap_lift_coefficient_per_full_deflection = std::numeric_limits<double>::max();
+        }
+        SUBCASE("large integral double survives state transfer") {
+            tuning.flap_lift_coefficient_per_full_deflection = 1e20;
+        }
+        SUBCASE("negative zero survives state transfer") {
+            tuning.flap_lift_coefficient_per_full_deflection = -0.0;
+        }
         tuning.stores_drag_coefficient_per_drag_index = 0.003;
         tuning.landing_gear_drag_coefficient_per_extension = 0.07;
         tuning.speedbrake_drag_coefficient_per_full_extension = 0.11;
@@ -1470,6 +1654,7 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         for (const auto &[name, member] : fields) {
             REQUIRE(encoded.contains(name));
             CHECK(encoded[name].get<double>() == tuning.*member);
+            CHECK(std::signbit(encoded[name].get<double>()) == std::signbit(tuning.*member));
         }
         const auto wire = document.dump();
         REQUIRE(Bridge::restore_world(target, {wire.begin(), wire.end()}));
@@ -1483,6 +1668,7 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             for (const auto &[name, member] : fields) {
                 INFO(name);
                 CHECK(restored->*member == tuning.*member);
+                CHECK(std::signbit(restored->*member) == std::signbit(tuning.*member));
             }
         }
         const auto before = Bridge::serialize_world(target);

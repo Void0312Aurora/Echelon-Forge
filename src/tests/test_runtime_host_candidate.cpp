@@ -1,4 +1,5 @@
 #include "runtime_host_candidate.h"
+#include "runtime_branch_contract.h"
 
 #include <doctest/doctest.h>
 
@@ -543,6 +544,94 @@ host::RuntimeLeaseAdmission acquire(host::RuntimeHostCandidate &runtime,
 } // namespace
 
 TEST_SUITE("runtime_host_candidate") {
+
+    TEST_CASE("active host supplies the authoritative parent to a native sibling branch") {
+        host::RuntimeHostCandidate runtime(
+            {.host_id = logical_host_id(901), .mode = host::RuntimeHostMode::Dark});
+        const auto active_control = make_control();
+        active_control->set_native_terminal(false);
+        const RuntimeIncarnationRef active = publish_initial(runtime, active_control);
+
+        auto episode_admission = runtime.issue_shadow_episode(0);
+        REQUIRE(episode_admission.status);
+        const auto action = runtime.submit_shadow_episode(
+            episode_admission.capability,
+            {.kind = host::RuntimeEpisodeIntentKind::Action,
+             .expected_episode = episode_admission.capability.episode(),
+             .expected_step_sequence = 0,
+             .idempotency_key = {.high = 902, .low = 903},
+             .payload_sha256 = kHash});
+        REQUIRE(action.status);
+        CHECK(action.receipt.resulting_step_sequence == 1);
+        REQUIRE(runtime.release_shadow_episode(episode_admission.capability));
+
+        const auto parent = runtime.shadow_episode_snapshot(0);
+        REQUIRE(parent.episode.world.incarnation == active);
+        REQUIRE(parent.phase == host::RuntimeEpisodePhase::Running);
+        REQUIRE(parent.step_sequence == 1);
+        const RuntimeIdentity128 child_resource{.high = 904, .low = 905};
+        const auto child_registry = make_transfer_owner_registry(child_resource);
+        std::atomic<int> child_begin_count{0};
+        std::atomic<int> child_end_count{0};
+        const auto profile = host::runtime_state_transfer_profile_from_decoder_matrix(
+            "host-native-branch.v2", 1, kHash, kHash);
+        host::RuntimeNativeSiblingBranchRequest request{
+            .admission = {.parent_snapshot = parent,
+                          .branch_id = {.high = 906, .low = 907},
+                          .parent_plan_sha256 = kHash,
+                          .intervention_sha256 = kHash2,
+                          .horizon = 1},
+            .transfer_profile = profile,
+            .census = {.profile_id = profile.profile_id,
+                       .profile_generation = profile.profile_generation,
+                       .source_slot = parent.episode.world.incarnation,
+                       .source_plan_sha256 = kHash,
+                       .target_plan_sha256 = kHash},
+            .derive_census_from_source = true,
+            .child_owner_registry = child_registry,
+            .child_resource_identity = child_resource,
+            .child_episode =
+                [&] {
+                    auto value = parent.episode;
+                    ++value.world.incarnation.incarnation_epoch;
+                    return value;
+                }(),
+            .child_snapshot_id = {.high = 908, .low = 909},
+            .child_snapshot_sha256 = kHash2,
+            .begin_child_state_transfer =
+                [&child_begin_count] {
+                    ++child_begin_count;
+                    return true;
+                },
+            .end_child_state_transfer = [&child_end_count] { ++child_end_count; },
+        };
+
+        SUBCASE("admitted plan executes the branch") {
+            const auto result = runtime.execute_shadow_sibling_branch(std::move(request));
+            INFO(result.status.detail);
+            REQUIRE(result.status);
+            CHECK(result.parent_snapshot.phase == host::RuntimeEpisodePhase::Running);
+            CHECK(result.parent_snapshot.step_sequence == parent.step_sequence);
+            CHECK(result.child_snapshot.episode.world.incarnation !=
+                  result.parent_snapshot.episode.world.incarnation);
+            CHECK(child_begin_count.load() == 1);
+            CHECK(child_end_count.load() == 1);
+            CHECK(runtime.shadow_episode_snapshot(0).phase == host::RuntimeEpisodePhase::Running);
+        }
+        SUBCASE("caller plan drift is rejected") {
+            request.transfer_profile.target_plan_sha256 = kHash2;
+            request.census.target_plan_sha256 = kHash2;
+            const auto result = runtime.execute_shadow_sibling_branch(std::move(request));
+            CHECK_FALSE(result.status);
+            CHECK(result.status.error == host::RuntimeStateTransferError::PlanMismatch);
+            CHECK(child_begin_count.load() == 0);
+            CHECK(runtime.shadow_episode_snapshot(0).phase == host::RuntimeEpisodePhase::Running);
+        }
+
+        auto still_usable = runtime.issue_shadow_episode(0);
+        REQUIRE(still_usable.status);
+        REQUIRE(runtime.release_shadow_episode(still_usable.capability));
+    }
 
     TEST_CASE("initial publication is dark-only and admits identity-bound leases") {
         host::RuntimeHostCandidate runtime(
