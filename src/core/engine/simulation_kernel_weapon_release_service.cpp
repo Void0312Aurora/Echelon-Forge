@@ -26,11 +26,13 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <charconv>
 #include <cmath>
 #include <cstdint>
 #include <limits>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace {
@@ -443,8 +445,13 @@ void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
     }
 }
 
-std::optional<std::string> platform_definition_name_from_munition_name(const char *munition_name,
-                                                                       int station_id) {
+struct MunitionStoreIdentity {
+    std::string platform_definition_name;
+    std::size_t store_index = 0;
+};
+
+std::optional<MunitionStoreIdentity>
+platform_definition_name_from_munition_name(const char *munition_name, int station_id) {
     if (!munition_name || station_id <= 0) {
         return std::nullopt;
     }
@@ -453,10 +460,28 @@ std::optional<std::string> platform_definition_name_from_munition_name(const cha
     if (full_name.size() <= suffix.size()) {
         return std::nullopt;
     }
-    if (full_name.rfind(suffix) != full_name.size() - suffix.size()) {
+    const std::size_t suffix_pos = full_name.rfind(suffix);
+    if (suffix_pos == std::string::npos || suffix_pos == 0) {
         return std::nullopt;
     }
-    return full_name.substr(0, full_name.size() - suffix.size());
+    const std::string_view tail(full_name.data() + suffix_pos + suffix.size(),
+                                full_name.size() - suffix_pos - suffix.size());
+    std::size_t store_index = 0;
+    if (!tail.empty()) {
+        constexpr std::string_view store_prefix = "_Store_";
+        if (!tail.starts_with(store_prefix)) {
+            return std::nullopt;
+        }
+        std::size_t ordinal = 0;
+        const char *begin = tail.data() + store_prefix.size();
+        const char *end = tail.data() + tail.size();
+        const auto [parsed_end, error] = std::from_chars(begin, end, ordinal);
+        if (error != std::errc{} || parsed_end != end || ordinal == 0) {
+            return std::nullopt;
+        }
+        store_index = ordinal - 1;
+    }
+    return MunitionStoreIdentity{full_name.substr(0, suffix_pos), store_index};
 }
 
 bool missile_launch_envelope_allows(const MissileTuning &tuning, const Detection &det) {
@@ -513,33 +538,34 @@ SimulationKernelWeaponReleaseService::resolve_missile_launch_definition(
                 continue;
             }
 
-            const auto platform_name = platform_definition_name_from_munition_name(
+            const auto munition_identity = platform_definition_name_from_munition_name(
                 ecs_get_name(ecs_.c_ptr(), child_id), munition->station_id);
-            if (!platform_name.has_value()) {
+            if (!munition_identity.has_value()) {
                 continue;
             }
 
             const UnitDefinition *platform_definition =
-                unit_factory_.get_definition(*platform_name);
+                unit_factory_.get_definition(munition_identity->platform_definition_name);
             if (!platform_definition) {
                 continue;
             }
 
             const auto weapon_it = platform_definition->default_loadout.find(munition->station_id);
-            if (weapon_it == platform_definition->default_loadout.end()) {
+            if (weapon_it == platform_definition->default_loadout.end() ||
+                munition_identity->store_index >= weapon_it->second.size()) {
                 continue;
             }
 
-            const UnitDefinition *weapon_definition =
-                unit_factory_.get_definition(weapon_it->second);
+            const std::string &weapon_name = weapon_it->second[munition_identity->store_index];
+            const UnitDefinition *weapon_definition = unit_factory_.get_definition(weapon_name);
             if (!weapon_definition || weapon_definition->type != UnitType::Missile) {
                 continue;
             }
 
             ResolvedMissileLaunchDefinition resolved{};
             resolved.munition_entity_id = static_cast<uint64_t>(child_id);
-            resolved.platform_definition_name = *platform_name;
-            resolved.weapon_definition_name = weapon_it->second;
+            resolved.platform_definition_name = munition_identity->platform_definition_name;
+            resolved.weapon_definition_name = weapon_name;
             resolved.station_id = munition->station_id;
             resolved.platform_definition = platform_definition;
             resolved.weapon_definition = weapon_definition;

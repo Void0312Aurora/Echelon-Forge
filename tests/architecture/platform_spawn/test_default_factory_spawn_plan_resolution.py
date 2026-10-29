@@ -215,8 +215,8 @@ def test_wp14_synthetic_platform_definition_surfaces_sensor_loadout_command_and_
       }};
       synthetic.mounted_sensors.mounts.push_back(SensorMount{{synthetic.sensor, "synthetic_surface_radar"}});
       synthetic.default_loadout = {{
-        {{1, "AIM-120C-7"}},
-        {{2, "AIM-9X"}},
+        {{1, {{"AIM-120C-7"}}}},
+        {{2, {{"AIM-9X"}}}},
       }};
       synthetic.has_command_link = true;
       synthetic.command_link = {{0.2, 0.0}};

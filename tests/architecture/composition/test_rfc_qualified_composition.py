@@ -131,8 +131,8 @@ def _legacy_projection(relative_path):
         if key.endswith("_ref") and isinstance(value, str)
     ]
     fields += [
-        (f"default_loadout.{station}", ref)
-        for station, ref in legacy.get("default_loadout", {}).items()
+        (f"default_loadout.{station}", stores[0] if isinstance(stores, list) else stores)
+        for station, stores in legacy.get("default_loadout", {}).items()
     ]
     modules = {
         field: ModuleRecord(

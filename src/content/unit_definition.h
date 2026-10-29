@@ -145,7 +145,7 @@ struct Engine {
 struct Hardpoint {
     int station_id;
     std::vector<std::string> supported_types;
-    double capacity_kg;
+    double capacity_kg = 0.0;
 };
 
 struct Airframe {
@@ -197,7 +197,9 @@ struct UnitDefinition {
 
     // Modular Data
     std::vector<Hardpoint> hardpoints;
-    std::unordered_map<int, std::string> default_loadout;
+    // Each station can carry more than one store. The JSON loader accepts the
+    // historical single-string form and normalizes it to a one-element list.
+    std::unordered_map<int, std::vector<std::string>> default_loadout;
 
     // Module Definitions (if type == Engine)
     Engine engine_data;

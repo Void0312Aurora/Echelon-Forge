@@ -64,7 +64,7 @@ Based on the repository aircraft examples. Units follow the field suffix unless 
 | `hardpoints[].station_id` | integer | Station identifier used by `default_loadout`. |
 | `hardpoints[].type[]` | string list | Supported station or launcher classes. |
 | `hardpoints[].capacity_kg` | kg | Station carrying capacity. |
-| `default_loadout` | object | Maps stringified station IDs to weapon definition names. |
+| `default_loadout` | object | Maps stringified station IDs to ordered weapon definition references. A legacy string means one store; an array declares one or more stores at that station. |
 | `has_ammo` | boolean | Enables the generic ammo component where applicable. |
 | `_provenance.sources[]` | reference list | Source references used by the entry. |
 | `_provenance.modeling_notes[]` | string list | Modeling assumptions and non-authoritative boundaries. |

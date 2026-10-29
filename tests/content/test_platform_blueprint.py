@@ -374,7 +374,7 @@ def test_legacy_projection_requires_explicit_loadout_path(blueprint, modules) ->
     assert lowered["default_loadout"]["1"] == "Aim120"
 
 
-def test_legacy_projection_rejects_multi_store_quantity_until_native_contract_exists(
+def test_legacy_projection_preserves_multi_store_quantity(
     blueprint, modules
 ) -> None:
     loadout_blueprint = replace(
@@ -419,5 +419,5 @@ def test_legacy_projection_rejects_multi_store_quantity_until_native_contract_ex
         slot_paths=(("propulsion", "propulsion"), ("primary_sensor", "sensor")),
         loadout_paths=(("station_1", "default_loadout.1"),),
     )
-    with pytest.raises(PlatformAssemblyError, match="native_loadout_quantity_unsupported"):
-        lower_to_legacy_unit_definition(plan, projection, modules=loadout_modules)
+    lowered = lower_to_legacy_unit_definition(plan, projection, modules=loadout_modules)
+    assert lowered["default_loadout"]["1"] == ["Aim120", "Aim120"]

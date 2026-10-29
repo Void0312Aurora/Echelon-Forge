@@ -253,10 +253,22 @@
     "default_loadout": {
       "type": "object",
       "additionalProperties": {
-        "type": "string",
-        "description": "Weapon name."
+        "oneOf": [
+          {
+            "type": "string",
+            "minLength": 1,
+            "description": "Legacy single-store weapon reference."
+          },
+          {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1},
+            "description": "Ordered weapon references carried at this station."
+          }
+        ],
+        "description": "Station loadout; a string is imported as a one-item store list."
       },
-      "description": "Station-to-weapon mapping."
+      "description": "Station-to-store-list mapping."
     },
     "has_ammo": {
       "type": "boolean",

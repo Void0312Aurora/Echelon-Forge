@@ -162,7 +162,7 @@ TEST_SUITE("content_compile_passes") {
         std::vector<UnitDefinition> definitions(2);
         definitions[0].name = "Ship_A";
         definitions[0].sensor_ref = "AN/SPY-1D";
-        definitions[0].default_loadout[1] = "SM-2";
+        definitions[0].default_loadout[1] = {"SM-2"};
         definitions[1].name = "Jet_B";
         definitions[1].engine_ref = "F110";
         definitions[1].sensor_refs = {"APG-68"};
@@ -222,11 +222,27 @@ TEST_SUITE("content_compile_passes") {
             platform.erase("hardpoints");
             expected = "platform.native_loadout_hardpoint_missing:1";
         }
+        SUBCASE("multi-store aggregate exceeds station capacity") {
+            platform["hardpoints"][0]["capacity_kg"] = 15.0;
+            platform["default_loadout"]["1"] = {"Fixture_Missile", "Fixture_Missile"};
+            expected = "platform.native_loadout_capacity_exceeded:1";
+        }
+        SUBCASE("used station requires a positive finite capacity") {
+            platform["hardpoints"][0]["capacity_kg"] = 0.0;
+            expected = "platform.native_hardpoint_capacity_invalid:1";
+        }
+        SUBCASE("used station cannot declare an empty store list") {
+            platform["default_loadout"]["1"] = nlohmann::json::array();
+            expected = "platform.native_loadout_stores_empty:1";
+        }
 
         const TemporaryLoadoutDefinitions fixture(platform);
+        const TemporaryLoadoutDefinitions module_fixture(
+            {{"name", "Fixture_Missile"}, {"type", "Missile"}, {"mass_kg", 10.0}});
 
         DefaultUnitFactory factory;
         std::string error;
+        REQUIRE(factory.load_definitions(module_fixture.path.string(), &error));
         REQUIRE(factory.load_definitions(fixture.path.string(), &error));
         const auto plan = factory.resolve_platform_spawn_plan_for_type_name("Loadout_Aircraft");
         CHECK_FALSE(plan.admitted);
@@ -252,7 +268,12 @@ TEST_SUITE("content_compile_passes") {
     TEST_CASE("valid native loadout preserves stores and legacy unarmed spawn") {
         auto platform = loadout_test_platform();
         bool armed = true;
+        std::size_t store_count = 1;
         SUBCASE("declared station and resolved module") {}
+        SUBCASE("explicit same-station multi-store list") {
+            platform["default_loadout"]["1"] = {"Fixture_Missile", "Fixture_Missile"};
+            store_count = 2;
+        }
         SUBCASE("legacy unarmed platform") {
             platform.erase("default_loadout");
             platform.erase("hardpoints");
@@ -274,14 +295,21 @@ TEST_SUITE("content_compile_passes") {
         const auto entity = factory.spawn(world, "Loadout_Aircraft", params);
         REQUIRE(entity.is_valid());
         REQUIRE(entity.get<Mass>() != nullptr);
-        CHECK(entity.get<Mass>()->stores_mass_kg == (armed ? 10.0 : 0.0));
-        CHECK(world.count<Munition>() == (armed ? 1 : 0));
+        CHECK(entity.get<Mass>()->stores_mass_kg == (armed ? 10.0 * store_count : 0.0));
+        CHECK(world.count<Munition>() == (armed ? store_count : 0));
         if (armed) {
             const auto child = entity.lookup("Loadout_Aircraft_Stn_1");
             REQUIRE(child.is_valid());
             REQUIRE(child.get<Munition>() != nullptr);
             CHECK(child.get<Munition>()->station_id == 1);
             CHECK(child.get<KeyEntity>()->type == UnitType::Missile);
+            if (store_count > 1) {
+                const auto second_child = entity.lookup("Loadout_Aircraft_Stn_1_Store_2");
+                REQUIRE(second_child.is_valid());
+                REQUIRE(second_child.get<Munition>() != nullptr);
+                CHECK(second_child.get<Munition>()->station_id == 1);
+                CHECK(second_child.get<KeyEntity>()->type == UnitType::Missile);
+            }
         }
     }
 
