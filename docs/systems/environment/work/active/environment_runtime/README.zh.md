@@ -4,9 +4,10 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/systems/environment/work/active/environment_runtime/README.md`
 Owner: `systems/environment`
-Last verified: `2026-09-28`
+Last verified: `2026-10-29`
 
-状态：`2026-09-28` active。`P0 Boundary` 已于 `2026-09-28` 获 owner 接受；尚无实现任务簇开工。
+状态：`2026-10-29` active。`P0 Boundary` 已于 `2026-09-28` 获 owner 接受；`P1 Evidence`（`P1-A`、`P1-B`）
+于 `2026-10-29` 通过，见 [P1 清点](environment_runtime_p1_inventory_20261029.md)。尚无实现任务簇开工。
 
 语言：
 
@@ -22,8 +23,8 @@ Last verified: `2026-09-28`
 - [公开数据源准入标准](../../../../../research/standards/public_data_source_admission.zh.md)
 - [大地坐标系](../../../../physics/work/active/geodetic_frame/README.zh.md)——同级工作包
 - 需求案例：[航母打击群对抗](../../../../../domains/naval/work/active/carrier_strike_group_engagement/README.zh.md)
-  （海军），以及 `origin/work/army-mechanisms` 上的陆军原生地形线
-  （`docs/domains/ground/work/active/ground_arnis_native_terrain_v1/`，未进 `main`）
+  （海军），以及自 `2026-10-01` 起已在 `main` 上的陆军原生地形线
+  （[已接受记录](../../../../../domains/ground/reviews/ground_arnis_native_terrain_v1_20260924/README.zh.md)）
 - [子项目创建标准](../../../../../engineering/automation/rules/subproject_creation_standard.zh.md)
 - 代码：`src/core/interfaces/environment_model.h`、`src/models/environment/`、
   `python/scenario/environment_substrate/`、`python/scenario/runtime/kernel_apply.py`
@@ -49,7 +50,7 @@ Last verified: `2026-09-28`
 | 离线分层底座 | G0 已接受，在 `main` | `components.py`（`maritime_ocean` 第 38 层、`hydrology` 30、`wind_field` 36、`illumination` 37） | 仅数据契约；无运行时权威 |
 | Arnis 陆地/近岸导入 | phase 1 已接受，在 `main` | `tools/environment/arnis/`；`importers/arnis_bundle.py` | OSM + USGS 3DEP + ESA WorldCover；水体只有轮廓和水面高程，没有深度、温度或盐度 |
 | 运行时地形 | 一个全局栅格 | `default_environment_model.cpp` 中的 `RasterGrid` | 无多瓦片、无多图层、垂直基准未指定 |
-| 陆军原生地形 | 陆军于 `2026-09-24` 接受，**未进 `main`** | `origin/work/army-mechanisms` 提交 `fdbf8ee8`..`986335e3` | 陆军代码位于共享文件内；迁移见下 |
+| 陆军原生地形 | 陆军于 `2026-09-24` 接受；自 `2026-10-01` 起在 `main` 上（合并 `85abc7ce6`） | `be2de24af` 与陆军栈 #82–#85 | 陆军所有的方法、类型和策略位于共享文件内，但没有领域 include；见 [P1 清点](environment_runtime_p1_inventory_20261029.md) |
 | 海洋状态 | 场景常量，全局 | `set_maritime_state` / `get_maritime_state` | 无风浪/涌浪之分，无空间场 |
 | 风、太阳 | 场景常量 | `set_wind`、`set_sun_direction` | 无时钟驱动的昼夜 |
 | 海洋数据 | 缺失 | 无 | 无水深、温盐剖面或环境噪声 |
@@ -65,22 +66,23 @@ Last verified: `2026-09-28`
 整个拟议水平段，提供方须计入中途隆起的海底。合成浅滩仅用于回归测试，不代表海洋图集已准入；
 本轮也不包含海底接触、损伤或流体动力学。
 
-### `origin/work/army-mechanisms` 上的陆军耦合
+### `main` 上的陆军耦合
 
-于 `2026-09-28` 在 `3cee10ff` 测得：
+`2026-09-28` 在 `origin/work/army-mechanisms`（`3cee10ff`）上测得的结论已被取代。
+`2026-10-29` 在 `main`（`3d7df0818`）上测得（P1-B）：
 
-- `src/core/interfaces/environment_model.h` 引入了
-  `components/domains/ground/tasking/ground_tasking_enums.h`，并声明了 `get_ground_slope_deg`、
-  `load_arnis_terrain_bundle`、`load_arnis_field_overlay`、`get_ground_field_semantic_observation`、
-  `get_ground_transition_observation` 与 `get_ground_transition_movement_observation`（最后一个接收
-  `GroundStance`）。
-- `src/models/environment/default_environment_model.cpp` 引入了
-  `systems/domains/ground/movement_effects.h` 并调用
-  `ground_infantry_movement_detail::evaluate_movement_effects`。include 方向门
-  （`tools/architecture/cpp_include_graph.py`）把这条 `models` → `systems` 边判为不允许，
-  该分支也没有登记它。
-- `get_terrain_at` 把 `SurfaceType::Water` 当作不可通行，瓦片以外返回 `Obstacle`。两者都是陆军的
-  通行语义：舰艇把水当作可航行，陆地瓦片以外的开阔海面也不是障碍。
+- 两个共享文件都不再引入领域头文件。`16fb9bcda` 在陆军栈合并之前就移除了
+  `ground_tasking_enums.h` include、`movement_effects.h` include 和
+  `get_ground_transition_movement_observation`。
+- `environment_model.h` 仍声明陆军方法和类型：`get_ground_field_semantic_observation`、
+  `get_ground_transition_observation`、`load_arnis_field_overlay`、`GroundFieldSemanticObservation`
+  与 `GroundTransitionObservation`。`get_ground_slope_deg` 本身是领域中立的，只是命名带了 Ground。
+- `get_terrain_at` 仍把 `Water` 当作不可通行，并在已加载栅格以外返回 `Obstacle`，而
+  `get_terrain_elevation` 在同一位置返回程序化山丘。两者都是陆军的通行语义，而且这两个查询在
+  栅格外互相矛盾。
+
+[P1 清点](environment_runtime_p1_inventory_20261029.md)对每处环境读取和每项陆军内容都做了分类，
+并记录了尚未合并的陆军地形通视查询应如何落地。
 
 ## 范围
 
@@ -114,7 +116,7 @@ Last verified: `2026-09-28`
 | 阶段 | 目标 | 进入条件 | 退出条件 | 状态 |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | 冻结范围与分层运行时契约。 | owner 批准 | README 与任务簇获批 | accepted |
-| `P1 Evidence` | 清点每处环境读取、`main` 上的运行时，以及陆军分支对共享文件的改动。 | `P0` | 每个读取点与每项陆军新增都归为共享、陆军所有或退役 | planned |
+| `P1 Evidence` | 清点每处环境读取、`main` 上的运行时，以及陆军分支对共享文件的改动。 | `P0` | 每个读取点与每项陆军新增都归为共享、陆军所有或退役 | pass `2026-10-29`（[清点](environment_runtime_p1_inventory_20261029.md)） |
 | `P2 Contract` | 分层状态、垂直基准、水体契约、瓦片模型、与域无关的查询 API。 | `P1` | 契约成文并有原生测试覆盖 | planned |
 | `P3 Implementation` | 多瓦片栅格、水体、海岸线、可变天气与海况、时钟驱动的太阳、声学数据。 | `P2`；太阳位置与瓦片定位需 [大地坐标系](../../../../physics/work/active/geodetic_frame/README.zh.md) `P2-A` 的锚点 | 对照声明输入与参考值的原生与 Python 测试通过 | planned |
 | `P4 Migration` | 把陆军原生地形迁到共享运行时；陆军逻辑迁回陆军；其余使用方迁到查询上。 | `P3` | 共享文件不再引入任何域头文件；陆军验收测试重跑通过 | planned |
@@ -123,13 +125,13 @@ Last verified: `2026-09-28`
 
 ### 陆军迁移
 
-先在海军分支这条线上完成；与 `origin/work/army-mechanisms` 的冲突在两线合并时解决。
+陆军原生地形已在 `main` 上，因此迁移从 `main` 开始。
 
 - 共享部分：栅格加载与分瓦片、高程与地表覆盖查询、水体与海岸线查询、由高程算出的原始坡度。
 - 陆军所有：依赖 `GroundStance` 的机动效果、通行性、过渡代价、场地语义观测。这些迁到
   `src/systems/domains/ground/` 或 `src/models/domains/ground/`，并基于共享查询实现。
-- 从共享接口退役：`get_ground_*` 方法与 `environment_model.h` 中的陆军 include；
-  `default_environment_model.cpp` 中不允许的 `models` → `systems` 边。
+- 从共享接口退役：`environment_model.h` 中陆军的场地语义与过渡方法及结构体。陆军 include 和
+  `models` → `systems` 边已由 `16fb9bcda` 移除。
 - 陆军包已接受的测试就是迁移的回归证据；任何变化的结果都要记录，不做重新调参。
 
 ## 任务簇
@@ -164,7 +166,8 @@ Last verified: `2026-09-28`
 
 ## 遗留与下一步
 
-- `P0` owner 审阅。
+- `P2-A` 契约（主线程），依据 P1 清点的关键发现：高程与地表在瓦片外给出同一个结果、声明垂直基准、
+  通视使用绝对高度还是离地高度，以及地球曲率。
 - **海洋数据线**（本 owner，在 `P2 Contract` 之后开启）：从经准入的公开来源导入水深、温盐
   气候态、海况与风、海岸线，并提供带种子的合成海洋生成器，供镜像与虚构场景使用。候选来源只作
   记录，在通过[准入标准](../../../../../research/standards/public_data_source_admission.zh.md)之前不算准入。
