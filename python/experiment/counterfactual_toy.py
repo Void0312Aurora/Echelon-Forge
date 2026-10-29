@@ -14,6 +14,17 @@ from typing import Literal
 
 CandidateStrategy = Literal["uniform", "reward_td", "oracle"]
 
+HOLD = 0
+COMMIT = 1
+#: Consecutive commit steps before the delayed benefit is paid.
+COMMIT_DELAY_STEPS = 3
+#: Toy rewards are integer quarter points, so they stay exact in any backend.
+REWARD_UNITS_PER_POINT = 4
+_HOLD_REWARD = 1
+_COMMIT_COST = -2
+_MATURED_COMMIT_BENEFIT = 6
+_JOINT_SYNERGY = 8
+
 
 @dataclass(frozen=True)
 class DecisionCandidate:
@@ -54,8 +65,8 @@ def select_candidates(
     if budget < 0:
         raise ValueError("budget must be non-negative")
     if strategy == "uniform":
-        key = lambda item: (item.time_step, item.candidate_id)
-    elif strategy == "reward_td":
+        return _evenly_spaced(candidates, budget)
+    if strategy == "reward_td":
         key = lambda item: (
             -(abs(item.reward_delta) + abs(item.td_surprise)),
             item.time_step,
@@ -66,6 +77,35 @@ def select_candidates(
     else:
         raise ValueError(f"unknown candidate strategy: {strategy!r}")
     return tuple(sorted(candidates, key=key)[:budget])
+
+
+def evenly_spaced_indices(count: int, budget: int) -> tuple[int, ...]:
+    """Pick ``budget`` of ``count`` ordered indices spread from first to last.
+
+    Probe ``i`` takes index ``i * (count - 1) / (budget - 1)`` rounded half up,
+    so both endpoints are always probed and indices never repeat.
+    """
+
+    if budget < 0 or count < 0:
+        raise ValueError("count and budget must be non-negative")
+    if budget >= count:
+        return tuple(range(count))
+    if budget == 0:
+        return ()
+    if budget == 1:
+        return (0,)
+    span = count - 1
+    gaps = budget - 1
+    return tuple((2 * index * span + gaps) // (2 * gaps) for index in range(budget))
+
+
+def _evenly_spaced(
+    candidates: tuple[DecisionCandidate, ...], budget: int
+) -> tuple[DecisionCandidate, ...]:
+    """Evenly spaced probes over the time-ordered candidates (input-order free)."""
+
+    ordered = sorted(candidates, key=lambda item: (item.time_step, item.candidate_id))
+    return tuple(ordered[index] for index in evenly_spaced_indices(len(ordered), budget))
 
 
 def candidate_recall(
@@ -81,6 +121,44 @@ def candidate_recall(
     if not important:
         return 1.0
     return len(important & {item.candidate_id for item in selected}) / len(important)
+
+
+def agent_step_rewards(actions: tuple[int, ...], commit_ages: tuple[int, ...]) -> tuple[int, ...]:
+    """Per-agent reward, in quarter points, for one toy step.
+
+    ``commit_ages`` counts each agent's consecutive commit steps before this
+    one. Hold pays ``+1``. Commit costs ``-2`` and, once the agent has committed
+    for ``COMMIT_DELAY_STEPS`` steps, also pays ``+6``. When two or more agents
+    all hold matured commitments, a joint synergy of ``8`` is split evenly with
+    any remainder going to the lowest agent indices.
+    """
+
+    if not actions or len(actions) != len(commit_ages):
+        raise ValueError("actions and commit_ages must be non-empty and aligned")
+    if any(action not in (HOLD, COMMIT) for action in actions):
+        raise ValueError("toy actions must be 0 or 1")
+    if any(isinstance(age, bool) or not isinstance(age, int) or age < 0 for age in commit_ages):
+        raise ValueError("commit ages must be non-negative integers")
+    rewards = [
+        _HOLD_REWARD
+        if action == HOLD
+        else _COMMIT_COST + (_MATURED_COMMIT_BENEFIT if age >= COMMIT_DELAY_STEPS else 0)
+        for action, age in zip(actions, commit_ages)
+    ]
+    count = len(actions)
+    if count >= 2 and all(
+        action == COMMIT and age >= COMMIT_DELAY_STEPS for action, age in zip(actions, commit_ages)
+    ):
+        share, remainder = divmod(_JOINT_SYNERGY, count)
+        for index in range(count):
+            rewards[index] += share + (1 if index < remainder else 0)
+    return tuple(rewards)
+
+
+def advance_commit_ages(actions: tuple[int, ...], commit_ages: tuple[int, ...]) -> tuple[int, ...]:
+    """Commit extends an agent's streak; hold resets it."""
+
+    return tuple(age + 1 if action == COMMIT else 0 for action, age in zip(actions, commit_ages))
 
 
 @dataclass(frozen=True)
@@ -112,14 +190,12 @@ def rollout_branch(
     if not 0.0 < gamma <= 1.0:
         raise ValueError("gamma must be in (0, 1]")
 
-    committed = sum(actions)
-    joint_commitment = int(len(actions) >= 2 and committed == len(actions))
+    commit_ages = (0,) * len(actions)
     step_returns = []
-    for step in range(horizon):
-        immediate = 0.25 * (len(actions) - committed) - 0.5 * committed
-        delayed = 1.5 * float(committed) if step >= 3 else 0.0
-        synergy = 2.0 * joint_commitment if step >= 3 else 0.0
-        step_returns.append(immediate + delayed + synergy)
+    for _ in range(horizon):
+        rewards = agent_step_rewards(actions, commit_ages)
+        step_returns.append(sum(rewards) / REWARD_UNITS_PER_POINT)
+        commit_ages = advance_commit_ages(actions, commit_ages)
 
     discounted_return = sum(gamma**step * value for step, value in enumerate(step_returns))
     return BranchResult(
@@ -153,10 +229,17 @@ def interaction_residual(horizon: int, gamma: float = 1.0) -> float:
 
 
 __all__ = [
+    "COMMIT",
+    "COMMIT_DELAY_STEPS",
+    "HOLD",
+    "REWARD_UNITS_PER_POINT",
     "BranchResult",
     "CandidateStrategy",
     "DecisionCandidate",
+    "advance_commit_ages",
+    "agent_step_rewards",
     "best_branch",
+    "evenly_spaced_indices",
     "candidate_recall",
     "interaction_residual",
     "rollout_branch",

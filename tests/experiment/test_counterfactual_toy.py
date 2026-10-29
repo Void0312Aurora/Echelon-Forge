@@ -70,3 +70,50 @@ def test_uniform_selector_is_a_baseline_and_does_not_read_oracle_gain() -> None:
     )
     selected = select_candidates(candidates, budget=1, strategy="uniform")
     assert [item.candidate_id for item in selected] == ["early"]
+    relabeled = tuple(
+        DecisionCandidate(item.candidate_id, item.time_step, 0.0, 0.0, -item.oracle_gain)
+        for item in candidates
+    )
+    assert select_candidates(relabeled, budget=1, strategy="uniform") == tuple(
+        item for item in relabeled if item.candidate_id == "early"
+    )
+
+
+def test_uniform_selector_spreads_probes_across_the_whole_timeline() -> None:
+    candidates = tuple(
+        DecisionCandidate(f"t{time_step}", time_step, 0.0, 0.0, 0.0)
+        for time_step in range(0, 100, 10)
+    )
+    selected = select_candidates(candidates, budget=3, strategy="uniform")
+    assert [item.time_step for item in selected] == [0, 50, 90]
+    every = select_candidates(candidates, budget=len(candidates), strategy="uniform")
+    assert [item.time_step for item in every] == list(range(0, 100, 10))
+    assert select_candidates(candidates, budget=0, strategy="uniform") == ()
+
+
+def test_uniform_selector_is_independent_of_input_order() -> None:
+    candidates = tuple(
+        DecisionCandidate(f"t{time_step}", time_step, 0.0, 0.0, 0.0)
+        for time_step in (7, 3, 9, 1, 5)
+    )
+    forward = select_candidates(candidates, budget=2, strategy="uniform")
+    backward = select_candidates(tuple(reversed(candidates)), budget=2, strategy="uniform")
+    assert forward == backward
+    assert [item.time_step for item in forward] == [1, 9]
+
+
+def test_doubling_horizon_stop_on_rank_agreement_misses_the_delayed_payoff() -> None:
+    """Pin the hazard any adaptive horizon rule must handle.
+
+    Hold wins at H=1, 2, and 4, so a doubling schedule that stops when two
+    consecutive horizons agree stops at H=2 with the wrong action. Commitment
+    only wins once its delayed payoff outweighs the accumulated hold reward.
+    """
+    schedule = (1, 2, 4, 8)
+    best = [best_branch(agent_count=1, horizon=horizon).actions for horizon in schedule]
+    assert best == [(0,), (0,), (0,), (1,)]
+    stop_index = next(
+        index for index in range(1, len(schedule)) if best[index] == best[index - 1]
+    )
+    assert schedule[stop_index] == 2
+    assert best[stop_index] != best[-1]
