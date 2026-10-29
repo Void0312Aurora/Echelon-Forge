@@ -54,7 +54,10 @@ jobs:
       # third-party toolkit action, so the lane adds no new supply-chain
       # dependency. Its nvcc predates the runner's default gcc, so g++-12 is
       # installed and pinned as the CUDA host compiler below; without that pin
-      # nvcc rejects the host toolchain outright.
+      # nvcc rejects the host toolchain outright. The C and C++ compilers are
+      # pinned to the same gcc-12: CUDA links add gcc-12's library directory,
+      # so objects built by the runner's newer default g++ would link against
+      # an older libstdc++ and fail on symbols it does not provide.
       - name: Install build tools and CUDA toolkit
         run: |
           sudo apt-get update
@@ -81,6 +84,8 @@ jobs:
             -DEF_ENABLE_CUDA_RESIDENT_BACKEND=ON \
             -DEF_ENABLE_CUDA_EXPERIMENTS=ON \
             -DCMAKE_CUDA_ARCHITECTURES=86 \
+            -DCMAKE_C_COMPILER=gcc-12 \
+            -DCMAKE_CXX_COMPILER=g++-12 \
             -DCMAKE_CUDA_HOST_COMPILER=g++-12
 
       # The resident backend and the device helpers are separate surfaces with
