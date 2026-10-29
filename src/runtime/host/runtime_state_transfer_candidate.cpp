@@ -830,6 +830,7 @@ struct OwnerImportReceiptGuard {
     ~OwnerImportReceiptGuard() noexcept {
         if (active && receipt != nullptr) {
             receipt->observations.clear();
+            receipt->categories_not_carried_by_source.clear();
             receipt->transaction.reset();
         }
     }
@@ -1169,13 +1170,15 @@ bool same_source_census(const RuntimeStateCensus &expected, const RuntimeStateCe
 RuntimeStateTransferStatus validate_source_artifacts(const RuntimeStateTransferProfile &profile,
                                                      const RuntimeStateCensus &census,
                                                      const RuntimeStateOwnerExport &source_export) {
-    if (source_export.artifacts.size() != kRuntimeStateCategoryCount) {
+    if (source_export.artifacts.size() !=
+        runtime_state_category_count(census.contract_generation)) {
         return failure(RuntimeStateTransferError::MissingCategory,
                        "owner source export does not contain one artifact per category");
     }
     std::array<const RuntimeStateOwnerArtifact *, kRuntimeStateCategoryCount> artifacts{};
     for (const RuntimeStateOwnerArtifact &artifact : source_export.artifacts) {
-        if (!supported_category(artifact.category)) {
+        if (!supported_category(artifact.category) ||
+            !runtime_state_category_present(artifact.category, census.contract_generation)) {
             return failure(RuntimeStateTransferError::SchemaMismatch,
                            "owner source export contains an unsupported artifact category");
         }
@@ -1192,6 +1195,9 @@ RuntimeStateTransferStatus validate_source_artifacts(const RuntimeStateTransferP
         }
     }
     for (const RuntimeStateCensusRowPolicy &policy : profile.rows) {
+        if (!runtime_state_category_present(policy.category, census.contract_generation)) {
+            continue;
+        }
         const auto entry = std::find_if(census.entries.begin(), census.entries.end(),
                                         [&](const RuntimeStateCensusEntry &candidate) {
                                             return candidate.category == policy.category;
@@ -2173,9 +2179,10 @@ RuntimeStateOwnerImportReceipt RuntimeStateOwnerAdapterRegistry::import_and_obse
         source_export.census.profile_generation != profile.profile_generation ||
         source_export.census.source_plan_sha256 != profile.source_plan_sha256 ||
         source_export.census.target_plan_sha256 != profile.target_plan_sha256 ||
-        source_export.census.entries.size() != kRuntimeStateCategoryCount ||
         (source_export.census.contract_generation != kRuntimeStateTransferContractGeneration &&
-         source_export.census.contract_generation != kRuntimeStateTransferPreviousGeneration)) {
+         source_export.census.contract_generation != kRuntimeStateTransferPreviousGeneration) ||
+        source_export.census.entries.size() !=
+            runtime_state_category_count(source_export.census.contract_generation)) {
         receipt.status =
             failure(RuntimeStateTransferError::InvalidArgument,
                     "owner source export does not bind the admitted profile and source slot");
@@ -2194,6 +2201,14 @@ RuntimeStateOwnerImportReceipt RuntimeStateOwnerAdapterRegistry::import_and_obse
         transactions.reserve(kRuntimeStateCategoryCount);
         OwnerImportPreparationGuard transactions_abort{.transactions = &transactions};
         for (const RuntimeStateCensusRowPolicy &policy : profile.rows) {
+            if (!runtime_state_category_present(policy.category,
+                                                source_export.census.contract_generation)) {
+                // The N-1 producer predates this category. Import nothing for
+                // it, so the target keeps its own state, and say so in the
+                // receipt instead of fabricating a source row.
+                receipt.categories_not_carried_by_source.push_back(policy.category);
+                continue;
+            }
             const auto entry = std::find_if(source_export.census.entries.begin(),
                                             source_export.census.entries.end(),
                                             [&](const RuntimeStateCensusEntry &candidate) {
@@ -2503,6 +2518,20 @@ runtime_state_decoder_replay_rule(RuntimeStateCategory category) noexcept {
         return nullptr;
     }
     return &runtime_state_decoder_replay_matrix()[index];
+}
+
+bool runtime_state_category_present(RuntimeStateCategory category,
+                                    std::uint32_t contract_generation) noexcept {
+    const RuntimeStateDecoderReplayRule *rule = runtime_state_decoder_replay_rule(category);
+    return rule != nullptr && rule->introduced_generation <= contract_generation;
+}
+
+std::size_t runtime_state_category_count(std::uint32_t contract_generation) noexcept {
+    const auto &matrix = runtime_state_decoder_replay_matrix();
+    return static_cast<std::size_t>(
+        std::count_if(matrix.begin(), matrix.end(), [&](const RuntimeStateDecoderReplayRule &rule) {
+            return rule.introduced_generation <= contract_generation;
+        }));
 }
 
 RuntimeStateTransferProfile runtime_state_transfer_profile_from_decoder_matrix(
@@ -3483,9 +3512,11 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
     transfer_reservation.release = quiescence_token->host_end_transfer;
     transfer_reservation.active = true;
 
+    const std::uint32_t census_generation = request.census.contract_generation;
     std::array<const RuntimeStateCensusEntry *, kRuntimeStateCategoryCount> entries{};
     for (const RuntimeStateCensusEntry &entry : request.census.entries) {
-        if (!supported_category(entry.category)) {
+        if (!supported_category(entry.category) ||
+            !runtime_state_category_present(entry.category, census_generation)) {
             return {.status = failure(RuntimeStateTransferError::InvalidArgument,
                                       "state census contains an unsupported category"),
                     .transfer = {}};
@@ -3499,13 +3530,18 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
         entries[index] = &entry;
     }
     for (std::size_t index = 0; index < entries.size(); ++index) {
-        if (entries[index] == nullptr) {
+        if (entries[index] == nullptr &&
+            runtime_state_category_present(static_cast<RuntimeStateCategory>(index),
+                                           census_generation)) {
             return {.status = failure(RuntimeStateTransferError::MissingCategory,
                                       "state census omits a required category"),
                     .transfer = {}};
         }
     }
     for (const RuntimeStateCensusRowPolicy &policy : request.profile.rows) {
+        if (!runtime_state_category_present(policy.category, census_generation)) {
+            continue;
+        }
         status = validate_entry(policy, *entries[static_cast<std::size_t>(policy.category)],
                                 barrier_snapshot);
         if (!status) {
@@ -3558,16 +3594,34 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
                                   "owner import transaction is not in the prepared state"),
                 .transfer = {}};
     }
+    // Every profile row is either observed or explicitly not carried by an
+    // older source census, never both and never neither.
+    std::size_t expected_not_carried = 0;
+    for (const RuntimeStateCensusRowPolicy &policy : request.profile.rows) {
+        if (!runtime_state_category_present(policy.category, census_generation)) {
+            ++expected_not_carried;
+            if (std::find(owner_receipt.categories_not_carried_by_source.begin(),
+                          owner_receipt.categories_not_carried_by_source.end(), policy.category) ==
+                owner_receipt.categories_not_carried_by_source.end()) {
+                return {.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
+                                          "owner receipt does not record a category the source "
+                                          "census generation predates"),
+                        .transfer = {}};
+            }
+        }
+    }
     if (owner_receipt.candidate_resource_identity !=
             request.host_quiescence.candidate_resource_identity() ||
-        owner_receipt.observations.size() != kRuntimeStateCategoryCount) {
+        owner_receipt.observations.size() != runtime_state_category_count(census_generation) ||
+        owner_receipt.categories_not_carried_by_source.size() != expected_not_carried) {
         return {.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
                                   "owner receipt is not bound to the complete candidate import"),
                 .transfer = {}};
     }
     std::array<const RuntimeStateOwnerObservation *, kRuntimeStateCategoryCount> observations{};
     for (const RuntimeStateOwnerObservation &observation : owner_receipt.observations) {
-        if (!supported_category(observation.category)) {
+        if (!supported_category(observation.category) ||
+            !runtime_state_category_present(observation.category, census_generation)) {
             return {.status = failure(RuntimeStateTransferError::SchemaMismatch,
                                       "owner receipt contains an unsupported category"),
                     .transfer = {}};
@@ -3581,6 +3635,9 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
         observations[index] = &observation;
     }
     for (const RuntimeStateCensusRowPolicy &policy : request.profile.rows) {
+        if (!runtime_state_category_present(policy.category, census_generation)) {
+            continue;
+        }
         const RuntimeStateCensusEntry &entry = *entries[static_cast<std::size_t>(policy.category)];
         const RuntimeStateOwnerObservation &observation =
             *observations[static_cast<std::size_t>(policy.category)];

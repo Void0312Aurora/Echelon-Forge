@@ -361,6 +361,12 @@ struct RuntimeStateDecoderReplayRule {
     RuntimeStateReplayPolicy replay_policy = RuntimeStateReplayPolicy::Reject;
     std::string_view migration_sha256;
     bool rollback_required = true;
+    // First contract generation whose census carries this category. A census
+    // of generation G contains exactly the categories introduced at or before
+    // G; an N-1 census therefore omits a category introduced at N, and its
+    // reader keeps the target's own state for that row instead of inventing a
+    // default.
+    std::uint32_t introduced_generation = 1;
 };
 
 struct RuntimeStateTransferProfile {
@@ -593,6 +599,9 @@ struct RuntimeStateOwnerImportReceipt {
     RuntimeStateTransferStatus status;
     RuntimeIdentity128 candidate_resource_identity;
     std::vector<RuntimeStateOwnerObservation> observations;
+    // Categories the target kept unchanged because the source census
+    // generation predates them. Every other profile row has an observation.
+    std::vector<RuntimeStateCategory> categories_not_carried_by_source;
     std::shared_ptr<RuntimeStateOwnerImportTransaction> transaction;
 };
 
@@ -862,6 +871,11 @@ runtime_state_disposition_name(RuntimeStateDisposition disposition) noexcept;
 runtime_state_decoder_replay_matrix() noexcept;
 [[nodiscard]] const RuntimeStateDecoderReplayRule *
 runtime_state_decoder_replay_rule(RuntimeStateCategory category) noexcept;
+// Whether a census of `contract_generation` carries `category`, and how many
+// categories such a census carries.
+[[nodiscard]] bool runtime_state_category_present(RuntimeStateCategory category,
+                                                  std::uint32_t contract_generation) noexcept;
+[[nodiscard]] std::size_t runtime_state_category_count(std::uint32_t contract_generation) noexcept;
 
 // Construct the canonical twelve-row profile from the maintained decoder /
 // replay matrix.  Callers still supply the plan bindings and profile identity,
