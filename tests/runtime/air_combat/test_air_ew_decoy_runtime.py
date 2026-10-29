@@ -15,7 +15,7 @@ import ef_py
 import pytest
 
 from python.runtime_bootstrap import resolve_repo_path
-
+from tests.support.unit_database import station_for
 
 DATABASE = resolve_repo_path("examples", "config", "database")
 _STEP_S = 0.05
@@ -23,9 +23,9 @@ _BURST_STEPS = 40
 _MAX_FLIGHT_STEPS = 400
 _SEEDS = range(12)
 
-# F-16C_Block50 default loadout stations.
-_AIM_120C_STATION = 1
-_AIM_9X_STATION = 2
+# Resolve stations from the authored F-16C_Block50 loadout, not by number.
+_AIM_120C_STATION = station_for("F-16C_Block50", "AIM-120C-7")
+_AIM_9X_STATION = station_for("F-16C_Block50", "AIM-9X")
 
 
 def _engagement(

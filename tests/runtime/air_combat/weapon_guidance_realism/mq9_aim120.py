@@ -61,7 +61,7 @@ def _spawn_f16_mq9_pair(
   sim.set_weapon_cooldown(shooter_id, 0.0, -1.0)
   pilot = ef_py.PilotAction()
   pilot.active = True
-  pilot.weapon_select_id = 1
+  pilot.weapon_select_id = station_for(_SHOOTER_TYPE, _AIM120)
   sim.set_pilot_action(shooter_id, pilot)
   _set_contacts(
     sim,
