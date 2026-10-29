@@ -605,15 +605,6 @@ def lower_to_legacy_unit_definition(
             raise PlatformAssemblyError(
                 f"platform.native_loadout_projection_missing:{hardpoint}"
             )
-        # The maintained native UnitDefinition contract stores one weapon
-        # reference per station.  A repeated list would look plausible in
-        # JSON but is rejected by the native loader and has no representation
-        # in UnitDefinition::default_loadout.  Keep quantity in the
-        # qualification identity, but do not claim that this legacy lowering
-        # can materialize it until the owner contract grows an explicit
-        # multi-store representation.
-        if quantity != 1:
-            raise PlatformAssemblyError("platform.native_loadout_quantity_unsupported")
         module = by_ref.get(ref)
         if module is None or not module.native_ref or not module.content_digest:
             raise PlatformAssemblyError(
@@ -637,7 +628,8 @@ def lower_to_legacy_unit_definition(
             raise PlatformAssemblyError(
                 f"platform.native_loadout_module_physical_mismatch:{hardpoint}"
             )
-        assign(loadout_paths[hardpoint], module.native_ref)
+        stores = [module.native_ref] * quantity
+        assign(loadout_paths[hardpoint], stores[0] if quantity == 1 else stores)
     for name, value in plan.parameter_overrides:
         if name not in overrides:
             raise PlatformAssemblyError(f"platform.native_override_projection_missing:{name}")

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import unittest
 from pathlib import Path
 import numpy as np
@@ -275,6 +276,69 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
     post_fire = sim.get_agent_observation(blue_id)
     self.assertEqual(int(getattr(post_fire, "missiles_remaining", -1)), 3)
     self.assertFalse(bool(getattr(post_fire, "can_fire", True)))
+
+  def test_multi_store_station_releases_each_resolved_store_in_order(self) -> None:
+    unit_path = Path(_DB_PATH) / "aircraft" / "units" / "f16c_block50.json"
+    definition = json.loads(unit_path.read_text(encoding="utf-8"))
+    definition["default_loadout"]["3"] = ["AIM-120C-7", "AIM-9X"]
+    temp_dir = tempfile.TemporaryDirectory(prefix="ef-f16-multistore-")
+    self.addCleanup(temp_dir.cleanup)
+    override_path = Path(temp_dir.name) / "f16_multistore.json"
+    override_path.write_text(json.dumps({"units": [definition]}), encoding="utf-8")
+
+    sim = ef_py.SimulationKernel()
+    self.assertTrue(sim.load_database(_DB_PATH))
+    self.assertTrue(sim.load_unit_definitions(str(override_path)))
+    sim.set_time_step(0.05)
+    sim.set_terrain_type("flat")
+    sim.set_wind(0.0, 0.0, 0.0)
+    blue_id = int(sim.spawn_unit(
+      ef_py.Side.Blue,
+      "F-16C_Block50",
+      0.0,
+      0.0,
+      1200.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      180.0,
+      0.0,
+    ))
+    red_id = int(sim.spawn_unit(
+      ef_py.Side.Red,
+      "F-16C_Block50",
+      0.0,
+      8000.0,
+      1200.0,
+      180.0,
+      0.0,
+      0.0,
+      0.0,
+      -180.0,
+      0.0,
+    ))
+    sim.set_unit_ammo(blue_id, 4, 4)
+    sim.set_weapon_cooldown(blue_id, 0.0, -1.0)
+    _wait_for_track(sim, blue_id, red_id)
+    _authorize_release(sim, blue_id, red_id)
+
+    pilot = ef_py.PilotAction()
+    pilot.active = True
+    pilot.weapon_select_id = 3
+    sim.set_pilot_action(blue_id, pilot)
+
+    first_id = int(sim.fire_missile(blue_id, red_id))
+    self.assertGreater(first_id, 0)
+    first_runtime = sim.debug_get_missile_runtime_state(first_id)
+    self.assertAlmostEqual(float(first_runtime["mass_total_kg"]), 152.0, delta=1.0e-6)
+
+    second_id = int(sim.fire_missile(blue_id, red_id))
+    self.assertGreater(second_id, 0)
+    self.assertNotEqual(second_id, first_id)
+    second_runtime = sim.debug_get_missile_runtime_state(second_id)
+    self.assertAlmostEqual(float(second_runtime["mass_total_kg"]), 85.0, delta=1.0e-6)
+    self.assertEqual(int(getattr(sim.get_agent_observation(blue_id), "missiles_remaining", -1)), 2)
 
   def test_air_to_air_weapon_database_defines_bvr_flight_time(self) -> None:
     for filename in ("aim_120c.json", "r77_1.json"):

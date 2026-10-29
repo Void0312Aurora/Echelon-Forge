@@ -18,6 +18,7 @@ from python.content.platform_blueprint import (
     ModuleSelection,
     PlatformAssemblyError,
     PlatformBlueprint,
+    lower_to_legacy_unit_definition,
     resolve_platform_assembly,
 )
 from python.content.platform_blueprint_adapter import (
@@ -372,7 +373,7 @@ def test_native_typed_projection_rejects_module_selection_not_loaded_in_snapshot
         _expand(blueprint, modules, plan)
 
 
-def test_native_typed_projection_rejects_multi_store_quantity_until_native_contract_exists() -> None:
+def test_native_typed_projection_preserves_multi_store_quantity() -> None:
     blueprint, modules, _ = _fixture()
     weapon = ModuleRecord(
         "fixture.weapon",
@@ -406,8 +407,9 @@ def test_native_typed_projection_rejects_multi_store_quantity_until_native_contr
         projection,
         loadout_paths=(("station_1", "default_loadout.1"),),
     )
-    with pytest.raises(PlatformAssemblyError, match="native_loadout_quantity_unsupported"):
-        _expand(blueprint, modules, plan, projection=projection)
+    expanded_multi = _expand(blueprint, modules, plan, projection=projection)
+    lowered_multi = lower_to_legacy_unit_definition(plan, projection, modules=modules)
+    assert lowered_multi["default_loadout"]["1"] == ["FixtureWeapon", "FixtureWeapon"]
 
     single_plan = resolve_platform_assembly(
         assembly_id="fixture.loadout.single-store.v1",
@@ -422,6 +424,10 @@ def test_native_typed_projection_rejects_multi_store_quantity_until_native_contr
         loadout_paths=(("station_1", "default_loadout.1"),),
     )
     expanded = _expand(blueprint, modules, single_plan, projection=single_projection)
+    lowered_single = lower_to_legacy_unit_definition(
+        single_plan, single_projection, modules=modules
+    )
+    assert lowered_single["default_loadout"]["1"] == "FixtureWeapon"
     launching = [
         capability
         for capability in expanded.capability_bundle.capabilities

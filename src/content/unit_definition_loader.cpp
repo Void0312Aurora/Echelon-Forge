@@ -11,6 +11,7 @@
 #include <cmath>
 #include <filesystem>
 #include <limits>
+#include <stdexcept>
 #include <unordered_map>
 
 #include "components/combat/common/missile_guidance_types.h"
@@ -988,7 +989,22 @@ void parse_hardpoints_and_loadout_json_fields(const nlohmann::json &entry, UnitD
 
     if (entry.contains("default_loadout") && entry["default_loadout"].is_object()) {
         for (auto &[key, val] : entry["default_loadout"].items()) {
-            def.default_loadout[std::stoi(key)] = val.get<std::string>();
+            auto &stores = def.default_loadout[std::stoi(key)];
+            if (val.is_string()) {
+                // Versioned legacy content uses one weapon name per station.
+                stores.push_back(val.get<std::string>());
+                continue;
+            }
+            if (!val.is_array()) {
+                throw std::invalid_argument("default_loadout entries must be strings or arrays");
+            }
+            stores.reserve(val.size());
+            for (const auto &store : val) {
+                if (!store.is_string()) {
+                    throw std::invalid_argument("default_loadout store references must be strings");
+                }
+                stores.push_back(store.get<std::string>());
+            }
         }
     }
 }

@@ -77,7 +77,11 @@ class CsgContentTests(unittest.TestCase):
         for path, rec in self.records:
             refs = [rec.get(k) for k in REF_KEYS if rec.get(k)]
             refs += list(rec.get("sensor_refs") or [])
-            refs += list((rec.get("default_loadout") or {}).values())
+            refs += [
+                ref
+                for stores in (rec.get("default_loadout") or {}).values()
+                for ref in (stores if isinstance(stores, list) else [stores])
+            ]
             helo = (rec.get("embarked_air_ops") or {}).get("helo_unit_name")
             refs += [helo] if helo else []
             missing += [(path.name, r) for r in refs if r not in self.names]
