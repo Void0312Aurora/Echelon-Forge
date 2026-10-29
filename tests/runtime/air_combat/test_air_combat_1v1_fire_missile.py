@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import unittest
 from pathlib import Path
 import numpy as np
@@ -16,6 +17,7 @@ from python.rl.runtime.world_batch import RuntimeFacadeAdapter # noqa: E402
 from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 from python.scenario_compiler import ScenarioCompiler # noqa: E402
 from python.scenario.runtime import load_compiled_scenario_for_setup_target # noqa: E402
+from python.content.unit_loadout import station_for, stations_carrying # noqa: E402
 
 
 _SCENARIO_PATH = resolve_repo_path(
@@ -24,6 +26,7 @@ _SCENARIO_PATH = resolve_repo_path(
   "air_combat_1v1_headon_sensor_smoke_v1.json",
 )
 _DB_PATH = resolve_repo_path("examples", "config", "database")
+_AMRAAM_STATION = station_for("F-16C_Block50", "AIM-120C-7")
 
 
 def _load_fixture(seed: int = 20260516) -> tuple[ef_py.SimulationKernel, ScenarioLoader, int, int]:
@@ -252,7 +255,7 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
 
     pilot = ef_py.PilotAction()
     pilot.active = True
-    pilot.weapon_select_id = 1
+    pilot.weapon_select_id = _AMRAAM_STATION
     sim.set_pilot_action(blue_id, pilot)
 
     missile_ids_before = _missile_ids(sim)
@@ -260,7 +263,7 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
     pilot.active = True
     pilot.master_arm = True
     pilot.fire_weapon = True
-    pilot.weapon_select_id = 1
+    pilot.weapon_select_id = _AMRAAM_STATION
     sim.set_pilot_action(blue_id, pilot)
     sim.step()
 
@@ -275,6 +278,69 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
     post_fire = sim.get_agent_observation(blue_id)
     self.assertEqual(int(getattr(post_fire, "missiles_remaining", -1)), 3)
     self.assertFalse(bool(getattr(post_fire, "can_fire", True)))
+
+  def test_multi_store_station_releases_each_resolved_store_in_order(self) -> None:
+    unit_path = Path(_DB_PATH) / "aircraft" / "units" / "f16c_block50.json"
+    definition = json.loads(unit_path.read_text(encoding="utf-8"))
+    definition["default_loadout"]["3"] = ["AIM-120C-7", "AIM-9X"]
+    temp_dir = tempfile.TemporaryDirectory(prefix="ef-f16-multistore-")
+    self.addCleanup(temp_dir.cleanup)
+    override_path = Path(temp_dir.name) / "f16_multistore.json"
+    override_path.write_text(json.dumps({"units": [definition]}), encoding="utf-8")
+
+    sim = ef_py.SimulationKernel()
+    self.assertTrue(sim.load_database(_DB_PATH))
+    self.assertTrue(sim.load_unit_definitions(str(override_path)))
+    sim.set_time_step(0.05)
+    sim.set_terrain_type("flat")
+    sim.set_wind(0.0, 0.0, 0.0)
+    blue_id = int(sim.spawn_unit(
+      ef_py.Side.Blue,
+      "F-16C_Block50",
+      0.0,
+      0.0,
+      1200.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      180.0,
+      0.0,
+    ))
+    red_id = int(sim.spawn_unit(
+      ef_py.Side.Red,
+      "F-16C_Block50",
+      0.0,
+      8000.0,
+      1200.0,
+      180.0,
+      0.0,
+      0.0,
+      0.0,
+      -180.0,
+      0.0,
+    ))
+    sim.set_unit_ammo(blue_id, 4, 4)
+    sim.set_weapon_cooldown(blue_id, 0.0, -1.0)
+    _wait_for_track(sim, blue_id, red_id)
+    _authorize_release(sim, blue_id, red_id)
+
+    pilot = ef_py.PilotAction()
+    pilot.active = True
+    pilot.weapon_select_id = 3
+    sim.set_pilot_action(blue_id, pilot)
+
+    first_id = int(sim.fire_missile(blue_id, red_id))
+    self.assertGreater(first_id, 0)
+    first_runtime = sim.debug_get_missile_runtime_state(first_id)
+    self.assertAlmostEqual(float(first_runtime["mass_total_kg"]), 152.0, delta=1.0e-6)
+
+    second_id = int(sim.fire_missile(blue_id, red_id))
+    self.assertGreater(second_id, 0)
+    self.assertNotEqual(second_id, first_id)
+    second_runtime = sim.debug_get_missile_runtime_state(second_id)
+    self.assertAlmostEqual(float(second_runtime["mass_total_kg"]), 85.0, delta=1.0e-6)
+    self.assertEqual(int(getattr(sim.get_agent_observation(blue_id), "missiles_remaining", -1)), 2)
 
   def test_air_to_air_weapon_database_defines_bvr_flight_time(self) -> None:
     for filename in ("aim_120c.json", "r77_1.json"):
@@ -308,8 +374,8 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
       )
     )
 
-    self.assertEqual(f16["default_loadout"]["1"], "AIM-120C-7")
-    self.assertEqual(f16["default_loadout"]["9"], "AIM-120C-7")
+    self.assertEqual(f16["name"], "F-16C_Block50")
+    self.assertGreaterEqual(len(stations_carrying("F-16C_Block50", "AIM-120C-7")), 1)
     self.assertEqual(str(aim120["name"]), "AIM-120C-7")
     self.assertAlmostEqual(float(aim120["mass_kg"]), 152.0, delta=1.0e-6)
     self.assertEqual(str(aim120["guidance"]["type"]), "ActiveRadar")
@@ -350,7 +416,7 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
     pilot.active = True
     pilot.master_arm = True
     pilot.fire_weapon = True
-    pilot.weapon_select_id = 1
+    pilot.weapon_select_id = _AMRAAM_STATION
     sim.set_pilot_action(blue_id, pilot)
 
     missile_ids_before = _missile_ids(sim)
@@ -479,8 +545,8 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
       action[0, 9] = 1.0
       action[0, 13] = 1.0
       action[0, 14] = 1.0
-      # Full mode encodes station 1 as the normalized categorical value 1/7.
-      action[0, 16] = 1.0 / 7.0
+      # Full mode encodes the selected station as the normalized value n/7.
+      action[0, 16] = _AMRAAM_STATION / 7.0
 
       initial_missiles = int(getattr(env.envs[0].last_truth, "missiles_remaining", -1))
       self.assertEqual(initial_missiles, 4)

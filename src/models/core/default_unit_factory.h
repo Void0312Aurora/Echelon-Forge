@@ -5,6 +5,7 @@
 #include <cmath>
 #include <limits>
 #include <numbers>
+#include <unordered_set>
 #include <unordered_map>
 #include <string_view>
 #include <utility>
@@ -586,6 +587,13 @@ class DefaultUnitFactory : public IUnitFactory {
         append_unique(plan.evidence_refs, plan.materialization_evidence_ref);
         plan.resolved_capabilities = bundle.capabilities;
         plan.type_name_projection_preserved = true;
+        const std::string loadout_rejection = validate_default_loadout(def);
+        if (!loadout_rejection.empty()) {
+            plan.admitted = false;
+            plan.rejection_reason = loadout_rejection;
+            plan.diagnostics_reason = loadout_rejection;
+            return plan;
+        }
         plan.admitted = bundle_validation.valid;
         if (!bundle_validation.valid) {
             plan.rejection_reason = bundle_validation.rejection_reason;
@@ -728,6 +736,74 @@ class DefaultUnitFactory : public IUnitFactory {
     }
 
   private:
+    [[nodiscard]] std::string validate_default_loadout(const UnitDefinition &def) const {
+        if (def.default_loadout.empty()) {
+            return {};
+        }
+
+        std::unordered_set<int> hardpoint_ids;
+        std::unordered_map<int, double> hardpoint_capacities;
+        hardpoint_ids.reserve(def.hardpoints.size());
+        hardpoint_capacities.reserve(def.hardpoints.size());
+        for (const auto &hardpoint : def.hardpoints) {
+            if (hardpoint.station_id <= 0) {
+                return "platform.native_hardpoint_invalid_station";
+            }
+            if (!hardpoint_ids.insert(hardpoint.station_id).second) {
+                return "platform.native_hardpoint_duplicate:" +
+                       std::to_string(hardpoint.station_id);
+            }
+            hardpoint_capacities.emplace(hardpoint.station_id, hardpoint.capacity_kg);
+        }
+
+        // Match materialization order so the first rejection is portable across
+        // standard libraries and JSON traversal order.
+        std::vector<std::pair<int, std::vector<std::string>>> stations(def.default_loadout.begin(),
+                                                                       def.default_loadout.end());
+        std::sort(stations.begin(), stations.end(),
+                  [](const auto &lhs, const auto &rhs) { return lhs.first < rhs.first; });
+        for (const auto &[station, module_names] : stations) {
+            if (station <= 0) {
+                return "platform.native_loadout_invalid_station";
+            }
+            if (!hardpoint_ids.contains(station)) {
+                return "platform.native_loadout_hardpoint_missing:" + std::to_string(station);
+            }
+            const double capacity_kg = hardpoint_capacities.at(station);
+            if (!std::isfinite(capacity_kg) || capacity_kg <= 0.0) {
+                return "platform.native_hardpoint_capacity_invalid:" + std::to_string(station);
+            }
+            if (module_names.empty()) {
+                return "platform.native_loadout_stores_empty:" + std::to_string(station);
+            }
+
+            double station_load_kg = 0.0;
+            for (const auto &module_name : module_names) {
+                const auto module_it = definitions_.find(module_name);
+                if (module_name.empty() || module_it == definitions_.end()) {
+                    return "platform.native_loadout_module_missing:" + std::to_string(station) +
+                           ":" + module_name;
+                }
+                // Every materialized store is a Missile and resolves through
+                // the maintained launch service's Missile contract.
+                if (module_it->second.type != UnitType::Missile) {
+                    return "platform.native_loadout_module_type_incompatible:" +
+                           std::to_string(station) + ":" + module_name;
+                }
+                const double store_mass_kg = module_it->second.mass_kg;
+                if (!std::isfinite(store_mass_kg) || store_mass_kg <= 0.0) {
+                    return "platform.native_loadout_module_mass_invalid:" +
+                           std::to_string(station) + ":" + module_name;
+                }
+                station_load_kg += store_mass_kg;
+            }
+            if (!std::isfinite(station_load_kg) || station_load_kg > capacity_kg) {
+                return "platform.native_loadout_capacity_exceeded:" + std::to_string(station);
+            }
+        }
+        return {};
+    }
+
     std::unordered_map<std::string, UnitDefinition> definitions_;
 
     static void resolve_spawn_orientation(const SpawnParams &params, double &heading_init,
@@ -849,22 +925,29 @@ class DefaultUnitFactory : public IUnitFactory {
             // `default_loadout` is an unordered_map whose iteration order differs between
             // standard libraries. Station munitions are created, and therefore stamped, in
             // ascending station order so creation order is portable (P1 E1).
-            std::vector<std::pair<int, std::string>> stations(def.default_loadout.begin(),
-                                                              def.default_loadout.end());
+            std::vector<std::pair<int, std::vector<std::string>>> stations(
+                def.default_loadout.begin(), def.default_loadout.end());
             std::sort(stations.begin(), stations.end(),
                       [](const auto &lhs, const auto &rhs) { return lhs.first < rhs.first; });
-            for (const auto &[station, weapon_name] : stations) {
-                auto w_it = definitions_.find(weapon_name);
-                if (w_it != definitions_.end()) {
+            for (const auto &[station, weapon_names] : stations) {
+                for (std::size_t store_index = 0; store_index < weapon_names.size();
+                     ++store_index) {
+                    const auto &weapon_name = weapon_names[store_index];
+                    const auto w_it = definitions_.find(weapon_name);
+                    if (w_it == definitions_.end()) {
+                        spdlog::warn("Unit {} references unknown weapon {}", unit_name,
+                                     weapon_name);
+                        continue;
+                    }
                     stores_kg += w_it->second.mass_kg;
 
-                    // Spawn Real Munition Entity (Child). The name is resolved inside the new
-                    // parent's scope: `ecs.entity(name).child_of(e)` resolved it at root scope,
-                    // so a second spawn of the same type found and re-parented the first
-                    // spawn's `<type>_Stn_<n>` instead of creating its own (P1 E2). With the
-                    // parent in the descriptor every spawn gets fresh children, and
-                    // `ecs_get_name` still yields `<type>_Stn_<n>` for the launch resolver.
-                    const std::string mun_name = unit_name + "_Stn_" + std::to_string(station);
+                    // Preserve the historic name for the first store. Additional
+                    // stores use a stable suffix so launch resolution selects the
+                    // matching definition in this station's ordered store list.
+                    std::string mun_name = unit_name + "_Stn_" + std::to_string(station);
+                    if (store_index > 0) {
+                        mun_name += "_Store_" + std::to_string(store_index + 1);
+                    }
                     ecs_entity_desc_t mun_desc = {};
                     mun_desc.name = mun_name.c_str();
                     mun_desc.parent = e.id();
@@ -875,12 +958,6 @@ class DefaultUnitFactory : public IUnitFactory {
                         .set<KeyEntity>({w_it->second.type})
                         .set<Mass>({w_it->second.mass_kg, 0, 0});
                     stamp_stable_serial(m_e);
-
-                    // Copy weapon characteristics if present?
-                    // Ideally we just point to the def, but for now copying generic props or
-                    // tagging is enough. The WeaponSystem will look at these children later.
-                } else {
-                    spdlog::warn("Unit {} references unknown weapon {}", unit_name, weapon_name);
                 }
             }
         }

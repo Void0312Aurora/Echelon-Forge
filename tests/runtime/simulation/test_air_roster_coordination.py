@@ -5,11 +5,15 @@ import ef_py
 from python.runtime_bootstrap import resolve_repo_path
 from python.simulation.air.coordination import AirScriptedRosterCoordinator
 from python.simulation.air.engagement import AirEngagementFacts, AirScriptedEngagementController
+from python.content.unit_loadout import station_for
 from python.simulation.facade_batch import FacadeBatchBackend
 
 
 DATABASE = resolve_repo_path("examples", "config", "database")
 
+
+
+_AMRAAM_STATION = station_for("F-16C_Block50", "AIM-120C-7")
 
 def _setup(seeds: tuple[int, ...]) -> ef_py.BatchWorldSetupRequest:
     request = ef_py.BatchWorldSetupRequest()
@@ -84,7 +88,7 @@ def _run(seed: int) -> tuple[tuple[int | None, ...], tuple[int, ...], tuple[bool
             command.assigned_target_track_id = target_id
             command.engagement_authority_holder_id = assignment.member_key[1]
             backend.submit_mission_commands({assignment.member_key: command})
-            controller = AirScriptedEngagementController(weapon_station_id=1)
+            controller = AirScriptedEngagementController(weapon_station_id=_AMRAAM_STATION)
             controllers.append(controller)
             member_index = current.entity_keys.index(assignment.member_key)
             facts = AirEngagementFacts(
@@ -181,7 +185,7 @@ def test_air_roster_coordinator_fails_closed_for_unauthorized_wing() -> None:
         fire.active = True
         fire.master_arm = True
         fire.fire_weapon = True
-        fire.weapon_select_id = 1
+        fire.weapon_select_id = _AMRAAM_STATION
         backend.step({blue_keys[0]: hold, blue_keys[1]: fire, red_keys[0]: hold, red_keys[1]: hold})
         packet = backend.export_engagement_events(entity_keys=(blue_keys[1],))
         assert not any(bool(event.accepted) for event in packet.launch_events)

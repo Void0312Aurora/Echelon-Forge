@@ -9,20 +9,90 @@
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "content/content_compile_passes.h"
 #include "content/unit_definition_loader.h"
+#include "components/basic/stable_identity.h"
+#include "components/physics/dynamics.h"
+#include "models/core/default_unit_factory.h"
+#include "systems/system_contribution_registry.h"
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
 
 #include <cmath>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
 using content_compile::ContentDiagnostic;
 
+namespace {
+
+std::filesystem::path make_temporary_loadout_path() {
+    static std::uint64_t sequence = 0;
+    return std::filesystem::temp_directory_path() /
+           ("ef_loadout_" + std::to_string(++sequence) + ".json");
+}
+
+struct TemporaryLoadoutDefinitions {
+    std::filesystem::path path = make_temporary_loadout_path();
+
+    explicit TemporaryLoadoutDefinitions(const nlohmann::json &platform) {
+        std::ofstream output(path);
+        output << platform;
+        if (!output.good()) {
+            throw std::runtime_error("failed to write temporary loadout fixture");
+        }
+    }
+
+    ~TemporaryLoadoutDefinitions() {
+        std::error_code error;
+        std::filesystem::remove(path, error);
+    }
+};
+
+nlohmann::json loadout_test_platform() {
+    return nlohmann::json::parse(R"json({
+  "name": "Loadout_Aircraft",
+  "type": "Aircraft",
+  "airframe": {"empty_mass_kg": 1000.0, "max_fuel_kg": 100.0},
+  "flight_model": {"max_speed": 600.0, "max_g": 9.0},
+  "hardpoints": [{"station_id": 1, "type": ["Rail"], "capacity_kg": 200.0}],
+  "default_loadout": {"1": "Fixture_Missile"}
+})json");
+}
+
+} // namespace
+
 TEST_SUITE("content_compile_passes") {
+
+    TEST_CASE("native loadout admission rejects a resolved non-missile module") {
+        auto platform = loadout_test_platform();
+        platform["default_loadout"] = {{"1", "Fixture_Engine"}};
+        const TemporaryLoadoutDefinitions fixture(platform);
+        const TemporaryLoadoutDefinitions module_fixture(
+            {{"name", "Fixture_Engine"}, {"type", "Engine"}, {"mil_thrust_n", 1.0}});
+
+        DefaultUnitFactory factory;
+        std::string error;
+        REQUIRE(factory.load_definitions(module_fixture.path.string(), &error));
+        REQUIRE(factory.load_definitions(fixture.path.string(), &error));
+
+        const auto plan = factory.resolve_platform_spawn_plan_for_type_name("Loadout_Aircraft");
+        CHECK_FALSE(plan.admitted);
+        CHECK(plan.rejection_reason ==
+              "platform.native_loadout_module_type_incompatible:1:Fixture_Engine");
+
+        flecs::world world;
+        runtime::systems::register_default_component_contributions(world);
+        world.set<StableIdentityState>({1, 42});
+        const SpawnParams params{Side::Blue, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        CHECK_FALSE(factory.spawn(world, "Loadout_Aircraft", params).is_valid());
+        CHECK(world.count<KeyEntity>() == 0);
+        CHECK(world.get<StableIdentityState>()->next_serial == 1);
+    }
 
     TEST_CASE("validate whitelist recognizes surveyed keys and rejects unknowns") {
         // Spot-checks across the 106 read keys, the present-but-unread keys, and
@@ -92,7 +162,7 @@ TEST_SUITE("content_compile_passes") {
         std::vector<UnitDefinition> definitions(2);
         definitions[0].name = "Ship_A";
         definitions[0].sensor_ref = "AN/SPY-1D";
-        definitions[0].default_loadout[1] = "SM-2";
+        definitions[0].default_loadout[1] = {"SM-2"};
         definitions[1].name = "Jet_B";
         definitions[1].engine_ref = "F110";
         definitions[1].sensor_refs = {"APG-68"};
@@ -115,6 +185,132 @@ TEST_SUITE("content_compile_passes") {
         CHECK(report.engine_ref == 1);
         CHECK(report.default_loadout == 1);
         CHECK(report.definitions_with_deferred_refs == 2);
+    }
+
+    TEST_CASE("native loadout admission rejects before entity or identity publication") {
+        auto platform = loadout_test_platform();
+        std::string expected;
+        SUBCASE("missing hardpoint") {
+            platform["default_loadout"] = {{"2", "Fixture_Missile"}};
+            expected = "platform.native_loadout_hardpoint_missing:2";
+        }
+        SUBCASE("missing module") {
+            platform["default_loadout"] = {{"1", "Missing_Missile"}};
+            expected = "platform.native_loadout_module_missing:1:Missing_Missile";
+        }
+        SUBCASE("empty module") {
+            platform["default_loadout"] = {{"1", ""}};
+            expected = "platform.native_loadout_module_missing:1:";
+        }
+        SUBCASE("invalid loadout station") {
+            platform["default_loadout"] = {{"0", "Fixture_Missile"}};
+            expected = "platform.native_loadout_invalid_station";
+        }
+        SUBCASE("invalid hardpoint station") {
+            platform["hardpoints"][0]["station_id"] = 0;
+            expected = "platform.native_hardpoint_invalid_station";
+        }
+        SUBCASE("duplicate hardpoint station") {
+            platform["hardpoints"].push_back(platform["hardpoints"][0]);
+            expected = "platform.native_hardpoint_duplicate:1";
+        }
+        SUBCASE("deterministic first rejection follows numeric station order") {
+            platform["default_loadout"] = {{"10", "Fixture_Missile"}, {"2", "Missing_Missile"}};
+            expected = "platform.native_loadout_hardpoint_missing:2";
+        }
+        SUBCASE("loadout requires declared hardpoints") {
+            platform.erase("hardpoints");
+            expected = "platform.native_loadout_hardpoint_missing:1";
+        }
+        SUBCASE("multi-store aggregate exceeds station capacity") {
+            platform["hardpoints"][0]["capacity_kg"] = 15.0;
+            platform["default_loadout"]["1"] = {"Fixture_Missile", "Fixture_Missile"};
+            expected = "platform.native_loadout_capacity_exceeded:1";
+        }
+        SUBCASE("used station requires a positive finite capacity") {
+            platform["hardpoints"][0]["capacity_kg"] = 0.0;
+            expected = "platform.native_hardpoint_capacity_invalid:1";
+        }
+        SUBCASE("used station cannot declare an empty store list") {
+            platform["default_loadout"]["1"] = nlohmann::json::array();
+            expected = "platform.native_loadout_stores_empty:1";
+        }
+
+        const TemporaryLoadoutDefinitions fixture(platform);
+        const TemporaryLoadoutDefinitions module_fixture(
+            {{"name", "Fixture_Missile"}, {"type", "Missile"}, {"mass_kg", 10.0}});
+
+        DefaultUnitFactory factory;
+        std::string error;
+        REQUIRE(factory.load_definitions(module_fixture.path.string(), &error));
+        REQUIRE(factory.load_definitions(fixture.path.string(), &error));
+        const auto plan = factory.resolve_platform_spawn_plan_for_type_name("Loadout_Aircraft");
+        CHECK_FALSE(plan.admitted);
+        CHECK(plan.rejection_reason == expected);
+        CHECK(plan.diagnostics_reason == expected);
+
+        flecs::world world;
+        runtime::systems::register_default_component_contributions(world);
+        world.set<StableIdentityState>({1, 42});
+        const auto sentinel = world.entity().set<Mass>({25.0, 0.0, 0.0});
+        const auto key_count = world.count<KeyEntity>();
+        const auto munition_count = world.count<Munition>();
+        const auto mass_count = world.count<Mass>();
+        const SpawnParams params{Side::Blue, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        CHECK_FALSE(factory.spawn(world, "Loadout_Aircraft", params).is_valid());
+        CHECK(world.count<KeyEntity>() == key_count);
+        CHECK(world.count<Munition>() == munition_count);
+        CHECK(world.count<Mass>() == mass_count);
+        CHECK(world.get<StableIdentityState>()->next_serial == 1);
+        CHECK(sentinel.get<Mass>()->empty_mass_kg == 25.0);
+    }
+
+    TEST_CASE("valid native loadout preserves stores and legacy unarmed spawn") {
+        auto platform = loadout_test_platform();
+        bool armed = true;
+        std::size_t store_count = 1;
+        SUBCASE("declared station and resolved module") {}
+        SUBCASE("explicit same-station multi-store list") {
+            platform["default_loadout"]["1"] = {"Fixture_Missile", "Fixture_Missile"};
+            store_count = 2;
+        }
+        SUBCASE("legacy unarmed platform") {
+            platform.erase("default_loadout");
+            platform.erase("hardpoints");
+            armed = false;
+        }
+        const TemporaryLoadoutDefinitions fixture(platform);
+        const TemporaryLoadoutDefinitions module_fixture(
+            {{"name", "Fixture_Missile"}, {"type", "Missile"}, {"mass_kg", 10.0}});
+        DefaultUnitFactory factory;
+        std::string error;
+        REQUIRE(factory.load_definitions(module_fixture.path.string(), &error));
+        REQUIRE(factory.load_definitions(fixture.path.string(), &error));
+        CHECK(factory.resolve_platform_spawn_plan_for_type_name("Loadout_Aircraft").admitted);
+
+        flecs::world world;
+        runtime::systems::register_default_component_contributions(world);
+        world.set<StableIdentityState>({1, 42});
+        const SpawnParams params{Side::Blue, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        const auto entity = factory.spawn(world, "Loadout_Aircraft", params);
+        REQUIRE(entity.is_valid());
+        REQUIRE(entity.get<Mass>() != nullptr);
+        CHECK(entity.get<Mass>()->stores_mass_kg == (armed ? 10.0 * store_count : 0.0));
+        CHECK(world.count<Munition>() == (armed ? store_count : 0));
+        if (armed) {
+            const auto child = entity.lookup("Loadout_Aircraft_Stn_1");
+            REQUIRE(child.is_valid());
+            REQUIRE(child.get<Munition>() != nullptr);
+            CHECK(child.get<Munition>()->station_id == 1);
+            CHECK(child.get<KeyEntity>()->type == UnitType::Missile);
+            if (store_count > 1) {
+                const auto second_child = entity.lookup("Loadout_Aircraft_Stn_1_Store_2");
+                REQUIRE(second_child.is_valid());
+                REQUIRE(second_child.get<Munition>() != nullptr);
+                CHECK(second_child.get<Munition>()->station_id == 1);
+                CHECK(second_child.get<KeyEntity>()->type == UnitType::Missile);
+            }
+        }
     }
 
     TEST_CASE("orchestrator loads identically with an unknown top-level key") {
@@ -145,8 +341,12 @@ TEST_SUITE("content_compile_passes") {
 
         const fs::path clean_path = directory / "clean.json";
         const fs::path unknown_path = directory / "unknown.json";
-        { std::ofstream(clean_path) << clean; }
-        { std::ofstream(unknown_path) << with_unknown; }
+        {
+            std::ofstream(clean_path) << clean;
+        }
+        {
+            std::ofstream(unknown_path) << with_unknown;
+        }
 
         std::vector<UnitDefinition> clean_definitions;
         std::vector<UnitDefinition> unknown_definitions;
@@ -202,7 +402,9 @@ TEST_SUITE("content_compile_passes") {
                 entry["countermeasures"] = {{field, 0.0}};
             }
             const fs::path path = directory / (field + ".json");
-            { std::ofstream(path) << entry.dump(2); }
+            {
+                std::ofstream(path) << entry.dump(2);
+            }
 
             std::vector<UnitDefinition> definitions;
             std::string error;
@@ -285,7 +487,9 @@ TEST_SUITE("content_compile_passes") {
 })json";
 
         const fs::path path = directory / "all_keys.json";
-        { std::ofstream(path) << all_keys; }
+        {
+            std::ofstream(path) << all_keys;
+        }
 
         std::vector<UnitDefinition> defs;
         std::string error;
@@ -377,7 +581,9 @@ TEST_SUITE("content_compile_passes") {
 })json";
 
         const fs::path path = directory / "merged.json";
-        { std::ofstream(path) << merged; }
+        {
+            std::ofstream(path) << merged;
+        }
 
         std::vector<UnitDefinition> defs;
         std::string error;
@@ -421,8 +627,12 @@ TEST_SUITE("content_compile_passes") {
 
         const fs::path present = directory / "present.json";
         const fs::path absent = directory / "absent.json";
-        { std::ofstream(present) << present_json; }
-        { std::ofstream(absent) << absent_json; }
+        {
+            std::ofstream(present) << present_json;
+        }
+        {
+            std::ofstream(absent) << absent_json;
+        }
 
         std::vector<UnitDefinition> present_defs;
         std::vector<UnitDefinition> absent_defs;
@@ -467,8 +677,12 @@ TEST_SUITE("content_compile_passes") {
 
         const fs::path before_data_link = directory / "before_data_link.json";
         const fs::path within_data_link = directory / "within_data_link.json";
-        { std::ofstream(before_data_link) << before_data_link_json; }
-        { std::ofstream(within_data_link) << within_data_link_json; }
+        {
+            std::ofstream(before_data_link) << before_data_link_json;
+        }
+        {
+            std::ofstream(within_data_link) << within_data_link_json;
+        }
 
         const auto thrown_message = [](const fs::path &path) {
             std::vector<UnitDefinition> defs;
@@ -559,7 +773,9 @@ TEST_SUITE("content_compile_passes") {
 })json";
 
         const fs::path path = directory / "all_keys.json";
-        { std::ofstream(path) << all_keys; }
+        {
+            std::ofstream(path) << all_keys;
+        }
 
         std::vector<UnitDefinition> defs;
         std::string error;
@@ -645,7 +861,9 @@ TEST_SUITE("content_compile_passes") {
 })json";
 
         const fs::path path = directory / "sparse.json";
-        { std::ofstream(path) << sparse; }
+        {
+            std::ofstream(path) << sparse;
+        }
 
         std::vector<UnitDefinition> defs;
         std::string error;
@@ -761,9 +979,15 @@ TEST_SUITE("content_compile_passes") {
         const fs::path full = directory / "full.json";
         const fs::path absent = directory / "absent.json";
         const fs::path partial = directory / "partial.json";
-        { std::ofstream(full) << full_json; }
-        { std::ofstream(absent) << absent_json; }
-        { std::ofstream(partial) << partial_json; }
+        {
+            std::ofstream(full) << full_json;
+        }
+        {
+            std::ofstream(absent) << absent_json;
+        }
+        {
+            std::ofstream(partial) << partial_json;
+        }
 
         std::vector<UnitDefinition> full_defs;
         std::vector<UnitDefinition> absent_defs;
@@ -890,9 +1114,15 @@ TEST_SUITE("content_compile_passes") {
         const fs::path within_ship = directory / "within_ship.json";
         const fs::path within_submarine = directory / "within_submarine.json";
         const fs::path across_blocks = directory / "across_blocks.json";
-        { std::ofstream(within_ship) << within_ship_json; }
-        { std::ofstream(within_submarine) << within_submarine_json; }
-        { std::ofstream(across_blocks) << across_blocks_json; }
+        {
+            std::ofstream(within_ship) << within_ship_json;
+        }
+        {
+            std::ofstream(within_submarine) << within_submarine_json;
+        }
+        {
+            std::ofstream(across_blocks) << across_blocks_json;
+        }
 
         const auto thrown_message = [](const fs::path &path) {
             std::vector<UnitDefinition> defs;
@@ -954,7 +1184,9 @@ TEST_SUITE("content_compile_passes") {
 })json";
 
         const fs::path path = directory / "all_keys.json";
-        { std::ofstream(path) << all_keys; }
+        {
+            std::ofstream(path) << all_keys;
+        }
 
         std::vector<UnitDefinition> defs;
         std::string error;
@@ -1007,7 +1239,9 @@ TEST_SUITE("content_compile_passes") {
 })json";
 
         const fs::path path = directory / "sparse.json";
-        { std::ofstream(path) << sparse; }
+        {
+            std::ofstream(path) << sparse;
+        }
 
         std::vector<UnitDefinition> defs;
         std::string error;
@@ -1054,8 +1288,12 @@ TEST_SUITE("content_compile_passes") {
 
         const fs::path enabled_before_table = directory / "enabled_before_table.json";
         const fs::path first_row_before_last = directory / "first_row_before_last.json";
-        { std::ofstream(enabled_before_table) << enabled_before_table_json; }
-        { std::ofstream(first_row_before_last) << first_row_before_last_json; }
+        {
+            std::ofstream(enabled_before_table) << enabled_before_table_json;
+        }
+        {
+            std::ofstream(first_row_before_last) << first_row_before_last_json;
+        }
 
         const auto thrown_message = [](const fs::path &path) {
             std::vector<UnitDefinition> defs;
@@ -1126,7 +1364,9 @@ TEST_SUITE("content_compile_passes") {
             {"failure_mode_weights", {{"structural-weakening", 1.5}, {"cut", 0.25}}},
         });
         const fs::path valid_path = directory / "valid.json";
-        { std::ofstream(valid_path) << valid_entry.dump(2); }
+        {
+            std::ofstream(valid_path) << valid_entry.dump(2);
+        }
 
         std::vector<UnitDefinition> valid_definitions;
         std::string error;
@@ -1162,7 +1402,9 @@ TEST_SUITE("content_compile_passes") {
 
         for (const auto &[name, component_fields] : invalid_entries) {
             const fs::path path = directory / (name + ".json");
-            { std::ofstream(path) << make_entry(component_fields).dump(2); }
+            {
+                std::ofstream(path) << make_entry(component_fields).dump(2);
+            }
             std::vector<UnitDefinition> definitions;
             std::string load_error;
             CHECK_FALSE(load_unit_definitions_json(path.string(), definitions, &load_error));

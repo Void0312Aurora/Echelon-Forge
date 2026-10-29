@@ -4,7 +4,7 @@ Document kind: `work`
 Lifecycle: `active`
 Canonical: `docs/architecture/work/issues/rfc_qualified_composition_implementation.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-10-17`
+Last verified: `2026-10-29`
 
 ## Scope and source
 
@@ -29,7 +29,7 @@ composition diagnostics and resize operation received the same failure guard.
 | #239 input lock | #260 | `897d29f02b98212e8a4431ae02721f0bcf90a62c` |
 | #251 failure domains | #261 | `f8403b3ea13a47796f792053e142b4f6c1b44dbb` |
 
-## Current integration status (2026-10-15)
+## Current integration status (2026-10-29)
 
 PRs #278–#287 merged the qualification stack into `main`; the final stack
 commit is `ed9e476be4b57831001e0ef8e42d500989933e0e`. The #210 native owner
@@ -44,7 +44,7 @@ isolation.
 | RFC | Implemented in this checkpoint | Evidence and limits |
 | --- | --- | --- |
 | #229 | Complete recursive boundaries; capability/clock/backend inheritance; incompatible information layers, clocks and multiple producers reject. Immutable parameters, backend references and clock policies participate in identity. Two native Air seeker primitive adapters and one stateful CV tracker share a qualification configuration. A bounded adapter now binds compiled nodes to an owner-provided StageNodeManifest snapshot and reuses realized-order evidence. Versioned owner vocabularies now cover both port schemas and freshness labels, and freshness vocabulary identity participates in graph identity. | Native LOS conversion and world-position reconstruction feed the actual CV tracker. Four timesteps reach the same four-second horizon under a fixed measurement schedule. Missing, duplicate, incomplete or adapter-only stage evidence rejects before qualification. A child exception after native state mutation but before outer publication reuses #251's unknown-state projection. These are bounded proofs, not installation of an authored execution graph. |
-| #236 | Numeric bounds, blueprint constraints, module digests and native reference selections participate in plan identity. Bounded mass, power-budget and slot-mount compatibility checks now fail closed before publication. Explicit hardpoint contracts and loadout selections validate mount class, allowed module kind, quantity, capacity, module physical metadata and native identity before publication; all of those values participate in the canonical plan identity. The immutable legacy projection now requires an explicit loadout path and rejects missing or mismatched loadout evidence instead of silently dropping selected modules. Because the maintained native `UnitDefinition::default_loadout` map stores one weapon reference per station, native lowering and the typed adapter reject `quantity != 1` until an owner multi-store contract exists; quantity remains qualification evidence and identity. The opt-in `platform_blueprint_adapter` projects slot and supported single-store loadout capabilities into the maintained typed request shape, carries hardpoint and quantity evidence, rejects slot/cardinality, module identity and native capability-family drift before DTO publication, and compares shared source type/capability semantics against an actual native factory-resolved plan. The native validator rejects source, bundle and resolved-capability drift. | F-16 and Ground infantry are lowered, loaded and spawned through existing native owners. An explicit F-16 two-station loadout projection reaches the existing native loader with observation parity after one step. The real database-backed F-16 factory plan is queried; a partial authored capability mapping is rejected before typed DTO publication instead of being treated as equivalent. All public observation fields match at setup and after four steps for the existing F-16/Ground and typed Air proofs. Hardpoint/loadout validation, quantity rejection, legacy projection, native capability projection and factory-plan mismatch fencing are covered by focused tests; broader owner-approved capability mapping, native unit compatibility, multi-store native representation and owner production review remain open. |
+| #236 | Numeric bounds, blueprint constraints, module digests and native reference selections participate in plan identity. Bounded mass, power-budget and slot-mount compatibility checks now fail closed before publication. Explicit hardpoint contracts and loadout selections validate mount class, allowed module kind, quantity, capacity, module physical metadata and native identity before publication; all of those values participate in the canonical plan identity. Legacy strings remain supported and normalize to a single store; ordered string arrays represent same-station multi-store loadouts. The native factory validates all references and missile types, summed store mass against positive hardpoint capacity, and rejects empty lists before publication. It materializes each store with deterministic station/store ordering, stable child names, individual mass and missile-release lookup. The opt-in `platform_blueprint_adapter` preserves selection quantity in the native projection and typed request identity, rejects slot/cardinality, module identity and native capability-family drift before DTO publication, and compares shared source type/capability semantics against an actual native factory-resolved plan. The native validator rejects source, bundle and resolved-capability drift. | Focused native tests cover legacy singleton import, explicit repeated stores, summed mass, deterministic entities and capacity/empty-list rejection; the Air runtime suite exercises F-16 missile release from a capacity-compatible station. F-16's two AIM-120C-7 records were moved from 150 kg wingtip rails to the 300 kg inner pylons while retaining two AIM-9X wingtip stores. A read-only authored-content census found an unresolved `R-73` reference and over-capacity R-77-1 wingtip stores in Su-35; that unit remains unmodified and inadmissible until its source records and station assignments are resolved. Broader owner-approved capability mapping, native unit compatibility, rollback and production review remain open. |
 | #237 | Relationships survive compilation and hashing with instance-scoped endpoints; reused packages expand independently; nested role capability requirements are checked; frame/anchor/provenance references survive in package-instance evidence. A qualification adapter now binds one compiled package to an existing CSG group by explicit entity-name and assembly-type maps, carries the compiled relationship digest, records CSG schema, scenario, geometry and embarked-inventory digests, and delegates the complete qualified snapshot to the existing loader. The loader requires an independently supplied compiled-package scope and rechecks package and relationship identity before delegation. Malformed group metadata and missing guide-frame evidence now fail closed with explicit qualification errors. | Recursive, full named/mirror CSG, loader and negative fixtures. Both full S0 fixtures bind all seven surface hulls per group; native loader positions and 241 replay frames match. In-memory coordinate, inventory, geometry, runtime-metadata, compiled-package and relationship drift is rejected before loading. CSG still owns coordinate expansion, geodesy, embarked inventory and native scenario materialization. It does not install task authority or replace the CSG compiler. |
 | #238 | Field provenance/frame checks, explicit optional defaults with preserved field order, action bounds/timing checks, deterministic policy selection, a legacy-kind compatibility gate and an admitted binding through `DecisionRuntimeAgent`. An owner-issued `PolicyCheckpoint` metadata contract now checks artifact digest, policy/version and observation/action contract identity before binding. Verified checkpoint bytes can now pass through an explicit owner-loader seam, and `PolicyRuntimeBinding.from_checkpoint_artifact` verifies bytes before constructing the existing binding; the contract layer verifies the model lifecycle protocol without deserializing a framework. Runtime binding now rejects a caller-constructed admitted DTO and accepts only the marker produced by `admit_policy()`. The marker is field-bound, so resealing a rejected admission with `dataclasses.replace()` cannot turn it into an admitted binding. The binding supports an owner action-authorizer after generic value/timing checks and before the owner action projector, so current mask, authority and expiry remain native/domain-owner decisions. Admission can consume the maintained owner `ObservationViewSpec`, fail closed on invalid identity/schema/layers, compare the selected view against the policy contract, and carry the admitted view identity/version into the existing model context. | Basic mission fields come from the mission packet owner, action dimensions from the existing native action adapter, and action bounds from the existing Gym space. The binding preserves the existing model reset/decide/close lifecycle, carries verified checkpoint provenance when supplied, validates produced actions and delegates live authorization plus final action projection to owner callbacks. Focused tests cover digest rejection before owner loading, owner protocol rejection, binding-factory loading, action projection, maintained-view binding/provenance, direct and resealed caller-constructed admission rejection and a real `DecisionRuntimeAgent` path that rejects an expired action before projection. An external JSON stand-in checkpoint now runs through PolicyRuntimeBinding and DecisionRuntimeAgent into the existing native facade action endpoint; live native mission updates change model output and observed throttle with direct-action state parity. Production checkpoint quality, selection/profile admission and authorization-provider wiring remain open. |
 | #239 | Deeply immutable canonical input identity, semantic freshness checks on compiled scenario snapshots, ScenarioCompiler dependency projection, separate observed native manifest/graph/topology identity, and a host receipt binding join to the existing RunReceipt validator. A file-bound join now reads a host-published canonical receipt, verifies its bytes and delegates to the same owner validator without synthesizing a receipt. Completed comparison now requires the exact structural evidence shape emitted by that join, including a completed outcome, receipt digest/binding and durable acknowledgement. The comparator also checks receipt binding identity fields and digest-shaped native evidence before treating completion evidence as comparable. | One existing Air matrix entry produces a static candidate with explicit effective seeds. Source changes and in-memory semantic snapshot changes reject. The join preserves receipt/run/host/generation, backend graph, native validator evidence and durable acknowledgement, and the file-bound path rejects noncanonical or unreadable host output. Receipt/comparability fixtures remain synthetic owner-contract vectors rather than durable production run records. A bounded native dark-host subprocess now publishes an actual receipt referencing the Air input lock and reopens it through the native file ledger. It checks admission with a missing lock blob, source drift and later blob loss. This reference-only run explicitly reports unexecuted input-lock semantics and remains incomparable; matching host mode and owner-observed semantic execution are required for ordinary comparisons. An opt-in native shutdown capture now persists the same-run CPU scheduler topology as a receipt-bound output artifact; ledger reopening and the file-bound join reject missing, corrupted or mismatched topology evidence. A separate opt-in native world-scope artifact binds outcome indexes to receipt world IDs, boot, incarnation and world epoch. Missing associations remain unknown; file-bound associations require matching receipt-referenced bytes. A string `status=completed` or arbitrary truthy evidence cannot establish comparability. |
@@ -236,9 +236,16 @@ merge into main, accept the proposed ADRs or close RFC issues.
    request identity; a supplied factory plan still decides admission. Explicit
    hardpoint contracts and loadout selections now validate mount class, allowed
    kind, quantity, capacity, physical metadata and native identity, and legacy
-   lowering requires a declared loadout path. The current native map stores one
-   weapon reference per station, so native lowering and typed admission reject
-   `quantity != 1` until the owner defines a multi-store representation. Owner
+   lowering requires a declared loadout path. Native loadouts preserve historic
+   strings as one store and accept ordered string arrays for multiple stores at
+   one station. Factory admission rejects empty lists, unresolved/non-missile
+   modules, nonpositive capacity and aggregate store mass above the station
+   limit before publication. Materialization records per-store entities and
+   stable identity in array order; release resolution selects the matching
+   store definition. F-16's AIM-120C-7 load moved to stations 2 and 8 to respect
+   their 300 kg hardpoint limits. The authored-data census still finds missing
+   Su-35 R-73 references and its 190 kg R-77-1 stores assigned to 150 kg rails;
+   that unit remains unresolved rather than bypassing native admission. Owner
    review is still required for the mapping's production contract, explicit
    unit contracts and broader native physical compatibility before any
    production consumer is enabled.
@@ -293,6 +300,47 @@ merge into main, accept the proposed ADRs or close RFC issues.
    starts a fresh native process. This proves local process-boundary behavior,
    not a production supervisor, durable host availability, rollback or a
    per-world commit claim.
+
+## 2026-10-29 native multi-store loadouts
+
+`UnitDefinition::default_loadout` now maps each station to an ordered list
+of store references. The JSON loader still accepts the historic single
+string and stores it as a one-element list. `DefaultUnitFactory` admission
+checks every reference and its Missile type, a finite positive capacity on
+each used station, a non-empty list, and that the summed store mass does
+not exceed the station capacity. Materialization keeps the historic
+`<unit>_Stn_<n>` name for the first store and names later stores
+`<unit>_Stn_<n>_Store_<k>`; weapon release parses that ordinal to select the
+matching definition. Blueprint lowering and the typed adapter project
+`quantity` as a repeated list instead of rejecting it.
+
+The capacity check rejected the authored F-16C Block 50 loadout, which put
+the 152 kg AIM-120C-7 on the 150 kg wingtip stations. The AIM-9X and
+AIM-120C-7 pairs were swapped onto stations that fit; capacities come from
+the existing record. A census of all 143 authored units found one other
+inadmissible unit: Su-35S references two undefined R-73 records and carries
+190 kg R-77-1 on 150 kg rails. It stays unmodified and rejected until its
+source records are resolved.
+
+Air tests and scripted demos had selected weapons by literal station
+number and some tests built partial database copies. Both broke when the
+F-16 layout changed. `python/content/unit_loadout.py` now resolves a
+station from the authored loadout by weapon name, and
+`tests/support/unit_database.py` patches named records in a full database
+copy.
+
+PR #320 alone already fails four `test_flight_dynamics_runtime.py` tests on
+HEI because their two-file database copy omits the F-16's weapons; the
+maintained CI suites do not run that file. This checkpoint fixes them.
+
+HEI (GCC 13.3, Release, CMake 4.2.3) at this checkpoint: native `ef_test`
+368 cases / 171,001 assertions passed with one design skip; the focused
+content, platform-spawn, RFC-composition, fire-missile and typed-spawn
+pytest set passed 177 tests. `tests/runtime/air_combat` has the same eight
+failures as `main@5a84af716` on the same host and no others.
+`tests/runtime/simulation` (60), `tests/runtime/air` (98) and
+`tests/runtime/tasking` (39) pass. The CI smoke suite and the 14 scenario
+contracts pass.
 
 ## 2026-10-13 native input-lock receipt reference
 

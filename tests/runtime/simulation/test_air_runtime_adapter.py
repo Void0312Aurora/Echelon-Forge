@@ -5,6 +5,7 @@ import ef_py
 from python.runtime_bootstrap import resolve_repo_path
 from python.simulation.air.engagement import AirEngagementFacts, AirScriptedEngagementController
 from python.simulation.air.runtime import AirEngagementRuntimeInput, AirScriptedEngagementRuntimeModel
+from python.content.unit_loadout import station_for
 from python.simulation.facade_batch import FacadeBatchBackend
 from python.tasking_contracts.common.decision_runtime import (
     DECISION_RUNTIME_ACTION_DECIDED,
@@ -16,6 +17,9 @@ from python.tasking_contracts.common.decision_runtime import (
 
 DATABASE = resolve_repo_path("examples", "config", "database")
 
+
+
+_AMRAAM_STATION = station_for("F-16C_Block50", "AIM-120C-7")
 
 def _setup(seeds: tuple[int, ...]) -> ef_py.BatchWorldSetupRequest:
     request = ef_py.BatchWorldSetupRequest()
@@ -64,7 +68,7 @@ def test_air_scripted_controller_uses_common_runtime_hold_and_replay_identity() 
             authority_scope="air:engagement",
         ),
             AirScriptedEngagementRuntimeModel(
-                controller=AirScriptedEngagementController(weapon_station_id=1)
+                controller=AirScriptedEngagementController(weapon_station_id=_AMRAAM_STATION)
             ),
     )
     try:
