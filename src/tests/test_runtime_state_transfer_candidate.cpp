@@ -232,6 +232,13 @@ class CountingAbortImportTransaction final : public host::RuntimeStateOwnerImpor
     std::shared_ptr<std::atomic<int>> count_;
 };
 
+// Fixture rows carry the oldest generation their category admits: N-1, or
+// the generation that introduced the category if it is newer.
+std::uint32_t fixture_row_generation(host::RuntimeStateCategory category) {
+    return std::max(host::kRuntimeStateTransferPreviousGeneration,
+                    host::runtime_state_decoder_replay_rule(category)->introduced_generation);
+}
+
 class FixtureOwnerRegistry final : public host::RuntimeStateTransferOwnerRegistry {
   public:
     explicit FixtureOwnerRegistry(bool tamper = false, bool export_allowed = true,
@@ -271,7 +278,7 @@ class FixtureOwnerRegistry final : public host::RuntimeStateTransferOwnerRegistr
                     .disposition = policy.disposition,
                     .owner_id = policy.owner_id,
                     .schema_id = policy.schema_id,
-                    .schema_generation = host::kRuntimeStateTransferPreviousGeneration,
+                    .schema_generation = fixture_row_generation(policy.category),
                     .sequence_high_watermark = 17,
                     .rng_draw_position = 18,
                     .simulation_tick = 19,
@@ -431,6 +438,7 @@ std::vector<std::pair<host::RuntimeStateCategory, host::RuntimeStateDisposition>
         {host::RuntimeStateCategory::ExternalSideEffects,
          host::RuntimeStateDisposition::NotApplicable},
         {host::RuntimeStateCategory::DiagnosticsTelemetry, host::RuntimeStateDisposition::Rederive},
+        {host::RuntimeStateCategory::ScenarioSettings, host::RuntimeStateDisposition::Transfer},
     };
 }
 
@@ -509,21 +517,21 @@ ValidationFixture make_validation_fixture(std::uint64_t host_low, bool tamper = 
                            category == host::RuntimeStateCategory::ClockCadence ||
                            category == host::RuntimeStateCategory::DelayedEventsQueues ||
                            category == host::RuntimeStateCategory::CommandsLinksPendingIntent ||
-                           category == host::RuntimeStateCategory::EpisodeRewardTermination;
-        profile.rows.push_back(
-            {.category = category,
-             .disposition = disposition,
-             .owner_id = owner,
-             .schema_id = schema,
-             .minimum_schema_generation = host::kRuntimeStateTransferPreviousGeneration,
-             .maximum_schema_generation = host::kRuntimeStateTransferPreviousGeneration,
-             .truth_affecting = truth});
+                           category == host::RuntimeStateCategory::EpisodeRewardTermination ||
+                           category == host::RuntimeStateCategory::ScenarioSettings;
+        profile.rows.push_back({.category = category,
+                                .disposition = disposition,
+                                .owner_id = owner,
+                                .schema_id = schema,
+                                .minimum_schema_generation = fixture_row_generation(category),
+                                .maximum_schema_generation = fixture_row_generation(category),
+                                .truth_affecting = truth});
         host::RuntimeStateCensusEntry entry{
             .category = category,
             .disposition = disposition,
             .owner_id = owner,
             .schema_id = schema,
-            .schema_generation = host::kRuntimeStateTransferPreviousGeneration,
+            .schema_generation = fixture_row_generation(category),
             .item_count = 0,
             .settled_item_count = 0,
             .sequence_high_watermark = 17,
@@ -632,21 +640,21 @@ NativeBranchFixture make_native_branch_fixture(std::uint64_t host_low, bool tamp
                            category == host::RuntimeStateCategory::ClockCadence ||
                            category == host::RuntimeStateCategory::DelayedEventsQueues ||
                            category == host::RuntimeStateCategory::CommandsLinksPendingIntent ||
-                           category == host::RuntimeStateCategory::EpisodeRewardTermination;
-        profile.rows.push_back(
-            {.category = category,
-             .disposition = disposition,
-             .owner_id = owner,
-             .schema_id = schema,
-             .minimum_schema_generation = host::kRuntimeStateTransferPreviousGeneration,
-             .maximum_schema_generation = host::kRuntimeStateTransferPreviousGeneration,
-             .truth_affecting = truth});
+                           category == host::RuntimeStateCategory::EpisodeRewardTermination ||
+                           category == host::RuntimeStateCategory::ScenarioSettings;
+        profile.rows.push_back({.category = category,
+                                .disposition = disposition,
+                                .owner_id = owner,
+                                .schema_id = schema,
+                                .minimum_schema_generation = fixture_row_generation(category),
+                                .maximum_schema_generation = fixture_row_generation(category),
+                                .truth_affecting = truth});
         host::RuntimeStateCensusEntry entry{
             .category = category,
             .disposition = disposition,
             .owner_id = owner,
             .schema_id = schema,
-            .schema_generation = host::kRuntimeStateTransferPreviousGeneration,
+            .schema_generation = fixture_row_generation(category),
             .sequence_high_watermark = 17,
             .rng_draw_position = 18,
             .simulation_tick = 19,
@@ -1255,12 +1263,16 @@ TEST_SUITE("runtime_state_transfer_candidate") {
             CHECK(row.disposition == rule.disposition);
             CHECK(row.owner_id == rule.owner_id);
             CHECK(row.schema_id == rule.schema_id);
-            CHECK(row.minimum_schema_generation == rule.previous_schema_generation);
+            CHECK(row.minimum_schema_generation ==
+                  std::max(rule.previous_schema_generation, rule.introduced_generation));
             CHECK(row.maximum_schema_generation == rule.current_schema_generation);
         }
     }
 
-    TEST_CASE("fixed twelve-owner adapter registry executes current and N-1 generations") {
+    TEST_CASE("fixed owner adapter registry executes current and N-1 generations") {
+        // Corrupting the row imported last makes every other row prepare first.
+        constexpr auto kLastRegisteredCategory =
+            static_cast<host::RuntimeStateCategory>(host::kRuntimeStateCategoryCount - 1);
         bool emit_previous_generation = false;
         bool corrupt_last_import = false;
         bool precommit_first_child = false;
@@ -1291,7 +1303,7 @@ TEST_SUITE("runtime_state_transfer_candidate") {
                         .owner_id = row->owner_id,
                         .schema_id = row->schema_id,
                         .schema_generation = emit_previous_generation
-                                                 ? host::kRuntimeStateTransferPreviousGeneration
+                                                 ? fixture_row_generation(category)
                                                  : host::kRuntimeStateTransferContractGeneration,
                         .sequence_high_watermark = 17,
                         .rng_draw_position = 18,
@@ -1370,8 +1382,7 @@ TEST_SUITE("runtime_state_transfer_candidate") {
                         .source_schema_generation = entry.schema_generation,
                         .exact_schema_decoded = true,
                     };
-                    if (corrupt_last_import &&
-                        category == host::RuntimeStateCategory::DiagnosticsTelemetry) {
+                    if (corrupt_last_import && category == kLastRegisteredCategory) {
                         observation.owner_id = "invalid-owner";
                     }
                     std::shared_ptr<host::RuntimeStateOwnerImportTransaction> transaction;
@@ -1424,11 +1435,13 @@ TEST_SUITE("runtime_state_transfer_candidate") {
         REQUIRE(previous_import.status);
         REQUIRE(previous_import.observations.size() == host::kRuntimeStateCategoryCount);
         for (const auto &observation : previous_import.observations) {
-            CHECK(observation.source_schema_generation ==
-                  host::kRuntimeStateTransferPreviousGeneration);
+            const auto generation = fixture_row_generation(observation.category);
+            CHECK(observation.source_schema_generation == generation);
             CHECK(observation.schema_generation == host::kRuntimeStateTransferContractGeneration);
-            CHECK(observation.source_artifact_payload_sha256 !=
-                  observation.candidate_artifact_payload_sha256);
+            // Only rows that were really N-1 go through migration.
+            CHECK((observation.source_artifact_payload_sha256 !=
+                   observation.candidate_artifact_payload_sha256) ==
+                  (generation == host::kRuntimeStateTransferPreviousGeneration));
         }
         REQUIRE(previous_import.transaction->abort_with_deadline(2, 100));
 
@@ -1451,6 +1464,7 @@ TEST_SUITE("runtime_state_transfer_candidate") {
         CHECK_FALSE(rejected_import.status);
         CHECK(rejected_import.transaction == nullptr);
         CHECK(rejected_import.observations.empty());
+        // Every prepared transaction, including the corrupt last one, is aborted.
         CHECK(cleanup_abort_count->load() == static_cast<int>(host::kRuntimeStateCategoryCount));
     }
 

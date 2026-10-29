@@ -21,16 +21,18 @@ using echelon_forge::runtime_contracts::v1::RuntimeIncarnationRef;
 using echelon_forge::runtime_contracts::v1::RuntimeWorldRef;
 
 inline constexpr std::uint32_t kRuntimeEpisodeHandshakeGeneration = 1;
-// The ECS document gained the StableIdentityState singleton, and the clock
-// payload its frame count, after the generation-5 producer. N=6 derives
-// next_serial from the transferred serials and keeps the importing kernel's
-// episode seed for admitted N-1 bytes. Readers accept only N and N-1 so a rolling
+// After the generation-5 producer, the ECS document gained the
+// StableIdentityState singleton, the clock payload its frame count, and the
+// census the ScenarioSettings category. N=6 derives next_serial from the
+// transferred serials and keeps the importing kernel's episode seed for
+// admitted N-1 bytes; an N-1 census has no ScenarioSettings row, and the target
+// keeps its own settings. Readers accept only N and N-1 so a rolling
 // replacement can bridge one producer generation without silently accepting an
 // arbitrarily old state bundle.
 inline constexpr std::uint32_t kRuntimeStateTransferContractGeneration = 6;
 inline constexpr std::uint32_t kRuntimeStateTransferPreviousGeneration =
     kRuntimeStateTransferContractGeneration - 1;
-inline constexpr std::size_t kRuntimeStateCategoryCount = 12;
+inline constexpr std::size_t kRuntimeStateCategoryCount = 13;
 
 enum class RuntimeStateCategory : std::uint8_t {
     CompositionProviderSystemGraph,
@@ -45,6 +47,9 @@ enum class RuntimeStateCategory : std::uint8_t {
     InFlightRequestsResults,
     ExternalSideEffects,
     DiagnosticsTelemetry,
+    // Environment settings and missile tuning applied through kernel setters.
+    // Loaded content (terrain raster, unit definitions) is not part of it.
+    ScenarioSettings,
 };
 
 enum class RuntimeStateDisposition : std::uint8_t {
@@ -691,7 +696,7 @@ class RuntimeStateTransferOwnerRegistry {
 };
 
 // Concrete registry used by production-facing integration code.  Requiring a
-// fixed twelve-entry registration array makes omission and duplicate owner
+// fixed one-entry-per-category registration array makes omission and duplicate owner
 // registration observable at construction; all callback failures are returned
 // as fail-closed transfer status rather than being converted into defaults.
 class RuntimeStateOwnerAdapterRegistry final : public RuntimeStateTransferOwnerRegistry {
@@ -710,7 +715,7 @@ class RuntimeStateOwnerAdapterRegistry final : public RuntimeStateTransferOwnerR
 
     // Exposes the immutable registration selected by the fixed category
     // table. Integration tests use this to exercise a maintained owner codec
-    // and its WAL transaction without weakening the all-twelve export gate.
+    // and its WAL transaction without weakening the every-category export gate.
     [[nodiscard]] const RuntimeStateOwnerAdapterRegistration *
     registration(RuntimeStateCategory category) const noexcept;
 
@@ -877,7 +882,7 @@ runtime_state_decoder_replay_rule(RuntimeStateCategory category) noexcept;
                                                   std::uint32_t contract_generation) noexcept;
 [[nodiscard]] std::size_t runtime_state_category_count(std::uint32_t contract_generation) noexcept;
 
-// Construct the canonical twelve-row profile from the maintained decoder /
+// Construct the canonical one-row-per-category profile from the maintained decoder /
 // replay matrix.  Callers still supply the plan bindings and profile identity,
 // but cannot accidentally rename an owner/schema or widen the N/N-1 window.
 // This is a profile-construction guard; it does not claim that the production

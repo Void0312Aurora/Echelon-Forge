@@ -97,3 +97,32 @@ def test_maintained_facade_rejects_invalid_native_branch_admission() -> None:
     assert facade.fork_native_branch(0, "A" * 64, 1) is None
     assert facade.fork_native_branch(0, "a" * 63, 1) is None
     assert facade.fork_native_branch(0, "a" * 64, 0) is None
+
+
+def test_native_branch_of_a_non_default_seed_steps_like_its_parent() -> None:
+    # The review found children kept a fresh kernel's seed 42 identity and a
+    # float-rounded clock. Seed 7, dt = 1/60 and a fork after step 3 expose both.
+    facade = ef_py.RuntimeFacade(1)
+    setup = ef_py.BatchWorldSetupRequest()
+    setup.seeds = [7]
+    setup.time_steps = [1.0 / 60.0]
+    spawn = ef_py.WorldSpawnRequest()
+    spawn.type_name = "Aircraft"
+    spawn.entity_name = "controlled_aircraft"
+    spawn.is_agent = True
+    spawn.z = 3000.0
+    spawn.vx = 150.0
+    setup.spawn_requests = [spawn]
+    facade.apply_world_setup(setup)
+    for _ in range(3):
+        facade.step_batch()
+
+    child = facade.fork_native_branch(0, "a" * 64, 5)
+    assert child is not None
+    assert _facts_tuple(child.snapshot_facts()) == _facts_tuple(facade.native_snapshot_facts())
+    for _ in range(5):
+        facade.step_batch()
+        assert child.step_pilot_actions([])
+        assert _facts_tuple(child.snapshot_facts()) == _facts_tuple(
+            facade.native_snapshot_facts()
+        )

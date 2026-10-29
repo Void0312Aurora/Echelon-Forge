@@ -26,6 +26,12 @@ KERNEL_ADAPTER_TEST = (
     REPO_ROOT / "src" / "tests" / "test_simulation_kernel_state_owner_adapters.cpp"
 )
 COMPONENT_REFLECTION = REPO_ROOT / "src/core/engine/state_transfer_component_reflection.cpp"
+SCENARIO_SETTINGS_CODEC = (
+    KERNEL_ADAPTER_HEADER.parent / "simulation_kernel_scenario_settings_codec.cpp"
+)
+MISSILE_TUNING_HEADER = REPO_ROOT / "src/core/engine/simulation_kernel_missile_tuning.h"
+WEAPON_COMMON_HEADER = REPO_ROOT / "src/components/combat/common/weapon_common.h"
+ENVIRONMENT_MODEL_HEADER = REPO_ROOT / "src/core/interfaces/environment_model.h"
 ECS_MIGRATION_FUNCTIONS = (
     "decode_missile",
     "normalize_legacy_sensor_reflection",
@@ -55,6 +61,7 @@ STATE_CATEGORIES = (
     "InFlightRequestsResults",
     "ExternalSideEffects",
     "DiagnosticsTelemetry",
+    "ScenarioSettings",
 )
 
 
@@ -83,11 +90,11 @@ def _cpp_function_source(source: str, name: str) -> str:
     raise AssertionError(f"unterminated ECS migration implementation: {name}")
 
 
-def test_p4b_census_is_exactly_the_frozen_twelve_category_contract() -> None:
+def test_p4b_census_is_exactly_the_frozen_category_contract() -> None:
     header = HEADER.read_text(encoding="utf-8")
     source = SOURCE.read_text(encoding="utf-8")
 
-    assert "kRuntimeStateCategoryCount = 12" in header
+    assert f"kRuntimeStateCategoryCount = {len(STATE_CATEGORIES)}" in header
     assert _enum_members(header, "RuntimeStateCategory") == STATE_CATEGORIES
     assert "profile.rows.size() != kRuntimeStateCategoryCount" in source
     assert "request.census.entries" in source
@@ -95,8 +102,8 @@ def test_p4b_census_is_exactly_the_frozen_twelve_category_contract() -> None:
     assert "RuntimeStateTransferError::DuplicateCategory" in source
     for category in STATE_CATEGORIES:
         assert f"RuntimeStateCategory::{category}" in source
-    assert source.count('return "echelon_forge.runtime_state.') == 12
-    assert source.count('return "native.') == 11
+    assert source.count('return "echelon_forge.runtime_state.') == len(STATE_CATEGORIES)
+    assert source.count('return "native.') == len(STATE_CATEGORIES) - 1
     assert 'return "python.mirror-owner"' in source
 
 
@@ -195,7 +202,7 @@ def test_p4b_import_transaction_has_bounded_statusful_commit_abort_and_recovery(
     assert "RuntimeStateDecoderReplayRule" in header
     assert "runtime_state_transfer_profile_from_decoder_matrix" in header
     assert "runtime_state_transfer_profile_from_decoder_matrix" in source
-    assert source.count("migration_sha256 =") == 12
+    assert source.count("migration_sha256 =") == len(STATE_CATEGORIES)
     assert "one generation window" in native_test
     assert "canonical profile factory binds all rows to the decoder matrix" in native_test
     assert "RuntimeValidatedTransferLifecycle::Ambiguous" in source
@@ -225,7 +232,7 @@ def test_p4b_fixed_owner_registry_and_local_wal_are_executable_candidates() -> N
     assert "truncate_journal_file" in source
     assert "valid_journal_transition" in source
     assert "CompositeOwnerImportTransaction" in source
-    assert "fixed twelve-owner adapter registry executes current and N-1 generations" in native_test
+    assert "fixed owner adapter registry executes current and N-1 generations" in native_test
     assert "file WAL persists terminal owner transaction across journal reopen" in native_test
     assert "file WAL reconciles interrupted commit and rejects complete corruption" in native_test
 
@@ -252,8 +259,8 @@ def test_p4b_simulation_kernel_adapter_is_dark_complete_and_strict() -> None:
     assert "episode-barrier.v2" in adapter_source
     assert "clock owner payload does not match its native barrier" in adapter_source
     assert "episode owner payload does not match its native barrier" in adapter_source
-    assert "real SimulationKernel owner registry exports and imports all twelve rows" in adapter_test
-    assert "host replacement commits all twelve real SimulationKernel owner rows" in adapter_test
+    assert "real SimulationKernel owner registry exports and imports every row" in adapter_test
+    assert "host replacement commits every real SimulationKernel owner row" in adapter_test
     assert "every registered component has transfer or explicit rederive policy" in adapter_test
     assert "real RNG owner imports N-1 through the durable adapter journal" in adapter_test
     assert "clock owner imports N-1 and rejects trailing or stale barrier metadata" in adapter_test
@@ -360,3 +367,86 @@ def test_p4b_native_and_mirror_lanes_are_explicitly_ci_qualified() -> None:
     assert "runtime_host_candidate_boundary" in workflow
     assert "test_runtime_state_transfer_candidate_contract.py" in workflow
     assert "test_runtime_episode_mirror.py" in workflow
+
+
+def _struct_members(header: str, struct_name: str, stop: str = "\n};") -> list[str]:
+    opening = re.search(rf"\bstruct {struct_name} \{{", header)
+    assert opening is not None, struct_name
+    # A nested struct closes at its own indentation.
+    indent = header[header.rfind(chr(10), 0, opening.start()) + 1 : opening.start()]
+    closing = stop if stop != chr(10) + "};" else chr(10) + indent + "};"
+    body = header[opening.end():].split(closing, 1)[0]
+    return re.findall(
+        r"^\s*(?:std::vector<double>|double|int|bool|std::uint8_t|std::uint32_t|std::string"
+        r"|WarheadProfile|FuzeProfile|SurfaceType|MaritimeState|geodesy::GeodeticAnchor"
+        r"|std::vector<ZoneSettings>)\s+(\w+)\s*[=;{]",
+        body,
+        re.M,
+    )
+
+
+def _xmacro_names(source: str, macro: str) -> list[str]:
+    body = source.split(f"#define {macro}(X)", 1)[1]
+    lines = []
+    for line in body.splitlines():
+        lines.append(line)
+        if not line.rstrip().endswith("\\"):
+            break
+    return re.findall(r"X\((\w+)\)", " ".join(lines))
+
+
+def test_scenario_settings_codec_covers_every_member() -> None:
+    codec = SCENARIO_SETTINGS_CODEC.read_text(encoding="utf-8")
+    tuning = MISSILE_TUNING_HEADER.read_text(encoding="utf-8")
+    weapons = WEAPON_COMMON_HEADER.read_text(encoding="utf-8")
+    environment = ENVIRONMENT_MODEL_HEADER.read_text(encoding="utf-8")
+
+    def tables(*macros: str) -> list[str]:
+        return [name for macro in macros for name in _xmacro_names(codec, macro)]
+
+    tuning_codec = tables(
+        "EF_SCENARIO_MISSILE_TUNING_DOUBLE_FIELDS",
+        "EF_SCENARIO_MISSILE_TUNING_INT_FIELDS",
+        "EF_SCENARIO_MISSILE_TUNING_VECTOR_FIELDS",
+        "EF_SCENARIO_MISSILE_TUNING_BOOL_FIELDS",
+    ) + ["warhead_profile", "fuze_profile", "explicit_overrides"]
+    tuning_struct = _struct_members(tuning, "MissileTuning", "static constexpr")
+    tuning_struct.append("explicit_overrides")
+    assert sorted(tuning_codec) == sorted(tuning_struct)
+    assert len(tuning_codec) == len(set(tuning_codec))
+
+    warhead_codec = tables(
+        "EF_SCENARIO_WARHEAD_STRING_FIELDS",
+        "EF_SCENARIO_WARHEAD_DOUBLE_FIELDS",
+        "EF_SCENARIO_WARHEAD_UINT32_FIELDS",
+        "EF_SCENARIO_WARHEAD_BOOL_FIELDS",
+    )
+    assert sorted(warhead_codec) == sorted(_struct_members(weapons, "WarheadProfile"))
+    fuze_codec = tables(
+        "EF_SCENARIO_FUZE_STRING_FIELDS",
+        "EF_SCENARIO_FUZE_DOUBLE_FIELDS",
+        "EF_SCENARIO_FUZE_BOOL_FIELDS",
+    )
+    assert sorted(fuze_codec) == sorted(_struct_members(weapons, "FuzeProfile"))
+
+    # Every member of the environment settings reaches its encoder.
+    for struct_name, encoder, prefix in (
+        ("ZoneSettings", "encode_zone", "zone."),
+        ("Settings", "encode_environment", "settings."),
+    ):
+        encoder_body = codec.split(f"Json {encoder}(", 1)[1].split("\n}\n", 1)[0]
+        for member in _struct_members(environment, struct_name):
+            assert f"{prefix}{member}" in encoder_body, (struct_name, member)
+
+
+def test_scenario_settings_migration_digest_pins_the_codec() -> None:
+    codec = SCENARIO_SETTINGS_CODEC.read_text(encoding="utf-8")
+    transfer_source = SOURCE.read_text(encoding="utf-8")
+    # Whitespace-insensitive: reformatting does not move the pin, a field does.
+    implementation_digest = hashlib.sha256(" ".join(codec.split()).encode("utf-8")).hexdigest()
+    rule = transfer_source.split(".category = RuntimeStateCategory::ScenarioSettings,", 1)[1]
+    rule = rule.split("}", 1)[0]
+    declaration = re.search(r'"([0-9a-f]{64})"', rule)
+    assert declaration is not None
+    assert declaration.group(1) == implementation_digest
+    assert ".introduced_generation = 6" in rule

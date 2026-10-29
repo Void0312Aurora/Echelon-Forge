@@ -422,6 +422,7 @@ add_library(ef_runtime_kernel_state_codec STATIC
     src/core/engine/native_world_state_codec.h
     src/runtime/host/integration/simulation_kernel_state_owner_adapters.h
     src/runtime/host/integration/simulation_kernel_state_owner_adapters.cpp
+    src/runtime/host/integration/simulation_kernel_scenario_settings_codec.cpp
 )
 target_include_directories(ef_runtime_kernel_state_codec PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src

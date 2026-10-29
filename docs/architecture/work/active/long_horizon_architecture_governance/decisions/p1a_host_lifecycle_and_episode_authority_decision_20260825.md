@@ -276,6 +276,11 @@ must publish a versioned state census with an owner and one of `transfer`,
 | in-flight requests/results | drain or cancel with typed receipt; replay only when idempotent | late-result fencing and duplicate request tests |
 | external side effects | transactional outbox/receipt or replacement rejected | crash-before/after-commit recovery |
 | diagnostics/telemetry | may be rederived; continuity gaps are explicit | epoch-tagged metrics and gap reporting |
+| scenario settings (added at state-transfer generation 6) | transfer the environment settings and missile tuning applied through kernel setters; loaded terrain and unit content is a separate owner | exact round trip and non-default branch replay; an older census lists the row as not carried and the target keeps its own settings |
+
+A category added after the first census generation states its introducing
+generation. An N-1 census omits it, and the reader records the omission in its
+receipt instead of importing a default.
 
 An incomplete census is a hard failure. A default value is not evidence that a
 state field is safely rederived. State format upgrades follow the N/N-1 reader

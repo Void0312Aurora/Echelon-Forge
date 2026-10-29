@@ -35,6 +35,13 @@ std::vector<std::uint8_t> fixture_owner_state_payload(host::RuntimeStateCategory
     return {bytes.begin(), bytes.end()};
 }
 
+// Fixture rows carry the oldest generation their category admits: N-1, or
+// the generation that introduced the category if it is newer.
+std::uint32_t fixture_row_generation(host::RuntimeStateCategory category) {
+    return std::max(host::kRuntimeStateTransferPreviousGeneration,
+                    host::runtime_state_decoder_replay_rule(category)->introduced_generation);
+}
+
 RuntimeIdentity128 logical_host_id(std::uint64_t low = 2) {
     return {.high = 1, .low = low};
 }
@@ -260,7 +267,7 @@ class TransferOwnerRegistry final : public host::RuntimeStateTransferOwnerRegist
                     .disposition = policy.disposition,
                     .owner_id = policy.owner_id,
                     .schema_id = policy.schema_id,
-                    .schema_generation = host::kRuntimeStateTransferPreviousGeneration,
+                    .schema_generation = fixture_row_generation(policy.category),
                     .step_sequence = barrier_snapshot.step_sequence,
                     .barrier_sequence = barrier_snapshot.barrier_sequence,
                 };
@@ -410,6 +417,7 @@ host::RuntimeTransferCommitProof transfer_proof(host::RuntimeHostCandidate &runt
              host::RuntimeStateDisposition::NotApplicable},
             {host::RuntimeStateCategory::DiagnosticsTelemetry,
              host::RuntimeStateDisposition::Rederive},
+            {host::RuntimeStateCategory::ScenarioSettings, host::RuntimeStateDisposition::Transfer},
         };
     host::RuntimeStateTransferProfile profile{
         .profile_id = "host-test-profile",
@@ -432,21 +440,21 @@ host::RuntimeTransferCommitProof transfer_proof(host::RuntimeHostCandidate &runt
                            category == host::RuntimeStateCategory::ClockCadence ||
                            category == host::RuntimeStateCategory::DelayedEventsQueues ||
                            category == host::RuntimeStateCategory::CommandsLinksPendingIntent ||
-                           category == host::RuntimeStateCategory::EpisodeRewardTermination;
-        profile.rows.push_back(
-            {.category = category,
-             .disposition = disposition,
-             .owner_id = owner,
-             .schema_id = schema,
-             .minimum_schema_generation = host::kRuntimeStateTransferPreviousGeneration,
-             .maximum_schema_generation = host::kRuntimeStateTransferPreviousGeneration,
-             .truth_affecting = truth});
+                           category == host::RuntimeStateCategory::EpisodeRewardTermination ||
+                           category == host::RuntimeStateCategory::ScenarioSettings;
+        profile.rows.push_back({.category = category,
+                                .disposition = disposition,
+                                .owner_id = owner,
+                                .schema_id = schema,
+                                .minimum_schema_generation = fixture_row_generation(category),
+                                .maximum_schema_generation = fixture_row_generation(category),
+                                .truth_affecting = truth});
         host::RuntimeStateCensusEntry entry{
             .category = category,
             .disposition = disposition,
             .owner_id = owner,
             .schema_id = schema,
-            .schema_generation = host::kRuntimeStateTransferPreviousGeneration,
+            .schema_generation = fixture_row_generation(category),
             .step_sequence = barrier_snapshot.step_sequence,
             .barrier_sequence = barrier_snapshot.barrier_sequence,
         };

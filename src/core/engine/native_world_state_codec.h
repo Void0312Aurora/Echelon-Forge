@@ -23,5 +23,8 @@ namespace runtime::contracts {
                                                        std::uint64_t barrier_sequence);
 [[nodiscard]] bool restore_native_clock_state(SimulationKernel &kernel,
                                               const std::vector<std::uint8_t> &payload);
+[[nodiscard]] std::string serialize_native_scenario_settings(SimulationKernel &kernel);
+[[nodiscard]] bool restore_native_scenario_settings(SimulationKernel &kernel,
+                                                    const std::vector<std::uint8_t> &payload);
 
 } // namespace runtime::contracts

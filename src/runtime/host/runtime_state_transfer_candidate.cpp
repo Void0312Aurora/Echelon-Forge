@@ -585,6 +585,7 @@ bool category_requires_truth_schema(RuntimeStateCategory category) {
     case RuntimeStateCategory::DelayedEventsQueues:
     case RuntimeStateCategory::CommandsLinksPendingIntent:
     case RuntimeStateCategory::EpisodeRewardTermination:
+    case RuntimeStateCategory::ScenarioSettings:
         return true;
     default:
         return false;
@@ -869,6 +870,7 @@ RuntimeStateTransferStatus validate_profile(const RuntimeStateTransferProfile &p
             row.owner_id != runtime_state_owner_id(row.category) ||
             row.schema_id != runtime_state_schema_id(row.category) ||
             row.minimum_schema_generation < decoder_rule->previous_schema_generation ||
+            row.minimum_schema_generation < decoder_rule->introduced_generation ||
             row.maximum_schema_generation > decoder_rule->current_schema_generation ||
             row.maximum_schema_generation > kRuntimeStateTransferContractGeneration) {
             return failure(RuntimeStateTransferError::InvalidCensusProfile,
@@ -909,6 +911,7 @@ validate_category_semantics(const RuntimeStateCensusEntry &entry,
     case RuntimeStateCategory::ClockCadence:
     case RuntimeStateCategory::DelayedEventsQueues:
     case RuntimeStateCategory::EpisodeRewardTermination:
+    case RuntimeStateCategory::ScenarioSettings:
         if (entry.disposition != RuntimeStateDisposition::Transfer) {
             return failure(RuntimeStateTransferError::DispositionMismatch,
                            "truth state category requires canonical transfer");
@@ -2226,6 +2229,12 @@ RuntimeStateOwnerImportReceipt RuntimeStateOwnerAdapterRegistry::import_and_obse
                 return receipt;
             }
             const auto &registration = registrations_[static_cast<std::size_t>(policy.category)];
+            if (artifact->schema_generation < policy.minimum_schema_generation) {
+                // Covers a category introduced at N: no N-1 bytes can exist for it.
+                receipt.status = failure(RuntimeStateTransferError::SchemaMismatch,
+                                         "owner adapter source generation predates its category");
+                return receipt;
+            }
             RuntimeStateOwnerArtifact admitted_artifact = *artifact;
             if (artifact->schema_generation == kRuntimeStateTransferPreviousGeneration) {
                 admitted_artifact = registration.migrate_previous(*artifact);
@@ -2318,6 +2327,8 @@ std::string_view runtime_state_category_name(RuntimeStateCategory category) noex
         return "external-side-effects";
     case RuntimeStateCategory::DiagnosticsTelemetry:
         return "diagnostics-telemetry";
+    case RuntimeStateCategory::ScenarioSettings:
+        return "scenario-settings";
     }
     return "unsupported";
 }
@@ -2366,6 +2377,8 @@ std::string_view runtime_state_owner_id(RuntimeStateCategory category) noexcept 
         return "native.side-effect-outbox";
     case RuntimeStateCategory::DiagnosticsTelemetry:
         return "native.telemetry-owner";
+    case RuntimeStateCategory::ScenarioSettings:
+        return "native.scenario-settings-owner";
     }
     return "unsupported";
 }
@@ -2396,6 +2409,8 @@ std::string_view runtime_state_schema_id(RuntimeStateCategory category) noexcept
         return "echelon_forge.runtime_state.side_effect_outbox.v1";
     case RuntimeStateCategory::DiagnosticsTelemetry:
         return "echelon_forge.runtime_state.telemetry.v1";
+    case RuntimeStateCategory::ScenarioSettings:
+        return "echelon_forge.runtime_state.scenario_settings.v1";
     }
     return "unsupported";
 }
@@ -2507,6 +2522,17 @@ runtime_state_decoder_replay_matrix() noexcept {
              .replay_policy = RuntimeStateReplayPolicy::Rederive,
              .migration_sha256 =
                  "3f205d207034c8f48dc00408a8836da76bd0a7cfe4e82b24e4c80a3ad5ccfd66"},
+            {.category = RuntimeStateCategory::ScenarioSettings,
+             .disposition = RuntimeStateDisposition::Transfer,
+             .owner_id = "native.scenario-settings-owner",
+             .schema_id = "echelon_forge.runtime_state.scenario_settings.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::Reject,
+             .replay_policy = RuntimeStateReplayPolicy::Transfer,
+             .migration_sha256 =
+                 // SHA-256 of the normalized scenario-settings codec source.
+                 // Pinned by test_runtime_state_transfer_candidate_contract.py.
+             "7a555f42b635324fe09bd9f43c945f81f56aa6cafbaf2c5a4530f34ab1e6c245",
+             .introduced_generation = 6},
         }};
     return matrix;
 }
@@ -2550,7 +2576,8 @@ RuntimeStateTransferProfile runtime_state_transfer_profile_from_decoder_matrix(
             .disposition = rule.disposition,
             .owner_id = std::string(rule.owner_id),
             .schema_id = std::string(rule.schema_id),
-            .minimum_schema_generation = rule.previous_schema_generation,
+            .minimum_schema_generation =
+                std::max(rule.previous_schema_generation, rule.introduced_generation),
             .maximum_schema_generation = rule.current_schema_generation,
             .truth_affecting = category_requires_truth_schema(rule.category),
         });

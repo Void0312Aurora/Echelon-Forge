@@ -88,10 +88,12 @@ ClonedKernel clone_kernel(SimulationKernel &source, std::uint64_t step) {
     // it does not claim a candidate-host episode barrier.
     const std::string clock =
         runtime::contracts::serialize_native_clock_state(source, step, step + 1);
+    const std::string settings = runtime::contracts::serialize_native_scenario_settings(source);
 
     // WorldBatchRuntime uses the generated default plan for maintained CPU
     // worlds. The state owner restores the complete reflected ECS state, RNG,
-    // and clock into this independent kernel before the child is exposed.
+    // clock and scenario settings into this independent kernel before the
+    // child is exposed.
     auto child = std::make_shared<SimulationKernel>(
         std::string(runtime::contracts::generated::kDefaultResolvedExecutionPlanJson));
     if (!runtime::contracts::restore_native_world_state(*child, bytes(world))) {
@@ -102,6 +104,9 @@ ClonedKernel clone_kernel(SimulationKernel &source, std::uint64_t step) {
     }
     if (!runtime::contracts::restore_native_clock_state(*child, bytes(clock))) {
         throw std::runtime_error("native child branch could not restore clock state");
+    }
+    if (!runtime::contracts::restore_native_scenario_settings(*child, bytes(settings))) {
+        throw std::runtime_error("native child branch could not restore scenario settings");
     }
 
     const auto document = nlohmann::json::parse(world);

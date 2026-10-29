@@ -2621,6 +2621,8 @@ std::vector<std::uint8_t> export_category_payload(SimulationKernel &kernel,
                                                 barrier.barrier_sequence));
     case RuntimeStateCategory::EpisodeRewardTermination:
         return bytes(serialize_episode_owner(kernel, barrier));
+    case RuntimeStateCategory::ScenarioSettings:
+        return bytes(SimulationKernelStateOwnerBridge::serialize_scenario_settings(kernel));
     case RuntimeStateCategory::PythonLoaderControllerCaches:
     case RuntimeStateCategory::BackendDeviceAllocationsLeases:
     case RuntimeStateCategory::InFlightRequestsResults:
@@ -2649,6 +2651,9 @@ bool apply_staged(StagedImport &staged) {
         return staged.episode_barrier_validated &&
                restore_component_subset(*staged.kernel, staged.category, staged.source_payload,
                                         staged.step_sequence, staged.barrier_sequence);
+    case RuntimeStateCategory::ScenarioSettings:
+        return SimulationKernelStateOwnerBridge::restore_scenario_settings(*staged.kernel,
+                                                                           staged.source_payload);
     case RuntimeStateCategory::PythonLoaderControllerCaches:
         if (!staged.rederive_python_caches) {
             staged.python_caches_applied = true;
@@ -2679,6 +2684,9 @@ bool abort_staged(StagedImport &staged) {
         return staged.episode_barrier_validated &&
                restore_component_subset(*staged.kernel, staged.category, staged.before_payload,
                                         staged.step_sequence, staged.barrier_sequence);
+    case RuntimeStateCategory::ScenarioSettings:
+        return SimulationKernelStateOwnerBridge::restore_scenario_settings(*staged.kernel,
+                                                                           staged.before_payload);
     case RuntimeStateCategory::PythonLoaderControllerCaches:
         if (staged.rollback_python_caches &&
             !staged.rollback_python_caches(staged.before_payload)) {
@@ -2711,6 +2719,10 @@ RuntimeStateOwnerImportTransactionPhase recover_staged(StagedImport &staged) {
         break;
     case RuntimeStateCategory::EpisodeRewardTermination:
         current = bytes(serialize_episode_owner(*staged.kernel, staged.episode_barrier));
+        break;
+    case RuntimeStateCategory::ScenarioSettings:
+        current =
+            bytes(SimulationKernelStateOwnerBridge::serialize_scenario_settings(*staged.kernel));
         break;
     case RuntimeStateCategory::PythonLoaderControllerCaches:
         if (staged.recover_python_caches) {
@@ -2922,6 +2934,10 @@ SimulationKernelStateOwnerBridge::create_registry(SimulationKernelStateOwnerRegi
                 }
                 staged->episode_barrier_validated = true;
                 staged->episode_barrier = decoded;
+            } else if (category == RuntimeStateCategory::ScenarioSettings &&
+                       !SimulationKernelStateOwnerBridge::scenario_settings_well_formed(
+                           admitted_artifact.payload)) {
+                throw std::runtime_error("scenario settings owner payload is malformed");
             } else if (category == RuntimeStateCategory::ExternalSideEffects) {
                 const auto expected =
                     explicit_policy_payload(*kernel, category,
@@ -2986,6 +3002,10 @@ SimulationKernelStateOwnerBridge::create_registry(SimulationKernelStateOwnerRegi
             case RuntimeStateCategory::EpisodeRewardTermination:
                 staged->before_payload =
                     bytes(serialize_episode_owner(*kernel, staged->episode_barrier));
+                break;
+            case RuntimeStateCategory::ScenarioSettings:
+                staged->before_payload =
+                    bytes(SimulationKernelStateOwnerBridge::serialize_scenario_settings(*kernel));
                 break;
             case RuntimeStateCategory::PythonLoaderControllerCaches:
                 if (staged->snapshot_python_caches) {
@@ -3131,6 +3151,17 @@ bool restore_native_clock_state(SimulationKernel &kernel,
                                 const std::vector<std::uint8_t> &payload) {
     return runtime::host::integration::SimulationKernelStateOwnerBridge::restore_clock(kernel,
                                                                                        payload);
+}
+
+std::string serialize_native_scenario_settings(SimulationKernel &kernel) {
+    return runtime::host::integration::SimulationKernelStateOwnerBridge::
+        serialize_scenario_settings(kernel);
+}
+
+bool restore_native_scenario_settings(SimulationKernel &kernel,
+                                      const std::vector<std::uint8_t> &payload) {
+    return runtime::host::integration::SimulationKernelStateOwnerBridge::restore_scenario_settings(
+        kernel, payload);
 }
 
 } // namespace runtime::contracts

@@ -173,6 +173,30 @@ StableIdentityState identity_of(SimulationKernel &kernel) {
     return *identity;
 }
 
+// Turns a current export into what a `generation` producer wrote: rows for
+// categories introduced later are absent, and every remaining row, its
+// artifact and the census carry that generation. Payload bytes are left to
+// the caller, which edits them to the old schema first.
+void restamp_as_producer(host::RuntimeStateOwnerExport &exported, std::uint32_t generation) {
+    const auto later = [generation](host::RuntimeStateCategory category) {
+        return !host::runtime_state_category_present(category, generation);
+    };
+    std::erase_if(exported.census.entries, [&](const auto &row) { return later(row.category); });
+    std::erase_if(exported.artifacts, [&](const auto &row) { return later(row.category); });
+    exported.census.contract_generation = generation;
+    for (auto &row : exported.artifacts) {
+        row.schema_generation = generation;
+    }
+    for (auto &row : exported.census.entries) {
+        row.schema_generation = generation;
+        if (!row.canonical_payload.empty()) {
+            row.canonical_payload = host::runtime_state_canonical_payload(row);
+            row.canonical_payload_sha256 =
+                host::runtime_state_payload_sha256(row.canonical_payload);
+        }
+    }
+}
+
 ecs_world_info_t world_info_of(SimulationKernel &kernel) {
     auto lease = kernel.acquire_world_lease();
     const ecs_world_info_t *info = ecs_get_world_info(lease.world().c_ptr());
@@ -251,7 +275,7 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         CHECK(resumed_world_matches);
     }
 
-    TEST_CASE("real SimulationKernel owner registry exports and imports all twelve rows") {
+    TEST_CASE("real SimulationKernel owner registry exports and imports every row") {
         SimulationKernel source;
         SimulationKernel target;
         source.reset(123);
@@ -582,7 +606,7 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         std::filesystem::remove(journal_path, remove_error);
     }
 
-    TEST_CASE("host replacement commits all twelve real SimulationKernel owner rows") {
+    TEST_CASE("host replacement commits every real SimulationKernel owner row") {
         SimulationKernel source;
         SimulationKernel target;
         source.reset(901);
@@ -1492,24 +1516,15 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             });
         REQUIRE(entry != exported.census.entries.end());
         entry->state_content_sha256 = artifact->payload_sha256;
-        // A real old producer stamps the whole census and all twelve owners with 2,
-        // not just the changed ECS row. Unchanged owners still need reader promotion.
-        exported.census.contract_generation = kPreNavalS1ProducerGeneration;
-        for (auto &row : exported.artifacts) {
-            row.schema_generation = kPreNavalS1ProducerGeneration;
-        }
-        for (auto &row : exported.census.entries) {
-            row.schema_generation = kPreNavalS1ProducerGeneration;
-            if (!row.canonical_payload.empty()) {
-                row.canonical_payload = host::runtime_state_canonical_payload(row);
-                row.canonical_payload_sha256 =
-                    host::runtime_state_payload_sha256(row.canonical_payload);
-            }
-        }
+        const auto legacy_ecs_payload = artifact->payload;
+        // A real old producer stamps the whole census and every owner it had
+        // with 2, not just the changed ECS row. Unchanged owners still need
+        // reader promotion.
+        restamp_as_producer(exported, kPreNavalS1ProducerGeneration);
 
         const auto before = Bridge::serialize_world(target);
         // The N reader remains strict. Only explicit N-1 admission may translate it.
-        CHECK_FALSE(Bridge::restore_world(target, artifact->payload));
+        CHECK_FALSE(Bridge::restore_world(target, legacy_ecs_payload));
         CHECK(Bridge::serialize_world(target) == before);
         auto expired = exported;
         expired.census.contract_generation = kPreNavalS1ProducerGeneration - 1;
@@ -1941,20 +1956,15 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             });
         REQUIRE(entry != exported.census.entries.end());
         entry->state_content_sha256 = artifact->payload_sha256;
-        exported.census.contract_generation = producer_generation;
-        for (auto &row : exported.artifacts)
-            row.schema_generation = producer_generation;
-        for (auto &row : exported.census.entries) {
-            row.schema_generation = producer_generation;
-            if (!row.canonical_payload.empty()) {
-                row.canonical_payload = host::runtime_state_canonical_payload(row);
-                row.canonical_payload_sha256 =
-                    host::runtime_state_payload_sha256(row.canonical_payload);
-            }
-        }
+        restamp_as_producer(exported, producer_generation);
+        REQUIRE(exported.census.entries.size() ==
+                host::runtime_state_category_count(producer_generation));
         auto expired = exported;
         expired.census.contract_generation = 4; // N-2 no longer admitted
         const auto before = Bridge::serialize_world(target);
+        // A generation-5 producer had no scenario-settings owner; the target
+        // keeps its own settings.
+        const auto target_settings = Bridge::serialize_scenario_settings(target);
         CHECK_FALSE(target_registry->import_and_observe(profile, expired, {.high = 480, .low = 481})
                         .status);
         CHECK(Bridge::serialize_world(target) == before);
@@ -1963,7 +1973,10 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         INFO(imported.status.detail);
         REQUIRE(imported.status);
         REQUIRE(imported.transaction != nullptr);
-        REQUIRE(imported.observations.size() == host::kRuntimeStateCategoryCount);
+        REQUIRE(imported.observations.size() ==
+                host::runtime_state_category_count(producer_generation));
+        CHECK(imported.categories_not_carried_by_source ==
+              std::vector{host::RuntimeStateCategory::ScenarioSettings});
         for (const auto &observation : imported.observations) {
             CHECK(observation.source_schema_generation == producer_generation);
             CHECK(observation.schema_generation == host::kRuntimeStateTransferContractGeneration);
@@ -1971,6 +1984,7 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         const auto committed = imported.transaction->commit_with_deadline(20, 100);
         REQUIRE(committed.phase == host::RuntimeStateOwnerImportTransactionPhase::Committed);
         REQUIRE(committed.durable);
+        CHECK(Bridge::serialize_scenario_settings(target) == target_settings);
         const auto restored = json::parse(Bridge::serialize_world(target));
         auto source_document = json::parse(Bridge::serialize_world(source));
         CHECK(restored["results"] == source_document["results"]);
@@ -2124,6 +2138,259 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         const std::string negative_frames = "clock.v3\n0.25\n0.05\n5\n6\n-1\n";
         CHECK_FALSE(
             Bridge::restore_clock(target, {negative_frames.begin(), negative_frames.end()}));
+    }
+
+    // Puts every scenario setting off its default, so a branch that keeps a
+    // fresh kernel's settings cannot pass by accident.
+    void apply_non_default_scenario_settings(SimulationKernel & kernel) {
+        kernel.set_wind(3.25, 45.5, 1.75);
+        kernel.set_sun_direction(123.0, 12.5);
+        kernel.set_maritime_state(4.0, 33.0, 9.5);
+        kernel.set_geodetic_anchor(21.3, -157.9, 12.0);
+        kernel.set_terrain_type("flat");
+        // Two zones with equal z_order: their stored order must survive.
+        kernel.add_zone("dirt-a", 10.0, 20.0, 300.0, 40.0, 15.0, 3);
+        kernel.add_zone("dirt-b", -50.0, 5.0, 120.0, 60.0, 90.0, 3);
+        kernel.add_zone("runway", 0.0, 0.0, 2500.0, 45.0, 270.0, 0);
+        MissileTuning tuning = kernel.get_missile_tuning();
+        tuning.max_speed = 1234.5;
+        tuning.nav_gain = 4.25;
+        tuning.pn_los_rate_source = 1;
+        tuning.cd0_mach_breakpoints = {0.8, 1.2, 2.0};
+        tuning.cd0_mach_values = {0.3, 0.55, 0.4};
+        tuning.set_kalman_seeker_override(false);
+        tuning.warhead_profile.fragment_angular_distribution = "polar_band";
+        tuning.warhead_profile.fragment_azimuthal_lobes = 3;
+        tuning.warhead_profile.projection_near_field_floor_enabled = false;
+        tuning.has_warhead_profile = true;
+        tuning.fuze_profile.delay_s = 0.002;
+        tuning.has_fuze_profile = true;
+        kernel.set_missile_tuning(tuning);
+    }
+
+    TEST_CASE("scenario settings round trip exactly and the target keeps none of its own") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        SimulationKernel source;
+        SimulationKernel target;
+        source.reset(7);
+        target.reset(7);
+        apply_non_default_scenario_settings(source);
+        const auto bytes = Bridge::serialize_scenario_settings(source);
+        // A fresh kernel differs in every field set above.
+        REQUIRE(Bridge::serialize_scenario_settings(target) != bytes);
+        REQUIRE(Bridge::restore_scenario_settings(target, {bytes.begin(), bytes.end()}));
+        CHECK(Bridge::serialize_scenario_settings(target) == bytes);
+        CHECK(target.get_maritime_state().sea_state == source.get_maritime_state().sea_state);
+        CHECK(target.get_geodetic_anchor().latitude_deg == 21.3);
+        CHECK(target.get_missile_tuning().max_speed == 1234.5);
+        CHECK(target.get_missile_tuning().has_kalman_seeker_override());
+        // Environment queries agree, not just the bytes.
+        for (const auto &[x, y] :
+             std::array<std::pair<double, double>, 3>{{{10.0, 20.0}, {-50.0, 5.0}, {900.0, 0.0}}}) {
+            CHECK(target.get_ground_terrain_observation(x, y) ==
+                  source.get_ground_terrain_observation(x, y));
+        }
+        CHECK(target.get_sun_direction().x == source.get_sun_direction().x);
+    }
+
+    TEST_CASE("scenario settings reject malformed payloads without touching the target") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        SimulationKernel source;
+        SimulationKernel target;
+        source.reset(7);
+        target.reset(11);
+        apply_non_default_scenario_settings(source);
+        const auto document = json::parse(Bridge::serialize_scenario_settings(source));
+        const auto before = Bridge::serialize_scenario_settings(target);
+        const auto reject = [&](const json &changed) {
+            const auto wire = changed.dump();
+            const std::vector<std::uint8_t> payload(wire.begin(), wire.end());
+            CHECK_FALSE(Bridge::scenario_settings_well_formed(payload));
+            CHECK_FALSE(Bridge::restore_scenario_settings(target, payload));
+            CHECK(Bridge::serialize_scenario_settings(target) == before);
+        };
+        auto unknown = document;
+        unknown["environment"]["unknown_truth"] = true;
+        reject(unknown);
+        auto missing = document;
+        missing["missile_tuning"].erase("seeker_resolution_cell_m");
+        reject(missing);
+        auto schema = document;
+        schema["schema"] = "scenario-settings.v0";
+        reject(schema);
+        auto upper_hex = document;
+        std::string wind = upper_hex["environment"]["wind_speed_mps"];
+        std::transform(wind.begin(), wind.end(), wind.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+        upper_hex["environment"]["wind_speed_mps"] = wind;
+        reject(upper_hex);
+        auto surface = document;
+        surface["environment"]["zones"][0]["surface"] = 99;
+        reject(surface);
+        // set_missile_tuning rejects this; the environment must not change either.
+        auto invalid_tuning = document;
+        invalid_tuning["missile_tuning"]["pn_los_rate_source"] = 7;
+        const auto wire = invalid_tuning.dump();
+        CHECK_FALSE(Bridge::restore_scenario_settings(target, {wire.begin(), wire.end()}));
+        CHECK(Bridge::serialize_scenario_settings(target) == before);
+    }
+
+    TEST_CASE("scenario settings owner imports, aborts and recovers through its WAL") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        SimulationKernel source;
+        SimulationKernel target;
+        source.reset(61);
+        target.reset(62);
+        apply_non_default_scenario_settings(source);
+        const auto source_path = std::filesystem::temp_directory_path() / "ef_scenario_source.wal";
+        const auto target_path = std::filesystem::temp_directory_path() / "ef_scenario_target.wal";
+        std::error_code remove_error;
+        std::filesystem::remove(source_path, remove_error);
+        std::filesystem::remove(target_path, remove_error);
+        auto source_registry = std::dynamic_pointer_cast<host::RuntimeStateOwnerAdapterRegistry>(
+            Bridge::create_registry({
+                .kernel = &source,
+                .journal =
+                    std::make_shared<host::RuntimeStateTransferFileJournal>(source_path.string()),
+                .transaction_namespace = "scenario-source",
+            }));
+        auto target_registry = std::dynamic_pointer_cast<host::RuntimeStateOwnerAdapterRegistry>(
+            Bridge::create_registry({
+                .kernel = &target,
+                .journal =
+                    std::make_shared<host::RuntimeStateTransferFileJournal>(target_path.string()),
+                .transaction_namespace = "scenario-target",
+            }));
+        REQUIRE(source_registry != nullptr);
+        REQUIRE(target_registry != nullptr);
+        const auto *source_owner =
+            source_registry->registration(host::RuntimeStateCategory::ScenarioSettings);
+        const auto *target_owner =
+            target_registry->registration(host::RuntimeStateCategory::ScenarioSettings);
+        REQUIRE(source_owner != nullptr);
+        REQUIRE(target_owner != nullptr);
+        const auto profile = host::runtime_state_transfer_profile_from_decoder_matrix(
+            "scenario-settings.v1", 1, source.resolved_composition_sha256(),
+            target.resolved_composition_sha256());
+        const auto exported = source_owner->export_state(
+            profile, integration_slot(), integration_export_context(integration_barrier()));
+        CHECK(exported.census_entry.schema_generation ==
+              host::kRuntimeStateTransferContractGeneration);
+        const auto target_before = Bridge::serialize_scenario_settings(target);
+
+        auto aborted = target_owner->import_state(profile, integration_slot(),
+                                                  exported.census_entry, exported.artifact,
+                                                  exported.artifact, {.high = 610, .low = 611});
+        REQUIRE(aborted.transaction != nullptr);
+        CHECK(aborted.transaction->abort_with_deadline(20, 100).phase ==
+              host::RuntimeStateOwnerImportTransactionPhase::Aborted);
+        CHECK(Bridge::serialize_scenario_settings(target) == target_before);
+
+        const RuntimeIdentity128 candidate{.high = 612, .low = 613};
+        auto imported =
+            target_owner->import_state(profile, integration_slot(), exported.census_entry,
+                                       exported.artifact, exported.artifact, candidate);
+        REQUIRE(imported.transaction != nullptr);
+        const auto committed = imported.transaction->commit_with_deadline(20, 100);
+        CHECK(committed.phase == host::RuntimeStateOwnerImportTransactionPhase::Committed);
+        CHECK(committed.durable);
+        CHECK(Bridge::serialize_scenario_settings(target) ==
+              Bridge::serialize_scenario_settings(source));
+
+        auto reopened =
+            target_owner->import_state(profile, integration_slot(), exported.census_entry,
+                                       exported.artifact, exported.artifact, candidate);
+        REQUIRE(reopened.transaction != nullptr);
+        CHECK(reopened.transaction->status().phase ==
+              host::RuntimeStateOwnerImportTransactionPhase::Committed);
+
+        aborted.transaction.reset();
+        imported.transaction.reset();
+        reopened.transaction.reset();
+        source_registry.reset();
+        target_registry.reset();
+        std::filesystem::remove(source_path, remove_error);
+        std::filesystem::remove(target_path, remove_error);
+    }
+
+    TEST_CASE("a generation-5 census without scenario settings keeps the target's settings") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        SimulationKernel source;
+        SimulationKernel target;
+        source.reset(71);
+        target.reset(72);
+        apply_non_default_scenario_settings(target);
+        const auto source_path = std::filesystem::temp_directory_path() / "ef_gen5_source.wal";
+        const auto target_path = std::filesystem::temp_directory_path() / "ef_gen5_target.wal";
+        std::error_code remove_error;
+        std::filesystem::remove(source_path, remove_error);
+        std::filesystem::remove(target_path, remove_error);
+        auto source_registry = Bridge::create_registry({
+            .kernel = &source,
+            .journal =
+                std::make_shared<host::RuntimeStateTransferFileJournal>(source_path.string()),
+            .transaction_namespace = "gen5-source",
+        });
+        auto target_registry = Bridge::create_registry({
+            .kernel = &target,
+            .journal =
+                std::make_shared<host::RuntimeStateTransferFileJournal>(target_path.string()),
+            .transaction_namespace = "gen5-target",
+        });
+        const auto plan = source.resolved_composition_sha256();
+        const auto profile = host::runtime_state_transfer_profile_from_decoder_matrix(
+            "gen5-census.v1", 1, plan, plan);
+        auto exported = source_registry->export_source(
+            profile, integration_slot(), integration_export_context(integration_barrier()));
+        REQUIRE(exported.status);
+        REQUIRE(exported.census.entries.size() == host::kRuntimeStateCategoryCount);
+        const auto target_settings = Bridge::serialize_scenario_settings(target);
+
+        // A generation-5 census that still carries the new row is not what any
+        // producer wrote; it must be rejected, not silently imported.
+        auto mislabelled = exported;
+        mislabelled.census.contract_generation = host::kRuntimeStateTransferPreviousGeneration;
+        CHECK_FALSE(
+            target_registry->import_and_observe(profile, mislabelled, {.high = 720, .low = 721})
+                .status);
+
+        auto previous = exported;
+        // The ECS row needs real generation-5 bytes: no identity singleton.
+        auto ecs =
+            std::find_if(previous.artifacts.begin(), previous.artifacts.end(), [](const auto &row) {
+                return row.category == host::RuntimeStateCategory::EcsComponentTruth;
+            });
+        REQUIRE(ecs != previous.artifacts.end());
+        auto document = nlohmann::json::parse(ecs->payload);
+        REQUIRE(document.erase("identity") == 1);
+        const auto legacy = document.dump();
+        ecs->payload = {legacy.begin(), legacy.end()};
+        ecs->payload_sha256 = host::runtime_state_payload_sha256(ecs->payload);
+        for (auto &row : previous.census.entries) {
+            if (row.category == host::RuntimeStateCategory::EcsComponentTruth) {
+                row.state_content_sha256 = ecs->payload_sha256;
+            }
+        }
+        restamp_as_producer(previous, host::kRuntimeStateTransferPreviousGeneration);
+        REQUIRE(previous.census.entries.size() == host::kRuntimeStateCategoryCount - 1);
+
+        auto imported =
+            target_registry->import_and_observe(profile, previous, {.high = 722, .low = 723});
+        INFO(imported.status.detail);
+        REQUIRE(imported.status);
+        CHECK(imported.categories_not_carried_by_source ==
+              std::vector{host::RuntimeStateCategory::ScenarioSettings});
+        REQUIRE(imported.transaction != nullptr);
+        CHECK(imported.transaction->commit_with_deadline(20, 100).phase ==
+              host::RuntimeStateOwnerImportTransactionPhase::Committed);
+        CHECK(Bridge::serialize_scenario_settings(target) == target_settings);
+
+        imported.transaction.reset();
+        source_registry.reset();
+        target_registry.reset();
+        std::filesystem::remove(source_path, remove_error);
+        std::filesystem::remove(target_path, remove_error);
     }
 
     TEST_CASE("ground stance and complete command members survive whole world transfer") {

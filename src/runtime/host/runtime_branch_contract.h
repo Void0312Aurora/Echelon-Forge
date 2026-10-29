@@ -66,7 +66,7 @@ struct RuntimeBranchForkProof {
 };
 
 // The native sibling executor is intentionally a host-neutral seam.  It uses
-// the parent coordinator's branch barrier and the same twelve owner adapters
+// the parent coordinator's branch barrier and the same owner adapters
 // as replacement transfer, but it never publishes the child through a host
 // slot.  A caller must provide a distinct, owner-bound child registry and a
 // fresh child episode identity; omission or aliasing fails closed.
@@ -76,7 +76,7 @@ struct RuntimeNativeSiblingBranchRequest {
     RuntimeStateTransferProfile transfer_profile;
     RuntimeStateCensus census;
     // A native caller may provide only the census binding shell and ask the
-    // source owner to fill the twelve exact entries after the branch barrier
+    // source owner to fill every exact entry after the branch barrier
     // is open. Hand-authored entries remain accepted only when this is false.
     bool derive_census_from_source = false;
     RuntimeStateTransferEvidence evidence;
