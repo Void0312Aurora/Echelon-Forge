@@ -3902,9 +3902,11 @@ RuntimeValidatedStateTransfer::commit_for_host(std::uint64_t now_tick,
                             : RuntimeEpisodePhase::ReplacementBarrier;
                     if (coordinator->phase == expected_barrier_phase &&
                         coordinator->open_barrier_nonce == token->barrier_nonce) {
-                        coordinator->phase = token->kind == RuntimeEpisodeBarrierKind::Branch
-                                                 ? RuntimeEpisodePhase::Running
-                                                 : RuntimeEpisodePhase::TransferCommitted;
+                        if (token->kind == RuntimeEpisodeBarrierKind::Branch) {
+                            coordinator->phase = RuntimeEpisodePhase::Running;
+                        } else {
+                            coordinator->phase = RuntimeEpisodePhase::TransferCommitted;
+                        }
                         coordinator->open_barrier_nonce = {};
                     }
                 }
@@ -3984,11 +3986,13 @@ RuntimeValidatedStateTransfer::recover_for_host(std::uint64_t now_tick,
                             : RuntimeEpisodePhase::ReplacementBarrier;
                     if (coordinator->phase == expected_barrier_phase &&
                         coordinator->open_barrier_nonce == token->barrier_nonce) {
-                        coordinator->phase =
-                            token->kind == RuntimeEpisodeBarrierKind::Branch
-                                ? RuntimeEpisodePhase::Running
-                                : (committed ? RuntimeEpisodePhase::TransferCommitted
-                                             : RuntimeEpisodePhase::Terminal);
+                        if (token->kind == RuntimeEpisodeBarrierKind::Branch) {
+                            coordinator->phase = RuntimeEpisodePhase::Running;
+                        } else if (committed) {
+                            coordinator->phase = RuntimeEpisodePhase::TransferCommitted;
+                        } else {
+                            coordinator->phase = RuntimeEpisodePhase::Terminal;
+                        }
                         coordinator->open_barrier_nonce = {};
                     }
                 }
