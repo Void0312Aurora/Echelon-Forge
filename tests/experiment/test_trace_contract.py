@@ -41,18 +41,20 @@ def _snapshot(session: SessionSpec, step: int, state: str) -> SnapshotRef:
 
 def _branch_trace(session: SessionSpec, branch: BranchRef, states: str) -> BranchTrace:
     snapshots = [_snapshot(session, branch.origin_step + offset, state) for offset, state in enumerate(states)]
+    # A child's first step applies its intervention, as every session enforces.
+    first_actions = branch.intervention or (("agent_0", "hold"),)
     transitions = tuple(
         Transition(
             branch_digest=branch.digest,
             step=source.step,
             source_snapshot_digest=source.digest,
             target_snapshot_digest=target.digest,
-            actions=(("agent_0", "hold"),),
+            actions=first_actions if index == 0 else (("agent_0", "hold"),),
             rewards=(("agent_0", 1),),
             terminated=False,
             observation_provenance="facade_observation_packet",
         )
-        for source, target in zip(snapshots, snapshots[1:])
+        for index, (source, target) in enumerate(zip(snapshots, snapshots[1:]))
     )
     return BranchTrace(branch=branch, transitions=transitions)
 
@@ -131,6 +133,98 @@ def test_manifest_rejects_orphan_children_and_duplicate_branches() -> None:
         dataclasses.replace(manifest, branches=(root_trace, root_trace, child_trace))
     with pytest.raises(ContractError, match="root"):
         dataclasses.replace(manifest, branches=())
+
+
+def _child_of(root_trace: BranchTrace, origin: SnapshotRef, **overrides) -> BranchRef:
+    fields = dict(
+        origin_snapshot_digest=origin.digest,
+        origin_step=origin.step,
+        session_digest=origin.session_digest,
+        parent_digest=root_trace.branch.digest,
+        depth=1,
+        intervention=(("agent_0", "commit"),),
+        label="commit",
+    )
+    fields.update(overrides)
+    return BranchRef(**fields)
+
+
+def test_manifest_accepts_a_child_forked_mid_trace() -> None:
+    manifest, session = _manifest()
+    root_trace = manifest.branches[0]
+    mid = _snapshot(session, 2, "2")
+    child = _child_of(root_trace, mid)
+    rebuilt = dataclasses.replace(
+        manifest, branches=(root_trace, _branch_trace(session, child, "29"))
+    )
+    assert len(rebuilt.branches) == 2
+
+
+def test_manifest_rejects_a_child_whose_depth_skips_a_level() -> None:
+    manifest, session = _manifest()
+    root_trace = manifest.branches[0]
+    child = _child_of(root_trace, _snapshot(session, 0, "0"), depth=7)
+    with pytest.raises(ContractError, match="depth"):
+        dataclasses.replace(manifest, branches=(root_trace, _branch_trace(session, child, "05")))
+
+
+@pytest.mark.parametrize(
+    ("step", "state"),
+    [(0, "9"), (2, "9"), (9, "3")],
+    ids=["unreached-state-at-origin-step", "unreached-state-mid-trace", "reached-state-wrong-step"],
+)
+def test_manifest_rejects_a_child_forked_from_an_unreached_state(step: int, state: str) -> None:
+    manifest, session = _manifest()
+    root_trace = manifest.branches[0]
+    child = _child_of(root_trace, _snapshot(session, step, state))
+    with pytest.raises(ContractError, match="parent recorded reaching"):
+        dataclasses.replace(
+            manifest, branches=(root_trace, _branch_trace(session, child, state + "8"))
+        )
+
+
+def test_manifest_rejects_a_child_whose_first_step_skips_its_intervention() -> None:
+    manifest, session = _manifest()
+    root_trace, child_trace = manifest.branches
+    first = child_trace.transitions[0]
+    skipped = dataclasses.replace(first, actions=(("agent_0", "hold"),))
+    with pytest.raises(ContractError, match="intervention"):
+        dataclasses.replace(
+            manifest,
+            branches=(
+                root_trace,
+                dataclasses.replace(child_trace, transitions=(skipped, *child_trace.transitions[1:])),
+            ),
+        )
+
+
+def test_manifest_rejects_agents_outside_the_session() -> None:
+    manifest, session = _manifest()
+    root_trace, child_trace = manifest.branches
+    outsider = _child_of(root_trace, _snapshot(session, 0, "0"), intervention=(("agent_9", "x"),))
+    with pytest.raises(ContractError, match="agent_9"):
+        dataclasses.replace(manifest, branches=(root_trace, BranchTrace(branch=outsider)))
+    first = root_trace.transitions[0]
+    foreign = dataclasses.replace(
+        first, actions=(("agent_42", "hold"),), rewards=(("agent_42", 1),)
+    )
+    with pytest.raises(ContractError, match="agent_42"):
+        dataclasses.replace(
+            manifest,
+            branches=(
+                dataclasses.replace(root_trace, transitions=(foreign, *root_trace.transitions[1:])),
+                child_trace,
+            ),
+        )
+
+
+def test_manifest_decoder_applies_the_tree_rules() -> None:
+    manifest, session = _manifest()
+    payload = manifest.to_payload()
+    child_payload = next(item for item in payload["branches"] if item["branch"]["depth"] == 1)
+    child_payload["branch"]["depth"] = 4
+    with pytest.raises(ContractError):
+        manifest_from_payload(payload)
 
 
 def test_branch_trace_rejects_broken_state_chains() -> None:

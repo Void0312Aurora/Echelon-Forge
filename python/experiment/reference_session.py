@@ -239,7 +239,7 @@ class ReferenceSession:
             source_snapshot_digest=record.head.digest,
             target_snapshot_digest=target.digest,
             actions=pairs,
-            rewards=tuple(zip(self._spec.agent_ids, rewards)),
+            rewards=tuple(zip(self._spec.agent_ids, rewards, strict=True)),
             terminated=successor.terminated,
             observation_provenance=observation_provenance,
         )

@@ -9,6 +9,8 @@ probes being good.
 
 from __future__ import annotations
 
+import dataclasses
+
 from fractions import Fraction
 
 import pytest
@@ -265,6 +267,17 @@ def test_rugged_argmax_sits_at_the_cliff_edge_by_construction(report: dict) -> N
             assert world.cliff_sign * row["argmax"][0] == world.cliff_level
             anchor = world.baseline_action
             for offset in stencil(world.dims, SMALL.stencil_step):
+                assert not world.triggers_cliff(tuple(a + o for a, o in zip(anchor, offset)))
+
+
+@pytest.mark.parametrize("stencil_step", [1, 2])
+def test_no_baseline_stencil_point_triggers_the_cliff(stencil_step: int) -> None:
+    config = dataclasses.replace(SMALL, stencil_step=stencil_step)
+    for dims in (1, 2):
+        for seed in (*config.tuning_seeds, *config.eval_seeds):
+            world = make_world(config, "rugged", dims, seed)
+            anchor = world.baseline_action
+            for offset in stencil(dims, stencil_step):
                 assert not world.triggers_cliff(tuple(a + o for a, o in zip(anchor, offset)))
 
 

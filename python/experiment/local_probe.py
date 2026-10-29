@@ -40,9 +40,9 @@ targets, coupling, and baseline action for all three families):
 - ``mild``: ``f = mild_fuel``; the cubic curvature at the grid edge is about
   25% of the tracking curvature.
 - ``rugged``: the smooth world plus a cliff placed strictly between the
-  baseline action and the unconstrained optimum on axis 0, at least one cell
-  beyond the baseline. By construction no stencil point at the baseline
-  triggers it, and because the penalty dwarfs any gain from crossing, the true
+  baseline action and the unconstrained optimum on axis 0, at least
+  ``stencil_step`` cells beyond the baseline. By construction no stencil point
+  at the baseline triggers it, and because the penalty dwarfs any gain from crossing, the true
   argmax sits at the cliff edge (64 of 64 default worlds): the note's A4
   failure case, a model break the local probes cannot see before validating.
 
@@ -864,7 +864,10 @@ def make_world(config: LocalProbeConfig, family: str, dims: int, seed: int) -> R
         desired.append(optimum + Fraction(rng.randint(-3, 3), 8))
         anchor.append(start)
     gap = abs(round(desired[0]) - anchor[0])
-    cliff_reach = rng.randint(1, max(1, gap - 1))
+    # The stencil reaches stencil_step cells from the baseline, so the cliff
+    # must sit at least that far out for no stencil point to trigger it.
+    reach_low = config.stencil_step
+    cliff_reach = rng.randint(reach_low, max(reach_low, gap - 1))
     u, h = config.rate_unit, config.horizon
     s1, s2 = h * (h + 1) // 2, h * (h + 1) * (2 * h + 1) // 6
     command = tuple(anchor)

@@ -139,6 +139,22 @@ def test_step_rejects_unknown_agents_actions_and_branches() -> None:
         _step(session, stranger, _hold())
 
 
+class _ExtraRewardWorld(DelayedCommitmentWorld):
+    """Returns one more reward than there are agents."""
+
+    def step(self, state, actions):
+        successor, rewards, terminated = super().step(state, actions)
+        return successor, (*rewards, 999), terminated
+
+
+def test_step_rejects_a_world_reward_count_that_differs_from_the_agents() -> None:
+    session = ReferenceSession(
+        _session().spec, "toy_policy:hold", _ExtraRewardWorld()
+    )
+    with pytest.raises(ValueError):
+        _step(session, session.baseline, _hold())
+
+
 def test_step_rejects_policy_inputs_outside_maintained_provenance() -> None:
     session = _session()
     for label in ("raw_world_truth", "diagnostics_oracle"):

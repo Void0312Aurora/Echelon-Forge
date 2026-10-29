@@ -15,6 +15,11 @@ Integrity rules, all enforced at construction:
 - every branch belongs to the manifest's session;
 - branch digests are unique, at least one root exists, and every child's
   parent is present in the same manifest;
+- a child's depth is its parent's plus one, it starts at a snapshot its parent
+  recorded reaching (the parent's origin or a transition target), and its
+  first transition applies its intervention;
+- every agent named in an intervention, action or reward belongs to the
+  session;
 - each branch's transitions form a contiguous state chain that starts at the
   branch origin, carry that branch's digest, and stop at the first terminal
   transition.
@@ -32,6 +37,7 @@ from python.experiment.contracts import BranchRef
 from python.experiment.contracts import ContractError
 from python.experiment.contracts import SessionSpec
 from python.experiment.contracts import Transition
+from python.experiment.contracts import canonical_bytes
 from python.experiment.contracts import content_digest
 from python.experiment.contracts import from_payload
 
@@ -79,6 +85,47 @@ def _canonical_order(branches: tuple[BranchTrace, ...]) -> tuple[BranchTrace, ..
     return tuple(sorted(branches, key=lambda trace: (trace.branch.depth, trace.branch.digest)))
 
 
+def _check_branch_tree(session: SessionSpec, branches: tuple[BranchTrace, ...]) -> None:
+    """Reject manifests whose branches do not describe a reachable tree.
+
+    Per-field checks on ``BranchRef`` cannot see the parent, so a decoded
+    payload could otherwise claim a fork from a state its parent never
+    reached, skip depths, or attribute actions to agents outside the session.
+    """
+
+    agents = set(session.agent_ids)
+    by_digest = {trace.branch.digest: trace for trace in branches}
+    for trace in branches:
+        branch = trace.branch
+        for agent_id, _ in branch.intervention:
+            if agent_id not in agents:
+                raise ContractError(f"intervention names agent {agent_id!r} outside the session")
+        for index, transition in enumerate(trace.transitions):
+            for agent_id, _ in (*transition.actions, *transition.rewards):
+                if agent_id not in agents:
+                    raise ContractError(
+                        f"transition {index} names agent {agent_id!r} outside the session"
+                    )
+        if branch.parent_digest is None:
+            continue
+        parent = by_digest[branch.parent_digest]
+        if branch.depth != parent.branch.depth + 1:
+            raise ContractError("a child branch's depth must be its parent's depth plus one")
+        reached = {(parent.branch.origin_snapshot_digest, parent.branch.origin_step)}
+        reached.update(
+            (transition.target_snapshot_digest, transition.step + 1)
+            for transition in parent.transitions
+        )
+        if (branch.origin_snapshot_digest, branch.origin_step) not in reached:
+            raise ContractError(
+                "a child branch must start at a state its parent recorded reaching"
+            )
+        if trace.transitions and not set(branch.intervention) <= set(
+            trace.transitions[0].actions
+        ):
+            raise ContractError("a child branch's first transition must apply its intervention")
+
+
 @dataclass(frozen=True)
 class TraceManifest:
     """All branch traces of one session, in canonical order."""
@@ -92,6 +139,7 @@ class TraceManifest:
             raise ContractError("session must be a SessionSpec")
         if not isinstance(self.policy_ref, str) or not self.policy_ref.strip():
             raise ContractError("policy_ref must be a non-empty string")
+        canonical_bytes(self.policy_ref)
         if not isinstance(self.branches, tuple) or not all(
             isinstance(item, BranchTrace) for item in self.branches
         ):
@@ -110,6 +158,7 @@ class TraceManifest:
                 raise ContractError("a child branch's parent is missing from the manifest")
         if not any(trace.branch.parent_digest is None for trace in self.branches):
             raise ContractError("a manifest needs at least one root branch")
+        _check_branch_tree(self.session, self.branches)
         object.__setattr__(self, "branches", _canonical_order(self.branches))
 
     def to_payload(self) -> dict[str, Any]:

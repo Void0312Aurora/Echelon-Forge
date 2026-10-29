@@ -16,9 +16,10 @@ Boundary rules:
 2. Identities are SHA-256 digests over the float-free subset of the
    ``echelon_forge.canonical_json.v2`` profile, domain-separated per contract
    kind. For integers, strings, booleans, null, lists, and objects that profile
-   reduces to sorted-key compact UTF-8 JSON; a test pins byte equality with the
-   authority implementation. Floats are rejected rather than re-implementing
-   the profile's number rules.
+   reduces to compact UTF-8 JSON with object keys sorted by UTF-16 code units
+   (RFC 8785), not by code point; a test pins byte equality with the authority
+   implementation, including keys outside the Basic Multilingual Plane. Floats
+   are rejected rather than re-implementing the profile's number rules.
 3. Fail closed: every contract validates at construction, and
    :func:`from_payload` rejects unknown, missing, or mistyped fields and any
    other schema version.
@@ -87,6 +88,8 @@ def _check_canonical_value(value: Any, path: str) -> None:
             _check_canonical_value(item, f"{path}[{index}]")
         return
     if isinstance(value, Mapping):
+        if not isinstance(value, dict):
+            raise ContractError(f"{path}: objects must be plain dicts")
         for key, item in value.items():
             if not isinstance(key, str):
                 raise ContractError(f"{path}: object keys must be strings")
@@ -96,13 +99,29 @@ def _check_canonical_value(value: Any, path: str) -> None:
     raise ContractError(f"{path}: unsupported value {type(value).__name__}")
 
 
+def _encode(value: Any) -> str:
+    if isinstance(value, Mapping):
+        # RFC 8785 orders keys by UTF-16 code units. ``sort_keys`` orders by code
+        # point, which disagrees once a key mixes U+E000..U+FFFF with a
+        # supplementary-plane character.
+        keys = sorted(value, key=lambda key: key.encode("utf-16-be"))
+        return (
+            "{"
+            + ",".join(
+                json.dumps(key, ensure_ascii=False) + ":" + _encode(value[key]) for key in keys
+            )
+            + "}"
+        )
+    if isinstance(value, (list, tuple)):
+        return "[" + ",".join(_encode(item) for item in value) + "]"
+    return json.dumps(value, ensure_ascii=False, allow_nan=False)
+
+
 def canonical_bytes(value: Any) -> bytes:
     """Encode ``value`` with the float-free canonical JSON v2 subset."""
 
     _check_canonical_value(value, "$")
-    return json.dumps(
-        value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
-    ).encode("utf-8")
+    return _encode(value).encode("utf-8")
 
 
 def content_digest(domain: str, payload: Mapping[str, Any]) -> str:
@@ -123,6 +142,7 @@ def _require_identifier(value: Any, name: str) -> None:
 def _require_text(value: Any, name: str) -> None:
     if not isinstance(value, str) or not value.strip():
         raise ContractError(f"{name} must be a non-empty string")
+    _check_canonical_value(value, name)
 
 
 def _require_digest(value: Any, name: str) -> None:
@@ -429,9 +449,10 @@ def from_payload(payload: Mapping[str, Any]) -> _Contract:
         raise ContractError("payload must be a mapping")
     if payload.get("schema_version") != CONTRACT_SCHEMA_VERSION:
         raise ContractError(f"schema_version must be {CONTRACT_SCHEMA_VERSION!r}")
-    contract = _CONTRACTS.get(payload.get("kind"))  # type: ignore[arg-type]
+    kind = payload.get("kind")
+    contract = _CONTRACTS.get(kind) if isinstance(kind, str) else None
     if contract is None:
-        raise ContractError(f"unknown contract kind {payload.get('kind')!r}")
+        raise ContractError(f"unknown contract kind {kind!r}")
     return contract._from_fields(payload)
 
 

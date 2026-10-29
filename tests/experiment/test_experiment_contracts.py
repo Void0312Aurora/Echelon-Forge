@@ -4,6 +4,7 @@ import dataclasses
 import subprocess
 import sys
 from pathlib import Path
+from types import MappingProxyType
 
 import pytest
 
@@ -77,6 +78,8 @@ def test_canonical_bytes_match_the_authority_canonical_json_profile() -> None:
         _session().to_payload(),
         _snapshot().to_payload(),
         {"z": [3, {"é": None, "a": True}], "中": "x", "A": -9007199254740991},
+        # Code-point and UTF-16 order disagree for this pair.
+        {"\uffff": 1, "\U00010000": 2, "\ue000": [{"\U0001f600": 0, "\uffef": None}]},
     ):
         assert canonical_bytes(value) == canonical_json_bytes(value)
 
@@ -151,6 +154,16 @@ def test_from_payload_rejects_unknown_missing_and_mistyped_fields() -> None:
         from_payload({**payload, "schema_version": "echelon_forge.experiment.v0"})
     with pytest.raises(ContractError, match="kind"):
         from_payload({**payload, "kind": "not_a_contract"})
+    # Hostile, non-hashable or non-dict input must fail as a contract error.
+    with pytest.raises(ContractError, match="kind"):
+        from_payload({**payload, "kind": ["snapshot-ref"]})
+    with pytest.raises(ContractError, match="plain dicts"):
+        canonical_bytes({"x": MappingProxyType({"y": 1})})
+
+
+def test_unencodable_text_fails_at_construction() -> None:
+    with pytest.raises(ContractError, match="surrogate"):
+        dataclasses.replace(_session(), scenario_ref="x" + chr(0xD800))
 
 
 @pytest.mark.parametrize(
