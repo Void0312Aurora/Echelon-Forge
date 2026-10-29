@@ -3,11 +3,40 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "runtime/facade/runtime_facade.h"
 
 void bind_runtime_runtime(nb::module_ &m) {
+    nb::class_<RuntimeNativeSnapshotFacts>(m, "RuntimeNativeSnapshotFacts")
+        .def(nb::init<>())
+        .def_rw("step", &RuntimeNativeSnapshotFacts::step)
+        .def_rw("state_digest", &RuntimeNativeSnapshotFacts::state_digest)
+        .def_rw("event_cursor", &RuntimeNativeSnapshotFacts::event_cursor)
+        .def_rw("rng_digest", &RuntimeNativeSnapshotFacts::rng_digest)
+        .def_rw("terminated", &RuntimeNativeSnapshotFacts::terminated)
+        .def("well_formed", &RuntimeNativeSnapshotFacts::well_formed);
+
+    nb::class_<RuntimeFacadeNativeBranch>(m, "RuntimeFacadeNativeBranch")
+        .def("valid", &RuntimeFacadeNativeBranch::valid)
+        .def("snapshot_facts", &RuntimeFacadeNativeBranch::snapshot_facts)
+        .def("step_pilot_actions", &RuntimeFacadeNativeBranch::step_pilot_actions,
+             nb::arg("actions"))
+        .def("read_observation_packet", &RuntimeFacadeNativeBranch::read_observation_packet,
+             nb::arg("refs"))
+        .def(
+            "checkpoint",
+            [](const RuntimeFacadeNativeBranch &self) { return self.checkpoint().release(); },
+            nb::rv_policy::take_ownership)
+        .def(
+            "fork_native_branch",
+            [](const RuntimeFacadeNativeBranch &self, std::string intervention_digest,
+               std::uint64_t horizon) {
+                return self.fork_native_branch(std::move(intervention_digest), horizon).release();
+            },
+            nb::arg("intervention_digest"), nb::arg("horizon"), nb::rv_policy::take_ownership);
+
     nb::class_<RuntimeCapabilities> runtime_capabilities_class(m, "RuntimeCapabilities");
     runtime_capabilities_class.def(nb::init<>());
 #define EF_RUNTIME_CAPABILITIES_FIELD(type, name, default_value)                                   \

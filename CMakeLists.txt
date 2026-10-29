@@ -142,6 +142,9 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/SanderMertens/flecs.git
     GIT_TAG        eeb9eaa64243536c5d5c19279c9c305a52d0b9b3 # v4.0.0
     SOURCE_SUBDIR  __cmo_no_upstream_cmake_project__
+    PATCH_COMMAND  "${CMAKE_COMMAND}"
+                   "-DFLECS_SOURCE_FILE=<SOURCE_DIR>/flecs.c"
+                   -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/flecs_exact_json_precision.cmake"
     ${EF_FETCHCONTENT_PIN_MODE}
 )
 FetchContent_MakeAvailable(flecs)
@@ -296,6 +299,7 @@ set(EF_RUNTIME_FACADE_SOURCES
     src/runtime/facade/runtime_facade_query.cpp
     src/runtime/facade/runtime_facade_command_api.cpp
     src/runtime/facade/runtime_facade_packet.cpp
+    src/runtime/facade/runtime_facade_native_owner.cpp
 )
 
 set(EF_MODEL_DEFAULT_SOURCES
@@ -362,6 +366,8 @@ target_compile_features(ef_runtime_contracts PUBLIC cxx_std_20)
 add_library(ef_runtime_host_candidate STATIC
     src/runtime/host/runtime_host_candidate.h
     src/runtime/host/runtime_host_candidate.cpp
+    src/runtime/host/runtime_branch_contract.h
+    src/runtime/host/runtime_branch_contract.cpp
     src/runtime/host/runtime_state_transfer_candidate.h
     src/runtime/host/runtime_state_transfer_candidate.cpp
     src/runtime/crypto/sha256.h
@@ -412,6 +418,24 @@ sources=$<JOIN:$<TARGET_PROPERTY:ef_runtime_host_candidate,SOURCES>,|>
 # separate from ef_runtime_host_candidate so the host library keeps its
 # no-Flecs/no-core boundary, and it is not installed or linked by production
 # callers before the later P4-C/P5-D activation gates.
+add_library(ef_runtime_kernel_state_codec STATIC
+    src/runtime/contracts/native_world_state_codec.h
+    src/runtime/host/integration/simulation_kernel_state_owner_adapters.h
+    src/runtime/host/integration/simulation_kernel_state_owner_adapters.cpp
+)
+target_include_directories(ef_runtime_kernel_state_codec PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_compile_definitions(ef_runtime_kernel_state_codec PRIVATE
+    EF_RUNTIME_KERNEL_STATE_CODEC_ONLY=1
+)
+target_compile_features(ef_runtime_kernel_state_codec PUBLIC cxx_std_20)
+target_link_libraries(ef_runtime_kernel_state_codec PRIVATE
+    ef_core
+)
+
 add_library(ef_runtime_state_owner_adapters_candidate STATIC
     src/runtime/host/integration/simulation_kernel_state_owner_adapters.h
     src/runtime/host/integration/simulation_kernel_state_owner_adapters.cpp
@@ -420,18 +444,25 @@ target_include_directories(ef_runtime_state_owner_adapters_candidate PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
 )
+target_compile_definitions(ef_runtime_state_owner_adapters_candidate PRIVATE
+    EF_RUNTIME_STATE_OWNER_ADAPTERS_CANDIDATE_ONLY=1
+)
 target_compile_features(ef_runtime_state_owner_adapters_candidate PUBLIC cxx_std_20)
 target_link_libraries(ef_runtime_state_owner_adapters_candidate PRIVATE
     ef_runtime_host_candidate
+    ef_runtime_kernel_state_codec
     ef_core
 )
 
-# P4-C internal candidate seam. This target is build-tree-only: it binds a
-# real SimulationKernel to the accepted host/state-transfer candidate, but it
-# cannot be installed or linked by maintained production callers before P5-D.
+# P4-C dark/shadow candidate seam. This target is build-tree-only: it binds a
+# real SimulationKernel to the accepted host/state-transfer candidate. The
+# experiment/diagnostic binding may consume its bounded child-branch surface;
+# the production facade-only module remains unable to link or install it.
 add_library(ef_runtime_kernel_candidate STATIC
     src/runtime/host/integration/runtime_kernel_candidate.h
     src/runtime/host/integration/runtime_kernel_candidate.cpp
+    src/runtime/host/integration/runtime_pilot_action_codec.cpp
+    src/runtime/host/integration/runtime_pilot_action_codec.h
     src/runtime/host/integration/runtime_kernel_candidate_facade.h
     src/runtime/host/integration/runtime_kernel_candidate_facade.cpp
 )
@@ -596,6 +627,10 @@ add_library(ef_facade STATIC
 target_include_directories(ef_facade PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+target_include_directories(ef_facade PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
 # ef_core is listed first: facade TUs resolve engine/mission/content symbols
 # out of ef_core (and ef_content behind it), and nothing in ef_core calls back
@@ -604,6 +639,7 @@ target_include_directories(ef_facade PUBLIC
 # every downstream consumer.
 target_link_libraries(ef_facade PUBLIC
     ef_core
+    ef_runtime_kernel_state_codec
     flecs::flecs
     spdlog::spdlog
     nlohmann_json::nlohmann_json
@@ -621,12 +657,15 @@ add_library(ef_facade_backend SHARED
 )
 target_include_directories(ef_facade_backend PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 target_compile_definitions(ef_facade_backend PRIVATE EF_FACADE_BACKEND_BUILD=1)
 target_link_libraries(ef_facade_backend PRIVATE
     ef_composition
     ef_content
     ef_runtime_authority_contracts
+    ef_runtime_kernel_state_codec
     flecs::flecs
     spdlog::spdlog
     nlohmann_json::nlohmann_json
@@ -743,6 +782,7 @@ nanobind_add_module(ef_py
 )
 target_include_directories(ef_py PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 # bindings_runtime.cpp/bindings_gpu.cpp reference RuntimeFacade symbols, so the
 # bindings link the facade unit ahead of ef_core.  ef_core stays a *direct*
@@ -765,7 +805,29 @@ if (EF_PRODUCTION_FACADE_ONLY)
         Threads::Threads
     )
 else()
-    target_link_libraries(ef_py PRIVATE ef_facade ef_core)
+    target_link_libraries(ef_py PRIVATE
+        ef_facade
+        ef_core
+    )
+endif()
+
+# Native experiment consumers must not make ef_py reach candidate targets.
+# This source-owned extension imports ef_py only for its existing setup DTOs;
+# candidate state and lifecycle stay under the native integration owner.
+if (NOT EF_PRODUCTION_FACADE_ONLY)
+    nanobind_add_module(ef_runtime_candidate_py
+        src/runtime/host/integration/python_runtime_candidate_module.cpp
+    )
+    target_include_directories(ef_runtime_candidate_py PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(ef_runtime_candidate_py PRIVATE
+        ef_core
+        ef_runtime_kernel_candidate
+        ef_runtime_state_owner_adapters_candidate
+        ef_runtime_run_recorder
+    )
 endif()
 
 if (EF_BUILD_DIAGNOSTICS_BINDINGS)
@@ -992,6 +1054,7 @@ target_link_libraries(ef_runtime_contracts_compile_test PRIVATE
 
 add_executable(ef_runtime_host_candidate_test
     src/tests/test_main.cpp
+    src/tests/test_runtime_branch_contract.cpp
     src/tests/test_runtime_host_candidate.cpp
     src/tests/test_runtime_state_transfer_candidate.cpp
     src/tests/test_simulation_kernel_state_owner_adapters.cpp

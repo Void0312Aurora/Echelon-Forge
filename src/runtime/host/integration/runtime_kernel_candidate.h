@@ -1,6 +1,11 @@
 #pragma once
 
 #include "core/engine/world_batch_runtime.h"
+#include "components/physics/instruments.h"
+#include "core/interfaces/observation.h"
+#include "runtime/contracts/policy_contracts.h"
+#include "runtime/contracts/world_batch_contracts.h"
+#include "runtime/host/runtime_branch_contract.h"
 #include "runtime/host/runtime_host_candidate.h"
 #include "runtime_file_artifact_ledger_store.h"
 #include "runtime_run_recorder.h"
@@ -14,11 +19,10 @@
 #include <string_view>
 #include <vector>
 
-// P4-C internal-only adapter.  This header is intentionally under src/ and is
-// not installed or exposed through the maintained facade/binding surfaces.
-// RuntimeHostCandidate remains the only publication authority; this adapter
-// supplies a kernel-backed shadow resource and epoch-bearing references for
-// native/Python probes.
+// P4-C dark/shadow integration adapter. This header remains under src/ and is
+// intentionally excluded from the production facade-only wheel. The regular
+// ef_runtime_candidate_py extension exposes only the bounded native probe surface;
+// RuntimeHostCandidate remains the only publication authority.
 namespace runtime::host::integration {
 
 using echelon_forge::runtime_contracts::v1::RuntimeEntityRef;
@@ -27,6 +31,7 @@ using echelon_forge::runtime_contracts::v1::RuntimeWorldRef;
 struct RuntimeKernelCandidateConfig {
     RuntimeIdentity128 host_id;
     RuntimeHostMode mode = RuntimeHostMode::Dark;
+    std::uint32_t seed = 42;
     RuntimePlanBinding plan;
     std::string resolved_manifest_json;
     std::uint64_t lifecycle_deadline_tick = 100;
@@ -60,9 +65,68 @@ struct RuntimeCandidateCompositionSnapshot {
     bool operator==(const RuntimeCandidateCompositionSnapshot &) const = default;
 };
 
+// Native identity facts exposed by the kernel-backed experiment seam. The
+// payloads remain owned by the native state-transfer adapters; these are only
+// detached digests/cursors that the experiment trace may record.
+struct RuntimeKernelSnapshotFacts {
+    std::uint64_t step = 0;
+    std::string state_digest;
+    std::uint64_t event_cursor = 0;
+    std::string rng_digest;
+    bool terminated = false;
+};
+
+// Candidate-owned packet DTO. It mirrors the maintained packet fields without
+// making the dark/shadow consumer include the application facade header.
+struct RuntimeCandidateObservationPacket {
+    std::uint64_t snapshot_version = 0;
+    std::string barrier_id = "export";
+    double source_time_s = 0.0;
+    InformationStateSource provenance = make_information_state_source(
+        kPolicyInformationStateAgentObservation, kPolicySourceLabelFacadeObservationPacket,
+        kPolicyMaintainedStatusMaintained);
+    std::vector<WorldEntityRef> refs;
+    std::vector<AgentObservation> agent_observations;
+    std::vector<InstrumentState> instrument_states;
+};
+
+class RuntimeKernelSiblingBranch final {
+  public:
+    RuntimeKernelSiblingBranch(const RuntimeKernelSiblingBranch &) = delete;
+    RuntimeKernelSiblingBranch &operator=(const RuntimeKernelSiblingBranch &) = delete;
+    ~RuntimeKernelSiblingBranch();
+
+    [[nodiscard]] bool valid() const noexcept;
+    [[nodiscard]] RuntimeKernelSnapshotFacts snapshot_facts() const;
+    [[nodiscard]] bool step(std::string payload_sha256);
+    [[nodiscard]] bool step_pilot_actions(const std::vector<WorldPilotActionAssignment> &actions);
+    [[nodiscard]] std::optional<AgentObservation> observation(std::uint64_t entity_id) const;
+    [[nodiscard]] RuntimeCandidateObservationPacket
+    read_observation_packet(const std::vector<WorldEntityRef> &refs) const;
+    [[nodiscard]] std::uint64_t resolve_entity(std::string_view logical_name) const;
+    // Create a new opaque native checkpoint from this branch's current state.
+    // The state remains owned by the native owner registry; no payload crosses
+    // the experiment or Python boundary.
+    [[nodiscard]] std::unique_ptr<RuntimeKernelSiblingBranch> checkpoint() const;
+    [[nodiscard]] std::unique_ptr<RuntimeKernelSiblingBranch>
+    fork_native_branch(std::string intervention_sha256, std::uint64_t horizon) const;
+    [[nodiscard]] RuntimeBranchRef branch_ref() const noexcept;
+
+  private:
+    struct State;
+    explicit RuntimeKernelSiblingBranch(std::shared_ptr<State> state) noexcept;
+    [[nodiscard]] bool step_payload(std::string payload_sha256, std::vector<std::uint8_t> payload);
+    [[nodiscard]] std::unique_ptr<RuntimeKernelSiblingBranch>
+    clone_native(std::optional<std::string> intervention_sha256, std::uint64_t horizon) const;
+    friend class RuntimeKernelCandidate;
+    std::shared_ptr<State> state_;
+};
+
 class RuntimeKernelCandidate final {
   public:
     explicit RuntimeKernelCandidate(RuntimeKernelCandidateConfig config);
+    RuntimeKernelCandidate(std::uint64_t host_high, std::uint64_t host_low, bool shadow = true,
+                           std::uint32_t seed = 42);
     RuntimeKernelCandidate(const RuntimeKernelCandidate &) = delete;
     RuntimeKernelCandidate &operator=(const RuntimeKernelCandidate &) = delete;
     ~RuntimeKernelCandidate();
@@ -96,14 +160,30 @@ class RuntimeKernelCandidate final {
                                       RuntimeEpisodeIntentKind kind,
                                       RuntimeIdentity128 idempotency_key,
                                       std::string payload_sha256,
-                                      RuntimeEpisodeTransitionReceipt *receipt = nullptr);
+                                      RuntimeEpisodeTransitionReceipt *receipt = nullptr,
+                                      std::vector<std::uint8_t> action_payload = {});
     [[nodiscard]] bool try_get_entity_kinematics(const RuntimeEntityRef &entity,
                                                  WorldEntityKinematics *state);
     [[nodiscard]] bool try_set_entity_kinematics(const RuntimeEntityRef &entity,
                                                  const WorldEntityKinematics &state);
 
+    // Native sibling branch seam. The branch is created only from the current
+    // host-owned episode boundary and owns a real child SimulationKernel plus
+    // owner registry; a missing or rejected transfer returns nullptr.
+    [[nodiscard]] RuntimeKernelSnapshotFacts native_snapshot_facts() const;
+    [[nodiscard]] bool native_step(std::string payload_sha256);
+    [[nodiscard]] bool step_pilot_actions(const std::vector<WorldPilotActionAssignment> &actions);
+    [[nodiscard]] std::optional<AgentObservation> observation(std::uint64_t entity_id);
+    [[nodiscard]] RuntimeCandidateObservationPacket
+    read_observation_packet(const std::vector<WorldEntityRef> &refs);
+    [[nodiscard]] std::uint64_t resolve_entity(std::string_view logical_name) const;
+    [[nodiscard]] std::unique_ptr<RuntimeKernelSiblingBranch>
+    fork_native_branch(std::string intervention_sha256, std::uint64_t horizon);
+    [[nodiscard]] std::unique_ptr<RuntimeKernelSiblingBranch> native_checkpoint();
+
   private:
     class Control;
+    friend class RuntimeKernelSiblingBranch;
 
     [[nodiscard]] bool validate_world(const RuntimeWorldRef &world) const noexcept;
     [[nodiscard]] bool validate_entity(const RuntimeEntityRef &entity) const noexcept;

@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -14,6 +15,10 @@
 #include "runtime/contracts/runtime_dto_contracts.h"
 #include "runtime/contracts/runtime_composition_evidence_contract.h"
 #include "runtime/contracts/world_batch_contracts.h"
+
+class SimulationKernel;
+class FlecsCpuBackend;
+struct ObservationBatchPacket;
 
 struct RuntimeCapabilities {
 #define EF_RUNTIME_CAPABILITIES_FIELD(type, name, default_value) type name = default_value;
@@ -72,6 +77,50 @@ struct RuntimeFidelityRequest {
 struct RuntimeFidelityAdmission {
 #define EF_RUNTIME_FIDELITY_ADMISSION_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/runtime/runtime_fidelity_admission.inc"
+};
+
+// Native identity facts are detached observations of the maintained engine
+// owner.  The facade never derives these values from observation packet
+// versions, entity references, or Python-side mirrors.
+struct RuntimeNativeSnapshotFacts {
+    std::uint64_t step = 0;
+    std::string state_digest;
+    std::uint64_t event_cursor = 0;
+    std::string rng_digest;
+    bool terminated = false;
+
+    [[nodiscard]] bool well_formed() const noexcept;
+    bool operator==(const RuntimeNativeSnapshotFacts &) const = default;
+};
+
+// Opaque, native-owned sibling branch.  The child owns an independent
+// SimulationKernel restored from the parent's complete native state bundle.
+// No Python state or raw parent handle crosses this boundary.
+class RuntimeFacadeNativeBranch {
+  public:
+    RuntimeFacadeNativeBranch(const RuntimeFacadeNativeBranch &) = delete;
+    RuntimeFacadeNativeBranch &operator=(const RuntimeFacadeNativeBranch &) = delete;
+    RuntimeFacadeNativeBranch(RuntimeFacadeNativeBranch &&) noexcept;
+    RuntimeFacadeNativeBranch &operator=(RuntimeFacadeNativeBranch &&) noexcept;
+    ~RuntimeFacadeNativeBranch();
+
+    [[nodiscard]] bool valid() const noexcept;
+    [[nodiscard]] RuntimeNativeSnapshotFacts snapshot_facts() const;
+    [[nodiscard]] bool step_pilot_actions(const std::vector<WorldPilotActionAssignment> &actions);
+    [[nodiscard]] ObservationBatchPacket
+    read_observation_packet(const std::vector<WorldEntityRef> &refs) const;
+    [[nodiscard]] std::unique_ptr<RuntimeFacadeNativeBranch> checkpoint() const;
+    [[nodiscard]] std::unique_ptr<RuntimeFacadeNativeBranch>
+    fork_native_branch(std::string intervention_digest, std::uint64_t horizon) const;
+
+  private:
+    struct State;
+    explicit RuntimeFacadeNativeBranch(std::shared_ptr<State> state) noexcept;
+    std::shared_ptr<State> state_;
+    friend class FlecsCpuBackend;
+    friend std::unique_ptr<RuntimeFacadeNativeBranch>
+    make_runtime_facade_native_branch(SimulationKernel &, std::uint64_t, std::string,
+                                      std::uint64_t);
 };
 
 struct BatchResetRequest {

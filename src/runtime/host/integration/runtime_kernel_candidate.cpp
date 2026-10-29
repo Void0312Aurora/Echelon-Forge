@@ -1,4 +1,5 @@
 #include "runtime_kernel_candidate.h"
+#include "runtime_pilot_action_codec.h"
 
 #include "simulation_kernel_state_owner_adapters.h"
 #include "components/basic/common.h"
@@ -6,6 +7,7 @@
 
 #include <atomic>
 #include <filesystem>
+#include <functional>
 #include <limits>
 #include <mutex>
 #include <stdexcept>
@@ -67,6 +69,86 @@ class FileJournal final : public RuntimeStateTransferJournal {
     RuntimeStateTransferFileJournal journal_;
 };
 
+class TemporaryJournalCleanup final {
+  public:
+    explicit TemporaryJournalCleanup(std::string path) : path_(std::move(path)) {}
+    TemporaryJournalCleanup(const TemporaryJournalCleanup &) = delete;
+    TemporaryJournalCleanup &operator=(const TemporaryJournalCleanup &) = delete;
+
+    ~TemporaryJournalCleanup() {
+        if (!active_ || path_.empty()) {
+            return;
+        }
+        std::error_code error;
+        (void)std::filesystem::remove(path_, error);
+    }
+
+    void release() noexcept { active_ = false; }
+
+  private:
+    std::string path_;
+    bool active_ = true;
+};
+
+RuntimeKernelSnapshotFacts
+snapshot_facts_for(const std::shared_ptr<SimulationKernel> &kernel,
+                   const RuntimeEpisodeCoordinatorSnapshot &coordinator_snapshot) {
+    RuntimeKernelSnapshotFacts facts;
+    if (kernel == nullptr || !coordinator_snapshot.episode.well_formed()) {
+        return facts;
+    }
+    try {
+        const auto world = SimulationKernelStateOwnerBridge::serialize_world(*kernel);
+        facts.state_digest =
+            runtime_state_payload_sha256(std::vector<std::uint8_t>(world.begin(), world.end()));
+        const auto rng = SimulationKernelStateOwnerBridge::serialize_rng(*kernel);
+        facts.rng_digest =
+            runtime_state_payload_sha256(std::vector<std::uint8_t>(rng.begin(), rng.end()));
+        facts.step = coordinator_snapshot.step_sequence;
+        // The native episode coordinator is the event ordering authority for
+        // this seam. It advances exactly once per accepted action.
+        facts.event_cursor = coordinator_snapshot.step_sequence;
+        facts.terminated = coordinator_snapshot.phase == RuntimeEpisodePhase::Terminal;
+    } catch (...) {
+        return {};
+    }
+    return facts;
+}
+
+RuntimeCandidateObservationPacket make_candidate_observation_packet(
+    const std::vector<WorldEntityRef> &refs, std::uint64_t snapshot_version, std::string scope,
+    const std::function<std::optional<AgentObservation>(std::uint64_t)> &read_observation) {
+    RuntimeCandidateObservationPacket packet{};
+    packet.refs = refs;
+    packet.barrier_id = "export";
+    if (refs.empty() || snapshot_version == std::numeric_limits<std::uint64_t>::max()) {
+        return packet;
+    }
+    packet.snapshot_version = snapshot_version + 1;
+    packet.provenance.information_state_layer =
+        std::string(kPolicyInformationStateAgentObservation);
+    packet.provenance.source_label = std::string(kPolicySourceLabelFacadeObservationPacket);
+    packet.provenance.maintained_status = std::string(kPolicyMaintainedStatusMaintained);
+    packet.provenance.observation_packet_ids = {"obs:branch:" + scope + ":" +
+                                                std::to_string(packet.snapshot_version)};
+    packet.provenance.source_observation_versions = {"branch:" + scope + ":" +
+                                                     std::to_string(packet.snapshot_version)};
+    packet.provenance.diagnostics_reason.clear();
+    packet.agent_observations.reserve(refs.size());
+    for (const auto &ref : refs) {
+        if (ref.world_index != 0 || ref.entity_id == 0) {
+            return RuntimeCandidateObservationPacket{};
+        }
+        const auto observation = read_observation(ref.entity_id);
+        if (!observation.has_value()) {
+            return RuntimeCandidateObservationPacket{};
+        }
+        packet.agent_observations.push_back(*observation);
+        packet.source_time_s = observation->sim_time;
+    }
+    return packet;
+}
+
 } // namespace
 
 class RuntimeKernelCandidate::Control final : public RuntimeInstanceControl {
@@ -89,16 +171,29 @@ class RuntimeKernelCandidate::Control final : public RuntimeInstanceControl {
             if (kernel_ == nullptr) {
                 return {};
             }
+            bool mutation_attempted = false;
             try {
                 if (command.intent.kind == RuntimeEpisodeIntentKind::Action) {
+                    if (!command.intent.action_payload.empty()) {
+                        const auto actions = decode_pilot_actions(command.intent.action_payload);
+                        if (!actions || !pilot_action_entities_valid(*kernel_, *actions)) return {};
+                        mutation_attempted = true;
+                        for (const auto &assignment : *actions) {
+                            kernel_->set_pilot_action(assignment.entity_id, assignment.action);
+                        }
+                    }
+                    mutation_attempted = true;
                     kernel_->step();
                 } else if (command.intent.kind == RuntimeEpisodeIntentKind::Reset) {
+                    mutation_attempted = true;
                     kernel_->reset(reset_seed_);
                 } else {
                     return {};
                 }
             } catch (...) {
-                return {};
+                // A partial native mutation cannot be reported as a clean
+                // rejection. An incomplete applied receipt fail-stops admission.
+                return {.applied = mutation_attempted};
             }
             const bool terminal =
                 command.intent.kind == RuntimeEpisodeIntentKind::Action &&
@@ -110,7 +205,7 @@ class RuntimeKernelCandidate::Control final : public RuntimeInstanceControl {
                 const std::vector<std::uint8_t> bytes(serialized.begin(), serialized.end());
                 snapshot_sha256 = runtime_state_payload_sha256(bytes);
             } catch (...) {
-                return {};
+                return {.applied = true};
             }
             return {.applied = true,
                     .terminal = terminal,
@@ -185,6 +280,296 @@ class RuntimeKernelCandidate::Control final : public RuntimeInstanceControl {
     bool released_ = false;
     bool transfer_active_ = false;
 };
+
+struct RuntimeKernelSiblingBranch::State {
+    RuntimeBranchRef branch;
+    std::shared_ptr<SimulationKernel> kernel;
+    std::shared_ptr<RuntimeInstanceControl> control;
+    std::shared_ptr<RuntimeNativeEpisodeControl> native_control;
+    std::shared_ptr<RuntimeStateTransferOwnerRegistry> registry;
+    std::shared_ptr<RuntimeStateTransferJournal> journal;
+    std::unique_ptr<RuntimeEpisodeCoordinatorCandidate> coordinator;
+    std::string journal_path;
+    RuntimePlanBinding plan;
+    std::string resolved_manifest_json;
+    std::uint32_t seed = 42;
+    std::uint64_t lifecycle_deadline_tick = 1000;
+    mutable std::mutex mutex;
+    mutable std::atomic<std::uint64_t> next_transfer_fence{1};
+    bool owns_journal = false;
+
+    ~State() {
+        coordinator.reset();
+        native_control.reset();
+        control.reset();
+        registry.reset();
+        journal.reset();
+        kernel.reset();
+        if (owns_journal && !journal_path.empty()) {
+            std::error_code error;
+            (void)std::filesystem::remove(journal_path, error);
+        }
+    }
+};
+
+RuntimeKernelSiblingBranch::RuntimeKernelSiblingBranch(std::shared_ptr<State> state) noexcept
+    : state_(std::move(state)) {}
+
+RuntimeKernelSiblingBranch::~RuntimeKernelSiblingBranch() = default;
+
+bool RuntimeKernelSiblingBranch::valid() const noexcept {
+    if (state_ == nullptr) {
+        return false;
+    }
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    return state_->kernel != nullptr && state_->control != nullptr &&
+           state_->native_control != nullptr && state_->registry != nullptr &&
+           state_->coordinator != nullptr && state_->branch.well_formed();
+}
+
+RuntimeKernelSnapshotFacts RuntimeKernelSiblingBranch::snapshot_facts() const {
+    if (state_ == nullptr) {
+        return {};
+    }
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    if (state_->kernel == nullptr || state_->coordinator == nullptr ||
+        !state_->branch.well_formed()) {
+        return {};
+    }
+    return snapshot_facts_for(state_->kernel, state_->coordinator->snapshot());
+}
+
+bool RuntimeKernelSiblingBranch::step(std::string payload_sha256) {
+    return step_payload(std::move(payload_sha256), {});
+}
+
+bool RuntimeKernelSiblingBranch::step_pilot_actions(
+    const std::vector<WorldPilotActionAssignment> &actions) {
+    auto payload = encode_pilot_actions(actions);
+    if (!payload) return false;
+    const auto digest = runtime_state_payload_sha256(*payload);
+    return step_payload(digest, std::move(*payload));
+}
+
+std::optional<AgentObservation>
+RuntimeKernelSiblingBranch::observation(std::uint64_t entity_id) const {
+    if (!state_) return std::nullopt;
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    if (!state_->kernel || !state_->control || !state_->coordinator) return std::nullopt;
+    {
+        auto lease = state_->kernel->acquire_world_lease();
+        const auto entity = lease.world().entity(entity_id);
+        if (!entity.is_valid() || !entity.is_alive() || !entity.get<Transform>() ||
+            !entity.get<Velocity>())
+            return std::nullopt;
+    }
+    return state_->kernel->get_agent_observation(entity_id);
+}
+
+RuntimeCandidateObservationPacket
+RuntimeKernelSiblingBranch::read_observation_packet(const std::vector<WorldEntityRef> &refs) const {
+    if (!state_) return {};
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    if (!state_->kernel || !state_->coordinator || !state_->branch.well_formed()) return {};
+    const auto snapshot = state_->coordinator->snapshot();
+    return make_candidate_observation_packet(
+        refs, snapshot.step_sequence, std::to_string(state_->branch.branch_id.low),
+        [kernel = state_->kernel](std::uint64_t entity_id) -> std::optional<AgentObservation> {
+            try {
+                auto lease = kernel->acquire_world_lease();
+                const auto entity = lease.world().entity(entity_id);
+                if (!entity.is_valid() || !entity.is_alive() || !entity.get<Transform>() ||
+                    !entity.get<Velocity>()) {
+                    return std::nullopt;
+                }
+                return kernel->get_agent_observation(entity_id);
+            } catch (...) {
+                return std::nullopt;
+            }
+        });
+}
+
+std::uint64_t RuntimeKernelSiblingBranch::resolve_entity(std::string_view logical_name) const {
+    if (!state_) return 0;
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    return state_->kernel ? resolve_pilot_entity(*state_->kernel, logical_name) : 0;
+}
+
+bool RuntimeKernelSiblingBranch::step_payload(std::string payload_sha256,
+                                              std::vector<std::uint8_t> payload) {
+    if (state_ == nullptr) {
+        return false;
+    }
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    if (state_->kernel == nullptr || state_->control == nullptr ||
+        state_->native_control == nullptr || state_->coordinator == nullptr ||
+        !state_->branch.well_formed()) {
+        return false;
+    }
+    const auto current = state_->coordinator->snapshot();
+    if (!current.episode.well_formed() || current.phase != RuntimeEpisodePhase::Running ||
+        current.step_sequence == std::numeric_limits<std::uint64_t>::max()) {
+        return false;
+    }
+    const std::uint64_t sequence = current.step_sequence + 1;
+    const RuntimeIdentity128 idempotency_key{
+        .high = state_->branch.branch_id.high,
+        .low = sequence,
+    };
+    const auto transition =
+        state_->coordinator->submit({.kind = RuntimeEpisodeIntentKind::Action,
+                                     .expected_episode = current.episode,
+                                     .expected_step_sequence = current.step_sequence,
+                                     .idempotency_key = idempotency_key,
+                                     .payload_sha256 = std::move(payload_sha256),
+                                     .production_authorized = false,
+                                     .action_payload = std::move(payload)},
+                                    *state_->native_control);
+    return static_cast<bool>(transition.status);
+}
+
+std::unique_ptr<RuntimeKernelSiblingBranch> RuntimeKernelSiblingBranch::checkpoint() const {
+    return clone_native(std::nullopt, 1);
+}
+
+std::unique_ptr<RuntimeKernelSiblingBranch>
+RuntimeKernelSiblingBranch::fork_native_branch(std::string intervention_sha256,
+                                               std::uint64_t horizon) const {
+    return clone_native(std::move(intervention_sha256), horizon);
+}
+
+std::unique_ptr<RuntimeKernelSiblingBranch>
+RuntimeKernelSiblingBranch::clone_native(std::optional<std::string> intervention_sha256,
+                                         std::uint64_t horizon) const {
+    if (state_ == nullptr) {
+        return {};
+    }
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    if (state_->kernel == nullptr || state_->control == nullptr ||
+        state_->native_control == nullptr || state_->registry == nullptr ||
+        state_->coordinator == nullptr || !state_->branch.well_formed()) {
+        return {};
+    }
+
+    const auto parent_snapshot = state_->coordinator->snapshot();
+    if (!parent_snapshot.episode.well_formed() ||
+        parent_snapshot.phase != RuntimeEpisodePhase::Running ||
+        parent_snapshot.step_sequence == 0 || state_->plan.plan_sha256.size() != 64 ||
+        state_->branch.depth == std::numeric_limits<std::uint64_t>::max()) {
+        return {};
+    }
+    const RuntimeIdentity128 child_resource = mint_candidate_resource();
+    const RuntimeIdentity128 branch_id = mint_candidate_resource();
+    if (child_resource.low == std::numeric_limits<std::uint64_t>::max() ||
+        branch_id.low == std::numeric_limits<std::uint64_t>::max()) {
+        return {};
+    }
+    const auto child_kernel =
+        state_->resolved_manifest_json.empty()
+            ? std::make_shared<SimulationKernel>()
+            : std::make_shared<SimulationKernel>(state_->resolved_manifest_json);
+    const auto child_control = std::make_shared<RuntimeKernelCandidate::Control>(
+        child_resource, child_kernel, state_->seed);
+    const std::string child_journal_path =
+        (std::filesystem::temp_directory_path() /
+         ("echelon_forge_p4c_checkpoint_" + std::to_string(child_resource.low) + ".wal"))
+            .string();
+    TemporaryJournalCleanup journal_cleanup(child_journal_path);
+    const auto child_journal = std::make_shared<FileJournal>(child_journal_path);
+    const auto child_registry = SimulationKernelStateOwnerBridge::create_registry({
+        .kernel = child_kernel.get(),
+        .journal = child_journal,
+        .transaction_namespace = "p4c-kernel-checkpoint-" + std::to_string(child_resource.low),
+        .bound_resource_identity = child_resource,
+        .sample_tick = [deadline_tick = state_->lifecycle_deadline_tick] { return deadline_tick; },
+        .rederive_python_caches = [] { return true; },
+        .snapshot_python_caches = [] { return std::vector<std::uint8_t>{0}; },
+        .rollback_python_caches =
+            [](const std::vector<std::uint8_t> &before) { return before.size() == 1; },
+        .recover_python_caches =
+            [](const std::vector<std::uint8_t> &) {
+                return RuntimeStateOwnerImportTransactionPhase::Committed;
+            },
+    });
+    if (child_registry == nullptr) {
+        return {};
+    }
+    child_control->bind_registry(child_registry);
+
+    auto child_episode = parent_snapshot.episode;
+    child_episode.world.incarnation.incarnation_epoch = child_resource.low;
+    const auto checkpoint_digest = runtime_state_payload_sha256(std::vector<std::uint8_t>(
+        parent_snapshot.snapshot_sha256.begin(), parent_snapshot.snapshot_sha256.end()));
+    RuntimeNativeSiblingBranchRequest request;
+    request.admission = {
+        .parent_snapshot = parent_snapshot,
+        .branch_id = branch_id,
+        .parent_plan_sha256 = state_->plan.plan_sha256,
+        .intervention_sha256 = intervention_sha256.value_or(checkpoint_digest),
+        .horizon = horizon,
+        .require_parent_immutable = true,
+        .production_authorized = false,
+    };
+    request.parent_coordinator = state_->coordinator.get();
+    request.transfer_profile = runtime_state_transfer_profile_from_decoder_matrix(
+        "p4c.kernel-native-checkpoint.v1", kRuntimeStateTransferContractGeneration,
+        state_->plan.plan_sha256, state_->plan.plan_sha256);
+    request.census = {
+        .profile_id = request.transfer_profile.profile_id,
+        .profile_generation = request.transfer_profile.profile_generation,
+        .source_slot = parent_snapshot.episode.world.incarnation,
+        .source_plan_sha256 = state_->plan.plan_sha256,
+        .target_plan_sha256 = state_->plan.plan_sha256,
+    };
+    request.derive_census_from_source = true;
+    request.evidence.production_authorized = false;
+    request.source_owner_registry = state_->registry;
+    request.child_owner_registry = child_registry;
+    request.source_resource_identity = state_->control->resource_identity();
+    request.child_resource_identity = child_resource;
+    request.branch_authority_nonce = state_->coordinator->coordinator_nonce();
+    request.child_episode = child_episode;
+    request.child_snapshot_id = {.high = child_resource.high, .low = child_resource.low + 1};
+    request.child_snapshot_sha256 = parent_snapshot.snapshot_sha256;
+    request.child_episode_control = child_control->native_episode_control();
+    request.begin_child_state_transfer = [child_control] {
+        return child_control->begin_state_transfer();
+    };
+    request.end_child_state_transfer = [child_control] { child_control->end_state_transfer(); };
+    request.evidence.source_final_mutation_fence_sequence =
+        state_->next_transfer_fence.fetch_add(1, std::memory_order_relaxed);
+    if (request.evidence.source_final_mutation_fence_sequence == 0) {
+        return {};
+    }
+
+    auto native_result = RuntimeNativeSiblingBranchExecutor::execute(std::move(request));
+    if (!native_result.status || native_result.child_coordinator == nullptr ||
+        native_result.child_episode_control == nullptr) {
+        return {};
+    }
+    auto child_state = std::make_shared<RuntimeKernelSiblingBranch::State>();
+    child_state->branch = native_result.branch;
+    child_state->branch.depth = state_->branch.depth + 1;
+    child_state->kernel = child_kernel;
+    child_state->control = child_control;
+    child_state->native_control = std::move(native_result.child_episode_control);
+    child_state->registry = child_registry;
+    child_state->journal = child_journal;
+    child_state->coordinator = std::move(native_result.child_coordinator);
+    child_state->journal_path = child_journal_path;
+    child_state->plan = state_->plan;
+    child_state->resolved_manifest_json = state_->resolved_manifest_json;
+    child_state->seed = state_->seed;
+    child_state->lifecycle_deadline_tick = state_->lifecycle_deadline_tick;
+    child_state->owns_journal = true;
+    journal_cleanup.release();
+    return std::unique_ptr<RuntimeKernelSiblingBranch>(
+        new RuntimeKernelSiblingBranch(std::move(child_state)));
+}
+
+RuntimeBranchRef RuntimeKernelSiblingBranch::branch_ref() const noexcept {
+    return state_ == nullptr ? RuntimeBranchRef{} : state_->branch;
+}
 
 RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig config)
     : config_(std::move(config)), kernel_(nullptr),
@@ -317,9 +702,16 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
                 throw std::runtime_error(
                     "P5-B runtime configuration outcome could not be made durable");
             }
+        } else {
+            // The convenience/native seam still binds an explicit seed even
+            // when no durable P5-B run header is supplied. This keeps the
+            // Python session seed and native RNG authority on one admission
+            // path instead of silently falling back to a process default.
+            kernel_->reset(config_.seed);
         }
         const RuntimeIdentity128 resource = mint_candidate_resource();
-        control_ = std::make_shared<Control>(resource, kernel_, admitted_seed_.value_or(0U));
+        control_ =
+            std::make_shared<Control>(resource, kernel_, admitted_seed_.value_or(config_.seed));
         std::string journal_path = config_.journal_path;
         owns_journal_path_ = journal_path.empty();
         if (journal_path.empty()) {
@@ -375,6 +767,15 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
         throw;
     }
 }
+
+RuntimeKernelCandidate::RuntimeKernelCandidate(std::uint64_t host_high, std::uint64_t host_low,
+                                               bool shadow, std::uint32_t seed)
+    : RuntimeKernelCandidate(RuntimeKernelCandidateConfig{
+          .host_id = {.high = host_high, .low = host_low},
+          .mode = shadow ? RuntimeHostMode::Shadow : RuntimeHostMode::Dark,
+          .seed = seed,
+          .lifecycle_deadline_tick = 1000,
+      }) {}
 
 RuntimeKernelCandidate::~RuntimeKernelCandidate() {
     bool shutdown_completed = stopped_;
@@ -557,10 +958,9 @@ bool RuntimeKernelCandidate::record_mutation(std::string_view operation,
     if (!run_recorder_->admitted() || operation.empty()) return false;
     try {
         const auto arguments = nlohmann::json::parse(arguments_json.begin(), arguments_json.end());
-        const auto payload = nlohmann::json{
-            {"arguments", arguments},
-            {"operation", operation},
-            {"phase", "intent"}}.dump();
+        const auto payload =
+            nlohmann::json{{"arguments", arguments}, {"operation", operation}, {"phase", "intent"}}
+                .dump();
         return static_cast<bool>(run_recorder_->append(run_recorder_->next_sequence(), payload));
     } catch (const nlohmann::json::exception &) {
         return false;
@@ -940,7 +1340,18 @@ RuntimeKernelCandidate::spawn_unit(const RuntimeWorldRef &world, const WorldSpaw
         (void)host_.release_shadow_episode(episode_admission.capability);
         return std::nullopt;
     }
+    if (!request.entity_name.empty()) {
+        auto world_lease = kernel_->acquire_world_lease();
+        const auto existing = world_lease.world().lookup(request.entity_name.c_str());
+        if (request.entity_name.find('\0') != std::string::npos ||
+            (existing.is_valid() && existing.is_alive())) {
+            lease_admission.lease.settle();
+            (void)host_.release_shadow_episode(episode_admission.capability);
+            return std::nullopt;
+        }
+    }
     const auto spawn_arguments = nlohmann::json{{"world_index", request.world_index},
+                                                {"entity_name", request.entity_name},
                                                 {"side", request.side},
                                                 {"type_name", request.type_name},
                                                 {"x", request.x},
@@ -970,6 +1381,7 @@ RuntimeKernelCandidate::spawn_unit(const RuntimeWorldRef &world, const WorldSpaw
             (void)host_.release_shadow_episode(episode_admission.capability);
             return std::nullopt;
         }
+        if (!request.entity_name.empty()) entity.set_name(request.entity_name.c_str());
         const auto result = entity_ref(entity.id());
         const bool outcome_recorded = record_outcome(
             "spawn_unit", result.has_value(), nlohmann::json{{"entity_id", entity.id()}}.dump());
@@ -1006,12 +1418,17 @@ bool RuntimeKernelCandidate::submit_episode(const RuntimeEpisodeRef &expected_ep
                                             RuntimeEpisodeIntentKind kind,
                                             RuntimeIdentity128 idempotency_key,
                                             std::string payload_sha256,
-                                            RuntimeEpisodeTransitionReceipt *receipt) {
+                                            RuntimeEpisodeTransitionReceipt *receipt,
+                                            std::vector<std::uint8_t> action_payload) {
     if (!started_ || stopped_ || control_ == nullptr || control_->transfer_active() ||
         !expected_episode.well_formed() || expected_episode.world != world_ref() ||
         !idempotency_key.well_formed() || payload_sha256.size() != 64) {
         return false;
     }
+    if (!action_payload.empty() &&
+        (kind != RuntimeEpisodeIntentKind::Action || action_payload.size() > 65536 ||
+         runtime_state_payload_sha256(action_payload) != payload_sha256))
+        return false;
     const auto admission = host_.issue_shadow_episode(0);
     if (!admission.status) {
         return false;
@@ -1022,7 +1439,7 @@ bool RuntimeKernelCandidate::submit_episode(const RuntimeEpisodeRef &expected_ep
     }
     const std::string_view operation =
         kind == RuntimeEpisodeIntentKind::Action ? "episode_action" : "episode_reset";
-    const auto episode_arguments =
+    auto episode_arguments =
         nlohmann::json{{"world_host_high", expected_episode.world.incarnation.host.host_id.high},
                        {"world_host_low", expected_episode.world.incarnation.host.host_id.low},
                        {"world_slot", expected_episode.world.world_slot},
@@ -1032,6 +1449,8 @@ bool RuntimeKernelCandidate::submit_episode(const RuntimeEpisodeRef &expected_ep
                        {"idempotency_low", idempotency_key.low},
                        {"payload_sha256", payload_sha256},
                        {"expected_step_sequence", episode_step_sequence_}};
+    if (!action_payload.empty())
+        episode_arguments["action_payload_hex"] = hex_encode_bytes(action_payload);
     if (!record_mutation(operation, episode_arguments.dump())) {
         (void)host_.release_shadow_episode(admission.capability);
         return false;
@@ -1042,7 +1461,8 @@ bool RuntimeKernelCandidate::submit_episode(const RuntimeEpisodeRef &expected_ep
                                .expected_step_sequence = episode_step_sequence_,
                                .idempotency_key = idempotency_key,
                                .payload_sha256 = std::move(payload_sha256),
-                               .production_authorized = false});
+                               .production_authorized = false,
+                               .action_payload = std::move(action_payload)});
     auto outcome = nlohmann::json{{"detail", transition.status.detail}};
     if (transition.status) {
         outcome["resulting_step_sequence"] = transition.receipt.resulting_step_sequence;
@@ -1215,6 +1635,197 @@ bool RuntimeKernelCandidate::try_set_entity_kinematics(const RuntimeEntityRef &e
     lease_admission.lease.settle();
     (void)host_.release_shadow_episode(episode_admission.capability);
     return outcome_recorded;
+}
+
+RuntimeKernelSnapshotFacts RuntimeKernelCandidate::native_snapshot_facts() const {
+    if (!started_ || stopped_ || kernel_ == nullptr) {
+        return {};
+    }
+    return snapshot_facts_for(kernel_, host_.shadow_episode_snapshot(0));
+}
+
+bool RuntimeKernelCandidate::native_step(std::string payload_sha256) {
+    if (!started_ || stopped_ || payload_sha256.size() != 64) {
+        return false;
+    }
+    if (next_action_idempotency_sequence_ == std::numeric_limits<std::uint64_t>::max()) {
+        return false;
+    }
+    const auto episode = current_episode();
+    RuntimeEpisodeTransitionReceipt receipt{};
+    const bool accepted =
+        submit_episode(episode, RuntimeEpisodeIntentKind::Action,
+                       {.high = 0x4550432D50595448ULL, .low = next_action_idempotency_sequence_},
+                       std::move(payload_sha256), &receipt);
+    if (accepted) {
+        ++next_action_idempotency_sequence_;
+    }
+    return accepted;
+}
+
+bool RuntimeKernelCandidate::step_pilot_actions(
+    const std::vector<WorldPilotActionAssignment> &actions) {
+    if (!started_ || stopped_ || !kernel_ ||
+        next_action_idempotency_sequence_ == std::numeric_limits<std::uint64_t>::max())
+        return false;
+    auto payload = encode_pilot_actions(actions);
+    if (!payload) return false;
+    const auto digest = runtime_state_payload_sha256(*payload);
+    const bool accepted =
+        submit_episode(current_episode(), RuntimeEpisodeIntentKind::Action,
+                       {.high = 0x4550432D50595448ULL, .low = next_action_idempotency_sequence_},
+                       digest, nullptr, std::move(*payload));
+    if (accepted) ++next_action_idempotency_sequence_;
+    return accepted;
+}
+
+std::optional<AgentObservation> RuntimeKernelCandidate::observation(std::uint64_t entity_id) {
+    const auto entity = entity_ref(entity_id);
+    if (!entity || !validate_entity(*entity) || !kernel_) return std::nullopt;
+    const auto admission = host_.issue_shadow_episode(0);
+    if (!admission.status) return std::nullopt;
+    auto lease = host_.acquire_lease(admission.capability, RuntimeLeaseKind::ReadOnlyResult);
+    std::optional<AgentObservation> result;
+    if (lease.status) {
+        try {
+            result = kernel_->get_agent_observation(entity_id);
+        } catch (...) {
+            result = std::nullopt;
+        }
+        lease.lease.settle();
+    }
+    (void)host_.release_shadow_episode(admission.capability);
+    return result;
+}
+
+RuntimeCandidateObservationPacket
+RuntimeKernelCandidate::read_observation_packet(const std::vector<WorldEntityRef> &refs) {
+    if (!started_ || stopped_ || !kernel_) return {};
+    const auto facts = native_snapshot_facts();
+    return make_candidate_observation_packet(
+        refs, facts.step, "root",
+        [this](std::uint64_t entity_id) { return observation(entity_id); });
+}
+
+std::uint64_t RuntimeKernelCandidate::resolve_entity(std::string_view logical_name) const {
+    if (!started_ || stopped_ || !kernel_ || !control_ || control_->transfer_active()) return 0;
+    const auto id = resolve_pilot_entity(*kernel_, logical_name);
+    return entity_ref(id).has_value() ? id : 0;
+}
+
+std::unique_ptr<RuntimeKernelSiblingBranch> RuntimeKernelCandidate::native_checkpoint() {
+    return fork_native_branch(native_snapshot_facts().state_digest, 1);
+}
+
+std::unique_ptr<RuntimeKernelSiblingBranch>
+RuntimeKernelCandidate::fork_native_branch(std::string intervention_sha256, std::uint64_t horizon) {
+    if (!started_ || stopped_ || kernel_ == nullptr || control_ == nullptr ||
+        !config_.plan.plan_sha256.size() || horizon == 0) {
+        return {};
+    }
+    const auto parent_snapshot = host_.shadow_episode_snapshot(0);
+    if (!parent_snapshot.episode.well_formed() ||
+        parent_snapshot.phase != RuntimeEpisodePhase::Running ||
+        parent_snapshot.step_sequence == 0) {
+        return {};
+    }
+
+    const RuntimeIdentity128 child_resource = mint_candidate_resource();
+    if (child_resource.low == std::numeric_limits<std::uint64_t>::max()) {
+        return {};
+    }
+    const auto child_kernel =
+        config_.resolved_manifest_json.empty()
+            ? std::make_shared<SimulationKernel>()
+            : std::make_shared<SimulationKernel>(config_.resolved_manifest_json);
+    const auto child_control = std::make_shared<Control>(child_resource, child_kernel,
+                                                         admitted_seed_.value_or(config_.seed));
+    const std::string child_journal_path =
+        (std::filesystem::temp_directory_path() /
+         ("echelon_forge_p4c_branch_" + std::to_string(child_resource.low) + ".wal"))
+            .string();
+    TemporaryJournalCleanup journal_cleanup(child_journal_path);
+    const auto child_journal = std::make_shared<FileJournal>(child_journal_path);
+    const auto child_registry = SimulationKernelStateOwnerBridge::create_registry({
+        .kernel = child_kernel.get(),
+        .journal = child_journal,
+        .transaction_namespace = "p4c-kernel-branch-" + std::to_string(child_resource.low),
+        .bound_resource_identity = child_resource,
+        .sample_tick = [deadline_tick = config_.lifecycle_deadline_tick] { return deadline_tick; },
+        .rederive_python_caches = [] { return true; },
+        .snapshot_python_caches = [] { return std::vector<std::uint8_t>{0}; },
+        .rollback_python_caches =
+            [](const std::vector<std::uint8_t> &before) { return before.size() == 1; },
+        .recover_python_caches =
+            [](const std::vector<std::uint8_t> &) {
+                return RuntimeStateOwnerImportTransactionPhase::Committed;
+            },
+    });
+    if (child_registry == nullptr) {
+        return {};
+    }
+    child_control->bind_registry(child_registry);
+
+    auto child_episode = parent_snapshot.episode;
+    // Incarnation epochs are coordinator-global reservations. Deriving the
+    // child epoch from the freshly minted resource sequence keeps sibling
+    // branches distinct; parent_epoch+1 would alias the second sibling.
+    child_episode.world.incarnation.incarnation_epoch = child_resource.low;
+    RuntimeNativeSiblingBranchRequest request;
+    request.admission = {
+        .parent_snapshot = parent_snapshot,
+        .branch_id = mint_candidate_resource(),
+        .parent_plan_sha256 = config_.plan.plan_sha256,
+        .intervention_sha256 = std::move(intervention_sha256),
+        .horizon = horizon,
+        .require_parent_immutable = true,
+        .production_authorized = false,
+    };
+    request.transfer_profile = runtime_state_transfer_profile_from_decoder_matrix(
+        "p4c.kernel-native-sibling.v1", kRuntimeStateTransferContractGeneration,
+        config_.plan.plan_sha256, config_.plan.plan_sha256);
+    request.census = {
+        .profile_id = request.transfer_profile.profile_id,
+        .profile_generation = request.transfer_profile.profile_generation,
+        .source_slot = parent_snapshot.episode.world.incarnation,
+        .source_plan_sha256 = config_.plan.plan_sha256,
+        .target_plan_sha256 = config_.plan.plan_sha256,
+    };
+    request.derive_census_from_source = true;
+    request.evidence.production_authorized = false;
+    request.child_owner_registry = child_registry;
+    request.child_resource_identity = child_resource;
+    request.child_episode = child_episode;
+    request.child_snapshot_id = {.high = child_resource.high, .low = child_resource.low + 1};
+    request.child_snapshot_sha256 = parent_snapshot.snapshot_sha256;
+    request.child_episode_control = child_control->native_episode_control();
+    request.begin_child_state_transfer = [child_control] {
+        return child_control->begin_state_transfer();
+    };
+    request.end_child_state_transfer = [child_control] { child_control->end_state_transfer(); };
+
+    auto native_result = host_.execute_shadow_sibling_branch(std::move(request));
+    if (!native_result.status || native_result.child_coordinator == nullptr ||
+        native_result.child_episode_control == nullptr) {
+        return {};
+    }
+    auto state = std::make_shared<RuntimeKernelSiblingBranch::State>();
+    state->branch = native_result.branch;
+    state->kernel = child_kernel;
+    state->control = child_control;
+    state->native_control = std::move(native_result.child_episode_control);
+    state->registry = child_registry;
+    state->journal = child_journal;
+    state->coordinator = std::move(native_result.child_coordinator);
+    state->journal_path = child_journal_path;
+    state->plan = config_.plan;
+    state->resolved_manifest_json = config_.resolved_manifest_json;
+    state->seed = admitted_seed_.value_or(config_.seed);
+    state->lifecycle_deadline_tick = config_.lifecycle_deadline_tick;
+    state->owns_journal = true;
+    journal_cleanup.release();
+    return std::unique_ptr<RuntimeKernelSiblingBranch>(
+        new RuntimeKernelSiblingBranch(std::move(state)));
 }
 
 } // namespace runtime::host::integration
