@@ -1,5 +1,8 @@
 #pragma once
 
+#include "core/engine/simulation_kernel.h"
+#include "core/engine/native_world_state_codec.h"
+#include "core/engine/simulation_kernel_command_surface.h"
 #include "core/engine/world_batch_runtime.h"
 #include "runtime/facade/runtime_facade.h"
 

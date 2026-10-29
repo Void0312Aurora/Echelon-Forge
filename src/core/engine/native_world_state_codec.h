@@ -9,8 +9,9 @@ class SimulationKernel;
 namespace runtime::contracts {
 
 // Shared codec entrypoints used by the maintained facade and host adapters.
-// Implementations live with the native state codec and preserve the existing
-// state-owner validation rules.
+// They take the engine owner directly, so they are engine-side declarations,
+// not facade contracts. Implementations live with the native state codec and
+// preserve the existing state-owner validation rules.
 [[nodiscard]] std::string serialize_native_world_state(SimulationKernel &kernel);
 [[nodiscard]] bool restore_native_world_state(SimulationKernel &kernel,
                                               const std::vector<std::uint8_t> &payload);

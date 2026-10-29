@@ -1,10 +1,9 @@
 #include "runtime/facade/runtime_facade_types.h"
 
-#include "core/engine/simulation_kernel.h"
-#include "core/engine/simulation_kernel_command_surface.h"
+#include "runtime/facade/internal/flecs_cpu_backend.h"
+#include "runtime/facade/runtime_facade_internal.h"
 #include "runtime/crypto/sha256.h"
 #include "runtime/contracts/composition/resolved_execution_plan.v1.generated.h"
-#include "runtime/contracts/native_world_state_codec.h"
 
 #include <algorithm>
 #include <cctype>
@@ -157,6 +156,8 @@ bool RuntimeNativeSnapshotFacts::well_formed() const noexcept {
     return lower_hex_sha256(state_digest) && lower_hex_sha256(rng_digest) && event_cursor == step;
 }
 
+struct RuntimeFacadeNativeBranch::ConstructionKey {};
+
 struct RuntimeFacadeNativeBranch::State {
     std::shared_ptr<SimulationKernel> kernel;
     std::uint64_t step = 0;
@@ -166,7 +167,8 @@ struct RuntimeFacadeNativeBranch::State {
     bool valid = false;
 };
 
-RuntimeFacadeNativeBranch::RuntimeFacadeNativeBranch(std::shared_ptr<State> state) noexcept
+RuntimeFacadeNativeBranch::RuntimeFacadeNativeBranch(const ConstructionKey &,
+                                                     std::shared_ptr<State> state) noexcept
     : state_(std::move(state)) {}
 
 RuntimeFacadeNativeBranch::RuntimeFacadeNativeBranch(RuntimeFacadeNativeBranch &&) noexcept =
@@ -294,7 +296,7 @@ std::unique_ptr<RuntimeFacadeNativeBranch> RuntimeFacadeNativeBranch::checkpoint
         child_state->entity_remap = compose_remap(state_->entity_remap, cloned.local_entity_remap);
         child_state->valid = true;
         return std::unique_ptr<RuntimeFacadeNativeBranch>(
-            new RuntimeFacadeNativeBranch(std::move(child_state)));
+            new RuntimeFacadeNativeBranch(ConstructionKey{}, std::move(child_state)));
     } catch (...) {
         return {};
     }
@@ -331,6 +333,6 @@ make_runtime_facade_native_branch(SimulationKernel &source, std::uint64_t step,
     state->intervention_digest = std::move(intervention_digest);
     state->entity_remap = std::move(cloned.local_entity_remap);
     state->valid = true;
-    return std::unique_ptr<RuntimeFacadeNativeBranch>(
-        new RuntimeFacadeNativeBranch(std::move(state)));
+    return std::unique_ptr<RuntimeFacadeNativeBranch>(new RuntimeFacadeNativeBranch(
+        RuntimeFacadeNativeBranch::ConstructionKey{}, std::move(state)));
 }

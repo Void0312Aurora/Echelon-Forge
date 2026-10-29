@@ -6,7 +6,7 @@
 #include "runtime/facade/internal/world_batch_compatibility_port.h"
 #include "runtime/facade/runtime_facade_internal.h"
 
-class SimulationKernel;
+// Defined with the native branch owner; the engine type comes from the seam.
 std::unique_ptr<RuntimeFacadeNativeBranch>
 make_runtime_facade_native_branch(SimulationKernel &source, std::uint64_t step,
                                   std::string intervention_digest, std::uint64_t horizon);

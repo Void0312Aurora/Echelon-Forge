@@ -419,7 +419,7 @@ sources=$<JOIN:$<TARGET_PROPERTY:ef_runtime_host_candidate,SOURCES>,|>
 # no-Flecs/no-core boundary, and it is not installed or linked by production
 # callers before the later P4-C/P5-D activation gates.
 add_library(ef_runtime_kernel_state_codec STATIC
-    src/runtime/contracts/native_world_state_codec.h
+    src/core/engine/native_world_state_codec.h
     src/runtime/host/integration/simulation_kernel_state_owner_adapters.h
     src/runtime/host/integration/simulation_kernel_state_owner_adapters.cpp
 )

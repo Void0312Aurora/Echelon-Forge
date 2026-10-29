@@ -10,7 +10,7 @@
 #include "core/engine/simulation_kernel.h"
 #include "core/interfaces/unit_factory.h"
 #include "runtime/contracts/backend_profile_contracts.h"
-#include "runtime/contracts/native_world_state_codec.h"
+#include "core/engine/native_world_state_codec.h"
 
 #include <flecs/addons/json.h>
 #include <nlohmann/json.hpp>

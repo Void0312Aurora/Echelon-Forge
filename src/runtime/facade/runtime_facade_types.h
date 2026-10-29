@@ -16,7 +16,6 @@
 #include "runtime/contracts/runtime_composition_evidence_contract.h"
 #include "runtime/contracts/world_batch_contracts.h"
 
-class SimulationKernel;
 class FlecsCpuBackend;
 struct ObservationBatchPacket;
 
@@ -93,8 +92,8 @@ struct RuntimeNativeSnapshotFacts {
     bool operator==(const RuntimeNativeSnapshotFacts &) const = default;
 };
 
-// Opaque, native-owned sibling branch.  The child owns an independent
-// SimulationKernel restored from the parent's complete native state bundle.
+// Opaque, native-owned sibling branch.  The child owns an independent native
+// world restored from the parent's complete native state bundle.
 // No Python state or raw parent handle crosses this boundary.
 class RuntimeFacadeNativeBranch {
   public:
@@ -113,14 +112,14 @@ class RuntimeFacadeNativeBranch {
     [[nodiscard]] std::unique_ptr<RuntimeFacadeNativeBranch>
     fork_native_branch(std::string intervention_digest, std::uint64_t horizon) const;
 
-  private:
+    // Construction is private to the facade implementation, which defines the
+    // key type; consumers only ever receive a branch from the facade.
+    struct ConstructionKey;
     struct State;
-    explicit RuntimeFacadeNativeBranch(std::shared_ptr<State> state) noexcept;
+    RuntimeFacadeNativeBranch(const ConstructionKey &, std::shared_ptr<State> state) noexcept;
+
+  private:
     std::shared_ptr<State> state_;
-    friend class FlecsCpuBackend;
-    friend std::unique_ptr<RuntimeFacadeNativeBranch>
-    make_runtime_facade_native_branch(SimulationKernel &, std::uint64_t, std::string,
-                                      std::uint64_t);
 };
 
 struct BatchResetRequest {

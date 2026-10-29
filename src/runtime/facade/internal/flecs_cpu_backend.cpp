@@ -1,7 +1,5 @@
 #include "runtime/facade/internal/flecs_cpu_backend.h"
-#include "core/engine/simulation_kernel.h"
 #include "runtime/crypto/sha256.h"
-#include "runtime/contracts/native_world_state_codec.h"
 
 #include <stdexcept>
 #include <utility>
