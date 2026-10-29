@@ -2,37 +2,41 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 import sys
-import tempfile
 import unittest
 from textwrap import dedent
 
 from python.runtime_bootstrap import build_dir, resolve_repo_path
+from tests.support.unit_database import patched_database
 
 
 _REPO_ROOT = resolve_repo_path()
 _BUILD_DIR = build_dir()
 _DB_PATH = resolve_repo_path("examples", "config", "database")
 _SCENARIO_PATH = resolve_repo_path("scenarios", "test", "test_aero.json")
-_F16_PATH = resolve_repo_path(
-  "examples",
-  "config",
-  "database",
-  "aircraft",
-  "units",
-  "f16c_block50.json",
-)
-_ENGINE_PATH = resolve_repo_path(
-  "examples",
-  "config",
-  "database",
-  "aircraft",
-  "modules",
-  "engines",
-  "f110_ge_129.json",
-)
+_F16_NAME = "F-16C_Block50"
+_ENGINE_NAME = "F110-GE-129"
+_DEFAULT_AIRFRAME_TUNING = {
+  "enabled": True,
+  "alpha_stall_clean_deg": 6.0,
+  "alpha_stall_flaps_full_deg": 8.0,
+  "alpha_peak_offset_deg": 3.0,
+  "alpha_deep_offset_deg": 5.0,
+  "pitch_break_onset_deg": 5.5,
+  "pitch_break_full_deg": 8.5,
+  "pitch_break_cm_nose_down": -0.5,
+}
+_DEFAULT_ENGINE_TUNING = {
+  "enabled": True,
+  "throttle_ab_threshold": 0.55,
+  "tau_spool_up_s": 0.6,
+  "tau_spool_down_s": 0.5,
+  "tau_ab_light_s": 0.25,
+  "tau_ab_extinguish_s": 0.2,
+  "tsfc_mil_kg_per_nh": 0.76,
+  "tsfc_ab_kg_per_nh": 1.90,
+}
 
 
 def _run_probe(script: str) -> dict[str, float]:
@@ -166,30 +170,16 @@ class FlightDynamicsRuntimeGuardTests(unittest.TestCase):
     self.assertGreater(default_spawn["entity_id"], 0)
     self.assertGreaterEqual(default_spawn["ias"], 0.0)
 
-    with tempfile.TemporaryDirectory(prefix="cmo_fd_p1a_") as tmpdir:
-      db_dir = os.path.join(tmpdir, "db")
-      aircraft_dir = os.path.join(db_dir, "aircraft")
-      units_dir = os.path.join(aircraft_dir, "units")
-      engines_dir = os.path.join(aircraft_dir, "modules", "engines")
-      os.makedirs(units_dir, exist_ok=True)
-      os.makedirs(engines_dir, exist_ok=True)
-
-      with open(_F16_PATH, "r", encoding="utf-8") as f:
-        unit_data = json.load(f)
-      with open(_ENGINE_PATH, "r", encoding="utf-8") as f:
-        engine_data = json.load(f)
-
-      unit_data.setdefault("airframe", {})
-      unit_data["airframe"]["tuning"] = {
+    with _tuned_database(
+      airframe_tuning={
         "enabled": True,
         "cl_alpha_per_deg": 0.11,
         "pitch_break_onset_deg": 15.5,
         "pitch_break_full_deg": 26.0,
         "mach_breakpoints": [0.0, 0.9, 1.2],
         "cd0_add_vs_mach": [0.0, 0.01, 0.03],
-      }
-      engine_data.setdefault("engine", {})
-      engine_data["engine"]["tuning"] = {
+      },
+      engine_tuning={
         "enabled": True,
         "tau_spool_up_s": 2.0,
         "tau_spool_down_s": 1.3,
@@ -198,15 +188,8 @@ class FlightDynamicsRuntimeGuardTests(unittest.TestCase):
         "throttle_ab_threshold": 0.88,
         "tsfc_mil_kg_per_nh": 0.76,
         "tsfc_ab_kg_per_nh": 1.90,
-      }
-
-      tuned_unit_path = os.path.join(units_dir, "f16c_block50.json")
-      tuned_engine_path = os.path.join(engines_dir, "f110_ge_129.json")
-      with open(tuned_unit_path, "w", encoding="utf-8") as f:
-        json.dump(unit_data, f)
-      with open(tuned_engine_path, "w", encoding="utf-8") as f:
-        json.dump(engine_data, f)
-
+      },
+    ) as db_dir:
       tuned_spawn = _run_probe(
         _guards_prelude()
         + dedent(
@@ -653,53 +636,22 @@ def _tuning_prelude(db_path: str) -> str:
   )
 
 
-def _make_tuned_database(
+def _tuned_database(
   *,
   airframe_tuning: dict | None = None,
   engine_tuning: dict | None = None,
-) -> tuple[str, str]:
-  tmpdir = tempfile.mkdtemp(prefix="cmo_fd_tuning_")
-  db_dir = os.path.join(tmpdir, "db")
-  units_dir = os.path.join(db_dir, "aircraft", "units")
-  engines_dir = os.path.join(db_dir, "aircraft", "modules", "engines")
-  os.makedirs(units_dir, exist_ok=True)
-  os.makedirs(engines_dir, exist_ok=True)
-
-  with open(_F16_PATH, "r", encoding="utf-8") as f:
-    unit_data = json.load(f)
-  with open(_ENGINE_PATH, "r", encoding="utf-8") as f:
-    engine_data = json.load(f)
-
-  unit_data.setdefault("airframe", {})
-  unit_data["airframe"]["tuning"] = airframe_tuning or {
-    "enabled": True,
-    "alpha_stall_clean_deg": 6.0,
-    "alpha_stall_flaps_full_deg": 8.0,
-    "alpha_peak_offset_deg": 3.0,
-    "alpha_deep_offset_deg": 5.0,
-    "pitch_break_onset_deg": 5.5,
-    "pitch_break_full_deg": 8.5,
-    "pitch_break_cm_nose_down": -0.5,
-  }
-
-  engine_data.setdefault("engine", {})
-  engine_data["engine"]["tuning"] = engine_tuning or {
-    "enabled": True,
-    "throttle_ab_threshold": 0.55,
-    "tau_spool_up_s": 0.6,
-    "tau_spool_down_s": 0.5,
-    "tau_ab_light_s": 0.25,
-    "tau_ab_extinguish_s": 0.2,
-    "tsfc_mil_kg_per_nh": 0.76,
-    "tsfc_ab_kg_per_nh": 1.90,
-  }
-
-  with open(os.path.join(units_dir, "f16c_block50.json"), "w", encoding="utf-8") as f:
-    json.dump(unit_data, f)
-  with open(os.path.join(engines_dir, "f110_ge_129.json"), "w", encoding="utf-8") as f:
-    json.dump(engine_data, f)
-
-  return tmpdir, db_dir
+):
+  return patched_database(
+    {
+      _F16_NAME: lambda record: record.setdefault("airframe", {}).update(
+        {"tuning": airframe_tuning or _DEFAULT_AIRFRAME_TUNING}
+      ),
+      _ENGINE_NAME: lambda record: record.setdefault("engine", {}).update(
+        {"tuning": engine_tuning or _DEFAULT_ENGINE_TUNING}
+      ),
+    },
+    prefix="cmo_fd_tuning_",
+  )
 
 
 class FlightDynamicsTuningRuntimeTests(unittest.TestCase):
@@ -728,8 +680,7 @@ class FlightDynamicsTuningRuntimeTests(unittest.TestCase):
     self.assertGreaterEqual(default_result["rpm"], 0.0)
     self.assertGreaterEqual(default_result["stall_progress"], 0.0)
 
-    tuned_tmpdir, tuned_db_dir = _make_tuned_database()
-    self.addCleanup(shutil.rmtree, tuned_tmpdir, True)
+    tuned_db_dir = str(self.enterContext(_tuned_database()))
     tuned_result = _run_probe(
       _tuning_prelude(tuned_db_dir)
       + dedent(
@@ -755,8 +706,7 @@ class FlightDynamicsTuningRuntimeTests(unittest.TestCase):
     self.assertGreaterEqual(tuned_result["stall_progress"], 0.0)
 
   def test_explicit_tuning_changes_propulsion_and_stall_observability(self) -> None:
-    tuned_tmpdir, tuned_db_dir = _make_tuned_database()
-    self.addCleanup(shutil.rmtree, tuned_tmpdir, True)
+    tuned_db_dir = str(self.enterContext(_tuned_database()))
 
     default_result = _run_probe(
       _tuning_prelude(_DB_PATH)
@@ -833,7 +783,7 @@ class FlightDynamicsTuningRuntimeTests(unittest.TestCase):
     self.assertGreater(tuned_result["pitch_break_seen"], default_result["pitch_break_seen"])
 
   def test_stall_state_retains_memory_during_brief_unload_and_clears_with_sustained_recovery(self) -> None:
-    tuned_tmpdir, tuned_db_dir = _make_tuned_database(
+    tuned_db_dir = str(self.enterContext(_tuned_database(
       airframe_tuning={
         "enabled": True,
         "alpha_stall_clean_deg": 4.0,
@@ -844,8 +794,7 @@ class FlightDynamicsTuningRuntimeTests(unittest.TestCase):
         "pitch_break_full_deg": 5.5,
         "pitch_break_cm_nose_down": -0.7,
       }
-    )
-    self.addCleanup(shutil.rmtree, tuned_tmpdir, True)
+    )))
     result = _run_probe(
       _tuning_prelude(tuned_db_dir)
       + dedent(
