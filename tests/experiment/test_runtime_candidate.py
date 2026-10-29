@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import dataclasses
+
 from dataclasses import dataclass, replace
 
 import pytest
@@ -26,26 +28,38 @@ class FakeBackend:
     invalid_step: int | None = None
     terminal_at: int | None = None
     cursor: int = 0
+    live: RuntimeSnapshotFacts | None = None
 
     def initial_snapshot(self) -> RuntimeSnapshotFacts:
-        return RuntimeSnapshotFacts(
+        self.live = RuntimeSnapshotFacts(
             step=0,
             state_digest="a" * 64,
             event_cursor=0,
             rng_digest="b" * 64,
         )
+        return self.live
+
+    def current_snapshot(self) -> RuntimeSnapshotFacts:
+        assert self.live is not None
+        return self.live
+
+    def mutate_outside_session(self) -> None:
+        """Stand-in for a spawn or time-step change that keeps the step count."""
+        assert self.live is not None
+        self.live = dataclasses.replace(self.live, state_digest="e" * 64)
 
     def step(self, actions: tuple[tuple[str, str], ...]) -> RuntimeStepResult:
         self.cursor += 1
         step = self.invalid_step if self.invalid_step is not None else self.cursor
+        self.live = RuntimeSnapshotFacts(
+            step=step,
+            state_digest=f"{self.cursor:064x}",
+            event_cursor=self.cursor,
+            rng_digest=f"{self.cursor + 100:064x}",
+            terminated=self.terminal_at == self.cursor,
+        )
         return RuntimeStepResult(
-            snapshot=RuntimeSnapshotFacts(
-                step=step,
-                state_digest=f"{self.cursor:064x}",
-                event_cursor=self.cursor,
-                rng_digest=f"{self.cursor + 100:064x}",
-                terminated=self.terminal_at == self.cursor,
-            ),
+            snapshot=self.live,
             rewards={agent_id: index for index, (agent_id, _) in enumerate(actions)},
         )
 
@@ -553,3 +567,36 @@ def test_real_aircraft_session_checkpoint_restore_nested_fork_and_verified_repla
         assert manifest_from_payload(session.manifest().to_payload()) == session.manifest()
     finally:
         assert native.shutdown()
+
+
+def test_step_rejects_native_state_changed_outside_the_session() -> None:
+    backend = FakeBackend()
+    session = _session(backend)
+    session.step(_actions(), observation_provenance=OBSERVATION)
+    backend.mutate_outside_session()
+    with pytest.raises(RuntimeCandidateError, match="outside the session"):
+        session.step(_actions(), observation_provenance=OBSERVATION)
+    assert len(session.trace(session.baseline).transitions) == 1
+
+
+def test_failed_observation_capture_poisons_the_branch_instead_of_retrying() -> None:
+    class FlakyRefs(AgentRefBranchBackend):
+        fail_next = False
+
+        def observation_refs(self, handle=None):
+            if self.fail_next:
+                self.fail_next = False
+                raise OSError("packet reader unavailable")
+            return super().observation_refs(handle)
+
+    backend = FlakyRefs()
+    session = _session(backend)
+    backend.fail_next = True
+    with pytest.raises(RuntimeCandidateError, match="must be discarded"):
+        session.step(_actions(), observation_provenance=OBSERVATION)
+    # The native world advanced once; a retry must not step it again.
+    cursor = backend.cursor
+    with pytest.raises(RuntimeCandidateError, match="unusable"):
+        session.step(_actions(), observation_provenance=OBSERVATION)
+    assert backend.cursor == cursor
+    assert session.trace(session.baseline).transitions == ()

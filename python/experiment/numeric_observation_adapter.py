@@ -13,7 +13,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 import os
+from pathlib import Path
 import re
+import shutil
+import tempfile
 from typing import Any, Callable, Mapping, Protocol, Sequence
 
 import numpy as np
@@ -25,6 +28,7 @@ from python.tasking_contracts.common.agent_contracts import OBS_FACADE_OBSERVATI
 from python.world_model.replay import DatasetSpec, Episode, EpisodeStore
 
 
+_EXPORT_SIDECAR = "trace_projection_export.json"
 NUMERIC_EXPORT_SCHEMA_VERSION = "echelon_forge.experiment_numeric_export.v1"
 AGENT_PACKET_SCHEMA_VERSION = "echelon_forge.agent_observation_packet.v1"
 AGENT_PACKET_PROVENANCE = (OBS_FACADE_OBSERVATION_PACKET, OBS_DECISION_BELIEF_PACKET)
@@ -625,7 +629,15 @@ def build_numeric_exports(
 def write_episode_store(
     exports: Sequence[NumericEpisodeExport], root_dir: str
 ) -> NumericExportReceipt:
-    """Write validated exports and an auditable projection sidecar."""
+    """Write validated exports and an auditable projection sidecar.
+
+    ``root_dir`` must not exist yet. Episodes are written into a temporary
+    sibling directory that is renamed into place only after the sidecar is
+    complete, so a crash never leaves a partial store and an earlier store is
+    never appended to. One store holds one split: ``EpisodeDataset`` loads every
+    episode under a root, so mixing training and evaluation seeds in one root
+    would leak evaluation data into training.
+    """
 
     exports = tuple(exports)
     if not exports:
@@ -637,40 +649,47 @@ def write_episode_store(
     action_dims = {int(item.actions.shape[1]) for item in exports}
     if len(obs_dims) != 1 or len(action_dims) != 1:
         raise ContractError("all exports must share observation and action dimensions")
+    if len({item.split for item in exports}) != 1:
+        raise ContractError("one export store must hold a single split")
     root = os.path.abspath(root_dir)
-    metadata_path = os.path.join(root, "trace_projection_export.json")
-    if os.path.exists(metadata_path):
-        raise ContractError(f"refusing to append to existing export: {metadata_path}")
-    store = EpisodeStore(
-        root,
-        DatasetSpec(action_dim=next(iter(action_dims)), obs_vec_dim=next(iter(obs_dims))),
-    )
-    episode_metadata: list[dict[str, object]] = []
-    episode_paths: list[str] = []
-    for item in sorted(exports, key=lambda value: (value.split, value.seed, value.branch_digest)):
-        path = store.add(item.to_episode(), seed=item.seed)
-        relative = os.path.relpath(path, root)
-        episode_paths.append(path)
-        episode_metadata.append(item.metadata(relative))
-    payload: dict[str, object] = {
-        "schema_version": NUMERIC_EXPORT_SCHEMA_VERSION,
-        "agent_packet_schema_version": AGENT_PACKET_SCHEMA_VERSION,
-        "projection_digest": next(iter(projection_digests)),
-        "episodes": episode_metadata,
-    }
-    metadata_digest = content_digest("experiment.numeric-export", payload)
-    payload["metadata_digest"] = metadata_digest
-    os.makedirs(root, exist_ok=True)
-    temporary = f"{metadata_path}.tmp"
-    with open(temporary, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        handle.write("\n")
-    os.replace(temporary, metadata_path)
+    if os.path.lexists(root):
+        raise ContractError(f"refusing to write into an existing export root: {root}")
+    parent = os.path.dirname(root)
+    os.makedirs(parent, exist_ok=True)
+    staging = tempfile.mkdtemp(prefix=f".{os.path.basename(root)}.", dir=parent)
+    try:
+        store = EpisodeStore(
+            staging,
+            DatasetSpec(action_dim=next(iter(action_dims)), obs_vec_dim=next(iter(obs_dims))),
+        )
+        episode_metadata: list[dict[str, object]] = []
+        relative_paths: list[str] = []
+        for item in sorted(exports, key=lambda value: (value.seed, value.branch_digest)):
+            path = store.add(item.to_episode(), seed=item.seed)
+            # POSIX separators keep the sidecar digest identical across hosts.
+            relative = Path(os.path.relpath(path, staging)).as_posix()
+            relative_paths.append(relative)
+            episode_metadata.append(item.metadata(relative))
+        payload: dict[str, object] = {
+            "schema_version": NUMERIC_EXPORT_SCHEMA_VERSION,
+            "agent_packet_schema_version": AGENT_PACKET_SCHEMA_VERSION,
+            "projection_digest": next(iter(projection_digests)),
+            "episodes": episode_metadata,
+        }
+        metadata_digest = content_digest("experiment.numeric-export", payload)
+        payload["metadata_digest"] = metadata_digest
+        with open(os.path.join(staging, _EXPORT_SIDECAR), "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            handle.write("\n")
+        os.rename(staging, root)
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
     return NumericExportReceipt(
         root_dir=root,
-        metadata_path=metadata_path,
+        metadata_path=os.path.join(root, _EXPORT_SIDECAR),
         metadata_digest=metadata_digest,
-        episode_paths=tuple(episode_paths),
+        episode_paths=tuple(os.path.join(root, *item.split("/")) for item in relative_paths),
     )
 
 

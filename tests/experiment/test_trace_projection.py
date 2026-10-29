@@ -19,6 +19,17 @@ from python.experiment.trace_projection import projection_from_payload
 DIGEST = "a" * 64
 
 
+def _all_branches(manifests) -> list[str]:
+    digests = (trace.branch.digest for manifest in manifests for trace in manifest.branches)
+    return list(dict.fromkeys(digests))
+
+
+def _project_all(manifests, split_spec, *, consumer):
+    return project_manifests(
+        manifests, split_spec, consumer=consumer, selected_branch_digests=_all_branches(manifests)
+    )
+
+
 def _manifest(seed: int, *, policy_ref: str = "policy:fixed", evidence: str = "runtime_candidate"):
     session = SessionSpec(
         session_id=f"runtime_session_{seed}",
@@ -94,7 +105,7 @@ def _manifest(seed: int, *, policy_ref: str = "policy:fixed", evidence: str = "r
 
 
 def test_projection_preserves_branch_lineage_and_assigns_one_split_per_session() -> None:
-    projection = project_manifests(
+    projection = _project_all(
         (_manifest(11), _manifest(17)),
         SeedSplit(training=(11,), evaluation=(17,)),
         consumer="evaluation",
@@ -114,8 +125,8 @@ def test_projection_preserves_branch_lineage_and_assigns_one_split_per_session()
 
 def test_projection_is_canonical_and_round_trips_with_digest_verification() -> None:
     split = SeedSplit(training=(11,), evaluation=(17,))
-    first = project_manifests((_manifest(17), _manifest(11)), split, consumer="ppo")
-    second = project_manifests((_manifest(11), _manifest(17)), split, consumer="ppo")
+    first = _project_all((_manifest(17), _manifest(11)), split, consumer="ppo")
+    second = _project_all((_manifest(11), _manifest(17)), split, consumer="ppo")
     assert first.digest == second.digest
     payload = first.to_payload()
     assert projection_from_payload(payload) == first
@@ -127,7 +138,7 @@ def test_projection_is_canonical_and_round_trips_with_digest_verification() -> N
 
 @pytest.mark.parametrize("consumer", ["bc", "evaluation", "ppo", "world_model"])
 def test_all_declared_consumers_share_the_same_projection_contract(consumer: str) -> None:
-    projection = project_manifests(
+    projection = _project_all(
         (_manifest(11),), SeedSplit(training=(11,), evaluation=(17,)), consumer=consumer
     )
     assert projection.consumer == consumer
@@ -138,23 +149,23 @@ def test_projection_rejects_leakage_and_mixed_authority() -> None:
     with pytest.raises(ContractError, match="disjoint"):
         SeedSplit(training=(11,), evaluation=(11,))
     with pytest.raises(ContractError, match="absent"):
-        project_manifests(
+        _project_all(
             (_manifest(12),), SeedSplit(training=(11,), evaluation=(17,)), consumer="bc"
         )
     with pytest.raises(ContractError, match="multiple manifests"):
-        project_manifests(
+        _project_all(
             (_manifest(11), dataclasses.replace(_manifest(11), policy_ref="policy:other")),
             SeedSplit(training=(11,), evaluation=(17,)),
             consumer="bc",
         )
     with pytest.raises(ContractError, match="policy"):
-        project_manifests(
+        _project_all(
             (_manifest(11), _manifest(17, policy_ref="policy:other")),
             SeedSplit(training=(11,), evaluation=(17,)),
             consumer="bc",
         )
     with pytest.raises(ContractError, match="evidence"):
-        project_manifests(
+        _project_all(
             (_manifest(11), _manifest(17, evidence="toy")),
             SeedSplit(training=(11,), evaluation=(17,)),
             consumer="bc",
@@ -162,7 +173,7 @@ def test_projection_rejects_leakage_and_mixed_authority() -> None:
 
 
 def test_projection_decoder_fails_closed_on_unknown_schema_fields() -> None:
-    projection = project_manifests(
+    projection = _project_all(
         (_manifest(11),), SeedSplit(training=(11,), evaluation=(17,)), consumer="world_model"
     )
     payload = projection.to_payload()
@@ -172,4 +183,37 @@ def test_projection_decoder_fails_closed_on_unknown_schema_fields() -> None:
     payload = projection.to_payload()
     payload["schema_version"] = "echelon_forge.experiment_trace_projection.v0"
     with pytest.raises(ContractError, match="schema"):
+        projection_from_payload(payload)
+
+
+def test_projection_includes_only_selected_branches() -> None:
+    manifest = _manifest(11)
+    full = next(trace.branch for trace in manifest.branches if trace.branch.label == "full")
+    projection = project_manifests(
+        (manifest,),
+        SeedSplit(training=(11,), evaluation=(17,)),
+        consumer="bc",
+        selected_branch_digests=[full.digest],
+    )
+    assert {row.branch_digest for row in projection.rows} == {full.digest}
+    assert len(projection.rows) == 1
+
+
+def test_projection_rejects_empty_duplicate_or_unknown_selections() -> None:
+    manifest = _manifest(11)
+    split = SeedSplit(training=(11,), evaluation=(17,))
+    digest = manifest.branches[0].branch.digest
+    for bad in ([], [digest, digest], ["not-a-digest"], ["b" * 64]):
+        with pytest.raises(ContractError, match="selected"):
+            project_manifests((manifest,), split, consumer="bc", selected_branch_digests=bad)
+
+
+def test_decoded_projection_cannot_move_a_seed_out_of_its_split() -> None:
+    projection = _project_all(
+        (_manifest(11),), SeedSplit(training=(11,), evaluation=(17,)), consumer="ppo"
+    )
+    payload = projection.to_payload()
+    for row in payload["rows"]:
+        row["split"] = "evaluation"
+    with pytest.raises(ContractError, match="split"):
         projection_from_payload(payload)
