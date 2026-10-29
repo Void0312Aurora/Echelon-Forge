@@ -21,11 +21,13 @@ using echelon_forge::runtime_contracts::v1::RuntimeIncarnationRef;
 using echelon_forge::runtime_contracts::v1::RuntimeWorldRef;
 
 inline constexpr std::uint32_t kRuntimeEpisodeHandshakeGeneration = 1;
-// MissionCommandGround gained reflected stance after the generation-4 producer;
-// N=5 materializes Stand for admitted N-1 bytes before durable import. Readers accept only N and
-// N-1 so a rolling replacement can bridge one producer generation without silently accepting an
+// The ECS document gained the StableIdentityState singleton, and the clock
+// payload its frame count, after the generation-5 producer. N=6 derives
+// next_serial from the transferred serials and keeps the importing kernel's
+// episode seed for admitted N-1 bytes. Readers accept only N and N-1 so a rolling
+// replacement can bridge one producer generation without silently accepting an
 // arbitrarily old state bundle.
-inline constexpr std::uint32_t kRuntimeStateTransferContractGeneration = 5;
+inline constexpr std::uint32_t kRuntimeStateTransferContractGeneration = 6;
 inline constexpr std::uint32_t kRuntimeStateTransferPreviousGeneration =
     kRuntimeStateTransferContractGeneration - 1;
 inline constexpr std::size_t kRuntimeStateCategoryCount = 12;

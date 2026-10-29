@@ -2,6 +2,7 @@
 
 #include "core/engine/state_transfer_component_reflection.h"
 
+#include "components/basic/stable_identity.h"
 #include "components/basic/tags.h"
 #include "components/command/common/comm_message.h"
 #include "components/combat/common/damage_common.h"
@@ -29,6 +30,12 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+// Added to the pinned flecs amalgamation by
+// cmake/patches/flecs_exact_json_precision.cmake. It restores the double world
+// time and the frame count exactly; ecs_frame_begin's float delta cannot.
+extern "C" void ef_flecs_restore_clock(ecs_world_t *world, double world_time_total,
+                                       int64_t frame_count_total);
 
 namespace runtime::host::integration {
 
@@ -175,6 +182,9 @@ struct DecodedClockState {
     double time_step = 0.0;
     std::uint64_t step_sequence = 0;
     std::uint64_t barrier_sequence = 0;
+    // clock.v3 only; clock.v2 producers did not record it.
+    bool has_frame_count = false;
+    std::int64_t frame_count = 0;
 };
 
 std::string f64_bits(double value) {
@@ -1366,13 +1376,19 @@ bool decode_clock_state(std::string_view encoded, DecodedClockState *decoded) {
     std::istringstream input{std::string(encoded)};
     std::string header;
     DecodedClockState candidate;
-    if (!std::getline(input, header) || header != "clock.v2" ||
+    if (!std::getline(input, header) || (header != "clock.v3" && header != "clock.v2") ||
         !(input >> candidate.world_time >> candidate.time_step >> candidate.step_sequence >>
           candidate.barrier_sequence) ||
         !std::isfinite(candidate.world_time) || candidate.world_time < 0.0 ||
         !std::isfinite(candidate.time_step) || candidate.time_step <= 0.0 ||
         candidate.barrier_sequence == 0) {
         return false;
+    }
+    if (header == "clock.v3") {
+        if (!(input >> candidate.frame_count) || candidate.frame_count < 0) {
+            return false;
+        }
+        candidate.has_frame_count = true;
     }
     input >> std::ws;
     if (!input.eof()) {
@@ -1419,6 +1435,47 @@ bool decode_episode_barrier(std::string_view encoded, RuntimeEpisodeCoordinatorS
 #endif // EF_RUNTIME_KERNEL_STATE_CODEC_ONLY
 
 } // namespace
+
+// The world-level identity singleton travels with the entities it numbers:
+// draw seeds hash `episode_seed`, and `next_serial` must stay ahead of every
+// transferred StableEntitySerial or the next spawn reuses a serial.
+static nlohmann::json encode_stable_identity(const StableIdentityState &identity) {
+    return {{"next_serial", identity.next_serial}, {"episode_seed", identity.episode_seed}};
+}
+
+static bool decode_stable_identity(const nlohmann::json &encoded, StableIdentityState *out) {
+    if (out == nullptr || !only_object_keys(encoded, {"next_serial", "episode_seed"}) ||
+        !encoded.contains("next_serial") || !encoded.contains("episode_seed") ||
+        !encoded["next_serial"].is_number_unsigned() ||
+        !encoded["episode_seed"].is_number_unsigned()) {
+        return false;
+    }
+    const auto next_serial = encoded["next_serial"].get<std::uint64_t>();
+    if (next_serial == 0) {
+        return false;
+    }
+    *out = StableIdentityState{.next_serial = next_serial,
+                               .episode_seed = encoded["episode_seed"].get<std::uint64_t>()};
+    return true;
+}
+
+// next_serial must exceed every serial in the document.
+static bool identity_covers_serials(const nlohmann::json &document,
+                                    const StableIdentityState &identity) {
+    for (const auto &result : document.at("results")) {
+        const auto components = result.find("components");
+        if (components == result.end() || !components->contains("StableEntitySerial")) {
+            continue;
+        }
+        const auto &serial = (*components)["StableEntitySerial"];
+        if (!serial.is_object() || !serial.contains("value") ||
+            !serial["value"].is_number_unsigned() ||
+            serial["value"].get<std::uint64_t>() >= identity.next_serial) {
+            return false;
+        }
+    }
+    return true;
+}
 
 #ifndef EF_RUNTIME_STATE_OWNER_ADAPTERS_CANDIDATE_ONLY
 std::string SimulationKernelStateOwnerBridge::serialize_world(SimulationKernel &kernel) {
@@ -1638,6 +1695,11 @@ std::string SimulationKernelStateOwnerBridge::serialize_world(SimulationKernel &
         }
         throw std::runtime_error(detail.str());
     }
+    const auto *identity = kernel.ecs.get<StableIdentityState>();
+    if (identity == nullptr) {
+        throw std::runtime_error("ECS snapshot requires the StableIdentityState singleton");
+    }
+    document["identity"] = encode_stable_identity(*identity);
     return document.dump();
 }
 
@@ -1785,9 +1847,9 @@ static bool normalize_legacy_ship_reflection(nlohmann::json &ship) {
 
 // ECS truth migration implementation: normalize_legacy_ecs_ships
 static bool normalize_legacy_ecs_ships(nlohmann::json &document) {
-    if (!only_object_keys(document, {"results", "child_of"}) || !document.contains("results") ||
-        !document["results"].is_array() || !document.contains("child_of") ||
-        !document["child_of"].is_array())
+    if (!only_object_keys(document, {"results", "child_of", "identity"}) ||
+        !document.contains("results") || !document["results"].is_array() ||
+        !document.contains("child_of") || !document["child_of"].is_array())
         return false;
     for (auto &result : document["results"]) {
         if (!result.is_object() || !result.contains("components") ||
@@ -1838,6 +1900,29 @@ static bool normalize_legacy_ecs_aero_tuning(nlohmann::json &document) {
             if (!tuning.contains(name)) tuning[name] = value;
         }
     }
+    return true;
+}
+
+// ECS truth migration implementation: normalize_legacy_ecs_identity
+static bool normalize_legacy_ecs_identity(nlohmann::json &document, std::uint64_t episode_seed) {
+    if (!document.is_object() || !document.contains("results") || !document["results"].is_array())
+        return false;
+    if (document.contains("identity")) return false; // N-1 producers never wrote it
+    std::uint64_t max_serial = 0;
+    for (const auto &result : document["results"]) {
+        if (!result.is_object() || !result.contains("components") ||
+            !result["components"].is_object())
+            return false;
+        const auto &components = result["components"];
+        if (!components.contains("StableEntitySerial")) continue;
+        const auto &serial = components["StableEntitySerial"];
+        if (!serial.is_object() || !serial.contains("value") ||
+            !serial["value"].is_number_unsigned())
+            return false;
+        max_serial = std::max(max_serial, serial["value"].get<std::uint64_t>());
+    }
+    document["identity"] = encode_stable_identity(
+        StableIdentityState{.next_serial = max_serial + 1, .episode_seed = episode_seed});
     return true;
 }
 
@@ -1894,9 +1979,15 @@ bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
         } catch (const nlohmann::json::exception &) {
             return false;
         }
-        if (!only_object_keys(document, {"results", "child_of"}) || !document.contains("results") ||
-            !document.at("results").is_array() || !document.contains("child_of") ||
-            !document.at("child_of").is_array()) {
+        if (!only_object_keys(document, {"results", "child_of", "identity"}) ||
+            !document.contains("results") || !document.at("results").is_array() ||
+            !document.contains("child_of") || !document.at("child_of").is_array()) {
+            return false;
+        }
+        StableIdentityState restored_identity{};
+        if (!document.contains("identity") ||
+            !decode_stable_identity(document.at("identity"), &restored_identity) ||
+            !identity_covers_serials(document, restored_identity)) {
             return false;
         }
         if (!normalize_legacy_ecs_sensors(document)) return false;
@@ -2145,6 +2236,7 @@ bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
                 child.child_of(parent);
             }
         }
+        kernel.ecs.set<StableIdentityState>(restored_identity);
         kernel.world_state_mutated_ = true;
         return true;
     }();
@@ -2193,13 +2285,15 @@ std::string SimulationKernelStateOwnerBridge::serialize_clock(SimulationKernel &
     kernel.ensure_active("state_transfer_export_clock");
     const ecs_world_info_t *info = ecs_get_world_info(kernel.ecs.c_ptr());
     const double world_time = info ? static_cast<double>(info->world_time_total) : 0.0;
+    const std::int64_t frame_count = info ? static_cast<std::int64_t>(info->frame_count_total) : 0;
     std::ostringstream output;
     output.precision(std::numeric_limits<double>::max_digits10);
-    output << "clock.v2\n"
+    output << "clock.v3\n"
            << world_time << '\n'
            << kernel.time_step << '\n'
            << step_sequence << '\n'
-           << barrier_sequence << '\n';
+           << barrier_sequence << '\n'
+           << frame_count << '\n';
     return output.str();
 }
 
@@ -2211,11 +2305,14 @@ bool SimulationKernelStateOwnerBridge::restore_clock(SimulationKernel &kernel,
     if (!decode_clock_state(text(payload), &restored)) {
         return false;
     }
-    ecs_reset_clock(kernel.ecs.c_ptr());
-    if (restored.world_time > 0.0) {
-        ecs_frame_begin(kernel.ecs.c_ptr(), static_cast<ecs_ftime_t>(restored.world_time));
-        ecs_frame_end(kernel.ecs.c_ptr());
-    }
+    // Set the double world time and frame count directly. Advancing one frame
+    // through ecs_frame_begin would round the time to float and add a frame.
+    // A clock.v2 payload has no frame count; keep the target's, as before.
+    const ecs_world_info_t *info = ecs_get_world_info(kernel.ecs.c_ptr());
+    const std::int64_t frame_count =
+        restored.has_frame_count ? restored.frame_count
+                                 : (info ? static_cast<std::int64_t>(info->frame_count_total) : 0);
+    ef_flecs_restore_clock(kernel.ecs.c_ptr(), restored.world_time, frame_count);
     kernel.time_step = restored.time_step;
     kernel.world_state_mutated_ = true;
     return true;
@@ -2329,8 +2426,10 @@ std::string serialize_component_subset(SimulationKernel &kernel, RuntimeStateCat
         result.erase("tags");
     }
     // Component-subset owners intentionally carry only their selected
-    // components; hierarchy closure belongs to the ECS truth owner.
+    // components; hierarchy closure and the identity singleton belong to the
+    // ECS truth owner.
     document.erase("child_of");
+    document.erase("identity");
     document["owner_schema"] = component_subset_schema(category);
     document["step_sequence"] = step_sequence;
     document["barrier_sequence"] = barrier_sequence;
@@ -2716,30 +2815,42 @@ SimulationKernelStateOwnerBridge::create_registry(SimulationKernelStateOwnerRegi
             return RuntimeStateOwnerAdapterExport{.census_entry = std::move(entry),
                                                   .artifact = std::move(artifact)};
         };
-        registration.migrate_previous =
-            [category = rule.category](const RuntimeStateOwnerArtifact &source) {
-                RuntimeStateOwnerArtifact migrated = source;
-                migrated.schema_generation = kRuntimeStateTransferContractGeneration;
-                if (category == RuntimeStateCategory::EcsComponentTruth) {
-                    if (source.category != category ||
-                        source.schema_generation != kRuntimeStateTransferPreviousGeneration) {
-                        throw std::runtime_error(
-                            "ECS byte migration requires an admitted N-1 artifact");
-                    }
-                    auto document = nlohmann::json::parse(text(source.payload));
-                    if (!normalize_legacy_ecs_ships(document) ||
-                        !normalize_legacy_ecs_aero_tuning(document) ||
-                        !normalize_legacy_ecs_ground_commands(document)) {
-                        throw std::runtime_error(
-                            "N-1 ECS state is malformed or mixes component schemas");
-                    }
-                    migrated.payload = bytes(document.dump());
+        registration.migrate_previous = [category = rule.category, kernel = config.kernel](
+                                            const RuntimeStateOwnerArtifact &source) {
+            RuntimeStateOwnerArtifact migrated = source;
+            migrated.schema_generation = kRuntimeStateTransferContractGeneration;
+            if (category == RuntimeStateCategory::EcsComponentTruth) {
+                if (source.category != category ||
+                    source.schema_generation != kRuntimeStateTransferPreviousGeneration) {
+                    throw std::runtime_error(
+                        "ECS byte migration requires an admitted N-1 artifact");
                 }
-                // Other categories retain their explicit reader promotion. The
-                // generation admission still prevents anything older than N-1.
-                migrated.payload_sha256 = runtime_state_payload_sha256(migrated.payload);
-                return migrated;
-            };
+                auto document = nlohmann::json::parse(text(source.payload));
+                // N-1 producers wrote no identity. The importing kernel's
+                // episode seed is the one their imports already used.
+                const std::uint64_t episode_seed = [&] {
+                    const auto lease = std::as_const(*kernel).acquire_world_lease();
+                    const auto *identity = lease.world().get<StableIdentityState>();
+                    if (identity == nullptr) {
+                        throw std::runtime_error(
+                            "N-1 ECS migration requires the target identity singleton");
+                    }
+                    return identity->episode_seed;
+                }();
+                if (!normalize_legacy_ecs_ships(document) ||
+                    !normalize_legacy_ecs_aero_tuning(document) ||
+                    !normalize_legacy_ecs_ground_commands(document) ||
+                    !normalize_legacy_ecs_identity(document, episode_seed)) {
+                    throw std::runtime_error(
+                        "N-1 ECS state is malformed or mixes component schemas");
+                }
+                migrated.payload = bytes(document.dump());
+            }
+            // Other categories retain their explicit reader promotion. The
+            // generation admission still prevents anything older than N-1.
+            migrated.payload_sha256 = runtime_state_payload_sha256(migrated.payload);
+            return migrated;
+        };
         registration.import_state = [kernel = config.kernel, journal = config.journal,
                                      transaction_namespace = config.transaction_namespace,
                                      rederive_python_caches = config.rederive_python_caches,

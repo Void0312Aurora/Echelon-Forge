@@ -17,6 +17,7 @@
 #include "components/systems/sonar.h"
 #include "components/systems/ew.h"
 #include "content/unit_definition.h"
+#include "components/basic/stable_identity.h"
 #include "core/engine/simulation_kernel.h"
 #include "core/interfaces/environment_model.h"
 #include "systems/system_contribution_registry.h"
@@ -164,6 +165,20 @@ class KernelReplacementControl final : public host::RuntimeInstanceControl {
     bool cancellation_acknowledged_ = false;
     bool released_ = false;
 };
+
+StableIdentityState identity_of(SimulationKernel &kernel) {
+    auto lease = kernel.acquire_world_lease();
+    const auto *identity = lease.world().get<StableIdentityState>();
+    REQUIRE(identity != nullptr);
+    return *identity;
+}
+
+ecs_world_info_t world_info_of(SimulationKernel &kernel) {
+    auto lease = kernel.acquire_world_lease();
+    const ecs_world_info_t *info = ecs_get_world_info(lease.world().c_ptr());
+    REQUIRE(info != nullptr);
+    return *info;
+}
 
 } // namespace
 
@@ -1307,15 +1322,31 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             "simulation-kernel-ecs-n-minus-one.v2", 1, plan_sha256, plan_sha256);
         auto exported = source_owner->export_state(profile, integration_slot(),
                                                    integration_export_context(barrier));
+        // A generation-5 producer wrote no identity singleton.
+        auto previous_document = nlohmann::json::parse(exported.artifact.payload);
+        REQUIRE(previous_document.erase("identity") == 1);
+        const auto previous_text = previous_document.dump();
+        auto previous_artifact = exported.artifact;
+        previous_artifact.schema_generation = host::kRuntimeStateTransferPreviousGeneration;
+        previous_artifact.payload = {previous_text.begin(), previous_text.end()};
+        previous_artifact.payload_sha256 =
+            host::runtime_state_payload_sha256(previous_artifact.payload);
         auto previous_entry = exported.census_entry;
         previous_entry.schema_generation = host::kRuntimeStateTransferPreviousGeneration;
+        previous_entry.state_content_sha256 = previous_artifact.payload_sha256;
         previous_entry.canonical_payload = host::runtime_state_canonical_payload(previous_entry);
         previous_entry.canonical_payload_sha256 =
             host::runtime_state_payload_sha256(previous_entry.canonical_payload);
-        auto previous_artifact = exported.artifact;
-        previous_artifact.schema_generation = host::kRuntimeStateTransferPreviousGeneration;
-        const auto migrated = source_owner->migrate_previous(previous_artifact);
-        REQUIRE(migrated.payload == previous_artifact.payload);
+        // The importing owner migrates, so the derived identity keeps the target's seed.
+        const auto migrated = target_owner->migrate_previous(previous_artifact);
+        auto migrated_document = nlohmann::json::parse(migrated.payload);
+        const auto migrated_identity = migrated_document.at("identity");
+        CHECK(migrated_identity.at("episode_seed") == 456);
+        CHECK(migrated_identity.at("next_serial") ==
+              nlohmann::json::parse(integration::SimulationKernelStateOwnerBridge::serialize_world(
+                  source))["identity"]["next_serial"]);
+        migrated_document.erase("identity");
+        REQUIRE(migrated_document == previous_document);
 
         const std::string target_before =
             integration::SimulationKernelStateOwnerBridge::serialize_world(target);
@@ -1338,8 +1369,12 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         const auto committed = imported.transaction->commit_with_deadline(20, 100);
         CHECK(committed.phase == host::RuntimeStateOwnerImportTransactionPhase::Committed);
         CHECK(committed.durable);
-        CHECK(integration::SimulationKernelStateOwnerBridge::serialize_world(target) ==
-              integration::SimulationKernelStateOwnerBridge::serialize_world(source));
+        // Entities match the source; the identity is the migrated one above.
+        auto committed_document = nlohmann::json::parse(
+            integration::SimulationKernelStateOwnerBridge::serialize_world(target));
+        CHECK(committed_document.at("identity") == migrated_identity);
+        committed_document.erase("identity");
+        CHECK(committed_document == previous_document);
 
         auto reopened = target_owner->import_state(profile, integration_slot(), previous_entry,
                                                    previous_artifact, migrated, candidate_identity);
@@ -1436,6 +1471,8 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         REQUIRE(artifact != exported.artifacts.end());
         auto previous = json::parse(artifact->payload);
         REQUIRE(previous["results"].size() == 1);
+        // The generation-2 producer wrote no identity singleton.
+        REQUIRE(previous.erase("identity") == 1);
         auto &components = previous["results"][0]["components"];
         auto &platform = components["ShipPlatform"];
         // Exact pre-#117 reflected shape: 22 hull fields and no ship yaw state.
@@ -1500,6 +1537,8 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         REQUIRE(kernel.spawn_unit(Side::Blue, "Ship", 100, 200, 0, 0, 0, 0, 0, 8, 0).is_valid());
         const auto before = Bridge::serialize_world(kernel);
         auto previous = json::parse(before);
+        // N-1 producers wrote no identity singleton.
+        REQUIRE(previous.erase("identity") == 1);
         auto &platform = previous["results"][0]["components"]["ShipPlatform"];
         // A malformed N-1 wire fixture must not be repaired into accepted truth.
         platform = {{"max_turn_rate_deg_s", 2.4},
@@ -1798,11 +1837,12 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
               kDefaultStructuralTopologyProfile);
     }
 
-    TEST_CASE("generation-4 ground stance imports commits and recovers after journal reopen") {
+    TEST_CASE("generation-5 ECS bytes import identity, commit and recover after journal reopen") {
         using Bridge = integration::SimulationKernelStateOwnerBridge;
         using json = nlohmann::json;
-        // The audited generation-4 producer omitted ground stance, including nested shells.
-        constexpr std::uint32_t producer_generation = 4;
+        // The audited generation-5 producer wrote no StableIdentityState. Stance was
+        // already present, so stripping it also checks the older normalizer still holds.
+        constexpr std::uint32_t producer_generation = 5;
         REQUIRE(host::kRuntimeStateTransferPreviousGeneration == producer_generation);
         SimulationKernel source;
         SimulationKernel target;
@@ -1825,8 +1865,10 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
                                             .objective_node_id = 7777,
                                             .tactical_cadence_hz = 0.125});
         }
-        const auto source_path = std::filesystem::temp_directory_path() / "ef_ground_v4_source.wal";
-        const auto target_path = std::filesystem::temp_directory_path() / "ef_ground_v4_target.wal";
+        const auto source_path =
+            std::filesystem::temp_directory_path() / "ef_identity_v5_source.wal";
+        const auto target_path =
+            std::filesystem::temp_directory_path() / "ef_identity_v5_target.wal";
         std::error_code remove_error;
         std::filesystem::remove(source_path, remove_error);
         std::filesystem::remove(target_path, remove_error);
@@ -1834,7 +1876,7 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             .kernel = &source,
             .journal =
                 std::make_shared<host::RuntimeStateTransferFileJournal>(source_path.string()),
-            .transaction_namespace = "ground-v4-source",
+            .transaction_namespace = "identity-v5-source",
         });
         const auto caches_applied = std::make_shared<bool>(false);
         const auto make_target_registry = [&] {
@@ -1842,7 +1884,7 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
                 .kernel = &target,
                 .journal =
                     std::make_shared<host::RuntimeStateTransferFileJournal>(target_path.string()),
-                .transaction_namespace = "ground-v4-target",
+                .transaction_namespace = "identity-v5-target",
                 .rederive_python_caches =
                     [caches_applied] {
                         *caches_applied = true;
@@ -1871,7 +1913,7 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         REQUIRE(target_registry != nullptr);
         const auto plan = source.resolved_composition_sha256();
         const auto profile = host::runtime_state_transfer_profile_from_decoder_matrix(
-            "ground-v4-recovery.v1", 1, plan, plan);
+            "identity-v5-recovery.v1", 1, plan, plan);
         auto exported = source_registry->export_source(
             profile, integration_slot(), integration_export_context(integration_barrier()));
         REQUIRE(exported.status);
@@ -1888,6 +1930,8 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         if (components.contains("MissionCommand"))
             REQUIRE(components["MissionCommand"]["ground"].erase("stance") == 1);
         REQUIRE(components["AeroTuning"].size() == 50);
+        const std::uint64_t source_next_serial = document["identity"]["next_serial"];
+        REQUIRE(document.erase("identity") == 1);
         const auto legacy_text = document.dump();
         artifact->payload = {legacy_text.begin(), legacy_text.end()};
         artifact->payload_sha256 = host::runtime_state_payload_sha256(artifact->payload);
@@ -1909,7 +1953,7 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             }
         }
         auto expired = exported;
-        expired.census.contract_generation = 3; // N-2 no longer admitted
+        expired.census.contract_generation = 4; // N-2 no longer admitted
         const auto before = Bridge::serialize_world(target);
         CHECK_FALSE(target_registry->import_and_observe(profile, expired, {.high = 480, .low = 481})
                         .status);
@@ -1927,8 +1971,11 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         const auto committed = imported.transaction->commit_with_deadline(20, 100);
         REQUIRE(committed.phase == host::RuntimeStateOwnerImportTransactionPhase::Committed);
         REQUIRE(committed.durable);
-        CHECK(Bridge::serialize_world(target) == Bridge::serialize_world(source));
         const auto restored = json::parse(Bridge::serialize_world(target));
+        auto source_document = json::parse(Bridge::serialize_world(source));
+        CHECK(restored["results"] == source_document["results"]);
+        CHECK(restored["identity"]["next_serial"] == source_next_serial);
+        CHECK(restored["identity"]["episode_seed"] == 52);
         const auto &tuning = restored["results"][0]["components"]["AeroTuning"];
         CHECK(tuning["flap_lift_coefficient_per_full_deflection"] == 0.35);
         CHECK(tuning["stores_drag_coefficient_per_drag_index"] == 0.001);
@@ -1950,12 +1997,133 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         const auto recovered = reopened.transaction->recover_with_deadline(21, 100);
         CHECK(recovered.phase == host::RuntimeStateOwnerImportTransactionPhase::Committed);
         CHECK(recovered.durable);
-        CHECK(Bridge::serialize_world(target) == Bridge::serialize_world(source));
+        CHECK(json::parse(Bridge::serialize_world(target))["results"] ==
+              source_document["results"]);
         reopened.transaction.reset();
         source_registry.reset();
         target_registry.reset();
         std::filesystem::remove(source_path, remove_error);
         std::filesystem::remove(target_path, remove_error);
+    }
+
+    TEST_CASE("whole world transfer carries the episode identity of a non-default seed") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        SimulationKernel source;
+        SimulationKernel target;
+        // The review found branches kept the fresh kernel's identity: seed 42
+        // and next_serial 1. Use a seed and spawn count that cannot match it.
+        source.reset(7);
+        target.reset(42);
+        for (int index = 0; index < 3; ++index) {
+            REQUIRE(
+                source
+                    .spawn_unit(Side::Blue, "Aircraft", 100.0 * index, 0, 3000, 0, 0, 0, 150, 0, 0)
+                    .is_valid());
+        }
+        source.step();
+        const auto source_identity = identity_of(source);
+        REQUIRE(source_identity.episode_seed == 7);
+        REQUIRE(source_identity.next_serial > 3);
+
+        const auto bytes = Bridge::serialize_world(source);
+        REQUIRE(Bridge::restore_world(target, {bytes.begin(), bytes.end()}));
+        const auto restored = identity_of(target);
+        CHECK(restored.episode_seed == 7);
+        CHECK(restored.next_serial == source_identity.next_serial);
+        CHECK(Bridge::serialize_world(target) == bytes);
+
+        // The next spawn on each side receives the same, previously unused serial.
+        const auto source_next =
+            source.spawn_unit(Side::Red, "Aircraft", 0, 900, 3000, 0, 0, 0, 150, 0, 0);
+        const auto target_next =
+            target.spawn_unit(Side::Red, "Aircraft", 0, 900, 3000, 0, 0, 0, 150, 0, 0);
+        REQUIRE(source_next.is_valid());
+        REQUIRE(target_next.is_valid());
+        {
+            auto source_lease = source.acquire_world_lease();
+            auto target_lease = target.acquire_world_lease();
+            const auto *source_serial =
+                source_lease.world().entity(source_next.id()).get<StableEntitySerial>();
+            const auto *target_serial =
+                target_lease.world().entity(target_next.id()).get<StableEntitySerial>();
+            REQUIRE(source_serial != nullptr);
+            REQUIRE(target_serial != nullptr);
+            CHECK(source_serial->value == target_serial->value);
+            CHECK(source_serial->value == source_identity.next_serial);
+        }
+    }
+
+    TEST_CASE("whole world transfer rejects identity that is missing or behind its serials") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        using json = nlohmann::json;
+        SimulationKernel source;
+        SimulationKernel target;
+        source.reset(7);
+        target.reset(11);
+        REQUIRE(
+            source.spawn_unit(Side::Blue, "Aircraft", 0, 0, 3000, 0, 0, 0, 150, 0, 0).is_valid());
+        const auto document = json::parse(Bridge::serialize_world(source));
+        const auto before = Bridge::serialize_world(target);
+        const auto reject = [&](json changed) {
+            const auto wire = changed.dump();
+            CHECK_FALSE(Bridge::restore_world(target, {wire.begin(), wire.end()}));
+            CHECK(Bridge::serialize_world(target) == before);
+        };
+        auto missing = document;
+        missing.erase("identity");
+        reject(missing);
+        auto behind = document;
+        behind["identity"]["next_serial"] = 1; // an existing entity already holds serial 1
+        reject(behind);
+        auto extra = document;
+        extra["identity"]["unknown"] = 0;
+        reject(extra);
+    }
+
+    TEST_CASE("clock transfer restores double world time and frame count exactly") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        SimulationKernel source;
+        SimulationKernel target;
+        source.reset(7);
+        target.reset(7);
+        // 1/60 is not exact in float; the review measured drift by step 3 when
+        // the restored time went through ecs_frame_begin's float delta.
+        source.set_time_step(1.0 / 60.0);
+        for (int step = 0; step < 37; ++step) {
+            source.step();
+        }
+        const ecs_world_info_t source_info = world_info_of(source);
+        const double source_time = source_info.world_time_total;
+        const auto source_frames = source_info.frame_count_total;
+        REQUIRE(static_cast<double>(static_cast<float>(source_time)) != source_time);
+
+        const auto clock = Bridge::serialize_clock(source, 37, 38);
+        REQUIRE(clock.rfind("clock.v3\n", 0) == 0);
+        REQUIRE(Bridge::restore_clock(target, {clock.begin(), clock.end()}));
+        const ecs_world_info_t target_info = world_info_of(target);
+        CHECK(target_info.world_time_total == source_time);
+        CHECK(target_info.frame_count_total == source_frames);
+        CHECK(target.get_time_step() == source.get_time_step());
+        CHECK(Bridge::serialize_clock(target, 37, 38) == clock);
+
+        // The same step from the same clock lands on the same time.
+        source.step();
+        target.step();
+        CHECK(world_info_of(target).world_time_total == world_info_of(source).world_time_total);
+    }
+
+    TEST_CASE("clock reader still accepts N-1 clock.v2 payloads") {
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        SimulationKernel target;
+        target.reset(7);
+        const std::string legacy = "clock.v2\n0.25\n0.05\n5\n6\n";
+        REQUIRE(Bridge::restore_clock(target, {legacy.begin(), legacy.end()}));
+        CHECK(world_info_of(target).world_time_total == 0.25);
+        CHECK(target.get_time_step() == 0.05);
+        const std::string negative_frames = "clock.v3\n0.25\n0.05\n5\n6\n-1\n";
+        CHECK_FALSE(
+            Bridge::restore_clock(target, {negative_frames.begin(), negative_frames.end()}));
     }
 
     TEST_CASE("ground stance and complete command members survive whole world transfer") {
@@ -2714,15 +2882,27 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
                                     unknown_artifact, unknown_artifact, {.high = 459, .low = 460}),
                                 std::runtime_error);
             }
+            auto previous_artifact = exported.artifact;
+            previous_artifact.schema_generation = host::kRuntimeStateTransferPreviousGeneration;
+            const bool ecs = category == host::RuntimeStateCategory::EcsComponentTruth;
             auto previous_entry = exported.census_entry;
+            if (ecs) {
+                // A generation-5 producer wrote no identity singleton.
+                auto legacy = nlohmann::json::parse(previous_artifact.payload);
+                REQUIRE(legacy.erase("identity") == 1);
+                const auto legacy_text = legacy.dump();
+                previous_artifact.payload.assign(legacy_text.begin(), legacy_text.end());
+                previous_artifact.payload_sha256 =
+                    host::runtime_state_payload_sha256(previous_artifact.payload);
+                previous_entry.state_content_sha256 = previous_artifact.payload_sha256;
+            }
             previous_entry.schema_generation = host::kRuntimeStateTransferPreviousGeneration;
             previous_entry.canonical_payload =
                 host::runtime_state_canonical_payload(previous_entry);
             previous_entry.canonical_payload_sha256 =
                 host::runtime_state_payload_sha256(previous_entry.canonical_payload);
-            auto previous_artifact = exported.artifact;
-            previous_artifact.schema_generation = host::kRuntimeStateTransferPreviousGeneration;
-            const auto migrated = source_owner->migrate_previous(previous_artifact);
+            // The importing side migrates, as the registry import path does.
+            const auto migrated = target_owner->migrate_previous(previous_artifact);
             auto imported = target_owner->import_state(profile, integration_slot(), previous_entry,
                                                        previous_artifact, migrated, identity);
             REQUIRE(imported.transaction != nullptr);
@@ -2731,7 +2911,29 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
             CHECK(committed.durable);
             const auto target_export = target_owner->export_state(
                 profile, integration_slot(), integration_export_context(barrier));
-            CHECK(target_export.artifact.payload == exported.artifact.payload);
+            if (ecs) {
+                // Entities match the source. The derived identity keeps the
+                // target's seed and starts after the highest transferred serial.
+                auto restored = nlohmann::json::parse(target_export.artifact.payload);
+                auto expected = nlohmann::json::parse(exported.artifact.payload);
+                std::uint64_t max_serial = 0;
+                for (const auto &result : expected.at("results")) {
+                    const auto &components = result.at("components");
+                    if (components.contains("StableEntitySerial")) {
+                        max_serial = std::max(
+                            max_serial,
+                            components.at("StableEntitySerial").at("value").get<std::uint64_t>());
+                    }
+                }
+                REQUIRE(max_serial > 0);
+                CHECK(restored.at("identity").at("episode_seed") == 82);
+                CHECK(restored.at("identity").at("next_serial") == max_serial + 1);
+                restored.erase("identity");
+                expected.erase("identity");
+                CHECK(restored == expected);
+            } else {
+                CHECK(target_export.artifact.payload == exported.artifact.payload);
+            }
             imported.transaction.reset();
         };
 

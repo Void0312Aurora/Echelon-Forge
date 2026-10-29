@@ -94,5 +94,32 @@ _flecs_replace_once("if (!strchr(token, '.')) {"
                     "if (!strchr(token, '.') && !strchr(token, 'e') && !strchr(token, 'E')) {"
                     "JSON large integer check")
 
+# Exact clock restore. ecs_get_world_info() returns a const view and the pinned
+# version has no setter, while ecs_frame_begin() takes an ecs_ftime_t (float)
+# delta. A restored world therefore cannot reproduce the source's double world
+# time or its frame count. Add one narrow setter next to ecs_reset_clock. Its
+# only caller, the native state-owner adapter, declares it with C linkage.
+_flecs_replace_once([=[void ecs_reset_clock(
+    ecs_world_t *world)
+{
+    world->info.world_time_total = 0;
+    world->info.world_time_total_raw = 0;
+}]=] [=[void ecs_reset_clock(
+    ecs_world_t *world)
+{
+    world->info.world_time_total = 0;
+    world->info.world_time_total_raw = 0;
+}
+
+void ef_flecs_restore_clock(
+    ecs_world_t *world,
+    double world_time_total,
+    int64_t frame_count_total)
+{
+    world->info.world_time_total = world_time_total;
+    world->info.world_time_total_raw = world_time_total;
+    world->info.frame_count_total = frame_count_total;
+}]=] "clock restore setter")
+
 file(WRITE "${FLECS_SOURCE_FILE}" "${_flecs_source}")
 message(STATUS "Flecs exact JSON precision patch: applied")
