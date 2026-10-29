@@ -22,6 +22,7 @@ from python.tasking_contracts.air.engagement.model import (  # noqa: E402
     AIR_COMBAT_HYBRID_ACTION_DIM,
     AIR_SCRIPTED_ENGAGEMENT_MODEL_ID,
 )
+from python.content.unit_loadout import station_for  # noqa: E402
 from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY  # noqa: E402
 from python.tasking_contracts.common.decision_runtime import (  # noqa: E402
     DecisionRuntimeAgent,
@@ -33,6 +34,10 @@ from tools.diagnostics.air_cooperative_ew_scripted_demo import _cooperative_slot
 DEFAULT_SCENARIO = resolve_repo_path(
     "scenarios", "air_combat", "cooperative_air_2v1_scripted_c2_roe_engagement_v1.json"
 )
+
+
+SHOOTER_PLATFORM = "F-16C_Block50"
+SHOOTER_WEAPON = "AIM-120C-7"
 
 
 def _json_value(value: Any) -> Any:
@@ -107,10 +112,9 @@ def run_demo(
                     action_dim=AIR_COMBAT_HYBRID_ACTION_DIM,
                     dt=0.05,
                     mission_obs_mode=AIR_COMBAT_C2_ROE_V2,
-                    # The cooperative fixture's F-16 loadout exposes station 1;
-                    # pass that capability into each model so a legal release can
-                    # reach the native fire gate.
-                    weapon_station_id=1,
+                    # Select the AMRAAM station from the shooter's authored loadout; the
+                    # model fails closed if a runtime omits or invalidates it.
+                    weapon_station_id=station_for(SHOOTER_PLATFORM, SHOOTER_WEAPON),
                 )
             ),
         )

@@ -21,6 +21,7 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
+from python.content.unit_loadout import station_for
 from tools.diagnostics.common import finite_float, native_stdout_to_stderr
 import ef_py  # noqa: E402
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethality_abstraction import (  # noqa: E402
@@ -3578,7 +3579,7 @@ def run_guidance_case(
     red_vx=target_vx,
     red_vy=target_vy,
   )
-  _select_weapon_station(sim, blue_id, 1)
+  _select_weapon_station(sim, blue_id, station_for("F-16C_Block50", "AIM-120C-7"))
   missile_id = int(sim.fire_missile(blue_id, red_id))
   if missile_id <= 0:
     raise RuntimeError(f"missile launch failed for {case_id}")

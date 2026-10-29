@@ -30,6 +30,7 @@ from python.tasking_contracts.common.decision_runtime import (  # noqa: E402
     DecisionRuntimeAgent,
     DecisionRuntimeAgentSpec,
 )
+from python.content.unit_loadout import station_for  # noqa: E402
 from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY  # noqa: E402
 from python.simulation import create_single_backend  # noqa: E402
 
@@ -40,6 +41,10 @@ DEFAULT_SCENARIO = resolve_repo_path(
     "1v1",
     "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json",
 )
+
+
+SHOOTER_PLATFORM = "F-16C_Block50"
+SHOOTER_WEAPON = "AIM-120C-7"
 
 
 def _unbatch(observation: dict[str, Any]) -> dict[str, Any]:
@@ -94,9 +99,9 @@ def run_demo(
         action_dim=action_dim,
         dt=0.05,
         mission_obs_mode=AIR_COMBAT_C2_ROE_V2,
-        # The fixture declares station 1 through the maintained loadout seam;
-        # the model fails closed if a runtime omits or invalidates it.
-        weapon_station_id=1,
+        # Select the AMRAAM station from the shooter's authored loadout; the
+        # model fails closed if a runtime omits or invalidates it.
+        weapon_station_id=station_for(SHOOTER_PLATFORM, SHOOTER_WEAPON),
     )
     agent = DecisionRuntimeAgent(
         DecisionRuntimeAgentSpec(

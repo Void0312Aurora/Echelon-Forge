@@ -9,7 +9,7 @@ class LaunchGuidanceRuntimeMixin:
     self.assertTrue(sim.load_database(_DB_PATH))
     sim.set_time_step(1.0 / 60.0)
 
-    _, _, aim120_id = _spawn_and_fire_with_station(sim, 1, range_m=22000.0, bearing_deg=5.0)
+    _, _, aim120_id = _spawn_and_fire_weapon(sim, _AIM120, range_m=22000.0, bearing_deg=5.0)
     aim120 = _missile_runtime(sim, aim120_id)
     self.assertAlmostEqual(float(aim120["mass_total_kg"]), 152.0, delta=1.0e-6)
     self.assertAlmostEqual(float(aim120["max_speed_mps"]), 1372.0, delta=1.0e-6)
@@ -62,7 +62,7 @@ class LaunchGuidanceRuntimeMixin:
     self.assertTrue(sim.load_database(_DB_PATH))
     sim.set_time_step(1.0 / 60.0)
 
-    _, _, aim9x_id = _spawn_and_fire_with_station(sim, 2, range_m=9000.0, bearing_deg=20.0)
+    _, _, aim9x_id = _spawn_and_fire_weapon(sim, _AIM9X, range_m=9000.0, bearing_deg=20.0)
     aim9x = _missile_runtime(sim, aim9x_id)
     self.assertAlmostEqual(float(aim9x["mass_total_kg"]), 85.0, delta=1.0e-6)
     self.assertAlmostEqual(float(aim9x["max_speed_mps"]), 850.0, delta=1.0e-6)
@@ -110,7 +110,7 @@ class LaunchGuidanceRuntimeMixin:
     tuning.max_lateral_g = 47.0
     sim.set_missile_tuning(tuning)
 
-    _, _, missile_id = _spawn_and_fire_with_station(sim, 2, range_m=9000.0, bearing_deg=15.0)
+    _, _, missile_id = _spawn_and_fire_weapon(sim, _AIM9X, range_m=9000.0, bearing_deg=15.0)
     runtime = _missile_runtime(sim, missile_id)
     self.assertAlmostEqual(float(runtime["mass_total_kg"]), 85.0, delta=1.0e-6)
     self.assertAlmostEqual(float(runtime["mass_fuel_kg"]), 33.0, delta=1.0e-6)

@@ -852,7 +852,7 @@ class MissileDynamicsRuntimeMixin:
         red_vx=target_vx,
         red_vy=target_vy,
       )
-      _select_weapon_station(sim, blue_id, 1)
+      _select_weapon(sim, blue_id, _AIM120)
       missile_id = int(sim.fire_missile(blue_id, red_id))
       self.assertGreater(missile_id, 0)
 

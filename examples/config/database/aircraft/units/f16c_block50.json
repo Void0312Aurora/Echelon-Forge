@@ -725,10 +725,10 @@
         }
     ],
     "default_loadout": {
-        "1": "AIM-120C-7",
-        "2": "AIM-9X",
-        "8": "AIM-9X",
-        "9": "AIM-120C-7"
+        "1": "AIM-9X",
+        "2": "AIM-120C-7",
+        "8": "AIM-120C-7",
+        "9": "AIM-9X"
     },
     "has_ammo": false
 }

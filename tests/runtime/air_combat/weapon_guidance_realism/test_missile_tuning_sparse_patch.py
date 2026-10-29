@@ -1,21 +1,18 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
-import shutil
-import tempfile
 import unittest
 
 from tests.runtime.air_combat.weapon_guidance_realism.helpers import (
-  _DB_PATH,
+  _AIM120,
   _make_detection,
   _missile_runtime,
-  _select_weapon_station,
+  _select_weapon,
   _set_contacts,
-  _spawn_and_fire_with_station,
+  _spawn_and_fire_weapon,
   _spawn_pair,
   ef_py,
 )
+from tests.support.unit_database import patched_database
 
 
 class MissileTuningSparsePatchTests(unittest.TestCase):
@@ -28,14 +25,10 @@ class MissileTuningSparsePatchTests(unittest.TestCase):
     definition_patch: dict[str, object],
     global_patch: dict[str, object],
   ) -> dict:
-    with tempfile.TemporaryDirectory(prefix="cmo_missile_tuning_patch_") as tmpdir:
-      database_path = Path(tmpdir) / "database"
-      shutil.copytree(_DB_PATH, database_path)
-      weapon_path = database_path / "weapons" / "air_to_air" / "aim_120c.json"
-      weapon = json.loads(weapon_path.read_text(encoding="utf-8"))
-      weapon["guidance"].update(definition_patch)
-      weapon_path.write_text(json.dumps(weapon), encoding="utf-8")
-
+    with patched_database(
+      {_AIM120: lambda weapon: weapon["guidance"].update(definition_patch)},
+      prefix="cmo_missile_tuning_patch_",
+    ) as database_path:
       sim = ef_py.SimulationKernel()
       self.assertTrue(sim.load_database(str(database_path)))
       sim.set_time_step(1.0 / 60.0)
@@ -44,9 +37,9 @@ class MissileTuningSparsePatchTests(unittest.TestCase):
         setattr(tuning, field_name, value)
       sim.set_missile_tuning(tuning)
 
-      _, _, missile_id = _spawn_and_fire_with_station(
+      _, _, missile_id = _spawn_and_fire_weapon(
         sim,
-        1,
+        _AIM120,
         range_m=22000.0,
         bearing_deg=5.0,
       )
@@ -81,20 +74,15 @@ class MissileTuningSparsePatchTests(unittest.TestCase):
     self.assertAlmostEqual(float(runtime["autopilot_damping"]), 0.65, delta=1.0e-9)
 
   def test_explicit_false_patch_overrides_true_definition_booleans(self) -> None:
-    with tempfile.TemporaryDirectory(prefix="cmo_missile_boolean_patch_") as tmpdir:
-      database_path = Path(tmpdir) / "database"
-      shutil.copytree(_DB_PATH, database_path)
-      weapon_path = database_path / "weapons" / "air_to_air" / "aim_120c.json"
-      weapon = json.loads(weapon_path.read_text(encoding="utf-8"))
-      weapon["guidance"].update(
-        {
-          "lobl_required": True,
-          "midcourse_datalink_supported": True,
-          "use_kalman_seeker": True,
-        }
-      )
-      weapon_path.write_text(json.dumps(weapon), encoding="utf-8")
-
+    boolean_patch = {
+      "lobl_required": True,
+      "midcourse_datalink_supported": True,
+      "use_kalman_seeker": True,
+    }
+    with patched_database(
+      {_AIM120: lambda weapon: weapon["guidance"].update(boolean_patch)},
+      prefix="cmo_missile_boolean_patch_",
+    ) as database_path:
       sim = ef_py.SimulationKernel()
       self.assertTrue(sim.load_database(str(database_path)))
       sim.set_time_step(1.0 / 60.0)
@@ -105,7 +93,7 @@ class MissileTuningSparsePatchTests(unittest.TestCase):
       sim.set_missile_tuning(tuning)
 
       blue_id, red_id = _spawn_pair(sim)
-      _select_weapon_station(sim, blue_id, 1)
+      _select_weapon(sim, blue_id, _AIM120)
       _set_contacts(
         sim,
         blue_id,

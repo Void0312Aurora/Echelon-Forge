@@ -4,12 +4,16 @@ import ef_py
 import pytest
 
 from python.runtime_bootstrap import resolve_repo_path
+from python.content.unit_loadout import station_for
 from python.simulation.facade_batch import FacadeBatchBackend
 from python.simulation.air.engagement import AirEngagementFacts, AirScriptedEngagementController
 
 
 DATABASE = resolve_repo_path("examples", "config", "database")
 
+
+
+_AMRAAM_STATION = station_for("F-16C_Block50", "AIM-120C-7")
 
 def _setup(seeds: tuple[int, ...]) -> ef_py.BatchWorldSetupRequest:
     request = ef_py.BatchWorldSetupRequest()
@@ -132,7 +136,7 @@ def test_scripted_engagement_controller_reaches_native_fire_gate() -> None:
         setup_factory=_setup,
         controlled_spawn_indices=(0, 1),
     )
-    controller = AirScriptedEngagementController(weapon_station_id=1)
+    controller = AirScriptedEngagementController(weapon_station_id=_AMRAAM_STATION)
     try:
         backend.seed(17)
         initial = backend.reset()
@@ -204,7 +208,7 @@ def _run_scripted_database_munition_episode(seed: int) -> tuple[int, str, list[f
         setup_factory=_setup,
         controlled_spawn_indices=(0, 1),
     )
-    controller = AirScriptedEngagementController(weapon_station_id=1)
+    controller = AirScriptedEngagementController(weapon_station_id=_AMRAAM_STATION)
     try:
         backend.seed(seed)
         initial = backend.reset()
@@ -261,7 +265,7 @@ def _run_scripted_database_munition_episode(seed: int) -> tuple[int, str, list[f
             command=command,
             facts=facts,
         )
-        assert decision.pilot_action.weapon_select_id == 1
+        assert decision.pilot_action.weapon_select_id == _AMRAAM_STATION
 
         after = backend.step({blue_key: decision.pilot_action, red_key: hold})
         launch_packet = backend.export_engagement_events(
@@ -334,7 +338,7 @@ def _run_direct_generic_terminal_episode(seed: int) -> tuple[int, object, object
         setup_factory=_setup_generic_target,
         controlled_spawn_indices=(0, 1),
     )
-    controller = AirScriptedEngagementController(weapon_station_id=1)
+    controller = AirScriptedEngagementController(weapon_station_id=_AMRAAM_STATION)
     try:
         backend.seed(seed)
         initial = backend.reset()
@@ -420,7 +424,7 @@ def test_direct_facade_scripted_surrogate_terminal_replays_deterministically() -
 
 
 def test_scripted_engagement_controller_blocks_repeat_fire_during_assessment() -> None:
-    controller = AirScriptedEngagementController(weapon_station_id=1)
+    controller = AirScriptedEngagementController(weapon_station_id=_AMRAAM_STATION)
     observation = type(
         "Observation",
         (),

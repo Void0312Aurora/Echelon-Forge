@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
+from tests.support.unit_database import station_for
 
 
 ensure_repo_imports()
@@ -16,6 +17,9 @@ import ef_py # noqa: E402
 
 
 _DB_PATH = resolve_repo_path("examples", "config", "database")
+_SHOOTER_TYPE = "F-16C_Block50"
+_AIM120 = "AIM-120C-7"
+_AIM9X = "AIM-9X"
 
 
 def _make_kernel(seed: int | None = None) -> ef_py.SimulationKernel:
@@ -154,6 +158,12 @@ def _select_weapon_station(sim: ef_py.SimulationKernel, entity_id: int, station_
   pilot.active = True
   pilot.weapon_select_id = int(station_id)
   sim.set_pilot_action(int(entity_id), pilot)
+
+
+def _select_weapon(sim: ef_py.SimulationKernel, entity_id: int, weapon: str) -> None:
+  """Select the shooter station that carries `weapon` in the authored loadout."""
+
+  _select_weapon_station(sim, entity_id, station_for(_SHOOTER_TYPE, weapon))
 
 
 def _set_unit_truth_state(
@@ -1281,16 +1291,16 @@ def _spawn_and_fire(
   return blue_id, red_id, missile_id
 
 
-def _spawn_and_fire_with_station(
+def _spawn_and_fire_weapon(
   sim: ef_py.SimulationKernel,
-  station_id: int,
+  weapon: str,
   *,
   range_m: float = 30000.0,
   bearing_deg: float = 0.0,
   elevation_deg: float = 0.0,
 ) -> tuple[int, int, int]:
   blue_id, red_id = _spawn_pair(sim)
-  _select_weapon_station(sim, blue_id, station_id)
+  _select_weapon(sim, blue_id, weapon)
   _set_contacts(
     sim,
     blue_id,
@@ -1298,7 +1308,7 @@ def _spawn_and_fire_with_station(
   )
   missile_id = int(sim.fire_missile(blue_id, red_id))
   if missile_id <= 0:
-    raise AssertionError(f"expected missile launch from station {station_id} to succeed")
+    raise AssertionError(f"expected {weapon} launch to succeed")
   return blue_id, red_id, missile_id
 
 

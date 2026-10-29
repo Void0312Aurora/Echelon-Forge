@@ -31,6 +31,7 @@ from python.tasking_contracts.air.ew.model import (  # noqa: E402
     AIR_EW_HYBRID_V2_ACTION_DIM,
     AIR_EW_JAMMER_DOCTRINES,
 )
+from python.content.unit_loadout import station_for  # noqa: E402
 from python.tasking_contracts.air.registry import AIR_SCRIPTED_MODEL_REGISTRY  # noqa: E402
 from python.tasking_contracts.common.decision_runtime import (  # noqa: E402
     DecisionRuntimeAgent,
@@ -54,6 +55,10 @@ PLAYABLE_BOUNDARY = (
     "and the generic Aircraft targets are surrogates; this is "
     "not a playable EW claim."
 )
+
+
+SHOOTER_PLATFORM = "F-16C_Block50"
+SHOOTER_WEAPON = "AIM-120C-7"
 
 
 def _json_value(value: Any) -> Any:
@@ -142,7 +147,9 @@ def run_demo(
                     max_rwr=4,
                     dt=0.05,
                     mission_obs_mode=AIR_COMBAT_C2_ROE_V2,
-                    weapon_station_id=1,
+                    # Select the AMRAAM station from the shooter's authored loadout; the
+                    # model fails closed if a runtime omits or invalidates it.
+                    weapon_station_id=station_for(SHOOTER_PLATFORM, SHOOTER_WEAPON),
                 ),
             )
             for name in slot_names
