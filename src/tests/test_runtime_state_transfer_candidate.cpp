@@ -1,5 +1,6 @@
 #include "runtime_state_transfer_candidate.h"
 #include "runtime_host_candidate.h"
+#include "runtime_branch_contract.h"
 
 #include <doctest/doctest.h>
 
@@ -235,10 +236,11 @@ class FixtureOwnerRegistry final : public host::RuntimeStateTransferOwnerRegistr
   public:
     explicit FixtureOwnerRegistry(bool tamper = false, bool export_allowed = true,
                                   bool tamper_artifact = false,
-                                  RuntimeIdentity128 resource_identity = {})
+                                  RuntimeIdentity128 resource_identity = {},
+                                  bool durable_import = false)
         : tamper_(tamper), export_allowed_(export_allowed), tamper_artifact_(tamper_artifact),
           abort_count_(std::make_shared<std::atomic<int>>(0)),
-          resource_identity_(resource_identity) {}
+          resource_identity_(resource_identity), durable_import_(durable_import) {}
 
     [[nodiscard]] RuntimeIdentity128 bound_resource_identity() const noexcept override {
         return resource_identity_;
@@ -371,7 +373,11 @@ class FixtureOwnerRegistry final : public host::RuntimeStateTransferOwnerRegistr
                     receipt.observations.back().candidate_entry_sha256.assign(64, '0');
                 }
             }
-            receipt.transaction = std::make_shared<NoopImportTransaction>(abort_count_);
+            if (durable_import_) {
+                receipt.transaction = std::make_shared<DurableStatusImportTransaction>();
+            } else {
+                receipt.transaction = std::make_shared<NoopImportTransaction>(abort_count_);
+            }
             return receipt;
         } catch (...) {
             receipt.status = {.error = host::RuntimeStateTransferError::SemanticEvidenceMissing,
@@ -386,6 +392,7 @@ class FixtureOwnerRegistry final : public host::RuntimeStateTransferOwnerRegistr
     bool tamper_artifact_ = false;
     std::shared_ptr<std::atomic<int>> abort_count_;
     RuntimeIdentity128 resource_identity_;
+    bool durable_import_ = false;
 
   public:
     [[nodiscard]] int abort_count() const noexcept {
@@ -552,6 +559,152 @@ ValidationFixture make_validation_fixture(std::uint64_t host_low, bool tamper = 
                         .episode_barrier = std::move(barrier.capability)}};
 }
 
+struct NativeBranchFixture {
+    std::shared_ptr<FixtureOwnerRegistry> source_owner_registry;
+    std::shared_ptr<FixtureOwnerRegistry> child_owner_registry;
+    std::unique_ptr<host::RuntimeEpisodeCoordinatorCandidate> parent_coordinator;
+    std::shared_ptr<host::RuntimeNativeEpisodeControl> child_episode_control;
+    host::RuntimeNativeSiblingBranchRequest request;
+    std::shared_ptr<std::atomic<int>> child_begin_count;
+    std::shared_ptr<std::atomic<int>> child_end_count;
+};
+
+class NativeBranchEpisodeControl final : public host::RuntimeNativeEpisodeControl {
+  public:
+    explicit NativeBranchEpisodeControl(RuntimeIdentity128 resource) : resource_(resource) {}
+
+    [[nodiscard]] RuntimeIdentity128 resource_identity() const noexcept override {
+        return resource_;
+    }
+
+    [[nodiscard]] host::RuntimeNativeEpisodeMutation
+    apply(const host::RuntimeNativeEpisodeCommand &) noexcept override {
+        return {.applied = true,
+                .terminal = false,
+                .snapshot_id = {.high = 200, .low = next_snapshot_++},
+                .snapshot_sha256 = kHash2};
+    }
+
+  private:
+    RuntimeIdentity128 resource_;
+    std::uint64_t next_snapshot_ = 1;
+};
+
+NativeBranchFixture make_native_branch_fixture(std::uint64_t host_low, bool tamper = false) {
+    const auto source_resource = RuntimeIdentity128{.high = 192, .low = host_low};
+    const auto child_resource = RuntimeIdentity128{.high = 193, .low = host_low};
+    const auto source_slot = slot(host_low, 1);
+    const auto child_slot = slot(host_low + 1000, 1);
+    const auto parent_episode = episode(source_slot, 1, 220);
+    auto parent_created = host::RuntimeEpisodeCoordinatorCandidate::create({
+        .initial_episode = parent_episode,
+        .initial_phase = host::RuntimeEpisodePhase::Running,
+        .initial_snapshot_id = {.high = 195, .low = host_low},
+        .initial_snapshot_sha256 = kHash,
+        .initial_step_sequence = 4,
+        .initial_barrier_sequence = 2,
+    });
+    REQUIRE(parent_created.status);
+
+    auto source_owner_registry =
+        std::make_shared<FixtureOwnerRegistry>(false, true, false, source_resource, false);
+    auto child_owner_registry =
+        std::make_shared<FixtureOwnerRegistry>(tamper, false, false, child_resource, true);
+    const auto parent_snapshot = parent_created.coordinator->snapshot();
+    host::RuntimeStateTransferProfile profile{
+        .profile_id = "profile:native-branch",
+        .profile_generation = 1,
+        .source_plan_sha256 = kHash,
+        .target_plan_sha256 = kHash2,
+    };
+    host::RuntimeStateCensus census{
+        .profile_id = profile.profile_id,
+        .profile_generation = profile.profile_generation,
+        .source_slot = source_slot,
+        .source_plan_sha256 = kHash,
+        .target_plan_sha256 = kHash2,
+    };
+    for (const auto &[category, disposition] : standard_rules()) {
+        const std::string owner(host::runtime_state_owner_id(category));
+        const std::string schema(host::runtime_state_schema_id(category));
+        const bool truth = category == host::RuntimeStateCategory::EcsComponentTruth ||
+                           category == host::RuntimeStateCategory::RngState ||
+                           category == host::RuntimeStateCategory::ClockCadence ||
+                           category == host::RuntimeStateCategory::DelayedEventsQueues ||
+                           category == host::RuntimeStateCategory::CommandsLinksPendingIntent ||
+                           category == host::RuntimeStateCategory::EpisodeRewardTermination;
+        profile.rows.push_back(
+            {.category = category,
+             .disposition = disposition,
+             .owner_id = owner,
+             .schema_id = schema,
+             .minimum_schema_generation = host::kRuntimeStateTransferPreviousGeneration,
+             .maximum_schema_generation = host::kRuntimeStateTransferPreviousGeneration,
+             .truth_affecting = truth});
+        host::RuntimeStateCensusEntry entry{
+            .category = category,
+            .disposition = disposition,
+            .owner_id = owner,
+            .schema_id = schema,
+            .schema_generation = host::kRuntimeStateTransferPreviousGeneration,
+            .sequence_high_watermark = 17,
+            .rng_draw_position = 18,
+            .simulation_tick = 19,
+            .step_sequence = parent_snapshot.step_sequence,
+            .barrier_sequence = parent_snapshot.barrier_sequence + 1,
+        };
+        if (disposition == host::RuntimeStateDisposition::Transfer) {
+            const auto owner_payload =
+                fixture_owner_state_payload(category, entry.schema_generation);
+            entry.state_content_sha256 = host::runtime_state_payload_sha256(owner_payload);
+            entry.canonical_payload = host::runtime_state_canonical_payload(entry);
+            entry.canonical_payload_sha256 =
+                host::runtime_state_payload_sha256(entry.canonical_payload);
+            entry.semantic_evidence_sha256 = kHash;
+        } else if (disposition == host::RuntimeStateDisposition::Rederive ||
+                   disposition == host::RuntimeStateDisposition::Drain) {
+            entry.semantic_evidence_sha256 = kHash2;
+        }
+        census.entries.push_back(std::move(entry));
+    }
+    auto child_episode = parent_episode;
+    child_episode.world.incarnation = child_slot;
+    auto child_episode_control = std::make_shared<NativeBranchEpisodeControl>(child_resource);
+    auto begin_count = std::make_shared<std::atomic<int>>(0);
+    auto end_count = std::make_shared<std::atomic<int>>(0);
+    NativeBranchFixture fixture{.source_owner_registry = std::move(source_owner_registry),
+                                .child_owner_registry = std::move(child_owner_registry),
+                                .parent_coordinator = std::move(parent_created.coordinator),
+                                .child_episode_control = child_episode_control,
+                                .child_begin_count = begin_count,
+                                .child_end_count = end_count};
+    fixture.request = {.admission = {.parent_snapshot = parent_snapshot,
+                                     .branch_id = {.high = 197, .low = host_low},
+                                     .parent_plan_sha256 = kHash,
+                                     .intervention_sha256 = kHash2,
+                                     .horizon = 2},
+                       .parent_coordinator = fixture.parent_coordinator.get(),
+                       .transfer_profile = std::move(profile),
+                       .census = std::move(census),
+                       .evidence = {.source_final_mutation_fence_sequence = 1},
+                       .source_owner_registry = fixture.source_owner_registry,
+                       .child_owner_registry = fixture.child_owner_registry,
+                       .source_resource_identity = source_resource,
+                       .child_resource_identity = child_resource,
+                       .branch_authority_nonce = {.high = 198, .low = host_low},
+                       .child_episode = child_episode,
+                       .child_snapshot_id = {.high = 199, .low = host_low},
+                       .child_snapshot_sha256 = kHash2,
+                       .child_episode_control = fixture.child_episode_control,
+                       .begin_child_state_transfer =
+                           [begin_count] {
+                               ++*begin_count;
+                               return true;
+                           },
+                       .end_child_state_transfer = [end_count] { ++*end_count; }};
+    return fixture;
+}
+
 host::RuntimeStateCensusEntry &entry_for(host::RuntimeStateTransferValidationRequest &request,
                                          host::RuntimeStateCategory category) {
     const auto position =
@@ -640,6 +793,91 @@ TEST_SUITE("runtime_state_transfer_candidate") {
               "7a9b047d12c941acf2153bb69d4bb20b0fba6feec9f9b2b92d845df503ab1c71");
     }
 
+    TEST_CASE("native sibling branch commits the owner bundle and resumes the parent") {
+        auto fixture = make_native_branch_fixture(401);
+        const auto parent_before = fixture.parent_coordinator->snapshot();
+        auto result = host::RuntimeNativeSiblingBranchExecutor::execute(std::move(fixture.request));
+        REQUIRE(result.status);
+        REQUIRE(result.branch_status);
+        REQUIRE(result.child_coordinator != nullptr);
+        CHECK(result.branch.well_formed());
+        CHECK(result.parent_snapshot.phase == host::RuntimeEpisodePhase::Running);
+        CHECK(result.parent_snapshot.episode == parent_before.episode);
+        CHECK(result.parent_snapshot.step_sequence == parent_before.step_sequence);
+        CHECK(result.parent_snapshot.barrier_sequence == parent_before.barrier_sequence + 1);
+        CHECK(result.child_snapshot.phase == host::RuntimeEpisodePhase::Running);
+        CHECK(result.child_snapshot.episode.world.incarnation !=
+              result.parent_snapshot.episode.world.incarnation);
+        CHECK(result.child_snapshot.step_sequence == result.parent_snapshot.step_sequence);
+        CHECK(result.child_snapshot.barrier_sequence == result.parent_snapshot.barrier_sequence);
+        CHECK(fixture.child_begin_count->load() == 1);
+        CHECK(fixture.child_end_count->load() == 1);
+        REQUIRE(result.child_episode_control != nullptr);
+
+        const auto child_before = result.child_coordinator->snapshot();
+        const auto child_transition =
+            result.child_coordinator->submit({.kind = host::RuntimeEpisodeIntentKind::Action,
+                                              .expected_episode = child_before.episode,
+                                              .expected_step_sequence = child_before.step_sequence,
+                                              .idempotency_key = {.high = 201, .low = 1},
+                                              .payload_sha256 = kHash2},
+                                             *result.child_episode_control);
+        REQUIRE(child_transition.status);
+        CHECK(child_transition.receipt.previous_step_sequence == child_before.step_sequence);
+        CHECK(child_transition.receipt.resulting_step_sequence == child_before.step_sequence + 1);
+        CHECK(fixture.parent_coordinator->snapshot().phase == host::RuntimeEpisodePhase::Running);
+
+        const auto child_episode = result.child_coordinator->snapshot().episode;
+        auto child_branch = result.child_coordinator->open_branch_barrier(
+            child_episode, result.child_coordinator->snapshot().step_sequence);
+        REQUIRE(child_branch.status);
+        CHECK(fixture.parent_coordinator->snapshot().phase == host::RuntimeEpisodePhase::Running);
+        REQUIRE(result.child_coordinator->abort_branch_barrier(std::move(child_branch.capability)));
+    }
+
+    TEST_CASE("native sibling branch rejects a mismatched child import and releases the parent") {
+        auto fixture = make_native_branch_fixture(402, true);
+        auto result = host::RuntimeNativeSiblingBranchExecutor::execute(std::move(fixture.request));
+        CHECK_FALSE(result.status);
+        CHECK(result.status.error == host::RuntimeStateTransferError::SemanticEvidenceMissing);
+        CHECK(fixture.parent_coordinator->snapshot().phase == host::RuntimeEpisodePhase::Running);
+        CHECK(fixture.child_end_count->load() == 1);
+        CHECK(result.child_coordinator == nullptr);
+    }
+
+    TEST_CASE("native sibling branch rejects RNG and event-order drift") {
+        SUBCASE("RNG draw position") {
+            auto fixture = make_native_branch_fixture(403);
+            auto entry =
+                std::find_if(fixture.request.census.entries.begin(),
+                             fixture.request.census.entries.end(), [](const auto &candidate) {
+                                 return candidate.category == host::RuntimeStateCategory::RngState;
+                             });
+            REQUIRE(entry != fixture.request.census.entries.end());
+            entry->rng_draw_position = 19;
+            const auto result =
+                host::RuntimeNativeSiblingBranchExecutor::execute(std::move(fixture.request));
+            CHECK_FALSE(result.status);
+            CHECK(fixture.parent_coordinator->snapshot().phase ==
+                  host::RuntimeEpisodePhase::Running);
+        }
+        SUBCASE("delayed event barrier sequence") {
+            auto fixture = make_native_branch_fixture(404);
+            auto entry = std::find_if(
+                fixture.request.census.entries.begin(), fixture.request.census.entries.end(),
+                [](const auto &candidate) {
+                    return candidate.category == host::RuntimeStateCategory::DelayedEventsQueues;
+                });
+            REQUIRE(entry != fixture.request.census.entries.end());
+            entry->barrier_sequence = 2;
+            const auto result =
+                host::RuntimeNativeSiblingBranchExecutor::execute(std::move(fixture.request));
+            CHECK_FALSE(result.status);
+            CHECK(fixture.parent_coordinator->snapshot().phase ==
+                  host::RuntimeEpisodePhase::Running);
+        }
+    }
+
     TEST_CASE("native coordinator owns phase sequence reset and idempotent receipts") {
         const auto source = slot();
         auto created = host::RuntimeEpisodeCoordinatorCandidate::create({
@@ -665,19 +903,37 @@ TEST_SUITE("runtime_state_transfer_candidate") {
                            .terminal = true,
                            .snapshot_id = {.high = 24, .low = 25},
                            .snapshot_sha256 = kHash2};
+        const std::vector<std::uint8_t> action_bytes{'p', 'i', 'l', 'o', 't'};
         const host::RuntimeEpisodeTransitionIntent intent{
             .kind = host::RuntimeEpisodeIntentKind::Action,
             .expected_episode = episode(source),
             .expected_step_sequence = 0,
             .idempotency_key = {.high = 26, .low = 27},
-            .payload_sha256 = kHash,
+            .payload_sha256 = host::runtime_state_payload_sha256(action_bytes),
+            .action_payload = action_bytes,
         };
+        auto tampered = intent;
+        tampered.action_payload[0] = 'x';
+        CHECK(created.coordinator->submit(tampered, action).status.error ==
+              host::RuntimeStateTransferError::InvalidArgument);
+        CHECK(action.calls == 0);
+        CHECK(created.coordinator->snapshot().step_sequence == 0);
+        auto oversized = intent;
+        oversized.action_payload.resize(65537, 'x');
+        oversized.payload_sha256 = host::runtime_state_payload_sha256(oversized.action_payload);
+        CHECK(created.coordinator->submit(oversized, action).status.error ==
+              host::RuntimeStateTransferError::InvalidArgument);
+        CHECK(action.calls == 0);
         const auto terminal = created.coordinator->submit(intent, action);
         REQUIRE(terminal.status);
         CHECK(terminal.receipt.well_formed());
         CHECK(terminal.receipt.resulting_step_sequence == 1);
         CHECK(terminal.receipt.resulting_phase == host::RuntimeEpisodePhase::Terminal);
         CHECK(action.calls == 1);
+        // Payload validation precedes receipt lookup even for a previously
+        // admitted idempotency key.
+        CHECK(created.coordinator->submit(tampered, action).status.error ==
+              host::RuntimeStateTransferError::InvalidArgument);
         CHECK_FALSE(native_capability.capability.valid());
 
         const auto replay = created.coordinator->submit(intent, action);
@@ -685,8 +941,14 @@ TEST_SUITE("runtime_state_transfer_candidate") {
         CHECK(replay.replayed);
         CHECK(replay.receipt == terminal.receipt);
         CHECK(action.calls == 1);
+        auto stripped_payload = intent;
+        stripped_payload.action_payload.clear();
+        CHECK(created.coordinator->submit(stripped_payload, action).status.error ==
+              host::RuntimeStateTransferError::IdempotencyConflict);
         auto conflicting_intent = intent;
-        conflicting_intent.payload_sha256 = kHash2;
+        conflicting_intent.action_payload.push_back('x');
+        conflicting_intent.payload_sha256 =
+            host::runtime_state_payload_sha256(conflicting_intent.action_payload);
         CHECK(created.coordinator->submit(conflicting_intent, action).status.error ==
               host::RuntimeStateTransferError::IdempotencyConflict);
 

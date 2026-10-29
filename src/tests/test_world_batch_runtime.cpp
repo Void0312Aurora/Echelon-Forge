@@ -460,6 +460,10 @@ TEST_SUITE("world_batch_runtime") {
         CHECK_FALSE(failed.requires_host_recreate);
         CHECK(failed.failure_reason.find("Unknown terrain_type") != std::string::npos);
         CHECK_THROWS_AS(facade.step_batch(), std::logic_error);
+        // Branching reads raw world state, so it must honor the same fence.
+        const std::string intervention_digest(64, 'a');
+        CHECK_THROWS_AS(facade.native_snapshot_facts(0), std::logic_error);
+        CHECK_THROWS_AS(facade.fork_native_branch(0, intervention_digest, 1), std::logic_error);
 
         facade.reset_batch();
         const auto recovered = facade.batch_failure_status();
@@ -468,6 +472,8 @@ TEST_SUITE("world_batch_runtime") {
         CHECK_FALSE(recovered.requires_host_recreate);
         CHECK(recovered.failure_reason.empty());
         CHECK_NOTHROW(facade.step_batch());
+        CHECK_NOTHROW(facade.native_snapshot_facts(0));
+        CHECK(facade.fork_native_branch(0, intervention_digest, 1) != nullptr);
     }
 
     TEST_CASE("facade worker launch failure fences the native generation") {

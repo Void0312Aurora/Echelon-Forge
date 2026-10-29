@@ -6,6 +6,11 @@
 #include "runtime/facade/internal/world_batch_compatibility_port.h"
 #include "runtime/facade/runtime_facade_internal.h"
 
+class SimulationKernel;
+std::unique_ptr<RuntimeFacadeNativeBranch>
+make_runtime_facade_native_branch(SimulationKernel &source, std::uint64_t step,
+                                  std::string intervention_digest, std::uint64_t horizon);
+
 // CPU reference adapter. Composition preserves WorldBatchRuntime's existing
 // layout/compatibility ABI and makes all translation into the semantic backend
 // contract explicit at one internal boundary.
@@ -28,6 +33,10 @@ class FlecsCpuBackend final : public IWorldBatchBackend, public IWorldBatchCompa
     runtime::backend::ExportResult
     export_state(const runtime::backend::ExportRequest &request) const override;
     runtime::backend::Diagnostics diagnostics() const override;
+    RuntimeNativeSnapshotFacts native_snapshot_facts(std::size_t world_index) const override;
+    std::unique_ptr<RuntimeFacadeNativeBranch> fork_native_branch(std::size_t world_index,
+                                                                  std::string intervention_digest,
+                                                                  std::uint64_t horizon) override;
 
     const IWorldBatchCompatibilityPort *compatibility_port() const noexcept override {
         return this;
@@ -49,5 +58,9 @@ class FlecsCpuBackend final : public IWorldBatchBackend, public IWorldBatchCompa
 
   private:
     friend class runtime::facade::testing::RuntimeFacadeTestAccess;
+    // Native identity and branch forks read raw world state, which bypasses
+    // WorldBatchRuntime's own failure fence; apply the same fence here.
+    void ensure_native_branch_source_healthy() const;
     WorldBatchRuntime runtime_;
+    std::vector<std::uint64_t> native_step_sequences_;
 };

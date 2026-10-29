@@ -1,4 +1,7 @@
 #include "runtime/facade/internal/flecs_cpu_backend.h"
+#include "core/engine/simulation_kernel.h"
+#include "runtime/crypto/sha256.h"
+#include "runtime/contracts/native_world_state_codec.h"
 
 #include <stdexcept>
 #include <utility>
@@ -49,7 +52,8 @@ const std::string &required_string(const std::string *value, const char *label) 
 
 } // namespace
 
-FlecsCpuBackend::FlecsCpuBackend(std::size_t world_count) : runtime_(world_count) {}
+FlecsCpuBackend::FlecsCpuBackend(std::size_t world_count)
+    : runtime_(world_count), native_step_sequences_(world_count, 0) {}
 
 runtime::backend::Configuration FlecsCpuBackend::configuration() const noexcept {
     return {
@@ -68,9 +72,23 @@ runtime::backend::BatchFailureStatus FlecsCpuBackend::failure_status() const {
     };
 }
 
+void FlecsCpuBackend::ensure_native_branch_source_healthy() const {
+    const auto status = failure_status();
+    if (status.healthy) {
+        return;
+    }
+    if (status.requires_host_recreate) {
+        throw std::logic_error(
+            "native branch source batch is failed-closed; recreate the host process");
+    }
+    throw std::logic_error(
+        "native branch source batch is failed-closed; call reset_batch before branching");
+}
+
 void FlecsCpuBackend::configure(const runtime::backend::ConfigureRequest &request) {
     if (request.world_count.has_value()) {
         runtime_.resize(*request.world_count);
+        native_step_sequences_.resize(*request.world_count, 0);
     }
     if (request.worker_threads.has_value()) {
         runtime_.set_worker_threads(*request.worker_threads);
@@ -94,6 +112,7 @@ FlecsCpuBackend::load_content(const runtime::backend::ContentRequest &request) {
 
 void FlecsCpuBackend::reset(const runtime::backend::ResetRequest &request) {
     runtime_.reset_batch(request.seeds.get());
+    std::fill(native_step_sequences_.begin(), native_step_sequences_.end(), 0);
 }
 
 runtime::backend::SetupResult
@@ -182,6 +201,9 @@ FlecsCpuBackend::advance(const runtime::backend::AdvanceRequest &request) {
     switch (request.kind) {
     case runtime::backend::AdvanceKind::WorldBatch:
         runtime_.step_batch();
+        for (auto &step : native_step_sequences_) {
+            ++step;
+        }
         return result;
     }
     throw std::invalid_argument("unknown backend advance kind");
@@ -250,6 +272,41 @@ runtime::backend::Diagnostics FlecsCpuBackend::diagnostics() const {
         });
     }
     return diagnostics;
+}
+
+RuntimeNativeSnapshotFacts FlecsCpuBackend::native_snapshot_facts(std::size_t world_index) const {
+    ensure_native_branch_source_healthy();
+    if (world_index >= runtime_.world_count()) {
+        throw std::out_of_range("native identity world index out of range");
+    }
+    auto &world = const_cast<SimulationKernel &>(runtime_.world_raw_quarantine(world_index));
+    const auto facts = [&]() {
+        const std::string world_payload = runtime::contracts::serialize_native_world_state(world);
+        const std::string rng_payload = runtime::contracts::serialize_native_rng_state(world);
+        return RuntimeNativeSnapshotFacts{
+            .step = native_step_sequences_[world_index],
+            .state_digest = runtime::crypto::sha256_hex(world_payload),
+            .event_cursor = native_step_sequences_[world_index],
+            .rng_digest = runtime::crypto::sha256_hex(rng_payload),
+            .terminated = false,
+        };
+    }();
+    if (!facts.well_formed()) {
+        throw std::runtime_error("native identity owner produced malformed snapshot facts");
+    }
+    return facts;
+}
+
+std::unique_ptr<RuntimeFacadeNativeBranch>
+FlecsCpuBackend::fork_native_branch(std::size_t world_index, std::string intervention_digest,
+                                    std::uint64_t horizon) {
+    ensure_native_branch_source_healthy();
+    if (world_index >= runtime_.world_count()) {
+        throw std::out_of_range("native branch world index out of range");
+    }
+    auto &world = runtime_.world_raw_quarantine(world_index);
+    return make_runtime_facade_native_branch(world, native_step_sequences_[world_index],
+                                             std::move(intervention_digest), horizon);
 }
 
 std::vector<std::vector<std::uint64_t>>

@@ -237,6 +237,7 @@ def test_p8a_inventory_classifies_retained_callers_and_names_residual_owners(
     ]
     assert surfaces["simulation_kernel.native_explicit_callers"]["callers"] == [
         "src/core/engine/world_batch_runtime.cpp",
+        "src/runtime/facade/runtime_facade_native_owner.cpp",
     ]
     assert "simulation_kernel.native_default_callers" not in surfaces
     assert "runtime_facade.native_internal_callers" not in surfaces
