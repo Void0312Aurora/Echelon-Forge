@@ -31,9 +31,31 @@ from tools.eval.sb3_eval_base import (
     make_env_settings,
     write_json_output,
 )
+from python.training.cooperative_policy_dispatch import (
+    CooperativeRouteLayout,
+    CooperativeRoutePolicyDispatcher,
+    resolve_cooperative_policy_models,
+)
 
 
 VALID_MODES = {"single", "cooperative"}
+
+
+def _resolve_policy_model_path(path: str, train_config_path: str) -> str:
+    """Resolve route model paths using the config directory and repository root."""
+
+    raw = str(path).strip()
+    if os.path.isabs(raw):
+        return os.path.abspath(raw)
+    candidates = (
+        os.path.join(os.path.dirname(os.path.abspath(train_config_path)), raw),
+        os.path.join(REPO_ROOT, raw),
+        os.path.abspath(raw),
+    )
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return os.path.abspath(candidate)
+    return os.path.abspath(candidates[0])
 
 
 def _build_single_env(scenario_path: str, train_config: dict[str, Any], args: argparse.Namespace):
@@ -260,9 +282,11 @@ def _run_world_episode(
     seed: int,
     deterministic: bool,
     max_world_steps: int | None,
+    policy_factory=None,
 ) -> dict[str, Any]:
     env.seed(int(seed))
     obs = env.reset()
+    policy = policy_factory(env) if policy_factory is not None else model
     world_steps = 0
     limit = int(max_world_steps) if max_world_steps is not None else 0
     if limit <= 0:
@@ -272,7 +296,7 @@ def _run_world_episode(
 
     final_infos: list[dict[str, Any]] | None = None
     while world_steps < limit:
-        action, _ = model.predict(obs, deterministic=bool(deterministic))
+        action, _ = policy.predict(obs, deterministic=bool(deterministic))
         obs, _rewards, dones, infos = env.step(action)
         world_steps += 1
         if bool(np.any(dones)):
@@ -380,7 +404,17 @@ def _aggregate_slot_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
 def _run_cooperative_eval(args: argparse.Namespace) -> int:
     train_config = load_json_config(os.path.abspath(args.train_config))
     env_settings = make_env_settings(train_config, args, include_runtime_overrides=True)
-    model = load_sb3_policy(os.path.abspath(args.model), algo=str(args.algo), device=str(args.device))
+    route_model_paths = resolve_cooperative_policy_models(train_config)
+    model = None
+    route_models = {}
+    if route_model_paths:
+        for route, path in route_model_paths.items():
+            resolved_path = _resolve_policy_model_path(path, args.train_config)
+            route_models[route] = load_sb3_policy(
+                os.path.abspath(resolved_path), algo=str(args.algo), device=str(args.device)
+            )
+    else:
+        model = load_sb3_policy(os.path.abspath(args.model), algo=str(args.algo), device=str(args.device))
     action_wrapper_kwargs = _cooperative_action_wrapper_kwargs(train_config)
     env = create_cooperative_backend(
         backend_id="world_batch",
@@ -401,6 +435,13 @@ def _run_cooperative_eval(args: argparse.Namespace) -> int:
                 seed=int(args.seed) + ep,
                 deterministic=not bool(args.stochastic),
                 max_world_steps=args.max_world_steps,
+                policy_factory=(
+                    lambda current_env: CooperativeRoutePolicyDispatcher(
+                        route_models, CooperativeRouteLayout.from_env(current_env)
+                    )
+                    if route_models
+                    else None
+                ),
             )
             world_rows.append(row)
             flat_slot_rows.extend(list(row["slots"]))
@@ -420,7 +461,11 @@ def _run_cooperative_eval(args: argparse.Namespace) -> int:
             "mode": "cooperative",
             "scenario": os.path.abspath(args.scenario),
             "train_config": os.path.abspath(args.train_config),
-            "model": os.path.abspath(args.model),
+            "model": None if route_models else os.path.abspath(args.model),
+            "policy_models": {
+                str(route): _resolve_policy_model_path(path, args.train_config)
+                for route, path in route_model_paths.items()
+            },
             "algo": str(args.algo),
             "episodes": int(args.episodes),
             "seed_start": int(args.seed),
@@ -458,6 +503,8 @@ def _run_cooperative_eval(args: argparse.Namespace) -> int:
         print(f"scenario:   {payload['scenario']}")
         print(f"train_cfg:  {payload['train_config']}")
         print(f"model:      {payload['model']}")
+        if payload["policy_models"]:
+            print(f"policy_models: {payload['policy_models']}")
         print(f"episodes:   {int(args.episodes)} seed: {int(args.seed)}..{int(args.seed) + int(args.episodes) - 1}")
         print(f"env:        {env_settings}")
         print(f"curriculum: stage={payload['curriculum_applied']['stage_index']}")

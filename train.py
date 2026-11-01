@@ -48,6 +48,11 @@ from python.training.vec_env_factory import (
     print_test_only_preflight_runtime_summary,
     resolve_vec_env_spec,
 )
+from python.training.cooperative_policy_dispatch import (
+    CooperativeRouteLayout,
+    CooperativeRoutePolicyDispatcher,
+    resolve_cooperative_policy_models,
+)
 from python.rl.policy_checkpoint import (
     LaunchDecisionMigrationError,
     launch_decision_config_fingerprint,
@@ -55,6 +60,7 @@ from python.rl.policy_checkpoint import (
     validate_loaded_sb3_launch_decision_checkpoint,
     validate_sb3_checkpoint_against_config,
     write_sb3_launch_decision_sidecar,
+    load_sb3_policy,
 )
 from python.rl.policy_algo.model_contracts import resolve_launch_decision_contract
 
@@ -205,23 +211,46 @@ def main() -> int:
     if args.test_only:
         load_path = test_only_load_path
         assert load_path is not None
-        if not _validate_launch_decision_checkpoint_for_config(load_path, train_config):
+        route_model_paths = resolve_cooperative_policy_models(train_config) if agent_layer == "cooperative_execution" else {}
+        if not route_model_paths and not _validate_launch_decision_checkpoint_for_config(load_path, train_config):
             return 1
-        print(f"Loading model for testing: {load_path}")
-        model = algo_cls.load(load_path, env=vec_env)
-        try:
-            validate_loaded_sb3_launch_decision_checkpoint(
-                load_path,
-                model=model,
-                expected_config=train_config,
-            )
-        except LaunchDecisionMigrationError as exc:
-            print(f"Error: loaded launch-decision artifacts are incompatible: {exc}")
-            return 1
+        route_models = {}
+        if route_model_paths:
+            for route, path in route_model_paths.items():
+                resolved_path = path if os.path.isabs(path) else os.path.join(os.path.dirname(train_cfg_path), path)
+                print(f"Loading route model for testing: route={route} path={os.path.abspath(resolved_path)}")
+                route_models[route] = load_sb3_policy(
+                    os.path.abspath(resolved_path),
+                    algo=str(algo_name),
+                    device=str(train_config.get("hyperparameters", {}).get("device", "auto")),
+                )
+            model = None
+        else:
+            print(f"Loading model for testing: {load_path}")
+            model = algo_cls.load(load_path, env=vec_env)
+        if not route_model_paths:
+            try:
+                validate_loaded_sb3_launch_decision_checkpoint(
+                    load_path,
+                    model=model,
+                    expected_config=train_config,
+                )
+            except LaunchDecisionMigrationError as exc:
+                print(f"Error: loaded launch-decision artifacts are incompatible: {exc}")
+                return 1
         
         obs = vec_env.reset()
+        route_dispatcher = (
+            CooperativeRoutePolicyDispatcher(route_models, CooperativeRouteLayout.from_env(vec_env))
+            if route_models
+            else None
+        )
         for i in range(1000):
-            action, _ = model.predict(obs, deterministic=True)
+            if route_dispatcher is not None:
+                action, _ = route_dispatcher.predict(obs, deterministic=True)
+            else:
+                assert model is not None
+                action, _ = model.predict(obs, deterministic=True)
             obs, rewards, dones, info = vec_env.step(action)
             if i % 100 == 0:
                 print(f"Step {i}: Reward={rewards[0]:.2f}")
@@ -231,6 +260,15 @@ def main() -> int:
         return 0
 
     # 4. Training Setup
+    if agent_layer == "cooperative_execution" and resolve_cooperative_policy_models(train_config):
+        print(
+            "Error: cooperative_execution.policy_models is currently an inference/test-only route surface; "
+            "synchronized multi-policy PPO training is not admitted by this entrypoint. "
+            "Use --test_only or tools/eval/policy_execution_eval.py for route-dispatched models."
+        )
+        vec_env.close()
+        bootstrap.exp_lock.close()
+        return 1
     hyperparams = train_config.get("hyperparameters", {})
     if training_seed is not None and "seed" not in hyperparams:
         hyperparams = dict(hyperparams)
