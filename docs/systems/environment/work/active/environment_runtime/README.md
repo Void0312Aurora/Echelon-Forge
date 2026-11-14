@@ -4,10 +4,12 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/systems/environment/work/active/environment_runtime/README.md`
 Owner: `systems/environment`
-Last verified: `2026-09-28`
+Last verified: `2026-10-29`
 
-Status: `2026-09-28` active. `P0 Boundary` accepted by the owner on `2026-09-28`;
-no implementation cluster has started.
+Status: `2026-10-29` active. `P0 Boundary` accepted by the owner on `2026-09-28`;
+`P1 Evidence` (`P1-A`, `P1-B`) passed on `2026-10-29`, see the
+[P1 inventory](environment_runtime_p1_inventory_20261029.md). No implementation
+cluster has started.
 
 Language:
 
@@ -24,9 +26,8 @@ Inputs:
 - [Geodetic Frame](../../../../physics/work/active/geodetic_frame/README.md) — sibling package
 - Demand cases:
   [Carrier Strike Group Engagement](../../../../../domains/naval/work/active/carrier_strike_group_engagement/README.md)
-  (naval) and the Ground native-terrain line on `origin/work/army-mechanisms`
-  (`docs/domains/ground/work/active/ground_arnis_native_terrain_v1/`, not on
-  `main`)
+  (naval) and the Ground native-terrain line, on `main` since `2026-10-01`
+  ([accepted record](../../../../../domains/ground/reviews/ground_arnis_native_terrain_v1_20260924/README.md))
 - [Subproject Creation Standard](../../../../../engineering/automation/rules/subproject_creation_standard.md)
 - Code: `src/core/interfaces/environment_model.h`, `src/models/environment/`,
   `python/scenario/environment_substrate/`, `python/scenario/runtime/kernel_apply.py`
@@ -60,7 +61,7 @@ and contracts that data must fill.
 | Offline layered substrate | accepted G0, on `main` | `python/scenario/environment_substrate/components.py` (`maritime_ocean` layer 38, `hydrology` 30, `wind_field` 36, `illumination` 37) | data contract only; no runtime authority |
 | Arnis land/near-shore import | accepted phase 1, on `main` | `tools/environment/arnis/`; `importers/arnis_bundle.py` | OSM + USGS 3DEP + ESA WorldCover; water is footprint and surface elevation only — no depth, temperature, or salinity |
 | Runtime terrain | one global raster | `RasterGrid` in `src/models/environment/default_environment_model.cpp` | no multi-tile, no multi-layer, unspecified vertical datum |
-| Ground native terrain | accepted by Ground `2026-09-24`, **not on `main`** | `origin/work/army-mechanisms` commits `fdbf8ee8`..`986335e3` | Ground-owned code inside shared files; see migration below |
+| Ground native terrain | accepted by Ground `2026-09-24`; on `main` since `2026-10-01` (merge `85abc7ce6`) | `be2de24af` and the army stack #82–#85 | Ground-owned methods, types and policies inside shared files, without domain includes; see the [P1 inventory](environment_runtime_p1_inventory_20261029.md) |
 | Maritime state | scenario constant, global | `set_maritime_state` / `get_maritime_state` | no swell/wind-sea split, no spatial field |
 | Wind, sun | scenario constants | `set_wind`, `set_sun_direction` | no clock-driven day/night |
 | Ocean data | absent | none | no bathymetry, temperature/salinity profile, or ambient noise |
@@ -83,23 +84,27 @@ the component graph and reflected for state transfer; the resulting composition
 identity and provenance are regenerated. The synthetic fixtures are test data,
 not an admitted ocean atlas.
 
-### Ground-coupling findings on `origin/work/army-mechanisms`
+### Ground coupling on `main`
 
-Measured at `3cee10ff` on `2026-09-28`:
+The `2026-09-28` findings on `origin/work/army-mechanisms` at `3cee10ff` are
+superseded. Measured on `main` at `3d7df0818` (`2026-10-29`, P1-B):
 
-- `src/core/interfaces/environment_model.h` includes
-  `components/domains/ground/tasking/ground_tasking_enums.h` and declares
-  `get_ground_slope_deg`, `load_arnis_terrain_bundle`, `load_arnis_field_overlay`,
+- Neither shared file includes a domain header. `16fb9bcda` removed the
+  `ground_tasking_enums.h` include, the `movement_effects.h` include and
+  `get_ground_transition_movement_observation` before the army stack merged.
+- `environment_model.h` still declares Ground methods and types:
   `get_ground_field_semantic_observation`, `get_ground_transition_observation`,
-  and `get_ground_transition_movement_observation` (the last takes `GroundStance`).
-- `src/models/environment/default_environment_model.cpp` includes
-  `systems/domains/ground/movement_effects.h` and calls
-  `ground_infantry_movement_detail::evaluate_movement_effects`. The include gate
-  (`tools/architecture/cpp_include_graph.py`) classifies this `models` →
-  `systems` edge as disallowed, and the branch does not ratchet it.
-- `get_terrain_at` returns `SurfaceType::Water` as blocking and `Obstacle`
-  outside the loaded tile. Both are Ground passability semantics: a ship reads
-  water as navigable, and open sea beyond a land tile is not an obstacle.
+  `load_arnis_field_overlay`, `GroundFieldSemanticObservation` and
+  `GroundTransitionObservation`. `get_ground_slope_deg` is domain-neutral but
+  misnamed.
+- `get_terrain_at` still treats `Water` as blocking and returns `Obstacle`
+  outside the loaded raster, while `get_terrain_elevation` returns the
+  procedural hill there. Both are Ground passability semantics, and the two
+  queries disagree off the raster.
+
+The [P1 inventory](environment_runtime_p1_inventory_20261029.md) classifies every
+environment read and every Ground item, and records the decision for the
+unmerged army terrain line-of-sight query.
 
 ## Scope
 
@@ -147,7 +152,7 @@ Out of scope:
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | Freeze scope and the layered runtime contract. | owner approval | README and task clusters approved | accepted |
-| `P1 Evidence` | Inventory every environment read, the `main` runtime, and the Ground branch's shared-file changes. | `P0` | each read site and each Ground addition classified as shared, Ground-owned, or retired | planned |
+| `P1 Evidence` | Inventory every environment read, the `main` runtime, and the Ground branch's shared-file changes. | `P0` | each read site and each Ground addition classified as shared, Ground-owned, or retired | pass `2026-10-29` ([inventory](environment_runtime_p1_inventory_20261029.md)) |
 | `P2 Contract` | Layered state, vertical datum, water-body contract, tile model, domain-neutral query API. | `P1` | contract documented and covered by native tests | planned |
 | `P3 Implementation` | Multi-tile rasters, water bodies, coastline, varying weather/sea state, clock-driven sun, acoustic data. | `P2`; geodetic anchor from [Geodetic Frame](../../../../physics/work/active/geodetic_frame/README.md) `P2-A` for sun position and tile placement | native and Python tests pass against declared inputs and references | planned |
 | `P4 Migration` | Move Ground's native terrain onto the shared runtime; move Ground logic back to Ground; move remaining consumers onto the queries. | `P3` | shared files include no domain header; Ground acceptance tests rerun green | planned |
@@ -156,8 +161,7 @@ Out of scope:
 
 ### Ground migration
 
-Performed on the naval branch lineage first; conflicts with
-`origin/work/army-mechanisms` are resolved when the lines merge.
+Ground native terrain is on `main`, so the migration starts from `main`.
 
 - Shared: raster loading and tiling, elevation and landcover queries, water-body
   and coastline queries, raw slope from elevation.
@@ -165,9 +169,9 @@ Performed on the naval branch lineage first; conflicts with
   transition cost, field-semantic observations. These move to
   `src/systems/domains/ground/` or `src/models/domains/ground/` and are built on
   the shared queries.
-- Retired from the shared interface: `get_ground_*` methods and the Ground
-  include in `environment_model.h`; the disallowed `models` → `systems` edge in
-  `default_environment_model.cpp`.
+- Retired from the shared interface: the Ground field-semantic and transition
+  methods and structs in `environment_model.h`. The Ground include and the
+  `models` → `systems` edge were already removed by `16fb9bcda`.
 - The Ground package's accepted tests are the migration's regression evidence;
   any changed result is recorded, not re-tuned.
 
@@ -206,7 +210,9 @@ This package can be marked accepted only when:
 
 ## Residuals And Next Steps
 
-- `P0` owner review.
+- `P2-A` contract (main thread), using the P1 inventory's decisive findings:
+  one out-of-tile result for elevation and surface, a declared vertical datum,
+  absolute versus above-terrain heights for line of sight, and earth curvature.
 - **Ocean data line** (this owner, opens after `P2 Contract`): importers for
   bathymetry, temperature/salinity climatology, sea state and wind, and coastline
   from admitted public sources, plus a seeded synthetic ocean generator for
