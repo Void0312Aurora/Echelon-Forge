@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <limits>
 #include <numbers>
+#include <optional>
 #include <string>
 
 class IEnvironmentModel {
@@ -107,6 +108,58 @@ class IEnvironmentModel {
         double vegetation_density; // 0.0 = Clear, 1.0 = Dense Forest
         double runway_heading;     // Degrees (NAV), only valid if type == Concrete
     };
+
+    // Candidate shared point-query contract. Availability describes the paired
+    // elevation/surface sample, not passability or vertical-datum compatibility.
+    enum class TerrainPointAvailability : uint8_t {
+        Unavailable = 0,
+        Available = 1,
+        OutOfCoverage = 2,
+        InvalidInput = 3,
+        NoData = 4,
+    };
+
+    enum class TerrainPointSource : uint8_t { None = 0, ArnisMetricRaster = 1 };
+
+    // Source surface classes, without the legacy SurfaceType's movement policy.
+    enum class TerrainSurfaceClass : uint8_t {
+        TreeCover,
+        Shrubland,
+        Grassland,
+        Cropland,
+        BuiltUp,
+        BareGround,
+        SnowIce,
+        Water,
+        Wetland,
+        Mangroves,
+        MossLichen,
+    };
+
+    struct TerrainPointObservation {
+        TerrainPointAvailability availability = TerrainPointAvailability::Unavailable;
+        TerrainPointSource source = TerrainPointSource::None;
+        double elevation_m = std::numeric_limits<double>::quiet_NaN();
+        std::optional<TerrainSurfaceClass> surface{};
+        std::optional<uint8_t> landcover_code{};
+        std::string horizontal_frame{};
+        // Empty means undeclared; source-native-unspecified stays unspecified.
+        // Available does not establish compatibility with another height datum.
+        std::string vertical_datum{};
+        std::string elevation_source{};
+        std::string surface_source{};
+        std::string tile_id{};
+        // Signed metric grid steps; their magnitudes are the per-axis resolution.
+        double grid_step_x_m = std::numeric_limits<double>::quiet_NaN();
+        double grid_step_y_m = std::numeric_limits<double>::quiet_NaN();
+    };
+
+    // Additive raw raster observation: legacy elevation/surface queries keep
+    // their existing overlays and fallbacks. Unsupported providers return no
+    // sample rather than fabricating one from those compatibility methods.
+    virtual TerrainPointObservation get_terrain_point_observation(double /*x*/, double /*y*/) {
+        return {};
+    }
 
     struct GroundFieldSemanticObservation {
         bool configured = false;

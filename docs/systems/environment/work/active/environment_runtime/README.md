@@ -194,6 +194,8 @@ Ground native terrain is on `main`, so the migration starts from `main`.
 ## Task Clusters
 
 - [environment_runtime_task_clusters_20260928.md](environment_runtime_task_clusters_20260928.md)
+- [Terrain point query candidate](terrain_point_query_candidate.md): additive raw
+  single-raster API and tests; the full P2 contract and consumer migration remain open.
 
 The historical task-cluster table still labels `P1-A` and `P1-B` planned. Their
 recorded P1 pass above supersedes those status cells; `P2-A` remains planned.

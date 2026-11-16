@@ -1060,6 +1060,21 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(doctest)
 
+# The terrain point candidate is tested against the actual provider without
+# pulling in kernel, Ground systems, bindings or the GPU compatibility provider.
+add_executable(ef_environment_terrain_point_test
+    src/tests/test_main.cpp
+    src/tests/test_environment_terrain_point.cpp
+    src/models/environment/default_environment_model.cpp
+)
+target_link_libraries(ef_environment_terrain_point_test PRIVATE
+    doctest::doctest
+    nlohmann_json::nlohmann_json
+)
+target_include_directories(ef_environment_terrain_point_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME environment_terrain_point COMMAND ef_environment_terrain_point_test)
+set_tests_properties(environment_terrain_point PROPERTIES LABELS "fast;native")
+
 set(EF_TEST_SOURCES
     src/tests/test_main.cpp
     src/core/engine/testing/simulation_kernel_composition_test_access.cpp
@@ -1432,6 +1447,7 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_gpu_comm_candidate_phase0_probe
     ef_gpu_visual_candidate_phase0_probe
     ef_test
+    ef_environment_terrain_point_test
     ef_runtime_contracts_compile_test
     ef_runtime_host_candidate_test
     ef_runtime_run_recorder_test

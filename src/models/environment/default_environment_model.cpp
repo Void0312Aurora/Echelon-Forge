@@ -64,6 +64,11 @@ struct RasterGrid {
     std::vector<ArnisFeatureGeometry> settlement_features;
     bool field_overlay_loaded = false;
     bool arnis_metric_bundle = false;
+    std::string horizontal_frame;
+    std::string vertical_datum;
+    std::string elevation_source;
+    std::string surface_source;
+    std::string tile_id;
 
     static double distance_squared_to_segment(double x, double y, double x1, double y1, double x2,
                                               double y2) {
@@ -170,6 +175,41 @@ struct RasterGrid {
 };
 
 using Json = nlohmann::json;
+
+std::optional<IEnvironmentModel::TerrainSurfaceClass> terrain_surface_class(std::uint8_t code) {
+    using Surface = IEnvironmentModel::TerrainSurfaceClass;
+    switch (code) {
+    case 10:
+        return Surface::TreeCover;
+    case 20:
+        return Surface::Shrubland;
+    case 30:
+        return Surface::Grassland;
+    case 40:
+        return Surface::Cropland;
+    case 50:
+        return Surface::BuiltUp;
+    case 60:
+        return Surface::BareGround;
+    case 70:
+        return Surface::SnowIce;
+    case 80:
+        return Surface::Water;
+    case 90:
+        return Surface::Wetland;
+    case 95:
+        return Surface::Mangroves;
+    case 100:
+        return Surface::MossLichen;
+    default:
+        return std::nullopt;
+    }
+}
+
+std::string optional_metadata_string(const Json &object, const char *key) {
+    const auto it = object.find(key);
+    return it == object.end() || it->is_null() ? std::string{} : it->get<std::string>();
+}
 
 bool read_binary_bytes(const std::filesystem::path &path, std::size_t expected_bytes,
                        std::vector<std::uint8_t> &out) {
@@ -532,6 +572,59 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
         sun_azimuth_deg_ = std::fmod(azimuth_deg, 360.0);
         if (sun_azimuth_deg_ < 0.0) sun_azimuth_deg_ += 360.0;
         sun_elevation_deg_ = std::clamp(elevation_deg, -90.0, 90.0);
+    }
+
+    TerrainPointObservation get_terrain_point_observation(double x, double y) override {
+        TerrainPointObservation observation;
+        if (!std::isfinite(x) || !std::isfinite(y)) {
+            observation.availability = TerrainPointAvailability::InvalidInput;
+            return observation;
+        }
+        // This candidate implements the loaded raw Arnis raster only. Zones,
+        // bridge interpretation and synthetic scalar profiles keep their old API.
+        if (!raster_layer_.arnis_metric_bundle || flat_terrain_) return observation;
+
+        observation.source = TerrainPointSource::ArnisMetricRaster;
+        observation.horizontal_frame = raster_layer_.horizontal_frame;
+        observation.vertical_datum = raster_layer_.vertical_datum;
+        observation.elevation_source = raster_layer_.elevation_source;
+        observation.surface_source = raster_layer_.surface_source;
+        observation.tile_id = raster_layer_.tile_id;
+        observation.grid_step_x_m = raster_layer_.step_x;
+        observation.grid_step_y_m = raster_layer_.step_y;
+
+        // Bound before llround in index_for, including for huge finite inputs.
+        // Point-registered cells use nearest-centre lookup; outer half-cell ties
+        // round outside, matching the loader's existing lookup convention.
+        const double col = (x - raster_layer_.origin.x) / raster_layer_.step_x;
+        const double row = (y - raster_layer_.origin.y) / raster_layer_.step_y;
+        std::size_t index = 0;
+        if (!std::isfinite(col) || !std::isfinite(row) || col <= -0.5 || row <= -0.5 ||
+            col >= static_cast<double>(raster_layer_.width) - 0.5 ||
+            row >= static_cast<double>(raster_layer_.height) - 0.5 ||
+            !raster_layer_.index_for(x, y, index)) {
+            observation.availability = TerrainPointAvailability::OutOfCoverage;
+            return observation;
+        }
+        if (index >= raster_layer_.elevation.size() || index >= raster_layer_.landcover.size() ||
+            !std::isfinite(raster_layer_.elevation[index])) {
+            observation.availability = TerrainPointAvailability::NoData;
+            return observation;
+        }
+        observation.landcover_code = raster_layer_.landcover[index];
+        // A source byte has no surface meaning without its declared scheme.
+        if (observation.surface_source != "ESA_WorldCover_2021_v200") {
+            observation.availability = TerrainPointAvailability::NoData;
+            return observation;
+        }
+        observation.surface = terrain_surface_class(*observation.landcover_code);
+        if (!observation.surface.has_value()) {
+            observation.availability = TerrainPointAvailability::NoData;
+            return observation;
+        }
+        observation.elevation_m = raster_layer_.elevation[index];
+        observation.availability = TerrainPointAvailability::Available;
+        return observation;
     }
 
     TerrainCell get_terrain_at(double x, double y) override {
@@ -927,6 +1020,17 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
             candidate.width = elevation_width;
             candidate.height = elevation_height;
             candidate.arnis_metric_bundle = true;
+            candidate.horizontal_frame = optional_metadata_string(bundle, "coordinate_frame");
+            candidate.vertical_datum =
+                optional_metadata_string(elevation_metadata, "vertical_datum");
+            candidate.elevation_source =
+                optional_metadata_string(elevation_metadata, "source_provider");
+            candidate.surface_source =
+                optional_metadata_string(landcover_metadata, "classification_scheme");
+            const auto tile_scheme = bundle.find("tile_scheme");
+            if (tile_scheme != bundle.end() && !tile_scheme->is_null()) {
+                candidate.tile_id = optional_metadata_string(*tile_scheme, "tile_id");
+            }
             candidate.river_features = std::move(river_features);
             candidate.bridge_features = std::move(bridge_features);
             candidate.elevation.resize(cell_count);
