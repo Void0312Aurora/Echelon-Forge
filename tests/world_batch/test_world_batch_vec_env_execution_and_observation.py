@@ -266,6 +266,124 @@ def test_world_batch_vec_env_native_status_survives_revoked_admission(tmp_path, 
         vec_env.close()
 
 
+@pytest.mark.parametrize("failure_stage", ["state_read", "observation", "second_reward"])
+def test_python_publication_failure_requires_full_reset_without_inventing_native_failure(
+    tmp_path, monkeypatch, failure_stage
+) -> None:
+    scenario = _inline_vec_env_scenario()
+    # At the reward stage env0 auto-resets before env1 fails, so neither the
+    # handles nor native worlds form a complete published VecEnv transition.
+    scenario["meta"]["max_steps"] = 1 if failure_stage == "second_reward" else 5
+    env = WorldBatchVecEnv(
+        scenario_path=_write_scenario(tmp_path, scenario),
+        n_envs=3,
+        include_visual=False,
+        include_proprio=False,
+    )
+    actions = np.zeros((3, 17), dtype=np.float32)
+    try:
+        env.seed(123)
+        env.reset()
+        before = env.batch_failure_status()
+        native_steps = 0
+        original_step = env._runtime_adapter.step_batch
+
+        def counted_step():
+            nonlocal native_steps
+            original_step()
+            native_steps += 1
+
+        monkeypatch.setattr(env._runtime_adapter, "step_batch", counted_step)
+        error = RuntimeError("publication probe failed")
+        if failure_stage == "state_read":
+            method = "_read_truth_and_inst_batch"
+        elif failure_stage == "observation":
+            method = "_step_wait_build_observations"
+        else:
+            method = "_step_wait_finalize_env"
+        original = getattr(env, method)
+
+        def fail_publication(*args, **kwargs):
+            if failure_stage == "second_reward" and args[0] != 1:
+                return original(*args, **kwargs)
+            raise error
+
+        monkeypatch.setattr(env, method, fail_publication)
+        env.step_async(actions)
+        with pytest.raises(RuntimeError, match="publication probe failed") as raised:
+            env.step_wait()
+        assert raised.value is error
+        assert native_steps == 1
+        assert env._actions is None
+        failed = env.batch_failure_status()
+        assert failed.healthy
+        assert failed.generation == before.generation
+        if failure_stage == "state_read":
+            assert all(handle.steps == 0 for handle in env._handles)
+        if failure_stage == "second_reward":
+            assert env._handles[0].steps == 0
+            assert env._handles[1].steps == 1
+        with pytest.raises(RuntimeError, match="requires.*reset"):
+            env.step_async(actions)
+        with pytest.raises(RuntimeError, match="requires.*reset"):
+            env.step_wait()
+        assert native_steps == 1
+        assert env.projection_requires_reset
+
+        monkeypatch.setattr(env, method, original)
+        env.reset()
+        assert not env.projection_requires_reset
+        assert all(handle.steps == 0 for handle in env._handles)
+        assert env.batch_failure_status().generation == before.generation
+        _obs, rewards, _dones, _infos = env.step(actions)
+        assert native_steps == 2
+        assert np.isfinite(rewards).all()
+    finally:
+        env.close()
+
+
+@pytest.mark.parametrize("failure_stage", ["_activate_applied_world", "_obs_from_buf"])
+def test_incomplete_reset_does_not_reenable_python_projection(
+    tmp_path, monkeypatch, failure_stage
+) -> None:
+    env = WorldBatchVecEnv(
+        scenario_path=_write_scenario(tmp_path, _inline_vec_env_scenario()),
+        n_envs=3,
+        include_visual=False,
+        include_proprio=False,
+    )
+    actions = np.zeros((3, 17), dtype=np.float32)
+    try:
+        env.seed(123)
+        env.reset()
+        original = getattr(env, failure_stage)
+        error = ValueError("reset publication failed")
+
+        def fail_reset(*args, **kwargs):
+            if failure_stage == "_activate_applied_world" and args[0] != 1:
+                return original(*args, **kwargs)
+            raise error
+
+        env.seed(456)
+        pending_seeds = list(env._seeds)
+        monkeypatch.setattr(env, failure_stage, fail_reset)
+        with pytest.raises(ValueError, match="reset publication failed") as raised:
+            env.reset()
+        assert raised.value is error
+        assert env.batch_failure_status().healthy
+        with pytest.raises(RuntimeError, match="requires.*reset"):
+            env.step_async(actions)
+        assert env.projection_requires_reset
+        assert env._seeds == pending_seeds
+        monkeypatch.setattr(env, failure_stage, original)
+        env.reset()
+        assert not env.projection_requires_reset
+        assert env._actions is None
+        assert all(handle.steps == 0 for handle in env._handles)
+    finally:
+        env.close()
+
+
 def test_world_batch_vec_env_disables_execution_device_export_for_naval_profile(
     tmp_path,
     monkeypatch,

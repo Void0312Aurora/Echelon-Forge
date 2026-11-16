@@ -333,6 +333,7 @@ class WorldBatchVecEnv(
             handle.temporal_history = make_temporal_history_buffer(self.temporal_history_len)
         self.envs = list(self._handles)
         self._actions: np.ndarray | None = None
+        self._projection_failure_reason: str | None = None
         self._closed = False
         self._t_start = time.time()
 
@@ -368,6 +369,20 @@ class WorldBatchVecEnv(
         """
 
         return self._runtime_adapter.batch_failure_status()
+
+    @property
+    def projection_requires_reset(self) -> bool:
+        """Report incomplete Python publication, independently of native health."""
+
+        return self._projection_failure_reason is not None
+
+    def _require_complete_projection(self) -> None:
+        if self.projection_requires_reset:
+            raise RuntimeError(
+                "WorldBatchVecEnv requires reset() before step_async()/step_wait() "
+                "after an incomplete Python "
+                f"publication: {self._projection_failure_reason}"
+            )
 
     @staticmethod
     def _observation_own_ship_field_reader(truth: Any, field: str) -> Any:
@@ -625,6 +640,7 @@ class WorldBatchVecEnv(
         return obs, reset_info
 
     def step_async(self, actions: np.ndarray) -> None:
+        self._require_complete_projection()
         action_arr = np.asarray(actions, dtype=np.float32)
         if self.num_envs == 1 and action_arr.ndim == 1:
             action_arr = action_arr.reshape(1, -1)
@@ -888,6 +904,7 @@ class WorldBatchVecEnv(
     def step_wait(self) -> VecEnvStepReturn:
         """Complete one pending step and always consume its pending action."""
 
+        self._require_complete_projection()
         if self._actions is None:
             raise RuntimeError("step_async() must be called before step_wait().")
 
@@ -931,12 +948,33 @@ class WorldBatchVecEnv(
             self._step_wait_timing_snapshot(timing, total_t0)
 
             return self._obs_from_buf(), np.copy(self.buf_rews), np.copy(self.buf_dones), deepcopy(self.buf_infos)
+        except BaseException as exc:
+            # Native execution may be healthy while reads, per-env finalizers
+            # or auto-resets have only partly updated the Python projection.
+            # Preserve the native-owned status and original exception; fence
+            # subsequent steps until an explicit full reset is published.
+            if self._projection_failure_reason is None:
+                self._projection_failure_reason = f"step_wait failed ({type(exc).__name__})"
+            raise
         finally:
             # Never replay the pending action after a failed, possibly mutating
             # operation. The native owner retains its failure/recovery fence.
             self._actions = None
 
     def reset(self) -> VecEnvObs:
+        """Publish a complete reset before releasing the adapter-local fence."""
+
+        self._actions = None
+        self._projection_failure_reason = "reset has not completed"
+        try:
+            observations = self._reset_worlds_and_publish_observations()
+        except BaseException as exc:
+            self._projection_failure_reason = f"reset failed ({type(exc).__name__})"
+            raise
+        self._projection_failure_reason = None
+        return observations
+
+    def _reset_worlds_and_publish_observations(self) -> VecEnvObs:
         self._actions = None
         self._clear_policy_observation_device_cache()
         total_t0 = time.perf_counter() if self.collect_step_timing else 0.0
@@ -1022,9 +1060,10 @@ class WorldBatchVecEnv(
                 self.last_reset_timing = {"total_ms": total_ms}
         if not self.collect_step_timing:
             self.last_reset_timing = {}
+        observations = self._obs_from_buf()
         self._reset_seeds()
         self._reset_options()
-        return self._obs_from_buf()
+        return observations
 
     def close(self) -> None:
         self._clear_policy_observation_device_cache()
