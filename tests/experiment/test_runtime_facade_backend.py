@@ -12,7 +12,9 @@ from python.experiment.runtime_candidate import RuntimeCandidateSession
 from python.experiment.runtime_candidate import RuntimeSnapshotFacts
 from python.experiment.runtime_candidate import runtime_config_digest
 from python.experiment.runtime_facade_backend import RuntimeFacadeCandidateBackend
+from python.experiment.runtime_facade_backend import RuntimeFacadeMissionOwnerMapping
 from python.experiment.runtime_facade_backend import RuntimeFacadeNativeIdentityOwner
+from python.experiment.runtime_facade_backend import SECOND_AIR_MISSION_SURFACE
 from python.tasking_contracts.common.agent_contracts import OBS_FACADE_OBSERVATION_PACKET
 
 
@@ -285,6 +287,65 @@ def test_maintained_facade_requires_native_identity_owner() -> None:
             action_applier=lambda _runtime, _actions: None,
             identity_owner=object(),
             reward_reader=lambda *_args: {agent_id: 0 for agent_id in AGENTS},
+        )
+
+
+def test_second_air_mission_owner_mapping_preserves_setup_step_packet_identity() -> None:
+    mapping = RuntimeFacadeMissionOwnerMapping(
+        surface_id=SECOND_AIR_MISSION_SURFACE,
+        agent_action_kinds=(("agent_0", "takeoff_control"), ("agent_1", "takeoff_control")),
+        agent_ref_kinds=(("agent_0", "aircraft_ref"), ("agent_1", "aircraft_ref")),
+    )
+    backend, runtime, _identity = _backend()
+    qualified = RuntimeFacadeCandidateBackend(
+        runtime,
+        agent_ids=AGENTS,
+        setup_applier=_setup,
+        action_applier=lambda value, actions: value.set_actions(actions),
+        identity_owner=_identity,
+        reward_reader=lambda _runtime, actions, _before, _after: {
+            agent_id: index for index, (agent_id, _action) in enumerate(actions)
+        },
+        mission_owner=mapping,
+    )
+    assert qualified.mission_owner == mapping
+    assert qualified.mission_owner.agent_ids == AGENTS
+    session = _session(qualified)
+    transition = session.step(
+        {"agent_0": "rotate", "agent_1": "climb"},
+        observation_provenance=OBS_FACADE_OBSERVATION_PACKET,
+    )
+    assert session.head().step == 1
+    assert runtime.actions == [(('agent_0', 'rotate'), ('agent_1', 'climb'))]
+    packet_series = session.agent_observation_packet_series("agent_0")
+    assert len(packet_series) == 2
+    assert packet_series[0].provenance.source_label == OBS_FACADE_OBSERVATION_PACKET
+    assert backend.mission_owner is None
+
+
+def test_second_air_mission_owner_mapping_rejects_unsupported_or_misaligned_paths() -> None:
+    with pytest.raises(RuntimeCandidateError, match="second Air mission"):
+        RuntimeFacadeMissionOwnerMapping(
+            surface_id="air.execution.unknown.v1",
+            agent_action_kinds=(("agent_0", "takeoff_control"), ("agent_1", "takeoff_control")),
+            agent_ref_kinds=(("agent_0", "aircraft_ref"), ("agent_1", "aircraft_ref")),
+        )
+    mapping = RuntimeFacadeMissionOwnerMapping(
+        surface_id=SECOND_AIR_MISSION_SURFACE,
+        agent_action_kinds=(("agent_0", "takeoff_control"),),
+        agent_ref_kinds=(("agent_0", "aircraft_ref"),),
+    )
+    identity = _IdentityOwner()
+    runtime = _Runtime(identity)
+    with pytest.raises(RuntimeCandidateError, match="exactly the session Agents"):
+        RuntimeFacadeCandidateBackend(
+            runtime,
+            agent_ids=AGENTS,
+            setup_applier=_setup,
+            action_applier=lambda value, actions: value.set_actions(actions),
+            identity_owner=identity,
+            reward_reader=lambda *_args: {agent_id: 0 for agent_id in AGENTS},
+            mission_owner=mapping,
         )
 
 
