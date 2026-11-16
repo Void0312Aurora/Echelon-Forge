@@ -259,7 +259,7 @@ is not claimed as repaired here.
 | Reference timeline backend | pass (P2-A) | P2-B toy evidence labels; P3 owner decision |
 | CPU runtime candidate adapter | Selected flight controls, explicit scoring, saved checkpoint restore, replay, maintained facade identity, native child owner, and injected Python branch-owner tests pass | Mission-specific owners, broader mission coverage, and durable recovery |
 | Native full-state snapshot | Selected CPU checkpoint continuation, historical/nested forks, and trace replay pass | Broader owner coverage and durable recovery remain unproven |
-| Training projections | partial (P4-A) | `trace_projection.py`, `numeric_observation_adapter.py`, and `runtime_facade_observation.py` provide lineage-safe projections, a RuntimeFacade Agent-packet bridge, and optional persisted `EpisodeStore` exports; the fixed native pilot remains open-loop |
+| Training projections | partial (P4-A, R3 qualification slice) | `trace_projection.py`, `numeric_observation_adapter.py`, `runtime_facade_observation.py`, and the build-tree training-sidecar qualifier preserve packet provenance, fixed training split, selected branch ancestry, projection/manifest digests, and EpisodeStore metadata; production mission coverage and BC/world-model admission remain open |
 | GPU/distributed execution | deferred | P5 selected-slice parity |
 
 ## Explicit Non-Claims
@@ -286,7 +286,8 @@ This package currently does not establish:
    diagnostic, retaining explicit action and evaluator definitions.
 4. Broaden maintained runtime numeric observation sources and direct
    learner-dataset exports beyond the fixed pilot across admitted mission
-   surfaces; keep the native candidate evidence label.
+   surfaces; the current R3 sidecar is a single-surface qualification only and
+   keeps the native candidate evidence label.
 5. Extend durable recovery through the existing native checkpoint authority,
    then qualify alternate backends under the shared semantics.
 
@@ -313,7 +314,7 @@ This is the single residual register for the package.
 | --- | --- | --- | --- |
 | `R1` | `architecture/runtime-facade` with the long-horizon governance checkpoint owner | Native CPU checkpoint, typed flight actions, explicit scoring, and fixed comparison pass; broader mission/owner coverage and durable recovery remain incomplete. | Broader declared mission coverage and durable recovery pass continuation/isolation/provenance tests beyond the fixed flight diagnostic. |
 | `R2` | `architecture/runtime-workflow` | The Python world-batch adapter still owns substantial step-time orchestration. | A session adapter consumes maintained facade request/result contracts only. |
-| `R3` | `learning/training` | The fixed native pilot captures maintained Agent packets at native export barriers; a RuntimeFacade packet bridge and optional persisted PPO `EpisodeStore` export now exist, but production publication across admitted mission surfaces and BC/world-model coverage remain unproven. | The maintained RuntimeFacade-backed packet provider feeds admitted mission surfaces and persists learner-compatible PPO/BC/world-model exports while preserving the projection digest and split boundary. |
+| `R3` | `learning/training` | A single admitted `air.execution.runtime_facade.v1` training-sidecar qualification now binds facade observation provenance, fixed seed/training split, selected branch ancestry, projection/manifest digests and EpisodeStore metadata. It is not production admission and does not cover multiple mission surfaces or full BC/world-model publication. | The maintained RuntimeFacade-backed packet provider feeds admitted mission surfaces and persists learner-compatible PPO/BC/world-model exports while preserving the projection digest and split boundary. |
 | `R4` | `architecture/runtime-backend` | GPU-resident replay contracts are backend-specific and quarantined. | P5 selected-slice parity contract is shared by each admitted backend. |
 | `R5` | `learning/training` | The adaptive toy canary has synthetic evidence only. | An adaptive-selection experiment runs on maintained mission observations with a fixed protocol; the candidate flight diagnostic alone does not close this residual. |
 
