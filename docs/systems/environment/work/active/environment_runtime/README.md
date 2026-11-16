@@ -4,12 +4,13 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/systems/environment/work/active/environment_runtime/README.md`
 Owner: `systems/environment`
-Last verified: `2026-10-29`
+Last verified: `2026-11-16`
 
 Status: `2026-10-29` active. `P0 Boundary` accepted by the owner on `2026-09-28`;
 `P1 Evidence` (`P1-A`, `P1-B`) passed on `2026-10-29`, see the
-[P1 inventory](environment_runtime_p1_inventory_20261029.md). No implementation
-cluster has started.
+[P1 inventory](environment_runtime_p1_inventory_20261029.md). The source-state
+recheck on `2026-11-16` is recorded there. `P2 Contract` remains planned; no
+implementation cluster in this package has started.
 
 Language:
 
@@ -38,10 +39,10 @@ The offline environment substrate is already a shared, cross-domain contract:
 one manifest with ordered layers for physical base, terrain surface, hydrology,
 atmosphere and weather, wind, illumination, maritime ocean, vegetation, built
 structure, and infrastructure. The runtime does not follow that model. It holds
-one global raster, one global maritime state, and constant wind and sun, and the
-only runtime terrain line — Ground's native Arnis raster, on an unmerged branch —
-adds Ground-specific types and includes directly into the shared interface and
-implementation.
+one global raster, one global maritime state, and constant wind and sun. Ground's
+native Arnis terrain has been on `main` since `2026-10-01`. Ground-specific types,
+methods and passability policy remain in the shared interface and implementation;
+their domain-header includes were removed before that merge.
 
 This package makes the layered environment a single runtime authority that every
 domain reads through domain-neutral queries. It covers land, freshwater, sea, and
@@ -97,14 +98,29 @@ superseded. Measured on `main` at `3d7df0818` (`2026-10-29`, P1-B):
   `load_arnis_field_overlay`, `GroundFieldSemanticObservation` and
   `GroundTransitionObservation`. `get_ground_slope_deg` is domain-neutral but
   misnamed.
-- `get_terrain_at` still treats `Water` as blocking and returns `Obstacle`
-  outside the loaded raster, while `get_terrain_elevation` returns the
-  procedural hill there. Both are Ground passability semantics, and the two
-  queries disagree off the raster.
+- `get_terrain_at` reports surface classes; `get_ground_transition_observation`
+  and the Ground movement multipliers treat `Water` as blocking.
+  `get_terrain_at` returns `Obstacle` outside the loaded raster, while
+  `get_terrain_elevation` returns the procedural hill there. The off-raster
+  obstacle policy belongs to Ground, and the two point queries disagree there.
 
 The [P1 inventory](environment_runtime_p1_inventory_20261029.md) classifies every
 environment read and every Ground item, and records the decision for the
 unmerged army terrain line-of-sight query.
+
+The `2026-11-16` recheck pins `origin/main` at `23a936694`. Bounded infantry
+movement, static holds, rifle direct fire and DM-G1 damage are already on that
+line. The movement pose projection (`ff9fafcca`) and simulation-time-scaled
+damage progression (`d0154e037`) also have native regression tests. These are
+existing consumer behavior, not new Environment Runtime implementation work.
+
+`origin/codex/army-ground-integration` at `d1e343ec8` already implements the
+shared raster terrain line-of-sight query, its Ground rifle gate, and the
+raster-edge slope window fix, with native tests. They remain outside `main` at
+the pinned revision. Integrate or adapt that work rather than implement it
+again. The edge fix does not settle off-raster point elevation, and the query
+still uses heights above terrain on a single measured raster. Those limits
+leave the P2 contract decisions open; they do not admit a sensor LOS migration.
 
 ## Scope
 
@@ -179,6 +195,9 @@ Ground native terrain is on `main`, so the migration starts from `main`.
 
 - [environment_runtime_task_clusters_20260928.md](environment_runtime_task_clusters_20260928.md)
 
+The historical task-cluster table still labels `P1-A` and `P1-B` planned. Their
+recorded P1 pass above supersedes those status cells; `P2-A` remains planned.
+
 ## Outputs And Evidence
 
 - layered runtime environment state and domain-neutral query interface;
@@ -213,6 +232,9 @@ This package can be marked accepted only when:
 - `P2-A` contract (main thread), using the P1 inventory's decisive findings:
   one out-of-tile result for elevation and surface, a declared vertical datum,
   absolute versus above-terrain heights for line of sight, and earth curvature.
+  Existing army LOS and edge behavior are inputs to that review, not acceptance
+  of the broader contract. No `P2-B` implementation cluster is admitted by this
+  inventory update.
 - **Ocean data line** (this owner, opens after `P2 Contract`): importers for
   bathymetry, temperature/salinity climatology, sea state and wind, and coastline
   from admitted public sources, plus a seeded synthetic ocean generator for

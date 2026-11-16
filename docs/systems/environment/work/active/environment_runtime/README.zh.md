@@ -4,10 +4,11 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/systems/environment/work/active/environment_runtime/README.md`
 Owner: `systems/environment`
-Last verified: `2026-10-29`
+Last verified: `2026-11-16`
 
 状态：`2026-10-29` active。`P0 Boundary` 已于 `2026-09-28` 获 owner 接受；`P1 Evidence`（`P1-A`、`P1-B`）
-于 `2026-10-29` 通过，见 [P1 清点](environment_runtime_p1_inventory_20261029.md)。尚无实现任务簇开工。
+于 `2026-10-29` 通过，见 [P1 清点](environment_runtime_p1_inventory_20261029.md)。`2026-11-16` 的源码状态复核
+也记录于该清点。`P2 Contract` 仍为 planned；本工作包尚无实现任务簇开工。
 
 语言：
 
@@ -33,8 +34,8 @@ Last verified: `2026-10-29`
 
 离线环境底座已经是共享的跨域契约：一个 manifest，按顺序分层，包括物理基底、地表、水文、
 大气与天气、风、光照、海洋、植被、建筑与基础设施。运行时却没有沿用这个模型：它只有一个全局
-栅格、一个全局海况，风和太阳都是常量；而唯一的运行时地形线——陆军的原生 Arnis 栅格，位于未合并
-分支上——直接把陆军专用的类型和头文件加进了共享接口与实现。
+栅格、一个全局海况，风和太阳都是常量。陆军原生 Arnis 地形自 `2026-10-01` 起已在 `main` 上。
+共享接口与实现中仍有陆军专属类型、方法和通行策略；它们引入的领域头文件已在该次合并之前移除。
 
 本工作包把分层环境做成唯一的运行时权威，所有域通过与域无关的查询读取。它覆盖陆地、淡水、
 海洋与大气，使用同一垂直基准，支持多瓦片、多分辨率，并带有声明的时空变化。它还把陆军的原生
@@ -77,12 +78,21 @@ Last verified: `2026-10-29`
 - `environment_model.h` 仍声明陆军方法和类型：`get_ground_field_semantic_observation`、
   `get_ground_transition_observation`、`load_arnis_field_overlay`、`GroundFieldSemanticObservation`
   与 `GroundTransitionObservation`。`get_ground_slope_deg` 本身是领域中立的，只是命名带了 Ground。
-- `get_terrain_at` 仍把 `Water` 当作不可通行，并在已加载栅格以外返回 `Obstacle`，而
-  `get_terrain_elevation` 在同一位置返回程序化山丘。两者都是陆军的通行语义，而且这两个查询在
-  栅格外互相矛盾。
+- `get_terrain_at` 报告地表类别；把 `Water` 判为阻挡的是 `get_ground_transition_observation`
+  和陆军机动倍率。`get_terrain_at` 在已加载栅格以外返回 `Obstacle`，而 `get_terrain_elevation`
+  在同一位置返回程序化山丘。栅格外的障碍策略属于陆军，这两个点查询在该处给出不同的结果。
 
 [P1 清点](environment_runtime_p1_inventory_20261029.md)对每处环境读取和每项陆军内容都做了分类，
 并记录了尚未合并的陆军地形通视查询应如何落地。
+
+`2026-11-16` 的复核将 `origin/main` 固定在 `23a936694`。有界单兵机动、静态保持、步枪直射和
+DM-G1 损伤已在该主线上。机动位姿投影（`ff9fafcca`）与按仿真时间缩放的损伤推进
+（`d0154e037`）也已有原生回归测试。这些是现有使用方行为，不是 Environment Runtime 的新增实现工作。
+
+`origin/codex/army-ground-integration`（`d1e343ec8`）已经实现共享栅格地形通视查询、陆军步枪门控
+以及栅格边缘坡度窗口修复，并带有原生测试；在所固定的主线版本中，它们仍未合入。后续应集成或
+适配这些实现，避免重复开发。边缘修复尚未决定栅格外的点高程，通视查询仍使用单个实测栅格上的离地
+高度。这些边界意味着 P2 契约决策仍待完成，也没有准入传感器 LOS 迁移。
 
 ## 范围
 
@@ -138,6 +148,9 @@ Last verified: `2026-10-29`
 
 - [environment_runtime_task_clusters_20260928.md](environment_runtime_task_clusters_20260928.md)
 
+历史任务簇表仍把 `P1-A` 和 `P1-B` 标为 planned；上文已记录的 P1 pass 取代这两格旧状态。
+`P2-A` 仍为 planned。
+
 ## 产出与证据
 
 - 分层运行时环境状态与与域无关的查询接口；
@@ -168,6 +181,8 @@ Last verified: `2026-10-29`
 
 - `P2-A` 契约（主线程），依据 P1 清点的关键发现：高程与地表在瓦片外给出同一个结果、声明垂直基准、
   通视使用绝对高度还是离地高度，以及地球曲率。
+  现有陆军 LOS 和边缘行为是该审查的输入，不代表更广契约已获接受。本次清点更新没有准入
+  `P2-B` 实现任务簇。
 - **海洋数据线**（本 owner，在 `P2 Contract` 之后开启）：从经准入的公开来源导入水深、温盐
   气候态、海况与风、海岸线，并提供带种子的合成海洋生成器，供镜像与虚构场景使用。候选来源只作
   记录，在通过[准入标准](../../../../../research/standards/public_data_source_admission.zh.md)之前不算准入。

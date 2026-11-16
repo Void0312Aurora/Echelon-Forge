@@ -4,7 +4,7 @@ Document kind: `review`
 Lifecycle: `maintained`
 Canonical: `docs/systems/environment/work/active/environment_runtime/environment_runtime_p1_inventory_20261029.md`
 Owner: `systems/environment`
-Last verified: `2026-10-29`
+Last verified: `2026-11-16`
 
 Language: English canonical only; no Chinese companion (high-churn inventory record).
 
@@ -14,6 +14,8 @@ Status: `2026-10-29` pass. Read-only survey of `src/`, `python/`, `gym_envs/` an
 `tools/` on `main` at `3d7df0818`, plus the unmerged
 `codex/army-ground-integration` branch (merge base `71912e2a7`). The main thread
 re-checked the decisive findings against the source. Nothing was built or run.
+The dated census and its line references below retain that baseline; the
+`2026-11-16` source-state recheck is recorded separately below.
 
 Abbreviations: `EM.h` = `src/core/interfaces/environment_model.h`,
 `DEM.cpp` = `src/models/environment/default_environment_model.cpp`.
@@ -55,7 +57,7 @@ Classes:
 
 1. **Ground content is on `main` without domain includes.** The P4 exit
    condition "shared files include no domain header" already holds. What still
-   fails the package goal: four Ground methods and two Ground structs in `EM.h`
+   fails the package goal: three Ground methods and two Ground structs in `EM.h`
    (`get_ground_field_semantic_observation`, `get_ground_transition_observation`,
    `load_arnis_field_overlay`, `GroundFieldSemanticObservation`,
    `GroundTransitionObservation`; `get_ground_slope_deg` is shared but
@@ -63,10 +65,11 @@ Classes:
 2. **Elevation and surface disagree outside the raster.** Off an Arnis raster,
    `get_terrain_elevation` returns the procedural 2000 m Gaussian hill
    (`DEM.cpp:480-482`) while `get_terrain_at` returns `Obstacle`
-   (`DEM.cpp:627-633`). `3f89cf199` on the army branch measured about 88.7°
-   slopes at the raster edge from this. P2-A must define out-of-tile behavior
-   once, for both queries.
-3. **No vertical datum exists.** The Arnis bundle declares
+   (`DEM.cpp:627-633`). The army branch's `3f89cf199` fixes the resulting
+   raster-edge slope spike (about 88.7° on the fixture) by keeping the gradient
+   window inside the raster. It does not change the two point-query fallbacks.
+   P2-A must still define out-of-tile behavior once, for both queries.
+3. **No shared terrain vertical datum is enforced.** The Arnis bundle declares
    `source_provider_native_unspecified` (`arnis_bundle.py:980`) and the loader
    ignores datum (origin z = 0, `DEM.cpp:923`). Consumers each assume their own
    zero: ship z is forced to 0 (row 16), submarines require a surface at 0
@@ -109,9 +112,38 @@ absolute versus above-terrain heights, out-of-tile behavior, curvature and the
 sensors until those are settled, because sensors would lose results wherever it
 answers `Unknown`.
 
-A textual dry-run merge of the branch onto `main` merges both shared files
+A textual dry-run merge of the branch onto the original survey's `main` merges both shared files
 without conflict markers; conflicts appear only in `CMakeLists.txt` and five
-documentation files.
+documentation files. This is historical textual evidence, not a merge or test
+result against a later `main`.
+
+## Source-state recheck — 2026-11-16
+
+Read-only comparison against `origin/main` at `23a936694` and the remote army
+refs below. No native or Python runtime tests were run for this recheck.
+
+| Line | Existing implementation and evidence | Remaining boundary |
+| --- | --- | --- |
+| `origin/main` (`23a936694`) | Bounded infantry movement, stance and segment costs, static holds, rifle direct fire and DM-G1 are already present. `ff9fafcca` projects movement pose; `d0154e037` scales damage progression by simulation time. Regression sources: `src/tests/test_ground_movement.cpp`, `src/tests/test_ground_damage_system.cpp`, `tests/runtime/ground/test_ground_infantry_native_unit.py`, `tests/runtime/ground/test_ground_damage_response.py`. | No army terrain LOS query or raster-edge slope fix at this revision. The bootstrap Ground damage fixture explicitly keeps mobility capability unchanged after a hit; changing that is a separate Ground damage package. |
+| `origin/codex/army-ground-integration` (`d1e343ec8`) | Shared raster terrain LOS, the Ground rifle gate before release, and the raster-edge slope fix already exist. Native tests: `test_terrain_line_of_sight.cpp`, `test_ground_direct_fire_line_of_sight.cpp`, `test_environment_raster_boundary.cpp` under `src/tests/`. | AGL endpoints, one measured raster, explicit LOS `Unknown` outside coverage, and no curvature term. Point elevation still falls back to the procedural hill off-raster. |
+| `origin/codex/army-env-raster-edge` (`598bd1ec9`) | Its shared environment header and provider match the integration branch's corresponding files. | This is an existing slope fix, not another P2 implementation task. |
+| `origin/codex/army-env-track-surface` (`04fef7834`) | Extends integration with test-fixture landcover and road-feature authoring in `src/tests/terrain_raster_fixture.h`. | No new production segment traversal or track-surface query in that extra commit. |
+| `origin/codex/army-combat-infantry-hitbox` (`49135b011`) | WIP authored hit-volume types and geometry helpers, consumed inside its Ground LOS helper. | No corresponding content-loader, unit JSON, factory or release-service wiring changes, and no dedicated hit-volume tests. It forked before the integration branch's raster-edge and GC-0 updates; it is not a replacement integration tree. |
+
+The army command/route plan and GC-0 census are planning evidence, not a native
+route executor. The scripted admission, curriculum and matrix-hardening branches
+already contain their respective Python adapters and tests; none supplies the
+shared layered environment contract.
+
+The P1 findings therefore do not call for reimplementing Ground movement,
+damage, rifle LOS or the edge slope window. The next Environment Runtime step
+remains `P2-A`: define consistent coverage, source and vertical-datum reporting,
+tile behavior, and LOS height/curvature semantics before consumer migration.
+The existing bathymetry observation already carries availability, frame and
+datum fields; a terrain contract must account for that seam rather than assume
+the interface has no datum vocabulary at all. Source-native-unspecified Arnis
+heights do not establish a common datum merely by receiving a new field name.
+This recheck accepts no P2 contract or `P2-B` implementation cluster.
 
 ## P1-A: environment reads on `main`
 
