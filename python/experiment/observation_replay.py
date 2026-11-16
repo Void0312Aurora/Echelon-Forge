@@ -185,7 +185,7 @@ def _values(
         item = _field(value, name)
         if type(item) is not int or not -(1 << 31) <= item < (1 << 31):
             raise ContractError(f"observation replay: {name} must be an int32")
-        result[name] = {"type": "i32", "value": item}
+        result[name] = {"type": "int32", "value": item}
     for name in bool_fields:
         item = _field(value, name)
         if type(item) is not bool:
