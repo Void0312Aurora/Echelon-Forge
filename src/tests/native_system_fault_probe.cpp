@@ -1,4 +1,7 @@
 #include "core/engine/world_batch_runtime.h"
+#include "core/engine/testing/simulation_kernel_composition_test_access.h"
+#include "components/basic/common.h"
+#include "components/basic/stable_identity.h"
 #include "runtime/facade/internal/testing/runtime_facade_test_access.h"
 
 #include <atomic>
@@ -8,6 +11,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <tuple>
 #include <vector>
 
 #ifdef _WIN32
@@ -67,9 +71,11 @@ int main(int argc, char **argv) {
                 std::cout << "REPLACEMENT_PROCESS_HEALTHY" << std::endl;
                 return 0;
             }
+            facade.reset_batch(BatchResetRequest{.seeds = {41}});
             const auto generation = batch.batch_generation();
             for (std::size_t index = 0; index < world_count; ++index) {
                 auto lease = batch.world_raw_quarantine(index).acquire_world_lease();
+                lease.world().entity("QualificationResetMarker").add<SimObject>();
                 lease.world().entity("QualificationFaultState").set<FaultProbeState>({});
                 lease.world()
                     .system<FaultProbeState>("QualificationNativeFault")
@@ -128,9 +134,36 @@ int main(int argc, char **argv) {
                                 ->visits == 1,
                         "native mutation before failure was not retained");
             }
+            using RetainedFacts = std::tuple<std::uint64_t, std::uint64_t, double, double,
+                                             std::int64_t, bool, std::string>;
+            auto retained_facts = [&] {
+                std::vector<RetainedFacts> result;
+                for (std::size_t index = 0; index < world_count; ++index) {
+                    auto &kernel = batch.world_raw_quarantine(index);
+                    const auto rng =
+                        SimulationKernelCompositionTestAccess::rng_state_for_testing(kernel);
+                    auto lease = kernel.acquire_world_lease();
+                    const auto *identity = lease.world().get<StableIdentityState>();
+                    const auto *clock = ecs_get_world_info(lease.world().c_ptr());
+                    result.emplace_back(
+                        identity->episode_seed, identity->next_serial, clock->world_time_total,
+                        clock->world_time_total_raw, clock->frame_count_total,
+                        lease.world().lookup("QualificationResetMarker").is_alive(), rng);
+                }
+                return result;
+            };
+            const auto before_reset = retained_facts();
+            auto require_retained = [](bool condition, const char *message) {
+                if (!condition) {
+                    std::cerr << message << std::endl;
+                    // Failed assertions also retire the interrupted pipeline;
+                    // normal stack unwinding is not a teardown guarantee.
+                    std::_Exit(1);
+                }
+            };
             for (unsigned attempt = 0; attempt < 2; ++attempt) {
                 try {
-                    facade.reset_batch();
+                    facade.reset_batch(BatchResetRequest{.seeds = {101}});
                     throw std::runtime_error("reset certified an unfinished pipeline");
                 } catch (const std::logic_error &error) {
                     require(std::string(error.what()).find("recreate the host process") !=
@@ -138,6 +171,10 @@ int main(int argc, char **argv) {
                             "unexpected reset rejection");
                 }
                 const auto failed_reset_status = facade.batch_failure_status();
+                require_retained(retained_facts() == before_reset,
+                                 "fatal reset changed native seed/entity/clock/RNG facts");
+                require_retained(failed_reset_status.failure_reason == failure_status.failure_reason,
+                                 "fatal reset replaced the original failure reason");
                 require(!failed_reset_status.healthy, "failed reset reopened the batch");
                 require(failed_reset_status.requires_host_recreate,
                         "failed reset cleared terminal recovery");

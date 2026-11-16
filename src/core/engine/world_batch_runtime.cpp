@@ -437,6 +437,13 @@ WorldBatchRuntime::export_recent_engagement_events(size_t world_index) const {
 
 void WorldBatchRuntime::reset_batch(const std::vector<uint32_t> &seeds) {
     world_batch_setup::validate_reset_seeds(worlds_.size(), seeds);
+    // A terminal world makes the entire host unrecoverable. Reject before
+    // resetting any healthy sibling and preserve the original failure evidence.
+    if (batch_requires_host_recreate()) {
+        throw std::logic_error(
+            "WorldBatchRuntime reset cannot recover an unfinished native pipeline; "
+            "recreate the host process");
+    }
     try {
         if (batch_generation_ == std::numeric_limits<std::uint64_t>::max()) {
             throw std::overflow_error("WorldBatchRuntime batch generation exhausted");
