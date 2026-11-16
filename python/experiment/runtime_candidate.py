@@ -305,6 +305,9 @@ class _BranchState:
     handle: object | None
     transitions: list[Transition]
     pending_intervention: tuple[tuple[str, str], ...] = ()
+    # The baseline has no fork budget. Every admitted sibling is bounded even
+    # when a backend's test double or provider does not enforce that boundary.
+    remaining_steps: int | None = None
     terminated: bool = False
     # Set when the native world advanced but the step could not be recorded;
     # the branch's trace no longer describes its native state.
@@ -526,6 +529,8 @@ class RuntimeCandidateSession:
             raise RuntimeCandidateError(f"runtime candidate branch is unusable: {record.poisoned}")
         if record.terminated:
             raise RuntimeCandidateError("runtime candidate branch has terminated")
+        if record.remaining_steps == 0:
+            raise RuntimeCandidateError("runtime candidate branch horizon is exhausted")
         if observation_provenance not in POLICY_INPUT_PROVENANCE_LABELS:
             raise RuntimeCandidateError(
                 f"observation provenance {observation_provenance!r} is not admitted"
@@ -583,6 +588,8 @@ class RuntimeCandidateSession:
         record.facts = result.snapshot
         record.terminated = result.snapshot.terminated
         record.pending_intervention = ()
+        if record.remaining_steps is not None:
+            record.remaining_steps -= 1
         record.transitions.append(transition)
         self._record_agent_observations(record.ref.digest, captured)
         return transition
@@ -686,6 +693,7 @@ class RuntimeCandidateSession:
             handle=admission.handle,
             transitions=[],
             pending_intervention=pairs,
+            remaining_steps=horizon,
         )
 
     @staticmethod

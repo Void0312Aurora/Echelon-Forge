@@ -389,7 +389,9 @@ def test_historical_and_descendant_forks_use_their_own_native_handles() -> None:
     session.step(_actions(), observation_provenance=OBSERVATION)
     saved = session.checkpoint()
     session.step(_actions(), observation_provenance=OBSERVATION)
-    child = session.fork(session.baseline, saved, intervention=_actions(), label="history")
+    child = session.fork(
+        session.baseline, saved, intervention=_actions(), label="history", horizon=2
+    )
     session.step_branch(child, _actions(), observation_provenance=OBSERVATION)
     child_saved = session.checkpoint(child)
     session.step_branch(child, _actions(), observation_provenance=OBSERVATION)
@@ -548,13 +550,19 @@ def test_real_aircraft_session_checkpoint_restore_nested_fork_and_verified_repla
         parent_trace = session.trace(session.baseline)
         parent_head = session.head()
         assert saved.state_digest != parent_head.state_digest
-        restored = session.restore(saved, intervention=_actions(), label="restored", horizon=3)
+        # Three replayed transitions followed by the independent continuation
+        # below need a four-step budget.
+        restored = session.restore(saved, intervention=_actions(), label="restored", horizon=4)
         for expected in parent_trace.transitions[1:]:
             actual = session.step_branch(restored, _actions(), observation_provenance=OBSERVATION)
             assert replace(actual, branch_digest=expected.branch_digest) == expected
         assert session.head(restored) == parent_head
         nested_saved = session.checkpoint(restored)
         session.step_branch(restored, _actions(), observation_provenance=OBSERVATION)
+        exhausted_head = session.head(restored)
+        with pytest.raises(RuntimeCandidateError, match="horizon is exhausted"):
+            session.step_branch(restored, _actions(), observation_provenance=OBSERVATION)
+        assert session.head(restored) == exhausted_head
         nested = session.fork(restored, nested_saved, intervention=_actions(), label="nested")
         sibling = session.restore(saved, intervention=_actions(), label="sibling")
         session.step_branch(nested, _actions(), observation_provenance=OBSERVATION)
@@ -567,6 +575,35 @@ def test_real_aircraft_session_checkpoint_restore_nested_fork_and_verified_repla
         assert manifest_from_payload(session.manifest().to_payload()) == session.manifest()
     finally:
         assert native.shutdown()
+
+
+@pytest.mark.parametrize("horizon", [1, 2])
+def test_session_enforces_horizon_before_calling_an_unbounded_backend(horizon: int) -> None:
+    backend = CheckpointBackend()
+    session = _session(backend)
+    session.step(_actions(), observation_provenance=OBSERVATION)
+    branch = session.fork(
+        session.baseline, session.head(), intervention=_actions(), label="bounded", horizon=horizon
+    )
+    with pytest.raises(RuntimeCandidateError, match="provenance"):
+        session.step_branch(branch, _actions(), observation_provenance="unknown")
+    for _ in range(horizon):
+        session.step_branch(branch, _actions(), observation_provenance=OBSERVATION)
+    before = session.manifest()
+    native_cursors = dict(backend.branch_cursor)
+    with pytest.raises(RuntimeCandidateError, match="horizon is exhausted"):
+        session.step_branch(branch, _actions(), observation_provenance=OBSERVATION)
+    assert session.manifest() == before
+    assert backend.branch_cursor == native_cursors
+    # A budget limits continuation, not snapshot retention or a new fork.
+    saved = session.checkpoint(branch)
+    renewed = session.restore(
+        saved, parent=branch, intervention=_actions(), label="renewed", horizon=1
+    )
+    session.step_branch(renewed, _actions(), observation_provenance=OBSERVATION)
+    with pytest.raises(RuntimeCandidateError, match="horizon is exhausted"):
+        session.step_branch(renewed, _actions(), observation_provenance=OBSERVATION)
+    assert session.manifest().branches[0].transitions == before.branches[0].transitions
 
 
 def test_step_rejects_native_state_changed_outside_the_session() -> None:
