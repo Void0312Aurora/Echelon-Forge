@@ -100,6 +100,75 @@ def test_native_ground_gym_adapter_publishes_finite_observation_bounds() -> None
     )
 
 
+@pytest.mark.parametrize("height_m", [0.0, 317.25, -42.5, 33554432.0, -33554432.0])
+def test_native_ground_gym_position_height_uses_source_bounds_through_reset_and_step(
+    tmp_path: Path, height_m: float
+) -> None:
+    # A constant-height source keeps the native slope/movement behavior fixed.
+    # The large signed values expose float32 rounding of the existing 1 m margin.
+    elevation = np.full((32, 32), height_m, dtype="<f4")
+    landcover = np.full(elevation.shape, 40, dtype="u1")
+    elevation.tofile(tmp_path / "elevation.f32le")
+    landcover.tofile(tmp_path / "landcover.u8")
+    metadata = {"origin_xy_m": [0.0, 0.0], "step_xy_m": [1.0, 1.0]}
+    artifacts = [
+        {
+            "kind": "elevation_raster",
+            "path": "elevation.f32le",
+            "dtype": "float32_le",
+            "shape": list(elevation.shape),
+            "byte_length": elevation.nbytes,
+            "metadata": metadata,
+        },
+        {
+            "kind": "landcover_raster",
+            "path": "landcover.u8",
+            "dtype": "uint8",
+            "shape": list(landcover.shape),
+            "byte_length": landcover.nbytes,
+            "metadata": metadata,
+        },
+    ]
+    (tmp_path / "bundle.json").write_text(
+        json.dumps({
+            "contract_version": "arnis_cmo_bundle.v1",
+            "no_held_capability_release": True,
+            "artifacts": artifacts,
+        }),
+        encoding="utf-8",
+    )
+    probe = GroundInfantryNativeProbe(
+        database_dir=_REPO_ROOT / "examples" / "config" / "database",
+        bundle_dir=tmp_path,
+        start_xy_m=(10.0, 10.0),
+        goal_xy_m=(20.0, 10.0),
+        goal_radius_m=1.0,
+        max_steps=3,
+    )
+    env = GroundInfantryNativeEnv(probe)
+    position_space = env.observation_space["position_local_enu_m"]
+    expected_low = min(height_m, 0.0) - 1.0
+    expected_high = max(height_m, 0.0) + 1.0
+    actual_low = float(position_space.low[2])
+    actual_high = float(position_space.high[2])
+    assert math.isfinite(actual_low) and math.isfinite(actual_high)
+    assert actual_low <= expected_low
+    assert actual_high >= expected_high
+    # Tight source-derived bounds rule out a silent fallback to an arbitrary
+    # large range. Any widening is at most one representable float32 step.
+    assert expected_low - actual_low <= abs(float(np.spacing(np.float32(expected_low))))
+    assert actual_high - expected_high <= abs(float(np.spacing(np.float32(expected_high))))
+
+    observation, _info = env.reset(seed=42)
+    assert float(observation["position_local_enu_m"][2]) == 0.0
+    assert env.observation_space.contains(observation)
+    for _ in range(2):
+        observation, _reward, _terminated, _truncated, _info = env.step([0.5, 0.5, 0.0])
+        assert float(observation["position_local_enu_m"][2]) == pytest.approx(height_m)
+        assert float(observation["velocity_local_enu_mps"][2]) == 0.0
+        assert env.observation_space.contains(observation)
+
+
 def test_native_ground_gym_adapter_passes_gymnasium_checker() -> None:
     from gymnasium.utils.env_checker import check_env
 

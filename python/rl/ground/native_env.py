@@ -43,9 +43,11 @@ def _fixture_bounds(probe: GroundInfantryNativeProbe) -> tuple[float, float, flo
         step_x, step_y = (float(value) for value in metadata["step_xy_m"])
         x_end = origin_x + (shape[1] - 1) * step_x
         y_end = origin_y + (shape[0] - 1) * step_y
+        # Arnis names its serialized dtype; NumPy uses the byte-order code.
+        source_dtype = artifact["dtype"]
         raster = np.memmap(
             Path(probe.bundle_dir) / artifact["path"],
-            dtype=np.dtype(artifact["dtype"]),
+            dtype=np.dtype("<f4" if source_dtype == "float32_le" else source_dtype),
             mode="r",
             shape=shape,
         )
@@ -91,6 +93,15 @@ def _finite_observation_bounds(probe: GroundInfantryNativeProbe) -> dict[str, tu
         )
     elevation_low = min(elevation_low, 0.0) - 1.0
     elevation_high = max(elevation_high, 0.0) + 1.0
+    # Position z is the native owner's absolute terrain elevation after a step,
+    # while reset can still expose the spawn anchor at zero. Keep the source
+    # bounds finite and do not narrow them through float32 round-to-nearest.
+    position_low_z = np.float32(elevation_low)
+    position_high_z = np.float32(elevation_high)
+    if float(position_low_z) > elevation_low:
+        position_low_z = np.nextafter(position_low_z, np.float32(-np.inf))
+    if float(position_high_z) < elevation_high:
+        position_high_z = np.nextafter(position_high_z, np.float32(np.inf))
 
     goal_x = [point[0] for point in probe.waypoints_xy_m]
     goal_y = [point[1] for point in probe.waypoints_xy_m]
@@ -103,8 +114,8 @@ def _finite_observation_bounds(probe: GroundInfantryNativeProbe) -> dict[str, tu
 
     return {
         "position_local_enu_m": (
-            np.asarray([position_low_x, position_low_y, -1.0], dtype=np.float32),
-            np.asarray([position_high_x, position_high_y, 1.0], dtype=np.float32),
+            np.asarray([position_low_x, position_low_y, position_low_z], dtype=np.float32),
+            np.asarray([position_high_x, position_high_y, position_high_z], dtype=np.float32),
         ),
         "velocity_local_enu_mps": (
             np.full(3, -probe.max_speed_mps, dtype=np.float32),
