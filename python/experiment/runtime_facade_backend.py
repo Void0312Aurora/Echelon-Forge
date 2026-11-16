@@ -15,6 +15,7 @@ session actions into caller-owned native assignments.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 from typing import Protocol
 
 from python.experiment.runtime_candidate import (
@@ -63,6 +64,48 @@ RewardReader = Callable[
 ]
 
 
+SECOND_AIR_MISSION_SURFACE = "air.execution.takeoff.v1"
+
+
+@dataclass(frozen=True)
+class RuntimeFacadeMissionOwnerMapping:
+    """Explicit action/ref owner mapping for one additional Air mission surface."""
+
+    surface_id: str
+    agent_action_kinds: tuple[tuple[str, str], ...]
+    agent_ref_kinds: tuple[tuple[str, str], ...]
+
+    def __post_init__(self) -> None:
+        if self.surface_id != SECOND_AIR_MISSION_SURFACE:
+            raise RuntimeCandidateError(
+                "RuntimeFacade mission owner surface is not the admitted second Air mission"
+            )
+        for name, pairs in (
+            ("agent_action_kinds", self.agent_action_kinds),
+            ("agent_ref_kinds", self.agent_ref_kinds),
+        ):
+            if not isinstance(pairs, tuple) or not pairs:
+                raise RuntimeCandidateError(f"{name} must be a non-empty tuple")
+            if tuple(sorted(pairs)) != pairs or len(set(pairs)) != len(pairs):
+                raise RuntimeCandidateError(f"{name} must be sorted and unique")
+            if any(
+                type(agent_id) is not str
+                or not agent_id
+                or type(kind) is not str
+                or not kind
+                for agent_id, kind in pairs
+            ):
+                raise RuntimeCandidateError(f"{name} must contain non-empty Agent/kind pairs")
+        if tuple(agent_id for agent_id, _ in self.agent_action_kinds) != tuple(
+            agent_id for agent_id, _ in self.agent_ref_kinds
+        ):
+            raise RuntimeCandidateError("mission owner action/ref Agent mappings must agree")
+
+    @property
+    def agent_ids(self) -> tuple[str, ...]:
+        return tuple(agent_id for agent_id, _ in self.agent_action_kinds)
+
+
 class RuntimeFacadeCandidateBackend:
     """Project one maintained facade world into the runtime-candidate contract.
 
@@ -91,6 +134,7 @@ class RuntimeFacadeCandidateBackend:
         identity_owner: RuntimeFacadeIdentityOwner | None = None,
         reward_reader: RewardReader,
         config_digest: str | None = None,
+        mission_owner: RuntimeFacadeMissionOwnerMapping | None = None,
     ) -> None:
         self._validate_runtime(runtime)
         if (
@@ -120,6 +164,14 @@ class RuntimeFacadeCandidateBackend:
             raise RuntimeCandidateError("RuntimeFacade reward reader must be callable")
         if config_digest is not None and (type(config_digest) is not str or not config_digest):
             raise RuntimeCandidateError("RuntimeFacade config digest must be a non-empty string")
+        if mission_owner is not None and not isinstance(
+            mission_owner, RuntimeFacadeMissionOwnerMapping
+        ):
+            raise RuntimeCandidateError("RuntimeFacade mission owner mapping is invalid")
+        if mission_owner is not None and mission_owner.agent_ids != agent_ids:
+            raise RuntimeCandidateError(
+                "RuntimeFacade mission owner mapping must cover exactly the session Agents"
+            )
         self._runtime = runtime
         if isinstance(world_index, bool) or not isinstance(world_index, int) or world_index < 0:
             raise RuntimeCandidateError("RuntimeFacade world index must be a non-negative integer")
@@ -132,6 +184,7 @@ class RuntimeFacadeCandidateBackend:
             runtime, world_index
         )
         self._reward_reader = reward_reader
+        self._mission_owner = mission_owner
         try:
             agent_refs = setup_applier(runtime)
         except Exception as exc:
@@ -201,6 +254,10 @@ class RuntimeFacadeCandidateBackend:
     @property
     def agent_ids(self) -> tuple[str, ...]:
         return self._agent_ids
+
+    @property
+    def mission_owner(self) -> RuntimeFacadeMissionOwnerMapping | None:
+        return self._mission_owner
 
     def initial_snapshot(self) -> RuntimeSnapshotFacts:
         facts = self._read_facts()
@@ -453,5 +510,7 @@ __all__ = [
     "RuntimeFacadeCandidateBackend",
     "RuntimeFacadeIdentityOwner",
     "RuntimeFacadeNativeIdentityOwner",
+    "RuntimeFacadeMissionOwnerMapping",
+    "SECOND_AIR_MISSION_SURFACE",
     "SetupApplier",
 ]
