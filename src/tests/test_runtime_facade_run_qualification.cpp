@@ -1,4 +1,4 @@
-#include "runtime/host/integration/runtime_facade_run_qualification.h"
+#include "tests/runtime_facade_run_qualification.h"
 #include "runtime/host/runtime_file_artifact_ledger_store.h"
 #include "runtime/contracts/authority/runtime_authority_contract.h"
 #include "runtime/facade/runtime_facade.h"

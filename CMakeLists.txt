@@ -1054,8 +1054,8 @@ target_compile_definitions(ef_runtime_run_recorder_test PRIVATE
 # owns an actual maintained facade without any candidate host/publication path.
 # Neither target is installed or linked into an application/Python wheel.
 add_library(ef_runtime_facade_run_qualification STATIC
-    src/runtime/host/integration/runtime_facade_run_qualification.h
-    src/runtime/host/integration/runtime_facade_run_qualification.cpp
+    src/tests/runtime_facade_run_qualification.h
+    src/tests/runtime_facade_run_qualification.cpp
 )
 target_include_directories(ef_runtime_facade_run_qualification PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src

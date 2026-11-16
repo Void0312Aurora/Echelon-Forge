@@ -1,4 +1,4 @@
-#include "runtime/host/integration/runtime_facade_run_qualification.h"
+#include "tests/runtime_facade_run_qualification.h"
 
 #include "runtime/contracts/authority/runtime_authority_contract.h"
 #include "runtime/contracts/composition/runtime_composition_evidence.v1.generated.h"

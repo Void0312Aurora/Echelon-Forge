@@ -199,7 +199,7 @@ repeat/A-B evidence remain #239 gates.
 ### Maintained-facade current-attempt qualification (2026-11-16)
 
 The build-tree-only
-[`RuntimeFacadeRunQualification`](../../../../../src/runtime/host/integration/runtime_facade_run_qualification.h)
+[`RuntimeFacadeRunQualification`](../../../../../src/tests/runtime_facade_run_qualification.h)
 owns one actual maintained `RuntimeFacade` and the existing native RunRecorder.
 It admits the measured input header durably before constructing the facade,
 sets up exactly one world/episode, and verifies native seed, step/time, scope
