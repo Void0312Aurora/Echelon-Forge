@@ -1,5 +1,6 @@
 #include "core/engine/world_batch_runtime.h"
 #include "core/engine/parallel_for_index.h"
+#include "core/engine/testing/simulation_kernel_composition_test_access.h"
 #include "core/engine/testing/world_batch_runtime_test_access.h"
 #include "components/basic/common.h"
 #include "components/basic/stable_identity.h"
@@ -16,6 +17,7 @@
 #include <stdexcept>
 #include <limits>
 #include <type_traits>
+#include <tuple>
 
 static_assert(!std::is_polymorphic_v<WorldBatchRuntime>,
               "WorldBatchRuntime compatibility ABI must remain non-polymorphic");
@@ -194,6 +196,68 @@ TEST_SUITE("world_batch_runtime") {
             CHECK(runtime.batch_generation() == failed_generation + 1);
             CHECK(runtime.batch_failure_reason().empty());
             CHECK_NOTHROW(runtime.step_batch());
+        }
+    }
+
+    TEST_CASE("fatal reset rejects before changing any world or replacing failure evidence") {
+        for (const std::size_t worker_threads : {std::size_t{1}, std::size_t{3}}) {
+            WorldBatchRuntime runtime(3);
+            runtime.set_worker_threads(worker_threads);
+            runtime.reset_batch({11, 17, 23});
+            for (std::size_t index = 0; index < runtime.world_count(); ++index) {
+                auto lease = runtime.world_raw_quarantine(index).acquire_world_lease();
+                lease.world().entity("FatalResetMarker").add<SimObject>();
+            }
+            using Facts = std::tuple<std::uint64_t, std::uint64_t, double, double, std::int64_t,
+                                     bool, std::string>;
+            auto facts = [&] {
+                std::vector<Facts> result;
+                for (std::size_t index = 0; index < runtime.world_count(); ++index) {
+                    auto &kernel = runtime.world_raw_quarantine(index);
+                    const auto rng =
+                        SimulationKernelCompositionTestAccess::rng_state_for_testing(kernel);
+                    auto lease = kernel.acquire_world_lease();
+                    const auto *identity = lease.world().get<StableIdentityState>();
+                    REQUIRE(identity != nullptr);
+                    const auto *clock = ecs_get_world_info(lease.world().c_ptr());
+                    result.emplace_back(identity->episode_seed, identity->next_serial,
+                                        clock->world_time_total, clock->world_time_total_raw,
+                                        clock->frame_count_total,
+                                        lease.world().lookup("FatalResetMarker").is_alive(), rng);
+                }
+                return result;
+            };
+            // This fixture owns a paired defer scope; no C++ exception escapes a
+            // Flecs callback. Only that test-owned scope is closed at teardown.
+            struct PairedDeferScope {
+                SimulationKernel &kernel;
+                explicit PairedDeferScope(SimulationKernel &value) : kernel(value) {
+                    auto lease = kernel.acquire_world_lease();
+                    lease.world().defer_begin();
+                }
+                ~PairedDeferScope() {
+                    auto lease = kernel.acquire_world_lease();
+                    lease.world().defer_end();
+                }
+            } deferred(runtime.world_raw_quarantine(1));
+            CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
+            REQUIRE_FALSE(runtime.batch_healthy());
+            REQUIRE(runtime.batch_requires_host_recreate());
+            const auto generation = runtime.batch_generation();
+            const auto failure = runtime.batch_failure_reason();
+            const auto before = facts();
+            // Input rejection retains its existing preflight precedence.
+            CHECK_THROWS_AS(runtime.reset_batch({101, 103}), std::invalid_argument);
+            CHECK(facts() == before);
+            for (unsigned attempt = 0; attempt < 2; ++attempt) {
+                CHECK_THROWS_AS(runtime.reset_batch({101, 103, 107}), std::logic_error);
+                CHECK(facts() == before);
+                CHECK(runtime.batch_failure_reason() == failure);
+                CHECK(runtime.batch_generation() == generation);
+                CHECK_FALSE(runtime.batch_healthy());
+                CHECK(runtime.batch_requires_host_recreate());
+                CHECK_THROWS_AS(runtime.step_batch(), std::logic_error);
+            }
         }
     }
 
