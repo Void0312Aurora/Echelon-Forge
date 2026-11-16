@@ -173,7 +173,8 @@ int main(int argc, char **argv) {
                 const auto failed_reset_status = facade.batch_failure_status();
                 require_retained(retained_facts() == before_reset,
                                  "fatal reset changed native seed/entity/clock/RNG facts");
-                require_retained(failed_reset_status.failure_reason == failure_status.failure_reason,
+                require_retained(failed_reset_status.failure_reason ==
+                                     failure_status.failure_reason,
                                  "fatal reset replaced the original failure reason");
                 require(!failed_reset_status.healthy, "failed reset reopened the batch");
                 require(failed_reset_status.requires_host_recreate,

@@ -29,5 +29,4 @@ class SimulationKernelCompositionTestAccess {
         state << kernel.rng.draw_position() << '\n' << kernel.rng.engine();
         return state.str();
     }
-
 };

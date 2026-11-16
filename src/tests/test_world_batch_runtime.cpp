@@ -208,8 +208,8 @@ TEST_SUITE("world_batch_runtime") {
                 auto lease = runtime.world_raw_quarantine(index).acquire_world_lease();
                 lease.world().entity("FatalResetMarker").add<SimObject>();
             }
-            using Facts = std::tuple<std::uint64_t, std::uint64_t, double, double,
-                                     std::int64_t, bool, std::string>;
+            using Facts = std::tuple<std::uint64_t, std::uint64_t, double, double, std::int64_t,
+                                     bool, std::string>;
             auto facts = [&] {
                 std::vector<Facts> result;
                 for (std::size_t index = 0; index < runtime.world_count(); ++index) {
@@ -220,10 +220,10 @@ TEST_SUITE("world_batch_runtime") {
                     const auto *identity = lease.world().get<StableIdentityState>();
                     REQUIRE(identity != nullptr);
                     const auto *clock = ecs_get_world_info(lease.world().c_ptr());
-                    result.emplace_back(
-                        identity->episode_seed, identity->next_serial, clock->world_time_total,
-                        clock->world_time_total_raw, clock->frame_count_total,
-                        lease.world().lookup("FatalResetMarker").is_alive(), rng);
+                    result.emplace_back(identity->episode_seed, identity->next_serial,
+                                        clock->world_time_total, clock->world_time_total_raw,
+                                        clock->frame_count_total,
+                                        lease.world().lookup("FatalResetMarker").is_alive(), rng);
                 }
                 return result;
             };
