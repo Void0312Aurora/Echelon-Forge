@@ -1049,6 +1049,46 @@ target_compile_definitions(ef_runtime_run_recorder_test PRIVATE
     EF_RUNTIME_COMPOSITION_REQUEST_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/default_runtime_composition_request.v1.json"
     EF_CANDIDATE_RELEASE_PACKAGE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/architecture/composition/fixtures/candidate_release_package.v1.bin"
 )
+
+# Build-tree-only, single-world current-attempt recording qualification. This
+# owns an actual maintained facade without any candidate host/publication path.
+# Neither target is installed or linked into an application/Python wheel.
+add_library(ef_runtime_facade_run_qualification STATIC
+    src/runtime/host/integration/runtime_facade_run_qualification.h
+    src/runtime/host/integration/runtime_facade_run_qualification.cpp
+)
+target_include_directories(ef_runtime_facade_run_qualification PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_compile_features(ef_runtime_facade_run_qualification PUBLIC cxx_std_20)
+target_link_libraries(ef_runtime_facade_run_qualification PRIVATE
+    ef_facade
+    ef_runtime_run_recorder
+    ef_runtime_authority_contracts
+    nlohmann_json::nlohmann_json
+)
+add_executable(ef_runtime_facade_run_qualification_test
+    src/tests/test_main.cpp
+    src/tests/test_runtime_facade_run_qualification.cpp
+)
+target_include_directories(ef_runtime_facade_run_qualification_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_link_libraries(ef_runtime_facade_run_qualification_test PRIVATE
+    ef_runtime_facade_run_qualification
+    ef_facade
+    ef_runtime_run_recorder
+    ef_runtime_authority_contracts
+    doctest::doctest
+    nlohmann_json::nlohmann_json
+)
+target_compile_definitions(ef_runtime_facade_run_qualification_test PRIVATE
+    EF_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
+)
+add_test(NAME runtime_facade_run_qualification COMMAND ef_runtime_facade_run_qualification_test)
+
 target_link_libraries(ef_runtime_contracts_compile_test PRIVATE
     ef_runtime_contracts
 )

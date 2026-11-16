@@ -172,6 +172,64 @@ recovery auditable.
   reports under the experiment output layout.
 - A maintained acceptance record only after exact scope and evidence gates pass.
 
+### Resolved input-lock artifact handoff (2026-11-16)
+
+The experiment owner exports two distinct files through
+[`write_resolved_input_lock_artifacts`](../../../../../python/experiment/input_lock_artifacts.py):
+
+| File role | Consumer | Identity rule |
+| --- | --- | --- |
+| Full `resolved_experiment` projection | Existing projection loader; adapter `production_resolved_input_lock_path` | Includes status and provenance outside the input identity. Its full-file SHA-256 is not the input-lock digest. |
+| Canonical `input_lock` payload | Native `RuntimeExecutionProvenanceSources.resolved_input_lock_path` | Raw file SHA-256 equals the existing `ResolvedInputLock.digest`. |
+
+`load_resolved_input_lock_artifacts` uses the existing projection reader and
+checks that the native file's exact bytes have that same digest. Export uses the
+existing canonical JSON implementation. The files must have distinct paths;
+their parent directories must already exist. Export is not a two-file
+transaction, so validate the complete pair before runtime handoff.
+
+The native receipt qualification uses this same exported pair through native
+provenance collection, durable receipt reopen, and the Python runtime binding
+assertion. It remains a three-step dark-host reference probe with
+`input_lock_semantics_executed=false`. This artifact handoff does not bind a
+production training attempt, establish a comparable Air run, or replace the
+native RunReceipt/ledger owners. Real receipt-bound Air execution and durable
+repeat/A-B evidence remain #239 gates.
+
+### Maintained-facade current-attempt qualification (2026-11-16)
+
+The build-tree-only
+[`RuntimeFacadeRunQualification`](../../../../../src/runtime/host/integration/runtime_facade_run_qualification.h)
+owns one actual maintained `RuntimeFacade` and the existing native RunRecorder.
+It admits the measured input header durably before constructing the facade,
+sets up exactly one world/episode, and verifies native seed, step/time, scope
+and health against a fixed positive step budget. Native observed result and
+validation artifacts refer to that attempt. Shutdown and reclamation are
+recorded only after actual facade destruction; a separate read-only native
+process verifies the finalized receipt and its blobs.
+
+The isolated targets are `ef_runtime_facade_run_qualification` and
+`ef_runtime_facade_run_qualification_test`; neither is installed or linked into
+the Python wheel, and neither links a candidate host. The
+[cross-process input-lock test](../../../../../tests/architecture/composition/test_native_facade_receipt_input_lock_qualification.py)
+uses the same two artifact roles above. Its header uses existing versioned
+authority shells as qualification inputs, not accepted production release
+trust; terminal facts come from the recorder and live native execution.
+
+This slice admits only the maintained default composition, one spawned entity,
+one episode and no autoreset. Its result records
+the admitted `time_step_ns`, actual `world_time_step`, observed frame delta and
+unmodified simulation time. The CPU ingress quantizes frame increments through
+`ecs_ftime_t`; fixed-step completion does not claim exact execution of the
+declared nanosecond duration. Both result and native validation preserve these
+distinct facts. The result also records
+`input_lock_semantics_executed=false`: a reference-bound native facade attempt
+does not prove that a full Air training/policy configuration was executed.
+Production release admission, training hookup, multi-world/multi-episode
+recording and real Air repeat/A-B evidence remain separate #239 gates. There is
+no new recorder, receipt schema, publication authority or transaction ledger.
+
+
 ## Acceptance Gate
 
 This subproject can be accepted only when:
