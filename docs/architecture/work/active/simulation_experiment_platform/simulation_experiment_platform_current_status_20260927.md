@@ -1,6 +1,6 @@
 # Simulation Experiment Platform Current Status
 
-Status: `2026-10-18` P0/P1/P2 are complete. P3 supports the selected native
+Status: `2026-11-16` P0/P1/P2 are complete. P3 supports the selected native
 CPU checkpoint/session lifecycle, typed flight controls, explicit speed-change
 scoring, and a fixed branch comparison with verified replay. P4-A now provides
 an audited lineage-preserving trace projection with fixed training/evaluation
@@ -14,7 +14,63 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/simulation_experiment_platform/simulation_experiment_platform_current_status_20260927.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-10-18`
+Last verified: `2026-11-16`
+
+## 2026-11-16 Local Stack Verification
+
+This recheck uses implementation and fresh artifacts rather than treating the
+historical records below as current-main acceptance. `origin/main` is pinned at
+`23a936694`. The GitHub API recheck on `2026-11-16` found PRs `#325`, `#326` and
+`#327` open and draft, at heads `9b4102bce`, `98e334167` and `4502b7618`.
+The following local fixes have not been pushed or merged:
+
+| Local line | Tested change | Revision |
+| --- | --- | --- |
+| `exp/pr2-native-branch` | Carries episode identity, exact double clock/frame count, generation-aware census and scenario settings; fixes repeatable Flecs patch application | `87f4f653c`, `3ecb79938`, `eac68f669`, `487241cb3` |
+| `exp/pr2-native-branch` | Enforces native sibling horizon, copies remaining checkpoint budget, isolates default journal owners, and rejects content not carried into a fresh child | `f7335bc74` |
+| `fix-experiment-runtime-session` | Stacks the existing Python runtime adapter on that native line; rejects exhausted session horizons before backend dispatch | `b7403bedd` |
+
+Fresh Windows/MSVC Release verification used Python 3.12 and both newly built
+extensions, `ef_py` and `ef_runtime_candidate_py`. Old binaries omitted the new
+branch cases and bindings and are not counted as current validation.
+
+| Executed check | Result | Evidence boundary |
+| --- | --- | --- |
+| Focused native CTest: host candidate, kernel candidate, candidate parity, authority, recorder and boundary checks | 8/8 passed | Includes Route B budget rejection, checkpoint independence, loaded-raster rejection and caller-owned explicit journal preservation |
+| Facade/native journal Python tests plus state-transfer contract and Flecs patch tests | 23 passed | Includes two processes with the same temporary root and host identity; the surviving process keeps its WAL and continues after the other owner exits |
+| `tests/architecture/structural_boundaries` | 21 passed | Source ownership and include boundary checks |
+| Full `tests/experiment` on the repaired session line and fresh native extensions | 445 passed | Selected CPU lifecycle, three aircraft seeds, facade owner, trace, observation and projection regressions; no skipped native-binding cases in this run |
+
+The focused native command was:
+
+```powershell
+ctest --test-dir <build> --output-on-failure `
+  -R 'runtime_(kernel_candidate|host_candidate|authority_contract|run_recorder|contracts_boundary)'
+```
+
+The Python commands used `CMO_BUILD_DIR` and `PYTHONPATH` pointing to that fresh
+build, then ran the focused files and `python -m pytest -q tests/experiment`.
+Ruff and CRLF-aware `git diff --check` passed on the edited source/test files.
+
+The new bounded behavior is explicit: a sibling may perform only its admitted
+number of successful steps. Checkpointing preserves its remaining budget;
+retaining a zero-budget checkpoint is valid, and a new fork requires a new
+positive horizon. Session validation rejects over-budget dispatch before a
+backend call. Historical tests that continued for two or four steps now request
+those budgets rather than relying on the old unenforced limit.
+
+Loaded unit catalogs, Arnis terrain rasters and field overlays remain outside
+the current child-content codec. Their transfer is rejected instead of
+silently substituting a built-in catalog or default terrain. The default WAL
+uses an atomically reserved per-owner directory; an explicit `journal_path`
+remains caller-owned and is preserved for reopening.
+
+This run does not establish full-observation replay equality, production mission
+reward semantics, generic binding of a session's declared seed to every backend,
+portable recovery, GPU parity or learner improvement. The generic kernel
+candidate's zero reward remains a diagnostic placeholder. The existing trace
+comparison verifies its declared state/event/RNG/reward/provenance fields;
+additional owner coverage and observation comparison need separate gates.
 
 ## Baseline Revision
 
@@ -47,7 +103,7 @@ Last verified: `2026-10-18`
 | Provenance | Agent-shim vocabulary distinguishes maintained observation, decision belief, raw truth, and diagnostics. | Branch traces must retain these labels. |
 | Replay | CUDA resident replay contracts define selected-field comparison and snapshot-version reporting. | They are candidate backend replay evidence, not a generic counterfactual contract. |
 | Episode storage | `EpisodeStore` stores arrays and optional expert actions. | It lacks immutable branch lineage, runtime profile, and manifest identity. |
-| Native checkpoint | Route B branch execution and opaque checkpoint cloning reuse the twelve-row owner registry and native transfer authority. | In-process, dark/shadow, one CPU world; no portable checkpoint format or production publication. |
+| Native checkpoint | Route B branch execution and opaque checkpoint cloning reuse the native transfer authority; the local generation-6 census has thirteen categories, including scenario settings. Older censuses explicitly record categories they do not carry. | In-process, dark/shadow, one CPU world; loaded content is rejected, with no portable checkpoint format or production publication. |
 | Toy canary | Candidate selection, deterministic toy branches, horizon effects, and interaction residual are tested. | Results are synthetic/toy only. |
 | Candidate discovery | `python/experiment/candidate_discovery.py` branches a synthetic causal world through the reference session and compares uniform, reward, TD, and oracle selectors on held-out seeds. | Synthetic only; results live in the counterfactual search issue. |
 | Experiment contracts | The reference session and native CPU candidate adapter produce the shared session, snapshot, branch, transition, and manifest contracts. | Python retains identity projections and opaque handles; authoritative payloads stay native. |
@@ -81,14 +137,16 @@ This package currently does not establish:
 
 ## Immediate Sequence
 
-1. Integrate explicit action/ref owners for additional mission surfaces while
+1. Review and integrate the verified native, session and evidence follow-ups in
+   `#325` → `#326` → `#327` order, retaining the selected-slice limits above.
+2. Integrate explicit action/ref owners for additional mission surfaces while
    keeping native state ownership in the maintained C++ facade.
-2. Broaden scenario and state-owner coverage beyond the fixed flight-control
+3. Broaden scenario and state-owner coverage beyond the fixed flight-control
    diagnostic, retaining explicit action and evaluator definitions.
-3. Broaden maintained runtime numeric observation sources and direct
+4. Broaden maintained runtime numeric observation sources and direct
    learner-dataset exports beyond the fixed pilot across admitted mission
    surfaces; keep the native candidate evidence label.
-4. Extend durable recovery through the existing native checkpoint authority,
+5. Extend durable recovery through the existing native checkpoint authority,
    then qualify alternate backends under the shared semantics.
 
 The checkpoint/session integration is implemented: save a native clone, advance

@@ -1,6 +1,6 @@
 # Simulation Experiment Platform
 
-Status: `2026-10-18` active. P0/P1/P2 are complete. The selected native CPU
+Status: `2026-11-16` active. P0/P1/P2 are complete. The selected native CPU
 slice supports session checkpoints, restore, historical/nested branches, and
 verified replay. Typed flight actions, an explicit speed-change evaluator, and
 a fixed native branch comparison now pass. The P4-A trace projection contract
@@ -9,6 +9,11 @@ RuntimeFacade Agent-packet bridge, a fail-closed maintained-facade session
 boundary, an explicit Python action/ref branch-owner injection, and optional
 persisted PPO `EpisodeStore` export are available for selected native branches;
 broader mission and durable recovery coverage remain incomplete.
+
+The [current status](simulation_experiment_platform_current_status_20260927.md#2026-11-16-local-stack-verification)
+records fresh local native and Python verification, bounded branch horizons,
+isolated temporary journals, and the rejected loaded-content boundary. Those
+local follow-ups have not been pushed to the open PR stack.
 
 Language:
 
@@ -19,7 +24,7 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/work/active/simulation_experiment_platform/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-10-18`
+Last verified: `2026-11-16`
 
 Inputs:
 
