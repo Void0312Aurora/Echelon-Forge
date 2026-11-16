@@ -145,6 +145,29 @@ full projection to the native payload slot. Production Air current-attempt
 recorder integration remains a separate gate; a dark receipt does not establish
 that input-lock semantics were executed.
 
+### Maintained-facade current-attempt qualification
+
+The build-tree-only `RuntimeFacadeRunQualification` slice at
+`f284caa4d` now owns one real maintained facade and the existing native
+`RuntimeRunRecorder` for a single world, episode and spawned entity. Durable
+admission and strict execution-provenance/plan checks happen before facade
+construction. Native facts, composition evidence, scheduler-topology integrity,
+seed, scope generations, health, observed time and fixed step count are checked
+from the live owner. The result preserves the admitted timestep, native
+configured timestep, observed simulation time, actual `ecs_ftime_t` frame delta,
+and the explicit `input_lock_semantics_executed=false` boundary.
+
+The facade is actually destroyed before shutdown and reclamation lifecycle
+events are recorded. A second read-only native owner reopens the receipt and
+artifact blobs. The native target passed 4 cases / 143 assertions (including
+3-step and 7-step success plus seven real drift/fault cases), and the
+cross-process Python qualification passed 8 tests. The new architecture test is
+registered exactly once in `architecture_guard_suite.json`; the target is
+build-tree-only, has no candidate-host or wheel linkage, and does not promote
+production Air input-lock semantics. The remaining #239 gates are production
+current-attempt ownership, multi-world/multi-episode recording and real Air
+repeat/A-B evidence.
+
 ### Independent Environment Handoff
 
 The `environment-query-contract` line at `e2c94a8ce`, based directly on
@@ -156,19 +179,39 @@ through the native branch codec.
 
 Its focused target passed 9 cases / 6950 assertions and its CTest entry passed;
 the full native suite passed 371 cases with 1 skipped, and the selected Ground
-native subset passed 6 cases / 55 assertions. The Python combination had
-88 passed, 2 failed and 4 subtests. The failures remain open: the blocked Ground
-position test still expects z zero after the existing movement code projects it
-to source height, and the Gym position Box still permits z only in [-1, 1].
-The affected movement, adapter, probe and test blobs are identical to main.
-These failures are not counted as green or repaired by the new query.
+native subset passed 6 cases / 55 assertions. The first Python combination had
+88 passed, 2 failed and 4 subtests; those two failures were subsequently fixed
+in the independent Ground follow-up [#328](https://github.com/Void0312Aurora/Echelon-Forge/pull/328)
+at `f1483f559`. The follow-up maps the existing `float32_le` Arnis dtype to
+NumPy `<f4`, derives finite position-height bounds from the source raster with
+outward float32 rounding, and separates horizontal blocking from terrain-owned
+absolute z projection. Its Ground/probe/proxy and architecture combination
+passed 111 tests and 4 subtests. It changes no native movement, typed query,
+LOS, route or admission code.
 
 The Environment line also retains a pre-existing census failure: main has 1001
 tracked documents but records 873, and the candidate adds only one tier-B page.
 That branch's broad baseline was not refreshed as part of the point-query API.
-This is distinct from the census reconciliation already owned by the #327
-evidence stack above. The next Ground slice must resolve the height assertion
-and Gym observation-space contract before a consumer migration is accepted.
+This remains distinct from the census reconciliation already owned by the #327
+evidence stack above.
+
+### Failure recovery handoff
+
+The native recovery follow-up [#329](https://github.com/Void0312Aurora/Echelon-Forge/pull/329)
+at `b82c92583` adds a fatal-reset preflight after seed validation and before any
+world mutation. It preserves the original failure reason, generation and world
+facts, without adding a completion bitmap or clearing an unfinished pipeline.
+The Python `WorldBatchVecEnv` separately fences incomplete observation/reward/
+reset publication and requires a complete explicit reset before either step
+entrypoint can run again; native health is not inferred from that local fence.
+
+The native regression passed 62 assertions, the full `ef_test` passed 372 cases
+with 1 skipped and 171097 assertions, and six escaped-callback probes plus two
+replacement-process probes passed. The focused Python recovery tests passed 12;
+the integrated WorldBatch/native-failure run passed 245 with 1 skipped and 18
+subtests, retaining two unchanged cooperative baseline failures. The stale
+rebuild-inventory fixture also reproduces its one failure on untouched main and
+is not claimed as repaired here.
 
 ## Baseline Revision
 
