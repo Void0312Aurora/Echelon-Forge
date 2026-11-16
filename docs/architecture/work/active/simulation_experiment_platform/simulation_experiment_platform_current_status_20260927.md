@@ -28,7 +28,9 @@ The following local fixes have not been pushed or merged:
 | --- | --- | --- |
 | `exp/pr2-native-branch` | Carries episode identity, exact double clock/frame count, generation-aware census and scenario settings; fixes repeatable Flecs patch application | `87f4f653c`, `3ecb79938`, `eac68f669`, `487241cb3` |
 | `exp/pr2-native-branch` | Enforces native sibling horizon, copies remaining checkpoint budget, isolates default journal owners, and rejects content not carried into a fresh child | `f7335bc74` |
-| `fix-experiment-runtime-session` | Stacks the existing Python runtime adapter on that native line; rejects exhausted session horizons before backend dispatch | `b7403bedd` |
+| `fix-experiment-runtime-session` | Stacks the existing Python runtime adapter on that native line; rejects exhausted session horizons before backend dispatch | `a5f1558f6` |
+| `exp/pr2-native-branch` | Exposes a read-only optional episode seed from the exact serialized native world used for the state digest | `1fe9367e2` |
+| `fix-experiment-runtime-session` | Requires the declared session seed to match native owner facts; compares the complete declared AgentObservation projection during replay | `5c3d87a27` |
 
 Fresh Windows/MSVC Release verification used Python 3.12 and both newly built
 extensions, `ef_py` and `ef_runtime_candidate_py`. Old binaries omitted the new
@@ -38,8 +40,10 @@ branch cases and bindings and are not counted as current validation.
 | --- | --- | --- |
 | Focused native CTest: host candidate, kernel candidate, candidate parity, authority, recorder and boundary checks | 8/8 passed | Includes Route B budget rejection, checkpoint independence, loaded-raster rejection and caller-owned explicit journal preservation |
 | Facade/native journal Python tests plus state-transfer contract and Flecs patch tests | 23 passed | Includes two processes with the same temporary root and host identity; the surviving process keeps its WAL and continues after the other owner exits |
-| `tests/architecture/structural_boundaries` | 21 passed | Source ownership and include boundary checks |
-| Full `tests/experiment` on the repaired session line and fresh native extensions | 445 passed | Selected CPU lifecycle, three aircraft seeds, facade owner, trace, observation and projection regressions; no skipped native-binding cases in this run |
+| Structural boundaries, state-transfer candidate contract and Flecs patch tests | 38 passed | Source ownership, include boundaries, generation-aware state-transfer metadata and patch repeatability |
+| Native facade identity and branch Python tests | 8 passed | Includes seed zero, maximum uint32 seed, read-only seed facts and nested checkpoint/fork preservation |
+| Full `tests/experiment` on the repaired session line and fresh native extensions | 581 passed | Includes 120 complete-projection cases, wrong-seed rejection without resetting setup, actual aircraft/facade replay and observation-only drift rejection; no skipped native-binding cases in this run |
+| Document tier census | 9 passed | Refreshes the pre-existing 991-document record to the measured 1007 tracked documents on this stack; no document tier or translation policy was changed |
 
 The focused native command was:
 
@@ -65,12 +69,88 @@ silently substituting a built-in catalog or default terrain. The default WAL
 uses an atomically reserved per-owner directory; an explicit `journal_path`
 remains caller-owned and is preserved for reopening.
 
-This run does not establish full-observation replay equality, production mission
-reward semantics, generic binding of a session's declared seed to every backend,
-portable recovery, GPU parity or learner improvement. The generic kernel
-candidate's zero reward remains a diagnostic placeholder. The existing trace
-comparison verifies its declared state/event/RNG/reward/provenance fields;
-additional owner coverage and observation comparison need separate gates.
+The initial 445-test pass did not establish observation replay equality or bind
+the session seed to its native owner. Round 2 closes the bounded checks below;
+production mission reward semantics, portable recovery, GPU parity and learner
+improvement remain outside this evidence. The generic kernel candidate's zero
+reward is still a diagnostic placeholder.
+
+### Round 2: Seed And Observation Identity
+
+The native seed is read from `identity.episode_seed` in the same serialized world
+payload used by `state_digest`, not from a construction config. Facade and kernel
+facts expose the original uint64 value as a read-only optional field. Missing,
+boolean, out-of-range or mismatched seed facts are rejected by the session;
+valid seed zero is admitted. The shared SessionSpec integer domain remains
+unchanged. No validation path resets an already set-up world.
+
+The packet-capable replay path freezes an immutable digest when each observation
+is captured. Replay compares the checkpoint observation and every subsequent
+endpoint, using positions relative to the source branch's origin. The declared
+projection covers every bound AgentObservation field and all ordered TrackData,
+RWR and ESM fields. Finite doubles retain exact hexadecimal values; uint64 ids
+retain exact typed decimal values. Own-entity ids are normalized to the session
+Agent only after the requested ref, packet ref and observed id agree. Sensor ids
+remain significant, so owner-local sensor-id changes conservatively fail replay.
+
+Packet ids, transport version and source-version tokens remain owner-local:
+each packet must carry internally consistent native tokens. Their full strings
+are not a cross-owner state identity. The maintained facade currently derives
+its packet version from ref count (a single-Agent packet stays at version one),
+whereas native children use step plus one. That existing discrepancy is not
+rewritten here. Semantic provenance, source time and complete declared observed
+values are compared, alongside the existing native state/event/RNG/step trace.
+InstrumentState is not part of this declared AgentObservation projection.
+Backends without a packet reader retain state-only replay and advertise
+`can_verify_observation_replay=False`.
+
+The seed DTO change exposed stale MSVC objects with zero Ninja dependencies in
+an incremental build. A clean 180-step rebuild removed the mixed ABI. Caller,
+candidate-test and Python-binding objects subsequently reported 315, 335 and
+426 valid dependencies respectively; the 8 native CTest gates then passed on
+the consistent artifacts. Earlier ABI-crashing runs are not counted as passes.
+
+### Independent Input-Lock Artifact Handoff
+
+The `input-lock-artifact-binding` line at `5a7b0da1f`, based on `5c3d87a27`,
+exports two explicit file roles: the complete resolved-experiment projection for
+the existing Python loader, and canonical input-lock payload bytes for native
+raw-file hashing. The pair is validated before use; the payload's raw SHA-256
+must equal the existing input-lock digest. This creates no additional receipt,
+manifest, runtime DTO or ledger and does not claim a two-file transaction.
+
+The focused exporter, existing resolved-input-lock and native receipt
+qualification combination passed 53 tests using the fresh native executable.
+It checks the real collector, durable reopen, stored payload bytes and existing
+Python assertion, including a negative control that mistakenly supplies the
+full projection to the native payload slot. Production Air current-attempt
+recorder integration remains a separate gate; a dark receipt does not establish
+that input-lock semantics were executed.
+
+### Independent Environment Handoff
+
+The `environment-query-contract` line at `e2c94a8ce`, based directly on
+`origin/main` at `23a936694`, adds the candidate raw raster point observation.
+It pairs height and surface from one cell, reports availability and original
+frame/datum/source metadata, and preserves legacy scalar consumers. It neither
+accepts the complete Environment P2 contract nor carries loaded raster content
+through the native branch codec.
+
+Its focused target passed 9 cases / 6950 assertions and its CTest entry passed;
+the full native suite passed 371 cases with 1 skipped, and the selected Ground
+native subset passed 6 cases / 55 assertions. The Python combination had
+88 passed, 2 failed and 4 subtests. The failures remain open: the blocked Ground
+position test still expects z zero after the existing movement code projects it
+to source height, and the Gym position Box still permits z only in [-1, 1].
+The affected movement, adapter, probe and test blobs are identical to main.
+These failures are not counted as green or repaired by the new query.
+
+The Environment line also retains a pre-existing census failure: main has 1001
+tracked documents but records 873, and the candidate adds only one tier-B page.
+That branch's broad baseline was not refreshed as part of the point-query API.
+This is distinct from the census reconciliation already owned by the #327
+evidence stack above. The next Ground slice must resolve the height assertion
+and Gym observation-space contract before a consumer migration is accepted.
 
 ## Baseline Revision
 
