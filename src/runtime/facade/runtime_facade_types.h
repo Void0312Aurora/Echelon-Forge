@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -87,6 +88,9 @@ struct RuntimeNativeSnapshotFacts {
     std::uint64_t event_cursor = 0;
     std::string rng_digest;
     bool terminated = false;
+    // Read from the exact serialized StableIdentityState used by state_digest.
+    // Absence is distinct from the valid seed zero.
+    std::optional<std::uint64_t> episode_seed;
 
     [[nodiscard]] bool well_formed() const noexcept;
     bool operator==(const RuntimeNativeSnapshotFacts &) const = default;

@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <nanobind/stl/optional.h>
 #include <string>
 #include <utility>
 #include <vector>
@@ -16,6 +17,7 @@ void bind_runtime_runtime(nb::module_ &m) {
         .def_rw("event_cursor", &RuntimeNativeSnapshotFacts::event_cursor)
         .def_rw("rng_digest", &RuntimeNativeSnapshotFacts::rng_digest)
         .def_rw("terminated", &RuntimeNativeSnapshotFacts::terminated)
+        .def_ro("episode_seed", &RuntimeNativeSnapshotFacts::episode_seed)
         .def("well_formed", &RuntimeNativeSnapshotFacts::well_formed);
 
     nb::class_<RuntimeFacadeNativeBranch>(m, "RuntimeFacadeNativeBranch")

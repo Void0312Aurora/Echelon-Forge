@@ -1,6 +1,7 @@
 #include "runtime/facade/internal/flecs_cpu_backend.h"
 #include "runtime/crypto/sha256.h"
 
+#include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <utility>
 
@@ -287,6 +288,10 @@ RuntimeNativeSnapshotFacts FlecsCpuBackend::native_snapshot_facts(std::size_t wo
             .event_cursor = native_step_sequences_[world_index],
             .rng_digest = runtime::crypto::sha256_hex(rng_payload),
             .terminated = false,
+            .episode_seed = nlohmann::json::parse(world_payload)
+                                .at("identity")
+                                .at("episode_seed")
+                                .get<std::uint64_t>(),
         };
     }();
     if (!facts.well_formed()) {

@@ -74,6 +74,7 @@ struct RuntimeKernelSnapshotFacts {
     std::uint64_t event_cursor = 0;
     std::string rng_digest;
     bool terminated = false;
+    std::optional<std::uint64_t> episode_seed;
 };
 
 // Candidate-owned packet DTO. It mirrors the maintained packet fields without

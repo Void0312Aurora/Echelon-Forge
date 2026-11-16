@@ -56,6 +56,8 @@ RuntimeNativeSnapshotFacts snapshot_for(SimulationKernel &kernel, std::uint64_t 
         .event_cursor = step,
         .rng_digest = runtime::crypto::sha256_hex(rng),
         .terminated = false,
+        .episode_seed =
+            nlohmann::json::parse(world).at("identity").at("episode_seed").get<std::uint64_t>(),
     };
 }
 
@@ -158,7 +160,8 @@ EntityRemap compose_remap(const EntityRemap &external_to_source,
 } // namespace
 
 bool RuntimeNativeSnapshotFacts::well_formed() const noexcept {
-    return lower_hex_sha256(state_digest) && lower_hex_sha256(rng_digest) && event_cursor == step;
+    return lower_hex_sha256(state_digest) && lower_hex_sha256(rng_digest) && event_cursor == step &&
+           episode_seed.has_value();
 }
 
 struct RuntimeFacadeNativeBranch::ConstructionKey {};

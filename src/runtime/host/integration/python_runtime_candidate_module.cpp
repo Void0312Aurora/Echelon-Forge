@@ -29,7 +29,8 @@ NB_MODULE(ef_runtime_candidate_py, m) {
         .def_rw("state_digest", &RuntimeKernelSnapshotFacts::state_digest)
         .def_rw("event_cursor", &RuntimeKernelSnapshotFacts::event_cursor)
         .def_rw("rng_digest", &RuntimeKernelSnapshotFacts::rng_digest)
-        .def_rw("terminated", &RuntimeKernelSnapshotFacts::terminated);
+        .def_rw("terminated", &RuntimeKernelSnapshotFacts::terminated)
+        .def_ro("episode_seed", &RuntimeKernelSnapshotFacts::episode_seed);
 
     nb::class_<RuntimeCandidateObservationPacket>(m, "RuntimeCandidateObservationPacket")
         .def(nb::init<>())

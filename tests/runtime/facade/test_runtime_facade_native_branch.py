@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 
@@ -15,6 +17,7 @@ def _facts_tuple(value: object) -> tuple[object, ...]:
         value.event_cursor,
         value.rng_digest,
         value.terminated,
+        value.episode_seed,
     )
 
 
@@ -138,3 +141,25 @@ def test_native_branch_rejects_untransferred_loaded_unit_definitions() -> None:
     before = _facts_tuple(facade.native_snapshot_facts())
     assert facade.fork_native_branch(0, "b" * 64, 1) is None
     assert _facts_tuple(facade.native_snapshot_facts()) == before
+
+
+@pytest.mark.parametrize("seed", [0, 7, 2**32 - 1])
+def test_native_episode_seed_is_an_owner_fact_preserved_by_forks(seed: int) -> None:
+    facade = ef_py.RuntimeFacade(1)
+    request = ef_py.BatchResetRequest()
+    request.seeds = [seed]
+    facade.reset_batch(request)
+    initial = facade.native_snapshot_facts()
+    assert initial.episode_seed == seed
+    with pytest.raises(AttributeError):
+        initial.episode_seed = seed + 1
+    child = facade.fork_native_branch(0, "a" * 64, 2)
+    assert child is not None
+    assert child.snapshot_facts().episode_seed == seed
+    assert child.step_pilot_actions([])
+    checkpoint = child.checkpoint()
+    assert checkpoint is not None
+    assert checkpoint.snapshot_facts().episode_seed == seed
+    nested = checkpoint.fork_native_branch("b" * 64, 1)
+    assert nested is not None
+    assert nested.snapshot_facts().episode_seed == seed

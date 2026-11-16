@@ -79,6 +79,8 @@ snapshot_facts_for(const std::shared_ptr<SimulationKernel> &kernel,
     }
     try {
         const auto world = SimulationKernelStateOwnerBridge::serialize_world(*kernel);
+        facts.episode_seed =
+            nlohmann::json::parse(world).at("identity").at("episode_seed").get<std::uint64_t>();
         facts.state_digest =
             runtime_state_payload_sha256(std::vector<std::uint8_t>(world.begin(), world.end()));
         const auto rng = SimulationKernelStateOwnerBridge::serialize_rng(*kernel);
