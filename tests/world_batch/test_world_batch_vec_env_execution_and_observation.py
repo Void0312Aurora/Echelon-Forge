@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
@@ -12,6 +13,7 @@ from python.runtime_bootstrap import ensure_repo_imports
 ensure_repo_imports()
 
 import torch  # noqa: E402
+import ef_py  # noqa: E402
 
 import python.rl.runtime.world_batch._observation_mixin as observation_mixin_module  # noqa: E402
 import python.rl.runtime.world_batch.vec_env as vec_env_module  # noqa: E402
@@ -30,6 +32,238 @@ def _write_scenario(tmp_path, scenario: dict, filename: str = "inline_scenario.j
     scenario_path = tmp_path / filename
     scenario_path.write_text(json.dumps(scenario, ensure_ascii=True), encoding="utf-8")
     return str(scenario_path)
+
+
+@pytest.mark.parametrize("world_count,worker_threads", [(3, 1), (4, 2)])
+@pytest.mark.parametrize("shared_reset", [True, False])
+def test_world_batch_vec_env_reset_recovers_unhealthy_native_generation(
+    tmp_path, monkeypatch, world_count, worker_threads, shared_reset
+) -> None:
+    scenario_path = _write_scenario(tmp_path, _inline_vec_env_scenario())
+    vec_env = WorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=world_count,
+        worker_threads=worker_threads,
+        include_visual=False,
+        include_proprio=False,
+    )
+    try:
+        vec_env.seed(123)
+        vec_env.reset()
+        before = vec_env.batch_failure_status()
+        assert before.healthy
+
+        if not shared_reset:
+            monkeypatch.setattr(vec_env, "_shared_randomization_overrides", lambda: None)
+
+        original_step = vec_env._runtime_adapter.step_batch
+
+        def _fail_after_native_step():
+            original_step()
+            request = ef_py.RuntimeWorldLayoutRequest()
+            request.world_index = 1
+            request.terrain_type = "qualification.invalid_terrain"
+            request.time_steps = [0.1]
+            vec_env.runtime_facade.apply_world_layout(request)
+
+        # Exercise the real step_wait path. The test-only wrapper advances the
+        # native batch and then raises from an actual mutating facade call.
+        # It does not simulate a Flecs callback fault or its terminal scopes.
+        monkeypatch.setattr(vec_env._runtime_adapter, "step_batch", _fail_after_native_step)
+        handle_steps = [handle.steps for handle in vec_env._handles]
+        vec_env.step_async(np.zeros((world_count, 17), dtype=np.float32))
+        with pytest.raises(ValueError, match="Unknown terrain_type"):
+            vec_env.step_wait()
+        assert vec_env._actions is None
+        assert [handle.steps for handle in vec_env._handles] == handle_steps
+        with pytest.raises(RuntimeError, match="step_async"):
+            vec_env.step_wait()
+        monkeypatch.setattr(vec_env._runtime_adapter, "step_batch", original_step)
+
+        failed = vec_env.batch_failure_status()
+        assert not failed.healthy
+        assert failed.generation == before.generation
+        assert not failed.requires_host_recreate
+        with pytest.raises(RuntimeError, match="failed-closed"):
+            vec_env.runtime_facade.export_composition_evidence()
+
+        # VecEnv.reset is the caller-visible recovery boundary.  It must use
+        # native reset_batch before scenario setup, which creates a new
+        # healthy generation rather than trying setup on the failed one.
+        vec_env.reset()
+        recovered = vec_env.batch_failure_status()
+        assert recovered.healthy
+        assert recovered.generation == failed.generation + 1
+        assert vec_env._actions is None
+        assert all(handle.steps == 0 for handle in vec_env._handles)
+        assert vec_env._policy_execution_device_view is None
+        assert vec_env._policy_visual_device_view is None
+        _obs, rewards, _dones, _infos = vec_env.step(
+            np.zeros((world_count, 17), dtype=np.float32)
+        )
+        assert np.isfinite(rewards).all()
+    finally:
+        vec_env.close()
+
+
+def test_world_batch_vec_env_reset_preserves_terminal_native_fence(tmp_path, monkeypatch) -> None:
+    scenario_path = _write_scenario(tmp_path, _inline_vec_env_scenario())
+    vec_env = WorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=1,
+        include_visual=False,
+        include_proprio=False,
+    )
+    try:
+        vec_env.seed(123)
+        vec_env.reset()
+        status = SimpleNamespace(
+            healthy=False,
+            generation=7,
+            requires_host_recreate=True,
+            failure_reason="unfinished native pipeline",
+        )
+        monkeypatch.setattr(vec_env._runtime_adapter, "batch_failure_status", lambda: status)
+        reset_called = False
+
+        def _unexpected_reset(_seeds=None):
+            nonlocal reset_called
+            reset_called = True
+            raise AssertionError("terminal native failure must not reset in-process")
+
+        monkeypatch.setattr(vec_env._runtime_adapter, "reset_batch", _unexpected_reset)
+        with pytest.raises(RuntimeError, match="requires host recreation"):
+            vec_env.reset()
+        assert not reset_called
+    finally:
+        vec_env.close()
+
+
+@pytest.mark.parametrize("stage", ["_step_wait_prepare_actions", "_step_wait_advance_worlds"])
+def test_world_batch_vec_env_failed_step_consumes_pending_action(tmp_path, monkeypatch, stage) -> None:
+    scenario_path = _write_scenario(tmp_path, _inline_vec_env_scenario())
+    vec_env = WorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=1,
+        include_visual=False,
+        include_proprio=False,
+    )
+    try:
+        vec_env.seed(123)
+        vec_env.reset()
+        vec_env.step_async(np.zeros((1, 17), dtype=np.float32))
+        error = RuntimeError("failed-closed")
+
+        def _failed_step(*_args):
+            raise error
+
+        monkeypatch.setattr(vec_env, stage, _failed_step)
+        with pytest.raises(RuntimeError, match="failed-closed") as raised:
+            vec_env.step_wait()
+        assert raised.value is error
+        assert vec_env._actions is None
+        with pytest.raises(RuntimeError, match="step_async"):
+            vec_env.step_wait()
+    finally:
+        vec_env.close()
+
+
+def test_world_batch_vec_env_failed_native_reset_keeps_generation_and_projections(
+    tmp_path, monkeypatch
+) -> None:
+    scenario_path = _write_scenario(tmp_path, _inline_vec_env_scenario())
+    vec_env = WorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=3,
+        include_visual=False,
+        include_proprio=False,
+    )
+    try:
+        monkeypatch.setattr(vec_env, "_shared_randomization_overrides", lambda: None)
+        vec_env.seed(123)
+        vec_env.reset()
+        request = ef_py.RuntimeWorldLayoutRequest()
+        request.world_index = 1
+        request.terrain_type = "qualification.invalid_terrain"
+        with pytest.raises(ValueError, match="Unknown terrain_type"):
+            vec_env.runtime_facade.apply_world_layout(request)
+        failed = vec_env.batch_failure_status()
+        adapter = vec_env._runtime_adapter
+        layouts = dict(adapter._world_layouts)
+        time_steps = dict(adapter._world_time_steps)
+        assert layouts and time_steps
+        original_reset = adapter.reset_batch
+
+        def _invalid_recovery_seeds(_seeds):
+            original_reset([11, 17])  # Neither base seed nor three-world scope.
+
+        monkeypatch.setattr(adapter, "reset_batch", _invalid_recovery_seeds)
+        with pytest.raises(ValueError, match="seeds"):
+            vec_env.reset()
+        status = vec_env.batch_failure_status()
+        assert not status.healthy
+        assert status.generation == failed.generation
+        assert adapter._world_layouts == layouts
+        assert adapter._world_time_steps == time_steps
+        with pytest.raises(RuntimeError, match="failed-closed"):
+            vec_env.runtime_facade.step_batch()
+
+        monkeypatch.setattr(adapter, "reset_batch", original_reset)
+        vec_env.reset()
+        assert vec_env.batch_failure_status().generation == failed.generation + 1
+    finally:
+        vec_env.close()
+
+
+def test_world_batch_vec_env_healthy_reset_and_autoreset_keep_native_generation(tmp_path) -> None:
+    scenario_path = _write_scenario(tmp_path, _inline_vec_env_scenario())
+    vec_env = WorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=2,
+        include_visual=False,
+        include_proprio=False,
+    )
+    try:
+        vec_env.seed(123)
+        vec_env.reset()
+        generation = vec_env.batch_failure_status().generation
+        vec_env.step_async(np.zeros((2, 17), dtype=np.float32))
+        vec_env.reset()
+        assert vec_env._actions is None
+        assert vec_env.batch_failure_status().generation == generation
+        _obs, _rewards, dones, infos = vec_env.step(np.zeros((2, 17), dtype=np.float32))
+        assert dones.all()
+        assert all("terminal_observation" in info for info in infos)
+        assert all(handle.steps == 0 for handle in vec_env._handles)
+        assert vec_env.batch_failure_status().generation == generation
+    finally:
+        vec_env.close()
+
+
+def test_world_batch_vec_env_native_status_survives_revoked_admission(tmp_path, monkeypatch) -> None:
+    scenario_path = _write_scenario(tmp_path, _inline_vec_env_scenario())
+    vec_env = WorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=1,
+        include_visual=False,
+        include_proprio=False,
+    )
+    try:
+        status = vec_env.batch_failure_status()
+
+        def _revoked_admission():
+            raise RuntimeError("production rollout revoked")
+
+        monkeypatch.setattr(
+            vec_env._runtime_adapter,
+            "_require_current_production_admission",
+            _revoked_admission,
+        )
+        assert vec_env.batch_failure_status().generation == status.generation
+        with pytest.raises(RuntimeError, match="production rollout revoked"):
+            vec_env._runtime_adapter.reset_batch()
+    finally:
+        vec_env.close()
 
 
 def test_world_batch_vec_env_disables_execution_device_export_for_naval_profile(

@@ -600,7 +600,8 @@ class RuntimeFacadeAdapter:
     def batch_failure_status(self) -> Any:
         """Return the native-owned failure snapshot for maintained callers."""
 
-        self._require_current_production_admission()
+        # Recovery diagnostics remain readable even if rollout admission was
+        # revoked after the native failure. Mutation/reset still check it.
         return self.facade.batch_failure_status()
 
     def reset_batch(self, seeds: Sequence[int] | None = None) -> None:

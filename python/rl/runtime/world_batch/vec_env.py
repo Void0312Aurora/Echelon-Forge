@@ -360,6 +360,15 @@ class WorldBatchVecEnv(
     def runtime_facade(self):
         return self._runtime_adapter.facade
 
+    def batch_failure_status(self) -> Any:
+        """Return the native-owned status for the active batch generation.
+
+        The VecEnv deliberately exposes the facade snapshot without deriving
+        per-world completion or recovery claims from a Python exception.
+        """
+
+        return self._runtime_adapter.batch_failure_status()
+
     @staticmethod
     def _observation_own_ship_field_reader(truth: Any, field: str) -> Any:
         """Inject the existing declared-view owner into lower batch helpers."""
@@ -877,54 +886,77 @@ class WorldBatchVecEnv(
             self.last_step_timing = {}
 
     def step_wait(self) -> VecEnvStepReturn:
+        """Complete one pending step and always consume its pending action."""
+
         if self._actions is None:
             raise RuntimeError("step_async() must be called before step_wait().")
 
-        self._clear_policy_observation_device_cache()
-        total_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-        timing: dict[str, float] = {}
-        # [stage:action_prepare]
-        (
-            assignments,
-            prepared_actions,
-            air_combat_truth_before,
-            naval_action_sync_indices,
-        ) = self._step_wait_prepare_actions(timing)
-        # [stage:physics_step]
-        self._step_wait_advance_worlds(assignments, naval_action_sync_indices, timing)
-        # [stage:state_read]
-        # [stage:behavior_update]
-        # [stage:command_sync]
-        self._step_wait_refresh_state_and_behavior(air_combat_truth_before, timing)
-        # [stage:observation_build]
-        # [stage:flight_shaping]
-        obs_batch = self._step_wait_build_observations(timing)
-
-        # [stage:reward_episode]
-        reward_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-        any_done = False
-        for env_idx in range(self.num_envs):
-            done = self._step_wait_finalize_env(
-                env_idx,
-                obs_batch[env_idx],
-                prepared=prepared_actions[env_idx],
-            )
-            any_done = any_done or done
-        timing["reward_info_ms"] = (
-            (time.perf_counter() - reward_t0) * 1000.0 if self.collect_step_timing else 0.0
-        )
-        if any_done:
+        try:
             self._clear_policy_observation_device_cache()
+            total_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+            timing: dict[str, float] = {}
+            # [stage:action_prepare]
+            (
+                assignments,
+                prepared_actions,
+                air_combat_truth_before,
+                naval_action_sync_indices,
+            ) = self._step_wait_prepare_actions(timing)
+            # [stage:physics_step]
+            self._step_wait_advance_worlds(assignments, naval_action_sync_indices, timing)
+            # [stage:state_read]
+            # [stage:behavior_update]
+            # [stage:command_sync]
+            self._step_wait_refresh_state_and_behavior(air_combat_truth_before, timing)
+            # [stage:observation_build]
+            # [stage:flight_shaping]
+            obs_batch = self._step_wait_build_observations(timing)
 
-        self._step_wait_timing_snapshot(timing, total_t0)
+            # [stage:reward_episode]
+            reward_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+            any_done = False
+            for env_idx in range(self.num_envs):
+                done = self._step_wait_finalize_env(
+                    env_idx,
+                    obs_batch[env_idx],
+                    prepared=prepared_actions[env_idx],
+                )
+                any_done = any_done or done
+            timing["reward_info_ms"] = (
+                (time.perf_counter() - reward_t0) * 1000.0 if self.collect_step_timing else 0.0
+            )
+            if any_done:
+                self._clear_policy_observation_device_cache()
 
-        self._actions = None
-        return self._obs_from_buf(), np.copy(self.buf_rews), np.copy(self.buf_dones), deepcopy(self.buf_infos)
+            self._step_wait_timing_snapshot(timing, total_t0)
+
+            return self._obs_from_buf(), np.copy(self.buf_rews), np.copy(self.buf_dones), deepcopy(self.buf_infos)
+        finally:
+            # Never replay the pending action after a failed, possibly mutating
+            # operation. The native owner retains its failure/recovery fence.
+            self._actions = None
 
     def reset(self) -> VecEnvObs:
+        self._actions = None
         self._clear_policy_observation_device_cache()
         total_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         seeds = [self._normalize_seed(self._seeds[env_idx]) for env_idx in range(self.num_envs)]
+
+        # Scenario setup normally resets each world in place.  Once native
+        # failure fencing has marked the generation unhealthy, that setup is
+        # not a recovery boundary: first ask the native owner for an explicit
+        # generation reset. A terminal unfinished pipeline remains fenced;
+        # recovery requires a replacement host rather than an in-process reset.
+        failure_status = self._runtime_adapter.batch_failure_status()
+        if not failure_status.healthy:
+            if failure_status.requires_host_recreate:
+                raise RuntimeError(
+                    "WorldBatchVecEnv reset requires host recreation for failed native "
+                    f"batch generation {failure_status.generation}: "
+                    f"{failure_status.failure_reason}"
+                )
+            self._runtime_adapter.reset_batch(seeds)
+
         shared_overrides = self._shared_randomization_overrides()
         if shared_overrides is not None:
             batch_setup_t0 = time.perf_counter() if self.collect_step_timing else 0.0
