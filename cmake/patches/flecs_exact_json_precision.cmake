@@ -15,15 +15,29 @@ file(READ "${FLECS_SOURCE_FILE}" _flecs_source)
 
 function(_flecs_replace_once _original _replacement _label)
     string(FIND "${_flecs_source}" "${_replacement}" _applied)
+    if (NOT _applied EQUAL -1)
+        # A replacement may intentionally retain the original function, as
+        # the clock setter does. Count complete replacements before looking
+        # for original text left outside that replacement.
+        string(REPLACE "${_replacement}" "" _without_replacement "${_flecs_source}")
+        string(LENGTH "${_flecs_source}" _source_length)
+        string(LENGTH "${_without_replacement}" _remaining_length)
+        string(LENGTH "${_replacement}" _replacement_length)
+        math(EXPR _applied_length "${_source_length} - ${_remaining_length}")
+        string(FIND "${_without_replacement}" "${_original}" _unpatched)
+        if (_applied_length EQUAL _replacement_length AND _unpatched EQUAL -1)
+            return()
+        endif()
+        message(FATAL_ERROR
+            "Flecs exact JSON precision patch requires exactly one pinned ${_label}; "
+            "inspect the upstream source before changing the patch.")
+    endif()
     string(REPLACE "${_original}" "" _without_original "${_flecs_source}")
     string(LENGTH "${_flecs_source}" _source_length)
     string(LENGTH "${_without_original}" _without_length)
     string(LENGTH "${_original}" _original_length)
     math(EXPR _removed_length "${_source_length} - ${_without_length}")
-    if (_removed_length EQUAL 0 AND NOT _applied EQUAL -1)
-        return()
-    endif()
-    if (NOT _removed_length EQUAL _original_length OR NOT _applied EQUAL -1)
+    if (NOT _removed_length EQUAL _original_length)
         message(FATAL_ERROR
             "Flecs exact JSON precision patch requires exactly one pinned ${_label}; "
             "inspect the upstream source before changing the patch.")
