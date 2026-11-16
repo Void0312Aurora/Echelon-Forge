@@ -31,6 +31,9 @@ from python.experiment.trace import TraceManifest
 
 
 RUNTIME_CANDIDATE_BACKEND = "runtime_candidate"
+_CapturedAgentObservations = tuple[
+    dict[str, object], dict[str, object] | None, dict[str, str] | None
+]
 
 
 class RuntimeCandidateError(RuntimeError):
@@ -50,6 +53,7 @@ class RuntimeSnapshotFacts:
     event_cursor: int
     rng_digest: str
     terminated: bool = False
+    episode_seed: int | None = None
 
 
 @dataclass(frozen=True)
@@ -251,6 +255,7 @@ class RuntimeKernelCandidateBackend:
                 event_cursor=int(getattr(value, "event_cursor")),
                 rng_digest=str(getattr(value, "rng_digest")),
                 terminated=bool(getattr(value, "terminated")),
+                episode_seed=getattr(value, "episode_seed", None),
             )
         except (AttributeError, TypeError, ValueError) as exc:
             raise RuntimeCandidateError("native kernel returned incomplete snapshot facts") from exc
@@ -287,6 +292,7 @@ class RuntimeCandidateCapabilities:
     can_snapshot_restore: bool = False
     can_fork: bool = False
     can_agent_observation_refs: bool = False
+    can_verify_observation_replay: bool = False
     evidence_label: str = "runtime_candidate"
 
 
@@ -365,6 +371,10 @@ class RuntimeCandidateSession:
             can_fork=self._native_branch_backend is not None,
             can_snapshot_restore=self._native_checkpoint_backend is not None,
             can_agent_observation_refs=self._agent_observation_ref_backend is not None,
+            can_verify_observation_replay=(
+                self._agent_observation_ref_backend is not None
+                and callable(getattr(self._backend, "observation_packet_reader", None))
+            ),
         )
         self._spec = SessionSpec(
             session_id=session_id,
@@ -391,6 +401,7 @@ class RuntimeCandidateSession:
         }
         self._agent_observation_refs: dict[str, dict[str, list[object]]] = {}
         self._agent_observation_packets: dict[str, dict[str, list[object]]] = {}
+        self._agent_observation_digests: dict[str, dict[str, list[str]]] = {}
         if self._agent_observation_ref_backend is not None:
             self._capture_agent_observation_refs(self._branches[self._baseline.digest])
 
@@ -741,7 +752,9 @@ class RuntimeCandidateSession:
         """Verify the recorded suffix on a fresh native clone before publishing it.
 
         Every action, reward, state/event/RNG identity, provenance and terminal
-        flag must match. On failure the private replay child is discarded.
+        flag must match. If a packet reader is declared, immutable Agent
+        observation projections must match at the checkpoint and every endpoint.
+        On failure the private replay child is discarded.
         """
 
         if self._native_checkpoint_backend is None:
@@ -752,6 +765,16 @@ class RuntimeCandidateSession:
         expected = tuple(item for item in record.transitions if item.step >= snapshot.step)
         if not expected or expected[0].source_snapshot_digest != snapshot.digest:
             raise RuntimeCandidateError("checkpoint has no recorded continuation to replay")
+        observation_suffix: dict[str, tuple[str, ...]] | None = None
+        if self.capabilities.can_verify_observation_replay:
+            offset = snapshot.step - record.transitions[0].step
+            stored = self._agent_observation_digests.get(record.ref.digest, {})
+            observation_suffix = {
+                agent: tuple(stored.get(agent, [])[offset : offset + len(expected) + 1])
+                for agent in self._spec.agent_ids
+            }
+            if any(len(values) != len(expected) + 1 for values in observation_suffix.values()):
+                raise RuntimeCandidateError("native replay is missing captured observation evidence")
         replay = self._fork_record(
             parent,
             snapshot,
@@ -762,10 +785,12 @@ class RuntimeCandidateSession:
         )
         try:
             self._capture_agent_observation_refs(replay)
-            for item in expected:
+            self._verify_replay_observations(replay, observation_suffix, 0)
+            for index, item in enumerate(expected, start=1):
                 actual = self._advance(replay, dict(item.actions), item.observation_provenance)
                 if replace(actual, branch_digest=item.branch_digest) != item:
                     raise RuntimeCandidateError(f"native replay diverged at step {item.step}")
+                self._verify_replay_observations(replay, observation_suffix, index)
         except BaseException:
             # A discarded replay must not leave observations behind: a retry
             # with the same label has the same digest and would append to them.
@@ -773,6 +798,19 @@ class RuntimeCandidateSession:
             raise
         self._branches[replay.ref.digest] = replay
         return replay.ref
+
+    def _verify_replay_observations(
+        self, replay: _BranchState, expected: dict[str, tuple[str, ...]] | None, index: int
+    ) -> None:
+        if expected is None:
+            return
+        captured = self._agent_observation_digests.get(replay.ref.digest, {})
+        for agent in self._spec.agent_ids:
+            values = captured.get(agent, [])
+            if len(values) != index + 1 or values[index] != expected[agent][index]:
+                raise RuntimeCandidateError(
+                    f"native replay observation diverged for {agent} at endpoint {index}"
+                )
 
     def _current_facts(self, record: _BranchState) -> RuntimeSnapshotFacts | None:
         """Read the live native identity of ``record`` from its owner.
@@ -813,10 +851,11 @@ class RuntimeCandidateSession:
     def _discard_observations(self, branch_digest: str) -> None:
         self._agent_observation_refs.pop(branch_digest, None)
         self._agent_observation_packets.pop(branch_digest, None)
+        self._agent_observation_digests.pop(branch_digest, None)
 
     def _read_agent_observations(
         self, record: _BranchState
-    ) -> tuple[dict[str, object], dict[str, object] | None] | None:
+    ) -> _CapturedAgentObservations | None:
         """Read every Agent's maintained ref and packet without recording them.
 
         Returns ``None`` when the backend has no observation-ref capability. Any
@@ -840,8 +879,9 @@ class RuntimeCandidateSession:
             raise RuntimeCandidateError("maintained Agent observation ref cannot be None")
         packet_reader_factory = getattr(self._backend, "observation_packet_reader", None)
         if not callable(packet_reader_factory):
-            return dict(refs), None
+            return dict(refs), None, None
         packets: dict[str, object] = {}
+        digests: dict[str, str] = {}
         for agent_id in self._spec.agent_ids:
             try:
                 reader = packet_reader_factory(record.handle)
@@ -868,24 +908,37 @@ class RuntimeCandidateSession:
                     "maintained Agent observation packet capture failed"
                 ) from exc
             packets[agent_id] = packet
-        return dict(refs), packets
+            from python.experiment.observation_replay import observation_replay_digest
+
+            try:
+                digests[agent_id] = observation_replay_digest(
+                    packet, refs[agent_id], agent_id=agent_id
+                )
+            except (TypeError, ValueError) as exc:
+                raise RuntimeCandidateError(
+                    f"maintained Agent observation replay projection rejected for {agent_id}"
+                ) from exc
+        return dict(refs), packets, digests
 
     def _record_agent_observations(
         self,
         branch_digest: str,
-        captured: tuple[dict[str, object], dict[str, object] | None] | None,
+        captured: _CapturedAgentObservations | None,
     ) -> None:
         """Append one already-read observation per Agent; cannot fail partway."""
 
         if captured is None:
             return
-        refs, packets = captured
+        refs, packets, digests = captured
         branch_refs = self._agent_observation_refs.setdefault(branch_digest, {})
         branch_packets = self._agent_observation_packets.setdefault(branch_digest, {})
+        branch_digests = self._agent_observation_digests.setdefault(branch_digest, {})
         for agent_id in self._spec.agent_ids:
             branch_refs.setdefault(agent_id, []).append(refs[agent_id])
             if packets is not None:
                 branch_packets.setdefault(agent_id, []).append(packets[agent_id])
+            if digests is not None:
+                branch_digests.setdefault(agent_id, []).append(digests[agent_id])
 
     def _capture_agent_observation_refs(self, record: _BranchState) -> None:
         self._record_agent_observations(record.ref.digest, self._read_agent_observations(record))
@@ -907,6 +960,10 @@ class RuntimeCandidateSession:
             raise RuntimeCandidateError(
                 f"backend snapshot step {facts.step} does not match expected {expected_step}"
             )
+        if type(facts.episode_seed) is not int or not 0 <= facts.episode_seed < 2**64:
+            raise RuntimeCandidateError("backend snapshot must carry its native uint64 episode seed")
+        if facts.episode_seed != self._spec.seed:
+            raise RuntimeCandidateError("session seed differs from the native episode seed")
         try:
             return SnapshotRef(
                 session_digest=self._spec.digest,

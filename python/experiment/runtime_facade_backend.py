@@ -49,6 +49,7 @@ class RuntimeFacadeNativeIdentityOwner:
             event_cursor=int(getattr(value, "event_cursor")),
             rng_digest=str(getattr(value, "rng_digest")),
             terminated=bool(getattr(value, "terminated")),
+            episode_seed=getattr(value, "episode_seed", None),
         )
 
 
@@ -379,6 +380,7 @@ class RuntimeFacadeCandidateBackend:
                 event_cursor=int(getattr(value, "event_cursor")),
                 rng_digest=str(getattr(value, "rng_digest")),
                 terminated=bool(getattr(value, "terminated")),
+                episode_seed=getattr(value, "episode_seed", None),
             )
         except (AttributeError, TypeError, ValueError) as exc:
             raise RuntimeCandidateError("RuntimeFacade native branch returned incomplete facts") from exc

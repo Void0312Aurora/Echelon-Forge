@@ -5,9 +5,11 @@ from __future__ import annotations
 import dataclasses
 
 from dataclasses import dataclass, replace
+from types import SimpleNamespace
 
 import pytest
 
+from observation_replay_fixtures import make_observation_packet
 from python.experiment.contracts import ContractError
 from python.experiment.runtime_candidate import RuntimeCandidateError
 from python.experiment.runtime_candidate import RuntimeKernelCandidateBackend
@@ -36,6 +38,7 @@ class FakeBackend:
             state_digest="a" * 64,
             event_cursor=0,
             rng_digest="b" * 64,
+            episode_seed=19,
         )
         return self.live
 
@@ -57,6 +60,7 @@ class FakeBackend:
             event_cursor=self.cursor,
             rng_digest=f"{self.cursor + 100:064x}",
             terminated=self.terminal_at == self.cursor,
+            episode_seed=19,
         )
         return RuntimeStepResult(
             snapshot=self.live,
@@ -96,6 +100,7 @@ class NativeBranchBackend(FakeBackend):
                 state_digest=f"{1000 + step:064x}",
                 event_cursor=1000 + step,
                 rng_digest=f"{2000 + step:064x}",
+                episode_seed=19,
             ),
             rewards={agent_id: index for index, (agent_id, _) in enumerate(actions)},
         )
@@ -145,6 +150,7 @@ class CheckpointBackend(NativeBranchBackend):
                 event_cursor=step,
                 rng_digest=f"{step + 100:064x}",
                 terminated=self.terminal_at == step,
+                episode_seed=19,
             ),
             rewards={
                 agent: index + int(self.reward_drift) for index, (agent, _) in enumerate(actions)
@@ -152,17 +158,55 @@ class CheckpointBackend(NativeBranchBackend):
         )
 
 
-def _session(backend: FakeBackend | None = None) -> RuntimeCandidateSession:
+def _session(backend: FakeBackend | None = None, *, seed: int = 19) -> RuntimeCandidateSession:
     return RuntimeCandidateSession(
         session_id="runtime_session",
         backend_id="runtime_candidate",
         scenario_ref="scenario:bounded",
         config_digest=runtime_config_digest({"world_count": 1, "time_step_units": 1}),
-        seed=19,
+        seed=seed,
         agent_ids=AGENTS,
         policy_ref="policy:fixture",
         backend=backend or FakeBackend(),
     )
+
+
+@pytest.mark.parametrize("native_seed", [None, True, -1, 2**64, 20])
+def test_session_rejects_missing_invalid_or_mismatched_owner_seed(native_seed) -> None:
+    class SeedBackend(FakeBackend):
+        def initial_snapshot(self) -> RuntimeSnapshotFacts:
+            return replace(super().initial_snapshot(), episode_seed=native_seed)
+
+    backend = SeedBackend()
+    with pytest.raises(RuntimeCandidateError, match="seed"):
+        _session(backend)
+    assert backend.cursor == 0
+
+
+@pytest.mark.parametrize("seed", [0, 19])
+def test_session_accepts_an_exact_owner_seed_including_zero(seed: int) -> None:
+    class SeedBackend(FakeBackend):
+        def initial_snapshot(self) -> RuntimeSnapshotFacts:
+            return replace(super().initial_snapshot(), episode_seed=seed)
+
+    assert _session(SeedBackend(), seed=seed).spec.seed == seed
+
+
+def test_session_poisoned_if_owner_reports_different_seed_after_native_step() -> None:
+    class SeedDriftBackend(FakeBackend):
+        def step(self, actions) -> RuntimeStepResult:
+            result = super().step(actions)
+            return replace(result, snapshot=replace(result.snapshot, episode_seed=20))
+
+    backend = SeedDriftBackend()
+    session = _session(backend)
+    before = session.head()
+    with pytest.raises(RuntimeCandidateError, match="advanced natively"):
+        session.step(_actions(), observation_provenance=OBSERVATION)
+    assert session.head() == before
+    assert backend.cursor == 1
+    with pytest.raises(RuntimeCandidateError, match="unusable"):
+        session.step(_actions(), observation_provenance=OBSERVATION)
 
 
 def _actions() -> dict[str, str]:
@@ -309,6 +353,7 @@ def test_candidate_rejects_partial_or_identity_drifting_native_branch_backends()
                     state_digest="f" * 64,
                     event_cursor=snapshot.event_cursor,
                     rng_digest=snapshot.rng_digest,
+                    episode_seed=snapshot.episode_seed,
                 ),
                 handle=admission.handle,
             )
@@ -637,3 +682,105 @@ def test_failed_observation_capture_poisons_the_branch_instead_of_retrying() -> 
         session.step(_actions(), observation_provenance=OBSERVATION)
     assert backend.cursor == cursor
     assert session.trace(session.baseline).transitions == ()
+
+
+class PacketCheckpointBackend(CheckpointBackend):
+    supports_agent_observation_refs = True
+    drift_step: int | None = None
+    corrupt_packet = False
+
+    def observation_refs(self, handle=None):
+        # Clones deliberately have different local own-entity ids.
+        base = 1 if handle is None else 100 * int(handle.split("-")[-1])
+        return {
+            agent: SimpleNamespace(world_index=0, entity_id=base + index)
+            for index, agent in enumerate(AGENTS)
+        }
+
+    def observation_packet_reader(self, handle=None):
+        def read(refs, **_kwargs):
+            step = self.cursor if handle is None else self.branch_cursor[handle]
+            packet = make_observation_packet(refs[0], step, scope=handle or "baseline")
+            if handle is not None and step == self.drift_step:
+                packet.agent_observations[0].health += 1.0
+            if self.corrupt_packet:
+                packet.agent_observations[0].health = float("nan")
+            return packet
+
+        return SimpleNamespace(read_observation_packet=read)
+
+
+@pytest.mark.parametrize("at_checkpoint", [True, False])
+def test_replay_rejects_observation_only_drift_and_can_retry_same_label(at_checkpoint) -> None:
+    backend = PacketCheckpointBackend()
+    session = _session(backend)
+    assert session.capabilities.can_verify_observation_replay
+    session.step(_actions(), observation_provenance=OBSERVATION)
+    saved = session.checkpoint()
+    for _ in range(2):
+        session.step(_actions(), observation_provenance=OBSERVATION)
+    before = session.manifest()
+    cache_keys = set(session._agent_observation_digests)
+    backend.drift_step = saved.step if at_checkpoint else saved.step + 1
+    with pytest.raises(RuntimeCandidateError, match="replay observation diverged"):
+        session.replay(session.baseline, saved, label="verified")
+    assert session.manifest() == before
+    assert set(session._agent_observation_digests) == cache_keys
+    backend.drift_step = None
+    replay = session.replay(session.baseline, saved, label="verified")
+    assert session.head(replay) == session.head()
+    assert len(session.agent_observation_packet_series("agent_0", replay)) == 3
+
+
+def test_replay_uses_relative_endpoints_for_nonzero_branch_origin() -> None:
+    backend = PacketCheckpointBackend()
+    session = _session(backend)
+    session.step(_actions(), observation_provenance=OBSERVATION)
+    origin = session.checkpoint()
+    branch = session.fork(
+        session.baseline, origin, intervention=_actions(), label="child", horizon=3
+    )
+    session.step_branch(branch, _actions(), observation_provenance=OBSERVATION)
+    saved = session.checkpoint(branch)
+    session.step_branch(branch, _actions(), observation_provenance=OBSERVATION)
+    replay = session.replay(branch, saved, label="child_replay")
+    assert session.head(replay) == session.head(branch)
+
+
+def test_packet_mutation_does_not_rewrite_captured_replay_evidence() -> None:
+    backend = PacketCheckpointBackend()
+    session = _session(backend)
+    session.step(_actions(), observation_provenance=OBSERVATION)
+    saved = session.checkpoint()
+    session.step(_actions(), observation_provenance=OBSERVATION)
+    evidence = tuple(session._agent_observation_digests[session.baseline.digest]["agent_0"])
+    session.agent_observation_packet_series("agent_0")[-1].agent_observations[0].health += 7
+    replay = session.replay(session.baseline, saved, label="immutable")
+    assert tuple(session._agent_observation_digests[session.baseline.digest]["agent_0"]) == evidence
+    assert session.head(replay) == session.head()
+
+
+def test_invalid_poststep_packet_does_not_append_partial_evidence() -> None:
+    backend = PacketCheckpointBackend()
+    session = _session(backend)
+    before = session.manifest()
+    evidence = {
+        agent: tuple(values)
+        for agent, values in session._agent_observation_digests[session.baseline.digest].items()
+    }
+    backend.corrupt_packet = True
+    with pytest.raises(RuntimeCandidateError, match="advanced natively"):
+        session.step(_actions(), observation_provenance=OBSERVATION)
+    assert session.manifest() == before
+    assert {
+        agent: tuple(values)
+        for agent, values in session._agent_observation_digests[session.baseline.digest].items()
+    } == evidence
+    assert backend.cursor == 1
+    with pytest.raises(RuntimeCandidateError, match="unusable"):
+        session.step(_actions(), observation_provenance=OBSERVATION)
+
+
+def test_state_only_backend_does_not_claim_observation_replay() -> None:
+    assert not _session(CheckpointBackend()).capabilities.can_verify_observation_replay
+    assert not _session(AgentRefBranchBackend()).capabilities.can_verify_observation_replay

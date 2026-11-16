@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from observation_replay_fixtures import make_observation_packet
 from python.experiment.runtime_candidate import RuntimeCandidateError
 from python.experiment.runtime_candidate import RuntimeCandidateSession
 from python.experiment.runtime_candidate import RuntimeSnapshotFacts
@@ -29,6 +30,7 @@ class _IdentityOwner:
             state_digest=f"{self.step + 1:064x}",
             event_cursor=self.step,
             rng_digest=f"{self.step + 101:064x}",
+            episode_seed=19,
         )
 
 
@@ -45,7 +47,10 @@ class _Runtime:
 
     def apply_world_setup(self, _request: object) -> dict[str, object]:
         self.setups += 1
-        return {agent_id: ("baseline", agent_id) for agent_id in AGENTS}
+        return {
+            agent_id: SimpleNamespace(world_index=0, entity_id=index + 1)
+            for index, agent_id in enumerate(AGENTS)
+        }
 
     def set_actions(self, actions: tuple[tuple[str, str], ...]) -> None:
         self.actions.append(actions)
@@ -55,7 +60,7 @@ class _Runtime:
         self.identity.step += 1
 
     def read_observation_packet(self, refs: list[object], **_kwargs: object) -> object:
-        return {"refs": tuple(refs), "step": self.steps}
+        return make_observation_packet(refs[0], self.steps)
 
     def native_snapshot_facts(self, _world_index: int = 0) -> object:
         return SimpleNamespace(
@@ -64,6 +69,7 @@ class _Runtime:
             event_cursor=self.identity.step,
             rng_digest=f"{self.identity.step + 101:064x}",
             terminated=False,
+            episode_seed=19,
         )
 
 
@@ -148,6 +154,7 @@ def test_native_identity_owner_reads_bound_facade_facts() -> None:
         event_cursor=0,
         rng_digest="65".zfill(64),
         terminated=False,
+        episode_seed=19,
     )
 
 
@@ -383,3 +390,59 @@ def test_bound_facade_branch_owner_runs_session_checkpoint_and_nested_fork() -> 
     ).target_snapshot_digest
     assert len(session.agent_observation_packet_series("agent_0", branch)) == 2
     assert branch_refs
+    # The baseline's single-ref transport version remains 1 while native
+    # branches use step+1. Their full observation payloads must still replay.
+    session.step({"agent_0": "idle"}, observation_provenance=OBS_FACADE_OBSERVATION_PACKET)
+    replay = session.replay(session.baseline, saved, label="facade_verified")
+    assert session.head(replay) == session.head()
+    assert session.capabilities.can_verify_observation_replay
+
+
+@pytest.mark.parametrize("actual_seed", [0, 42])
+def test_bound_facade_seed_mismatch_leaves_setup_world_untouched(actual_seed: int) -> None:
+    ef_py = pytest.importorskip("ef_py")
+    runtime = ef_py.RuntimeFacade(1)
+    refs: dict[str, object] = {}
+
+    def setup(value: object) -> dict[str, object]:
+        request = ef_py.BatchWorldSetupRequest()
+        request.seeds = [actual_seed]
+        spawn = ef_py.WorldSpawnRequest()
+        spawn.type_name = "Aircraft"
+        spawn.entity_name = "seed_owner_aircraft"
+        spawn.is_agent = True
+        spawn.z = 3000.0
+        spawn.vx = 150.0
+        request.spawn_requests = [spawn]
+        entity = value.apply_world_setup(request).entity_ids[0]
+        ref = ef_py.WorldEntityRef()
+        ref.entity_id = entity
+        refs["agent_0"] = ref
+        return dict(refs)
+
+    backend = RuntimeFacadeCandidateBackend(
+        runtime,
+        agent_ids=("agent_0",),
+        setup_applier=setup,
+        action_applier=lambda *_args: pytest.fail("seed validation dispatched an action"),
+        reward_reader=lambda *_args: {"agent_0": 0},
+    )
+    before = runtime.native_snapshot_facts()
+    with pytest.raises(RuntimeCandidateError, match="session seed differs"):
+        RuntimeCandidateSession(
+            session_id="wrong_seed",
+            backend_id="runtime_candidate",
+            scenario_ref="scenario:seed_owner",
+            config_digest=runtime_config_digest({"world_count": 1}),
+            seed=19,
+            agent_ids=("agent_0",),
+            policy_ref="policy:test",
+            backend=backend,
+        )
+    after = runtime.native_snapshot_facts()
+    assert after.state_digest == before.state_digest
+    assert after.rng_digest == before.rng_digest
+    assert after.episode_seed == before.episode_seed == actual_seed
+    assert after.step == before.step == 0
+    packet = runtime.export_observation_packet([refs["agent_0"]])
+    assert packet.agent_observations[0].speed == 150.0
