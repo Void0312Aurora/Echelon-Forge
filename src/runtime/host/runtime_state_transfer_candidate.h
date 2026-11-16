@@ -21,14 +21,18 @@ using echelon_forge::runtime_contracts::v1::RuntimeIncarnationRef;
 using echelon_forge::runtime_contracts::v1::RuntimeWorldRef;
 
 inline constexpr std::uint32_t kRuntimeEpisodeHandshakeGeneration = 1;
-// MissionCommandGround gained reflected stance after the generation-4 producer;
-// N=5 materializes Stand for admitted N-1 bytes before durable import. Readers accept only N and
-// N-1 so a rolling replacement can bridge one producer generation without silently accepting an
+// After the generation-5 producer, the ECS document gained the
+// StableIdentityState singleton, the clock payload its frame count, and the
+// census the ScenarioSettings category. N=6 derives next_serial from the
+// transferred serials and keeps the importing kernel's episode seed for
+// admitted N-1 bytes; an N-1 census has no ScenarioSettings row, and the target
+// keeps its own settings. Readers accept only N and N-1 so a rolling
+// replacement can bridge one producer generation without silently accepting an
 // arbitrarily old state bundle.
-inline constexpr std::uint32_t kRuntimeStateTransferContractGeneration = 5;
+inline constexpr std::uint32_t kRuntimeStateTransferContractGeneration = 6;
 inline constexpr std::uint32_t kRuntimeStateTransferPreviousGeneration =
     kRuntimeStateTransferContractGeneration - 1;
-inline constexpr std::size_t kRuntimeStateCategoryCount = 12;
+inline constexpr std::size_t kRuntimeStateCategoryCount = 13;
 
 enum class RuntimeStateCategory : std::uint8_t {
     CompositionProviderSystemGraph,
@@ -43,6 +47,9 @@ enum class RuntimeStateCategory : std::uint8_t {
     InFlightRequestsResults,
     ExternalSideEffects,
     DiagnosticsTelemetry,
+    // Environment settings and missile tuning applied through kernel setters.
+    // Loaded content (terrain raster, unit definitions) is not part of it.
+    ScenarioSettings,
 };
 
 enum class RuntimeStateDisposition : std::uint8_t {
@@ -69,11 +76,19 @@ enum class RuntimeStateReplayPolicy : std::uint8_t {
 };
 
 enum class RuntimeEpisodePhase : std::uint8_t {
-    Running,
-    Terminal,
-    ReplacementBarrier,
-    TransferCommitted,
-    FailStopped,
+    Running = 0,
+    Terminal = 1,
+    ReplacementBarrier = 2,
+    TransferCommitted = 3,
+    FailStopped = 4,
+    // Appended to preserve the numeric identity of the replacement protocol
+    // in already recorded episode snapshots.
+    BranchBarrier = 5,
+};
+
+enum class RuntimeEpisodeBarrierKind : std::uint8_t {
+    Branch,
+    Replacement,
 };
 
 enum class RuntimeEpisodeIntentKind : std::uint8_t {
@@ -145,6 +160,9 @@ struct RuntimeEpisodeTransitionIntent {
     RuntimeIdentity128 idempotency_key;
     std::string payload_sha256;
     bool production_authorized = false;
+    // Optional action bytes are committed by payload_sha256. Admission verifies
+    // them before idempotency lookup; digest-only lifecycle probes stay valid.
+    std::vector<std::uint8_t> action_payload;
 };
 
 struct RuntimeNativeEpisodeCommand {
@@ -212,6 +230,7 @@ struct RuntimeEpisodeCoordinatorSnapshot {
 struct RuntimeEpisodeCoordinatorState;
 struct RuntimeEpisodeBarrierToken;
 struct RuntimeNativeEpisodeToken;
+class RuntimeNativeSiblingBranchExecutor;
 class RuntimeHostCandidate;
 
 class RuntimeNativeEpisodeCapability {
@@ -230,6 +249,7 @@ class RuntimeNativeEpisodeCapability {
 
   private:
     friend class RuntimeEpisodeCoordinatorCandidate;
+    friend class RuntimeNativeSiblingBranchExecutor;
     friend class RuntimeHostCandidate;
     explicit RuntimeNativeEpisodeCapability(
         std::shared_ptr<RuntimeNativeEpisodeToken> token) noexcept;
@@ -255,12 +275,14 @@ class RuntimeEpisodeBarrierCapability {
     ~RuntimeEpisodeBarrierCapability();
 
     [[nodiscard]] bool valid() const noexcept;
+    [[nodiscard]] RuntimeEpisodeBarrierKind kind() const noexcept;
     [[nodiscard]] RuntimeEpisodeCoordinatorSnapshot snapshot() const noexcept;
     [[nodiscard]] RuntimeIdentity128 coordinator_nonce() const noexcept;
 
   private:
     friend class RuntimeEpisodeCoordinatorCandidate;
     friend class RuntimeHostCandidate;
+    friend class RuntimeNativeSiblingBranchExecutor;
     friend class RuntimeStateTransferValidator;
     explicit RuntimeEpisodeBarrierCapability(
         std::shared_ptr<RuntimeEpisodeBarrierToken> token) noexcept;
@@ -296,10 +318,15 @@ class RuntimeEpisodeCoordinatorCandidate {
     [[nodiscard]] RuntimeEpisodeBarrierAdmission
     open_replacement_barrier(const RuntimeEpisodeRef &expected_episode,
                              std::uint64_t expected_step_sequence);
+    [[nodiscard]] RuntimeEpisodeBarrierAdmission
+    open_branch_barrier(const RuntimeEpisodeRef &expected_episode,
+                        std::uint64_t expected_step_sequence);
     [[nodiscard]] RuntimeNativeEpisodeAdmission issue_episode_capability();
     [[nodiscard]] RuntimeIdentity128 coordinator_nonce() const noexcept;
     [[nodiscard]] RuntimeStateTransferStatus
     abort_replacement_barrier(RuntimeEpisodeBarrierCapability &&capability);
+    [[nodiscard]] RuntimeStateTransferStatus
+    abort_branch_barrier(RuntimeEpisodeBarrierCapability &&capability);
     [[nodiscard]] RuntimeEpisodeCoordinatorSnapshot snapshot() const;
 
   private:
@@ -339,6 +366,12 @@ struct RuntimeStateDecoderReplayRule {
     RuntimeStateReplayPolicy replay_policy = RuntimeStateReplayPolicy::Reject;
     std::string_view migration_sha256;
     bool rollback_required = true;
+    // First contract generation whose census carries this category. A census
+    // of generation G contains exactly the categories introduced at or before
+    // G; an N-1 census therefore omits a category introduced at N, and its
+    // reader keeps the target's own state for that row instead of inventing a
+    // default.
+    std::uint32_t introduced_generation = 1;
 };
 
 struct RuntimeStateTransferProfile {
@@ -571,6 +604,9 @@ struct RuntimeStateOwnerImportReceipt {
     RuntimeStateTransferStatus status;
     RuntimeIdentity128 candidate_resource_identity;
     std::vector<RuntimeStateOwnerObservation> observations;
+    // Categories the target kept unchanged because the source census
+    // generation predates them. Every other profile row has an observation.
+    std::vector<RuntimeStateCategory> categories_not_carried_by_source;
     std::shared_ptr<RuntimeStateOwnerImportTransaction> transaction;
 };
 
@@ -660,7 +696,7 @@ class RuntimeStateTransferOwnerRegistry {
 };
 
 // Concrete registry used by production-facing integration code.  Requiring a
-// fixed twelve-entry registration array makes omission and duplicate owner
+// fixed one-entry-per-category registration array makes omission and duplicate owner
 // registration observable at construction; all callback failures are returned
 // as fail-closed transfer status rather than being converted into defaults.
 class RuntimeStateOwnerAdapterRegistry final : public RuntimeStateTransferOwnerRegistry {
@@ -679,7 +715,7 @@ class RuntimeStateOwnerAdapterRegistry final : public RuntimeStateTransferOwnerR
 
     // Exposes the immutable registration selected by the fixed category
     // table. Integration tests use this to exercise a maintained owner codec
-    // and its WAL transaction without weakening the all-twelve export gate.
+    // and its WAL transaction without weakening the every-category export gate.
     [[nodiscard]] const RuntimeStateOwnerAdapterRegistration *
     registration(RuntimeStateCategory category) const noexcept;
 
@@ -702,10 +738,10 @@ class RuntimeStateOwnerAdapterRegistry final : public RuntimeStateTransferOwnerR
 
 struct RuntimeHostQuiescenceToken;
 
-// Minted only by RuntimeHostCandidate after admission is closed, cancellation
-// is acknowledged, and every truth-mutating lease has settled.  It binds a
-// state export to one candidate transaction and one non-reusable host mutation
-// fence; callers cannot synthesize the ordering proof from DTO fields.
+// Minted by RuntimeHostCandidate for replacement or by the native sibling
+// executor for a parent branch. It binds a state export to one candidate or
+// branch transaction and one non-reusable mutation fence; callers cannot
+// synthesize the ordering proof from DTO fields.
 class RuntimeHostQuiescenceCapability {
   public:
     RuntimeHostQuiescenceCapability() = default;
@@ -722,6 +758,7 @@ class RuntimeHostQuiescenceCapability {
 
   private:
     friend class RuntimeHostCandidate;
+    friend class RuntimeNativeSiblingBranchExecutor;
     friend class RuntimeStateTransferValidator;
     explicit RuntimeHostQuiescenceCapability(
         std::shared_ptr<RuntimeHostQuiescenceToken> token) noexcept;
@@ -735,6 +772,18 @@ class RuntimeHostQuiescenceCapability {
         std::function<void()> host_rollback, std::function<bool()> host_begin_transfer,
         std::function<bool()> host_claim_transfer, std::function<void()> host_end_transfer,
         std::uint64_t lifecycle_ticket, std::uint64_t candidate_sequence,
+        std::uint64_t mutation_fence_sequence, std::size_t source_read_only_result_leases,
+        bool cooperative_cancellation_acknowledged);
+    [[nodiscard]] static RuntimeHostQuiescenceCapability mint_for_branch(
+        const RuntimeIncarnationRef &source_slot, std::string source_plan_sha256,
+        std::string target_plan_sha256, RuntimeIdentity128 source_resource_identity,
+        RuntimeIdentity128 candidate_resource_identity,
+        std::shared_ptr<RuntimeStateTransferOwnerRegistry> source_owner_registry,
+        std::shared_ptr<RuntimeStateTransferOwnerRegistry> target_owner_registry,
+        const RuntimeIdentity128 &branch_authority_nonce, std::function<bool()> branch_revalidate,
+        std::function<void()> branch_rollback, std::function<bool()> child_begin_transfer,
+        std::function<bool()> branch_claim_transfer, std::function<void()> child_end_transfer,
+        std::uint64_t lifecycle_ticket, std::uint64_t branch_sequence,
         std::uint64_t mutation_fence_sequence, std::size_t source_read_only_result_leases,
         bool cooperative_cancellation_acknowledged);
     std::shared_ptr<RuntimeHostQuiescenceToken> token_;
@@ -761,6 +810,7 @@ class RuntimeValidatedStateTransfer {
     void abandon() noexcept;
 
   private:
+    friend class RuntimeNativeSiblingBranchExecutor;
     friend class RuntimeStateTransferValidator;
     friend class RuntimeHostCandidate;
     explicit RuntimeValidatedStateTransfer(
@@ -826,8 +876,13 @@ runtime_state_disposition_name(RuntimeStateDisposition disposition) noexcept;
 runtime_state_decoder_replay_matrix() noexcept;
 [[nodiscard]] const RuntimeStateDecoderReplayRule *
 runtime_state_decoder_replay_rule(RuntimeStateCategory category) noexcept;
+// Whether a census of `contract_generation` carries `category`, and how many
+// categories such a census carries.
+[[nodiscard]] bool runtime_state_category_present(RuntimeStateCategory category,
+                                                  std::uint32_t contract_generation) noexcept;
+[[nodiscard]] std::size_t runtime_state_category_count(std::uint32_t contract_generation) noexcept;
 
-// Construct the canonical twelve-row profile from the maintained decoder /
+// Construct the canonical one-row-per-category profile from the maintained decoder /
 // replay matrix.  Callers still supply the plan bindings and profile identity,
 // but cannot accidentally rename an owner/schema or widen the N/N-1 window.
 // This is a profile-construction guard; it does not claim that the production

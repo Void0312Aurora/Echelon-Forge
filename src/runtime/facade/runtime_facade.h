@@ -50,6 +50,12 @@ class EF_RUNTIME_FACADE_API RuntimeFacade {
     RuntimeBackendAdmission admit_backend_request(const RuntimeBackendRequest &request) const;
     RuntimeFidelityAdmission admit_fidelity_request(const RuntimeFidelityRequest &request) const;
 
+    [[nodiscard]] RuntimeNativeSnapshotFacts
+    native_snapshot_facts(std::size_t world_index = 0) const;
+    [[nodiscard]] std::unique_ptr<RuntimeFacadeNativeBranch>
+    fork_native_branch(std::size_t world_index, std::string intervention_digest,
+                       std::uint64_t horizon = 1);
+
     std::size_t world_count() const noexcept;
     void resize(std::size_t world_count);
     void set_worker_threads(std::size_t worker_threads) noexcept;

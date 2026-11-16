@@ -208,6 +208,7 @@ def test_p4c_caller_inventory_is_fresh_and_has_no_maintained_callers() -> None:
     fixture = caller_inventory.load_fixture()
     caller_inventory.validate_inventory(fixture)
     assert fixture["classified_callers"]["build_tree_candidate"] == [
+        "src/runtime/host/integration/python_runtime_candidate_module.cpp",
         "src/runtime/host/integration/runtime_kernel_candidate.cpp",
         "src/runtime/host/integration/runtime_kernel_candidate.h",
         "src/runtime/host/integration/runtime_kernel_candidate_facade.cpp",

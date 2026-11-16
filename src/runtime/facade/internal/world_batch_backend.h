@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <array>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <variant>
 #include <vector>
@@ -250,6 +251,18 @@ class IWorldBatchBackend {
     virtual runtime::backend::ExportResult
     export_state(const runtime::backend::ExportRequest &request) const = 0;
     virtual runtime::backend::Diagnostics diagnostics() const = 0;
+
+    // Native identity/branch seam.  Implementations must bind these facts to
+    // their own engine state and return a child owner with an independent
+    // state-transfer resource; a missing implementation fails closed at the
+    // facade boundary.
+    virtual RuntimeNativeSnapshotFacts native_snapshot_facts(std::size_t) const {
+        throw std::logic_error("selected backend does not expose native identity facts");
+    }
+    virtual std::unique_ptr<RuntimeFacadeNativeBranch> fork_native_branch(std::size_t, std::string,
+                                                                          std::uint64_t) {
+        throw std::logic_error("selected backend does not expose native child branches");
+    }
 
     // Quarantined adapter for legacy CPU/GPU-helper compatibility APIs. It is
     // optional and is not part of the semantic contract a resident backend
