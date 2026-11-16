@@ -14,8 +14,9 @@ The [current status](simulation_experiment_platform_current_status_20260927.md#2
 records fresh local native and Python verification, bounded branch horizons,
 isolated temporary journals, owner-bound episode seeds, and complete declared
 AgentObservation replay comparison. It also records the rejected loaded-content
-boundary and the independent input-lock artifact handoff. These local follow-ups
-have not been pushed to the open PR stack.
+boundary and the independent input-lock artifact handoff. These qualified
+follow-ups belong to the open draft PR stack; their evidence does not establish
+mainline merge or production acceptance.
 
 Language:
 

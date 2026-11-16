@@ -20,9 +20,10 @@ Last verified: `2026-11-16`
 
 This recheck uses implementation and fresh artifacts rather than treating the
 historical records below as current-main acceptance. `origin/main` is pinned at
-`23a936694`. The GitHub API recheck on `2026-11-16` found PRs `#325`, `#326` and
-`#327` open and draft, at heads `9b4102bce`, `98e334167` and `4502b7618`.
-The following local fixes have not been pushed or merged:
+`23a936694`. The pre-delivery GitHub API checkpoint on `2026-11-16` found PRs
+`#325`, `#326` and `#327` open and draft, at original heads `9b4102bce`,
+`98e334167` and `4502b7618`. The qualified revisions are listed below; the PRs
+remain review surfaces rather than mainline or production acceptance.
 
 | Local line | Tested change | Revision |
 | --- | --- | --- |
@@ -109,6 +110,23 @@ an incremental build. A clean 180-step rebuild removed the mixed ABI. Caller,
 candidate-test and Python-binding objects subsequently reported 315, 335 and
 426 valid dependencies respectively; the 8 native CTest gates then passed on
 the consistent artifacts. Earlier ABI-crashing runs are not counted as passes.
+
+### Review Delivery History
+
+The local review work had replayed the remote patches onto the current main
+baseline. Although the patches were equivalent, the remote PR heads were not
+ancestors, so those local heads were not directly suitable for fast-forward
+publication. `git cherry` independently showed that every remote-only native,
+session and documentation commit already had a patch-equivalent local commit.
+
+The delivery history retains those remote heads as merge parents. Native and
+session history reconciliation preserved tree hashes
+`1e4beef70ad1e6c0cb136cd22ce08dbec34c0a59` and
+`8c318fbacc125124fb817a760537715bc018642a` respectively, exactly matching the
+qualified implementations. The original evidence tree was also preserved before
+this delivery note. Each dependent delivery head includes its preceding stack
+head. An atomic push dry run accepted all three updates as fast-forwards; no
+force push or mainline merge is part of this handoff.
 
 ### Independent Input-Lock Artifact Handoff
 
