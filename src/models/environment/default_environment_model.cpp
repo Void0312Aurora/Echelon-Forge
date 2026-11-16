@@ -1008,7 +1008,11 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
     geodesy::GeodeticAnchor get_geodetic_anchor() const override { return geodetic_anchor_; }
 
     bool export_settings(Settings *out) const override {
-        if (out == nullptr) {
+        // The settings codec does not carry loaded raster/overlay bytes or a
+        // content identity with which a fresh child could reload them. Reject
+        // a partial export instead of silently changing the child's terrain.
+        if (out == nullptr || raster_layer_.arnis_metric_bundle ||
+            raster_layer_.field_overlay_loaded) {
             return false;
         }
         Settings settings{

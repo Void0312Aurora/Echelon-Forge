@@ -12,6 +12,7 @@
 #include "core/engine/simulation_kernel.h"
 #include "core/engine/simulation_kernel_missile_tuning.h"
 #include "core/interfaces/environment_model.h"
+#include "core/interfaces/unit_factory.h"
 
 #include <nlohmann/json.hpp>
 
@@ -386,6 +387,11 @@ std::string
 SimulationKernelStateOwnerBridge::serialize_scenario_settings(SimulationKernel &kernel) {
     auto lock = kernel.acquire_composition_operation();
     kernel.ensure_active("state_transfer_export_scenario_settings");
+    const auto *factory = kernel.unit_factory();
+    if (factory == nullptr || !factory->has_only_builtin_definitions()) {
+        throw std::runtime_error(
+            "native branches require a reproducible built-in unit definition catalog");
+    }
     IEnvironmentModel *environment = kernel.environment_model();
     IEnvironmentModel::Settings settings;
     if (environment == nullptr || !environment->export_settings(&settings)) {

@@ -330,14 +330,18 @@ make_runtime_facade_native_branch(SimulationKernel &source, std::uint64_t step,
     if (horizon == 0 || !lower_hex_sha256(intervention_digest)) {
         return {};
     }
-    auto cloned = clone_kernel(source, step);
-    auto state = std::make_shared<RuntimeFacadeNativeBranch::State>();
-    state->kernel = std::move(cloned.kernel);
-    state->step = step;
-    state->remaining_steps = horizon;
-    state->intervention_digest = std::move(intervention_digest);
-    state->entity_remap = std::move(cloned.local_entity_remap);
-    state->valid = true;
-    return std::unique_ptr<RuntimeFacadeNativeBranch>(new RuntimeFacadeNativeBranch(
-        RuntimeFacadeNativeBranch::ConstructionKey{}, std::move(state)));
+    try {
+        auto cloned = clone_kernel(source, step);
+        auto state = std::make_shared<RuntimeFacadeNativeBranch::State>();
+        state->kernel = std::move(cloned.kernel);
+        state->step = step;
+        state->remaining_steps = horizon;
+        state->intervention_digest = std::move(intervention_digest);
+        state->entity_remap = std::move(cloned.local_entity_remap);
+        state->valid = true;
+        return std::unique_ptr<RuntimeFacadeNativeBranch>(new RuntimeFacadeNativeBranch(
+            RuntimeFacadeNativeBranch::ConstructionKey{}, std::move(state)));
+    } catch (const std::exception &) {
+        return {};
+    }
 }

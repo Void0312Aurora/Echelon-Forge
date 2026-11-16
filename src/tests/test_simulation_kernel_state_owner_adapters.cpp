@@ -2168,6 +2168,31 @@ TEST_SUITE("simulation_kernel_state_owner_adapters") {
         kernel.set_missile_tuning(tuning);
     }
 
+    TEST_CASE("scenario settings refuse a partial export of loaded terrain content") {
+        SimulationKernel kernel;
+        IEnvironmentModel *environment = nullptr;
+        {
+            auto lease = kernel.acquire_world_lease();
+            const auto *reference = lease.world().get<EnvironmentModelRef>();
+            REQUIRE(reference != nullptr);
+            environment = reference->model;
+        }
+        REQUIRE(environment != nullptr);
+        IEnvironmentModel::Settings settings;
+        REQUIRE(environment->export_settings(&settings));
+        const auto root = std::filesystem::path(__FILE__).parent_path().parent_path().parent_path();
+        const auto bundle = root / "tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/"
+                                   "eastern_plain_infantry_phase1/expected";
+        REQUIRE(environment->load_arnis_terrain_bundle(bundle.string()));
+        const auto before = environment->get_terrain_elevation(0.0, 0.0);
+        CHECK_FALSE(environment->export_settings(&settings));
+        CHECK_FALSE(environment->load_arnis_terrain_bundle((bundle / "missing").string()));
+        CHECK_FALSE(environment->export_settings(&settings));
+        using Bridge = integration::SimulationKernelStateOwnerBridge;
+        CHECK_THROWS(Bridge::serialize_scenario_settings(kernel));
+        CHECK(environment->get_terrain_elevation(0.0, 0.0) == before);
+    }
+
     TEST_CASE("scenario settings round trip exactly and the target keeps none of its own") {
         using Bridge = integration::SimulationKernelStateOwnerBridge;
         SimulationKernel source;

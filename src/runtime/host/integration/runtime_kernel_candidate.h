@@ -183,6 +183,7 @@ class RuntimeKernelCandidate final {
 
   private:
     class Control;
+    class TemporaryJournalDirectory;
     friend class RuntimeKernelSiblingBranch;
 
     [[nodiscard]] bool validate_world(const RuntimeWorldRef &world) const noexcept;
@@ -219,12 +220,12 @@ class RuntimeKernelCandidate final {
     std::optional<std::string> terminal_cpu_topology_json_;
     std::optional<std::string> terminal_world_scope_json_;
     std::string journal_path_;
+    std::shared_ptr<TemporaryJournalDirectory> journal_directory_;
     RuntimeIncarnationRef incarnation_;
     std::uint64_t world_generation_ = 1;
     std::uint64_t episode_step_sequence_ = 0;
     std::uint64_t next_action_idempotency_sequence_ = 1;
     std::uint64_t next_entity_generation_ = 1;
-    bool owns_journal_path_ = false;
     bool started_ = false;
     bool stopped_ = false;
 };

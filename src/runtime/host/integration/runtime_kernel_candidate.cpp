@@ -10,6 +10,7 @@
 #include <functional>
 #include <limits>
 #include <mutex>
+#include <random>
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
@@ -67,27 +68,6 @@ class FileJournal final : public RuntimeStateTransferJournal {
 
   private:
     RuntimeStateTransferFileJournal journal_;
-};
-
-class TemporaryJournalCleanup final {
-  public:
-    explicit TemporaryJournalCleanup(std::string path) : path_(std::move(path)) {}
-    TemporaryJournalCleanup(const TemporaryJournalCleanup &) = delete;
-    TemporaryJournalCleanup &operator=(const TemporaryJournalCleanup &) = delete;
-
-    ~TemporaryJournalCleanup() {
-        if (!active_ || path_.empty()) {
-            return;
-        }
-        std::error_code error;
-        (void)std::filesystem::remove(path_, error);
-    }
-
-    void release() noexcept { active_ = false; }
-
-  private:
-    std::string path_;
-    bool active_ = true;
 };
 
 RuntimeKernelSnapshotFacts
@@ -281,6 +261,43 @@ class RuntimeKernelCandidate::Control final : public RuntimeInstanceControl {
     bool transfer_active_ = false;
 };
 
+class RuntimeKernelCandidate::TemporaryJournalDirectory final {
+  public:
+    TemporaryJournalDirectory() {
+        std::random_device random;
+        const auto temporary_root = std::filesystem::temp_directory_path();
+        for (unsigned int attempt = 0; attempt < 128; ++attempt) {
+            const auto candidate = temporary_root /
+                                   ("echelon_forge_p4c_" + std::to_string(random()) + "_" +
+                                    std::to_string(random()));
+            std::error_code error;
+            if (std::filesystem::create_directory(candidate, error)) {
+                root_ = candidate;
+                return;
+            }
+            if (error) {
+                throw std::filesystem::filesystem_error(
+                    "reserve native journal directory", candidate, error);
+            }
+        }
+        throw std::runtime_error("could not reserve a native journal directory");
+    }
+
+    ~TemporaryJournalDirectory() {
+        if (!cleanup_) return;
+        std::error_code error;
+        (void)std::filesystem::remove(root_ / "runtime.wal", error);
+        (void)std::filesystem::remove(root_, error);
+    }
+
+    [[nodiscard]] std::string journal_path() const { return (root_ / "runtime.wal").string(); }
+    void preserve() noexcept { cleanup_ = false; }
+
+  private:
+    std::filesystem::path root_;
+    bool cleanup_ = true;
+};
+
 struct RuntimeKernelSiblingBranch::State {
     RuntimeBranchRef branch;
     std::shared_ptr<SimulationKernel> kernel;
@@ -290,14 +307,14 @@ struct RuntimeKernelSiblingBranch::State {
     std::shared_ptr<RuntimeStateTransferJournal> journal;
     std::unique_ptr<RuntimeEpisodeCoordinatorCandidate> coordinator;
     std::string journal_path;
+    std::shared_ptr<RuntimeKernelCandidate::TemporaryJournalDirectory> journal_directory;
     RuntimePlanBinding plan;
     std::string resolved_manifest_json;
     std::uint32_t seed = 42;
     std::uint64_t lifecycle_deadline_tick = 1000;
+    std::uint64_t remaining_steps = 0;
     mutable std::mutex mutex;
     mutable std::atomic<std::uint64_t> next_transfer_fence{1};
-    bool owns_journal = false;
-
     ~State() {
         coordinator.reset();
         native_control.reset();
@@ -305,10 +322,7 @@ struct RuntimeKernelSiblingBranch::State {
         registry.reset();
         journal.reset();
         kernel.reset();
-        if (owns_journal && !journal_path.empty()) {
-            std::error_code error;
-            (void)std::filesystem::remove(journal_path, error);
-        }
+        journal_directory.reset();
     }
 };
 
@@ -403,7 +417,7 @@ bool RuntimeKernelSiblingBranch::step_payload(std::string payload_sha256,
     std::lock_guard<std::mutex> lock(state_->mutex);
     if (state_->kernel == nullptr || state_->control == nullptr ||
         state_->native_control == nullptr || state_->coordinator == nullptr ||
-        !state_->branch.well_formed()) {
+        !state_->branch.well_formed() || state_->remaining_steps == 0) {
         return false;
     }
     const auto current = state_->coordinator->snapshot();
@@ -425,7 +439,9 @@ bool RuntimeKernelSiblingBranch::step_payload(std::string payload_sha256,
                                      .production_authorized = false,
                                      .action_payload = std::move(payload)},
                                     *state_->native_control);
-    return static_cast<bool>(transition.status);
+    if (!transition.status) return false;
+    --state_->remaining_steps;
+    return true;
 }
 
 std::unique_ptr<RuntimeKernelSiblingBranch> RuntimeKernelSiblingBranch::checkpoint() const {
@@ -470,11 +486,9 @@ RuntimeKernelSiblingBranch::clone_native(std::optional<std::string> intervention
             : std::make_shared<SimulationKernel>(state_->resolved_manifest_json);
     const auto child_control = std::make_shared<RuntimeKernelCandidate::Control>(
         child_resource, child_kernel, state_->seed);
-    const std::string child_journal_path =
-        (std::filesystem::temp_directory_path() /
-         ("echelon_forge_p4c_checkpoint_" + std::to_string(child_resource.low) + ".wal"))
-            .string();
-    TemporaryJournalCleanup journal_cleanup(child_journal_path);
+    const auto journal_directory =
+        std::make_shared<RuntimeKernelCandidate::TemporaryJournalDirectory>();
+    const std::string child_journal_path = journal_directory->journal_path();
     const auto child_journal = std::make_shared<FileJournal>(child_journal_path);
     const auto child_registry = SimulationKernelStateOwnerBridge::create_registry({
         .kernel = child_kernel.get(),
@@ -557,12 +571,13 @@ RuntimeKernelSiblingBranch::clone_native(std::optional<std::string> intervention
     child_state->journal = child_journal;
     child_state->coordinator = std::move(native_result.child_coordinator);
     child_state->journal_path = child_journal_path;
+    child_state->journal_directory = journal_directory;
     child_state->plan = state_->plan;
     child_state->resolved_manifest_json = state_->resolved_manifest_json;
     child_state->seed = state_->seed;
     child_state->lifecycle_deadline_tick = state_->lifecycle_deadline_tick;
-    child_state->owns_journal = true;
-    journal_cleanup.release();
+    child_state->remaining_steps =
+        intervention_sha256.has_value() ? horizon : state_->remaining_steps;
     return std::unique_ptr<RuntimeKernelSiblingBranch>(
         new RuntimeKernelSiblingBranch(std::move(child_state)));
 }
@@ -713,12 +728,9 @@ RuntimeKernelCandidate::RuntimeKernelCandidate(RuntimeKernelCandidateConfig conf
         control_ =
             std::make_shared<Control>(resource, kernel_, admitted_seed_.value_or(config_.seed));
         std::string journal_path = config_.journal_path;
-        owns_journal_path_ = journal_path.empty();
         if (journal_path.empty()) {
-            journal_path =
-                (std::filesystem::temp_directory_path() /
-                 ("echelon_forge_p4c_candidate_" + std::to_string(resource.low) + ".wal"))
-                    .string();
+            journal_directory_ = std::make_shared<TemporaryJournalDirectory>();
+            journal_path = journal_directory_->journal_path();
         }
         journal_path_ = journal_path;
         journal_ = std::make_shared<FileJournal>(journal_path);
@@ -796,13 +808,13 @@ RuntimeKernelCandidate::~RuntimeKernelCandidate() {
     control_.reset();
     kernel_.reset();
     journal_.reset();
-    if (shutdown_completed &&
-        (run_recorder_ == nullptr ||
-         run_recorder_->state() == RuntimeRunRecorderState::Finalized) &&
-        owns_journal_path_ && !journal_path_.empty()) {
-        std::error_code error;
-        (void)std::filesystem::remove(journal_path_, error);
+    if (journal_directory_ &&
+        (!shutdown_completed ||
+         (run_recorder_ != nullptr &&
+          run_recorder_->state() != RuntimeRunRecorderState::Finalized))) {
+        journal_directory_->preserve();
     }
+    journal_directory_.reset();
 }
 
 RuntimeCandidateCompositionSnapshot RuntimeKernelCandidate::composition_snapshot() const {
@@ -1740,11 +1752,8 @@ RuntimeKernelCandidate::fork_native_branch(std::string intervention_sha256, std:
             : std::make_shared<SimulationKernel>(config_.resolved_manifest_json);
     const auto child_control = std::make_shared<Control>(child_resource, child_kernel,
                                                          admitted_seed_.value_or(config_.seed));
-    const std::string child_journal_path =
-        (std::filesystem::temp_directory_path() /
-         ("echelon_forge_p4c_branch_" + std::to_string(child_resource.low) + ".wal"))
-            .string();
-    TemporaryJournalCleanup journal_cleanup(child_journal_path);
+    const auto journal_directory = std::make_shared<TemporaryJournalDirectory>();
+    const std::string child_journal_path = journal_directory->journal_path();
     const auto child_journal = std::make_shared<FileJournal>(child_journal_path);
     const auto child_registry = SimulationKernelStateOwnerBridge::create_registry({
         .kernel = child_kernel.get(),
@@ -1818,12 +1827,12 @@ RuntimeKernelCandidate::fork_native_branch(std::string intervention_sha256, std:
     state->journal = child_journal;
     state->coordinator = std::move(native_result.child_coordinator);
     state->journal_path = child_journal_path;
+    state->journal_directory = journal_directory;
     state->plan = config_.plan;
     state->resolved_manifest_json = config_.resolved_manifest_json;
     state->seed = admitted_seed_.value_or(config_.seed);
     state->lifecycle_deadline_tick = config_.lifecycle_deadline_tick;
-    state->owns_journal = true;
-    journal_cleanup.release();
+    state->remaining_steps = horizon;
     return std::unique_ptr<RuntimeKernelSiblingBranch>(
         new RuntimeKernelSiblingBranch(std::move(state)));
 }

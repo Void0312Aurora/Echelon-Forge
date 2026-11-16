@@ -286,6 +286,13 @@ An incomplete census is a hard failure. A default value is not evidence that a
 state field is safely rederived. State format upgrades follow the N/N-1 reader
 rules in P1-B/P1-C and reject unknown truth-affecting fields.
 
+The bounded native branch implementation currently admits the built-in unit
+catalog and procedural/flat terrain with exported scenario settings. A loaded
+unit catalog, terrain raster or field overlay is rejected before publishing a
+child: the current codec has no content-owner identity and rehydration proof
+for those assets. Snapshot digest equality alone does not establish complete
+replay of state outside that codec.
+
 ## Failure And Concurrency Matrix
 
 | Condition | Required behavior | Forbidden behavior |

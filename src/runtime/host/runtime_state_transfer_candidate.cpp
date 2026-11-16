@@ -2531,7 +2531,7 @@ runtime_state_decoder_replay_matrix() noexcept {
              .migration_sha256 =
                  // SHA-256 of the normalized scenario-settings codec source.
                  // Pinned by test_runtime_state_transfer_candidate_contract.py.
-             "7a555f42b635324fe09bd9f43c945f81f56aa6cafbaf2c5a4530f34ab1e6c245",
+             "7f3698be9665340af2e10fa3e84c05b7a5fdba4cab12b4c012d1127bbf6766e2",
              .introduced_generation = 6},
         }};
     return matrix;

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from python.runtime_bootstrap import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 
 ensure_repo_imports()
@@ -126,3 +126,15 @@ def test_native_branch_of_a_non_default_seed_steps_like_its_parent() -> None:
         assert _facts_tuple(child.snapshot_facts()) == _facts_tuple(
             facade.native_snapshot_facts()
         )
+
+
+def test_native_branch_rejects_untransferred_loaded_unit_definitions() -> None:
+    facade = ef_py.RuntimeFacade(1)
+    assert facade.fork_native_branch(0, "a" * 64, 1) is not None
+    definition = resolve_repo_path(
+        "examples", "config", "database", "ground", "units", "ground_infantry_soldier_mvp.json"
+    )
+    assert facade.load_unit_definitions(str(definition))
+    before = _facts_tuple(facade.native_snapshot_facts())
+    assert facade.fork_native_branch(0, "b" * 64, 1) is None
+    assert _facts_tuple(facade.native_snapshot_facts()) == before

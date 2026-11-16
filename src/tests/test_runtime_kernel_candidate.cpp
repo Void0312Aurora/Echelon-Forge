@@ -11,7 +11,9 @@
 #include <fstream>
 #include <functional>
 #include <nlohmann/json.hpp>
+#include <random>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -19,6 +21,42 @@ using runtime::host::RuntimeHostState;
 using runtime::host::integration::RuntimeKernelCandidate;
 
 namespace {
+
+class TemporaryReleasePackage final {
+  public:
+    TemporaryReleasePackage() {
+        std::random_device random;
+        const auto temporary_root = std::filesystem::temp_directory_path();
+        for (unsigned int attempt = 0; attempt < 128; ++attempt) {
+            const auto candidate = temporary_root /
+                                   ("ef_p5b_release_mutation_" + std::to_string(random()) + "_" +
+                                    std::to_string(random()));
+            std::error_code error;
+            if (std::filesystem::create_directory(candidate, error)) {
+                root_ = candidate;
+                return;
+            }
+            if (error) {
+                throw std::filesystem::filesystem_error(
+                    "create isolated release mutation directory", candidate, error);
+            }
+        }
+        throw std::runtime_error("could not reserve a release mutation directory");
+    }
+
+    TemporaryReleasePackage(const TemporaryReleasePackage &) = delete;
+    TemporaryReleasePackage &operator=(const TemporaryReleasePackage &) = delete;
+
+    ~TemporaryReleasePackage() {
+        std::error_code error;
+        (void)std::filesystem::remove_all(root_, error);
+    }
+
+    [[nodiscard]] std::filesystem::path path() const { return root_ / "release.bin"; }
+
+  private:
+    std::filesystem::path root_;
+};
 
 class CandidateRunStore final : public runtime::host::RuntimeRunRecorderStore {
   public:
@@ -850,11 +888,11 @@ TEST_SUITE("runtime_kernel_candidate") {
         CHECK(completed_lifecycle.back().at("durable_sequence") ==
               terminal_store.final_receipt.at("payload").at("journal_last_sequence"));
 
-        const auto mutable_package =
-            std::filesystem::temp_directory_path() / "ef_p5b_candidate_release_mutation.bin";
+        const TemporaryReleasePackage temporary_package;
+        const auto mutable_package = temporary_package.path();
         std::error_code copy_error;
         std::filesystem::copy_file(EF_CANDIDATE_RELEASE_PACKAGE_PATH, mutable_package,
-                                   std::filesystem::copy_options::overwrite_existing, copy_error);
+                                   std::filesystem::copy_options::none, copy_error);
         REQUIRE_FALSE(copy_error);
         auto mutable_sources = execution_sources();
         mutable_sources.package_path = mutable_package.string();
@@ -883,8 +921,6 @@ TEST_SUITE("runtime_kernel_candidate") {
         CHECK(mutated_package_store.final_receipt.at("payload").at("terminal_state") == "failed");
         CHECK(mutated_package_store.final_receipt.at("payload").at("terminal_reason") ==
               "execution provenance changed after admission");
-        std::filesystem::remove(mutable_package, copy_error);
-
         CandidateRunStore outcome_failure_store;
         RuntimeKernelCandidate outcome_failure({
             .host_id = {.high = 0x5035422D4F555443ULL, .low = 1},
@@ -1107,6 +1143,64 @@ TEST_SUITE("runtime_kernel_candidate") {
         CHECK(descendant->snapshot_facts().rng_digest == continued_parent.rng_digest);
         CHECK(descendant->snapshot_facts().event_cursor == continued_parent.event_cursor);
         CHECK(saved->snapshot_facts().state_digest == parent_before.state_digest);
+    }
+
+    TEST_CASE("Route B sibling checkpoints preserve independent remaining step budgets") {
+        RuntimeKernelCandidate candidate({
+            .host_id = {.high = 0x524F555445422D32ULL, .low = 2},
+            .mode = runtime::host::RuntimeHostMode::Shadow,
+            .lifecycle_deadline_tick = 1000,
+        });
+        REQUIRE(candidate.start());
+        REQUIRE(candidate.native_step(std::string(64, 'a')));
+        const auto branch = candidate.fork_native_branch(std::string(64, 'b'), 2);
+        REQUIRE(branch != nullptr);
+        CHECK_FALSE(branch->step("invalid-digest"));
+        REQUIRE(branch->step(std::string(64, 'c')));
+        const auto checkpoint = branch->checkpoint();
+        REQUIRE(checkpoint != nullptr);
+        REQUIRE(branch->step(std::string(64, 'd')));
+        REQUIRE(checkpoint->step(std::string(64, 'd')));
+
+        const auto assert_rejected_without_mutation = [](const auto &owner) {
+            const auto before = owner->snapshot_facts();
+            CHECK_FALSE(owner->step(std::string(64, 'e')));
+            const auto after = owner->snapshot_facts();
+            CHECK(after.step == before.step);
+            CHECK(after.state_digest == before.state_digest);
+            CHECK(after.rng_digest == before.rng_digest);
+            CHECK(after.event_cursor == before.event_cursor);
+            CHECK(after.terminated == before.terminated);
+        };
+        assert_rejected_without_mutation(branch);
+        assert_rejected_without_mutation(checkpoint);
+
+        const auto exhausted_checkpoint = checkpoint->checkpoint();
+        REQUIRE(exhausted_checkpoint != nullptr);
+        CHECK(exhausted_checkpoint->valid());
+        assert_rejected_without_mutation(exhausted_checkpoint);
+        const auto renewed = exhausted_checkpoint->fork_native_branch(std::string(64, 'f'), 1);
+        REQUIRE(renewed != nullptr);
+        REQUIRE(renewed->step(std::string(64, 'a')));
+        assert_rejected_without_mutation(renewed);
+    }
+
+    TEST_CASE("explicit candidate journals remain caller-owned after clean shutdown") {
+        const TemporaryReleasePackage temporary_journal;
+        const auto journal_path = temporary_journal.path();
+        {
+            RuntimeKernelCandidate candidate({
+                .host_id = {.high = 0x524F555445422D33ULL, .low = 3},
+                .mode = runtime::host::RuntimeHostMode::Shadow,
+                .lifecycle_deadline_tick = 1000,
+                .journal_path = journal_path.string(),
+            });
+            REQUIRE(candidate.start());
+            REQUIRE(candidate.native_step(std::string(64, 'a')));
+            CHECK(std::filesystem::exists(journal_path));
+            REQUIRE(candidate.shutdown(10, 1000).status);
+        }
+        CHECK(std::filesystem::exists(journal_path));
     }
 
     TEST_CASE("P4-C candidate sustains repeated epochs and fences retired references") {
