@@ -269,17 +269,17 @@ class RuntimeKernelCandidate::TemporaryJournalDirectory final {
         std::random_device random;
         const auto temporary_root = std::filesystem::temp_directory_path();
         for (unsigned int attempt = 0; attempt < 128; ++attempt) {
-            const auto candidate = temporary_root /
-                                   ("echelon_forge_p4c_" + std::to_string(random()) + "_" +
-                                    std::to_string(random()));
+            const auto candidate =
+                temporary_root /
+                ("echelon_forge_p4c_" + std::to_string(random()) + "_" + std::to_string(random()));
             std::error_code error;
             if (std::filesystem::create_directory(candidate, error)) {
                 root_ = candidate;
                 return;
             }
             if (error) {
-                throw std::filesystem::filesystem_error(
-                    "reserve native journal directory", candidate, error);
+                throw std::filesystem::filesystem_error("reserve native journal directory",
+                                                        candidate, error);
             }
         }
         throw std::runtime_error("could not reserve a native journal directory");
@@ -811,9 +811,8 @@ RuntimeKernelCandidate::~RuntimeKernelCandidate() {
     kernel_.reset();
     journal_.reset();
     if (journal_directory_ &&
-        (!shutdown_completed ||
-         (run_recorder_ != nullptr &&
-          run_recorder_->state() != RuntimeRunRecorderState::Finalized))) {
+        (!shutdown_completed || (run_recorder_ != nullptr &&
+                                 run_recorder_->state() != RuntimeRunRecorderState::Finalized))) {
         journal_directory_->preserve();
     }
     journal_directory_.reset();

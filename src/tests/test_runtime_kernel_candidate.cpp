@@ -28,9 +28,9 @@ class TemporaryReleasePackage final {
         std::random_device random;
         const auto temporary_root = std::filesystem::temp_directory_path();
         for (unsigned int attempt = 0; attempt < 128; ++attempt) {
-            const auto candidate = temporary_root /
-                                   ("ef_p5b_release_mutation_" + std::to_string(random()) + "_" +
-                                    std::to_string(random()));
+            const auto candidate =
+                temporary_root / ("ef_p5b_release_mutation_" + std::to_string(random()) + "_" +
+                                  std::to_string(random()));
             std::error_code error;
             if (std::filesystem::create_directory(candidate, error)) {
                 root_ = candidate;
