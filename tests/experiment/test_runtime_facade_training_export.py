@@ -8,7 +8,9 @@ import pytest
 from python.experiment.contracts import ContractError, canonical_bytes
 from python.experiment.numeric_observation_adapter import AgentObservationSeries
 from python.experiment.runtime_facade_training_export import (
+    ADMITTED_AIR_MISSION_SURFACES,
     AIR_RUNTIME_FACADE_SURFACE,
+    AIR_TAKEOFF_RUNTIME_FACADE_SURFACE,
     export_runtime_facade_training_sidecar,
     load_runtime_facade_training_sidecar,
 )
@@ -53,6 +55,33 @@ def test_runtime_facade_export_round_trips_one_admitted_air_branch(tmp_path) -> 
     assert payload["surface_id"] == AIR_RUNTIME_FACADE_SURFACE
     assert payload["episodes"][0]["projection_digest"] == projection.digest
     assert payload["branch_ancestry"][0]["branch_digest"] == key[1]
+
+
+def test_takeoff_surface_round_trips_through_the_same_sidecar_contract(tmp_path) -> None:
+    projection, key, sources = _selected()
+    receipt = export_runtime_facade_training_sidecar(
+        projection,
+        sources,
+        agent_id="pilot",
+        selected_branch_digests=[key[1]],
+        seed=11,
+        split="training",
+        action_encoder=_action,
+        reward_encoder=_reward,
+        root_dir=str(tmp_path / "takeoff-training"),
+        surface_id=AIR_TAKEOFF_RUNTIME_FACADE_SURFACE,
+    )
+    payload = load_runtime_facade_training_sidecar(
+        receipt.root_dir,
+        projection_digest=projection.digest,
+        agent_id="pilot",
+        seed=11,
+        split="training",
+        branch_digests=[key[1]],
+        surface_id=AIR_TAKEOFF_RUNTIME_FACADE_SURFACE,
+    )
+    assert payload["surface_id"] == AIR_TAKEOFF_RUNTIME_FACADE_SURFACE
+    assert receipt.surface_id in ADMITTED_AIR_MISSION_SURFACES
 
 
 def test_export_rejects_decision_belief_source_that_old_api_accepts(tmp_path) -> None:

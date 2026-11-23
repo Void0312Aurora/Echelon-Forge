@@ -11,12 +11,13 @@ from python.experiment.runtime_facade_learner_admission import (
     admit_runtime_facade_learner_sidecar,
 )
 from python.experiment.runtime_facade_training_export import (
+    AIR_TAKEOFF_RUNTIME_FACADE_SURFACE,
     export_runtime_facade_training_sidecar,
 )
 from tests.experiment.test_numeric_observation_adapter import _action, _projection, _reward, _sources
 
 
-def _sidecar(tmp_path: Path):
+def _sidecar(tmp_path: Path, *, surface_id: str | None = None):
     projection = _projection()
     all_sources = _sources(projection)
     key = next(iter(all_sources))
@@ -30,6 +31,7 @@ def _sidecar(tmp_path: Path):
         action_encoder=_action,
         reward_encoder=_reward,
         root_dir=str(tmp_path / "dataset"),
+        **({"surface_id": surface_id} if surface_id is not None else {}),
     )
     return projection, key, receipt
 
@@ -64,6 +66,26 @@ def test_three_consumers_round_trip_one_admitted_sidecar(tmp_path, consumer: str
         assert batch.targets.shape == batch.actions.shape
     else:
         assert batch.targets is None
+
+
+@pytest.mark.parametrize("consumer", LEARNER_CONSUMERS)
+def test_takeoff_surface_round_trips_for_all_learner_consumers(tmp_path, consumer: str) -> None:
+    projection, key, receipt = _sidecar(
+        tmp_path,
+        surface_id=AIR_TAKEOFF_RUNTIME_FACADE_SURFACE,
+    )
+    batches = admit_runtime_facade_learner_sidecar(
+        receipt.root_dir,
+        consumer=consumer,
+        projection_digest=projection.digest,
+        agent_id="pilot",
+        seed=11,
+        split="training",
+        branch_digests=[key[1]],
+        surface_id=AIR_TAKEOFF_RUNTIME_FACADE_SURFACE,
+    )
+    assert len(batches) == 1
+    assert batches[0].consumer == consumer
 
 
 def test_admission_rejects_unknown_consumer_and_identity_drift(tmp_path) -> None:

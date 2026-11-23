@@ -27,6 +27,11 @@ from python.experiment.trace_projection import TraceProjection
 
 
 AIR_RUNTIME_FACADE_SURFACE = "air.execution.runtime_facade.v1"
+AIR_TAKEOFF_RUNTIME_FACADE_SURFACE = "air.execution.takeoff.v1"
+ADMITTED_AIR_MISSION_SURFACES = (
+    AIR_RUNTIME_FACADE_SURFACE,
+    AIR_TAKEOFF_RUNTIME_FACADE_SURFACE,
+)
 RUNTIME_FACADE_TRAINING_EXPORT_SCHEMA = "echelon_forge.runtime_facade_training_export.v1"
 _RUNTIME_EXPORT_SIDECAR = "runtime_facade_training_export.json"
 _DIGEST = re.compile(r"[0-9a-f]{64}\Z")
@@ -86,8 +91,8 @@ def _validate_request(
 ) -> tuple[str, ...]:
     if not isinstance(projection, TraceProjection):
         raise ContractError("projection must be a TraceProjection")
-    if surface_id != AIR_RUNTIME_FACADE_SURFACE:
-        raise ContractError("surface is not the admitted Air RuntimeFacade surface")
+    if surface_id not in ADMITTED_AIR_MISSION_SURFACES:
+        raise ContractError("surface is not an admitted Air RuntimeFacade mission surface")
     if not isinstance(agent_id, str) or not re.fullmatch(r"[a-z0-9][a-z0-9_]*", agent_id):
         raise ContractError("agent_id must match [a-z0-9][a-z0-9_]*")
     if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
@@ -232,6 +237,7 @@ def load_runtime_facade_training_sidecar(
     seed: int,
     split: str,
     branch_digests: Sequence[str],
+    surface_id: str = AIR_RUNTIME_FACADE_SURFACE,
 ) -> dict[str, Any]:
     """Read and revalidate a RuntimeFacade learner sidecar and its identity."""
 
@@ -255,8 +261,10 @@ def load_runtime_facade_training_sidecar(
         raise ContractError("metadata digest does not match sidecar payload")
     if payload["schema_version"] != RUNTIME_FACADE_TRAINING_EXPORT_SCHEMA:
         raise ContractError("unsupported runtime facade export schema")
-    if payload["surface_id"] != AIR_RUNTIME_FACADE_SURFACE:
-        raise ContractError("sidecar surface is not admitted Air RuntimeFacade")
+    if surface_id not in ADMITTED_AIR_MISSION_SURFACES:
+        raise ContractError("requested surface is not an admitted Air RuntimeFacade mission surface")
+    if payload["surface_id"] != surface_id:
+        raise ContractError("sidecar surface does not match requested mission surface")
     if payload["projection_digest"] != projection_digest:
         raise ContractError("sidecar projection digest mismatch")
     if payload["agent_id"] != agent_id or payload["seed"] != seed or payload["split"] != split:
@@ -292,7 +300,9 @@ def load_runtime_facade_training_sidecar(
 
 
 __all__ = [
+    "ADMITTED_AIR_MISSION_SURFACES",
     "AIR_RUNTIME_FACADE_SURFACE",
+    "AIR_TAKEOFF_RUNTIME_FACADE_SURFACE",
     "RUNTIME_FACADE_TRAINING_EXPORT_SCHEMA",
     "RuntimeFacadeTrainingExportReceipt",
     "export_runtime_facade_training_sidecar",

@@ -17,6 +17,7 @@ import numpy as np
 
 from python.experiment.contracts import ContractError, content_digest
 from python.experiment.runtime_facade_training_export import (
+    AIR_RUNTIME_FACADE_SURFACE,
     load_runtime_facade_training_sidecar,
 )
 
@@ -173,6 +174,7 @@ def admit_runtime_facade_learner_sidecar(
     seed: int,
     split: str,
     branch_digests: list[str] | tuple[str, ...],
+    surface_id: str = AIR_RUNTIME_FACADE_SURFACE,
 ) -> tuple[LearnerConsumerBatch, ...]:
     """Admit one qualified sidecar for PPO, BC, or world-model consumers."""
 
@@ -185,6 +187,7 @@ def admit_runtime_facade_learner_sidecar(
         seed=seed,
         split=split,
         branch_digests=branch_digests,
+        surface_id=surface_id,
     )
     root = Path(root_dir).resolve()
     expected = {
