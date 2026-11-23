@@ -73,6 +73,29 @@ The implementation originated in PR #230's #210 owner repair at
 `7989800d284484c76ccd0aed77cca32300fb2dda` and was adapted during qualification
 from the historical `de19c3dbd69e9feb330b1291e84a210c53bfd09f` interface baseline.
 That historical branch and SHA remain in the record for provenance; the maintained
-owner repair is now present on `main`. #210 remains open for the broader contract
-and acceptance work. The newer composition diagnostics export and resize operation
-also reject an unhealthy generation.
+owner repair is now present on `main`. The newer composition diagnostics export
+and resize operation also reject an unhealthy generation.
+
+## #210 acceptance record
+
+The bounded implementation contract is complete on `main@52f556716` after PRs
+#278, #319 and #329. The acceptance scope is the maintained CPU WorldBatch owner
+and its facade/Python projection. It does not include the broader #251 RFC.
+
+| Acceptance item | Maintained evidence |
+| --- | --- |
+| Public failure, clock, replay and retry rules | This contract: a failed generation has unknown commit status, guarded exports and no transparent retry |
+| Deterministic mixed completion | `mixed world advancement remains diagnostic until explicit generation reset` exercises 3/4 worlds with serial and parallel workers |
+| Serial and parallel policy | The same generation fence and explicit reset rules apply for worker counts 1, 2 and world count |
+| Facade/Python cannot resume a desynchronized batch | Native facade failure-status/export guards and `project_native_batch_fault` preserve unknown outcomes and required recovery |
+| Distinct rejection and mutation faults | Invalid seeds/timesteps leave state unchanged; worker-launch, task and partial kinematics/setup failures fence the generation |
+| Fatal recovery boundary | `fatal reset rejects before changing any world or replacing failure evidence` preserves all worlds and diagnostics when host recreation is required |
+| No global rollback claim | Successful-world clocks are diagnostic only; neither this contract nor the Python projection assigns per-world commit truth |
+
+Native regressions live in
+[`test_world_batch_runtime.cpp`](../../../src/tests/test_world_batch_runtime.cpp).
+Python outcome regressions live in
+[`test_failure_domains.py`](../../../tests/architecture/tasking_contracts/test_failure_domains.py).
+The running-system fault probe separately exercises a damaged native pipeline
+inside a disposable subprocess. Production process supervision, broader mechanism
+failure domains and migration governance remain with #251.
