@@ -627,7 +627,8 @@ def build_numeric_exports(
 
 
 def write_episode_store(
-    exports: Sequence[NumericEpisodeExport], root_dir: str
+    exports: Sequence[NumericEpisodeExport], root_dir: str, *,
+    finalize_staging: Callable[[NumericExportReceipt], None] | None = None,
 ) -> NumericExportReceipt:
     """Write validated exports and an auditable projection sidecar.
 
@@ -681,6 +682,13 @@ def write_episode_store(
         with open(os.path.join(staging, _EXPORT_SIDECAR), "w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
             handle.write("\n")
+        if finalize_staging is not None:
+            finalize_staging(NumericExportReceipt(
+                root_dir=staging,
+                metadata_path=os.path.join(staging, _EXPORT_SIDECAR),
+                metadata_digest=metadata_digest,
+                episode_paths=tuple(os.path.join(staging, *item.split("/")) for item in relative_paths),
+            ))
         os.rename(staging, root)
     except BaseException:
         shutil.rmtree(staging, ignore_errors=True)

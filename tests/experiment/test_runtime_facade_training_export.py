@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 import json
+from pathlib import Path
 
 import pytest
 
@@ -22,6 +23,38 @@ def _selected():
     sources = _sources(projection)
     key = next(iter(sources))
     return projection, key, {key: sources[key]}
+
+
+def test_sidecar_write_failure_leaves_no_export_and_allows_retry(tmp_path, monkeypatch) -> None:
+    from python.experiment import runtime_facade_training_export as exporter
+
+    projection, key, sources = _selected()
+    root = tmp_path / "atomic-export"
+    write_bytes = Path.write_bytes
+
+    def fail_sidecar(path, data):
+        if path.name == exporter._RUNTIME_EXPORT_SIDECAR:
+            raise OSError("injected sidecar write failure")
+        return write_bytes(path, data)
+
+    kwargs = dict(
+        agent_id="pilot", selected_branch_digests=[key[1]], seed=11,
+        split="training", action_encoder=_action, reward_encoder=_reward,
+        root_dir=str(root),
+    )
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "write_bytes", fail_sidecar)
+        with pytest.raises(OSError, match="sidecar write failure"):
+            export_runtime_facade_training_sidecar(projection, sources, **kwargs)
+    assert not root.exists()
+    assert list(tmp_path.iterdir()) == []
+    receipt = export_runtime_facade_training_sidecar(projection, sources, **kwargs)
+    payload = load_runtime_facade_training_sidecar(
+        str(root), projection_digest=projection.digest, agent_id="pilot",
+        seed=11, split="training", branch_digests=[key[1]],
+    )
+    assert payload["metadata_digest"] == receipt.metadata_digest
+    assert all(Path(path).is_file() for path in receipt.episode_paths)
 
 
 def test_runtime_facade_export_round_trips_one_admitted_air_branch(tmp_path) -> None:

@@ -175,46 +175,52 @@ def export_runtime_facade_training_sidecar(
         raise ContractError("numeric export lacks facade observation provenance")
     if any(item.seed != seed or item.split != split for item in exports):
         raise ContractError("numeric export crossed fixed seed or split")
-    numeric_receipt: NumericExportReceipt = write_episode_store(exports, root_dir)
-    numeric_sidecar = _load_json(Path(numeric_receipt.metadata_path))
-    numeric_metadata_digest = numeric_sidecar.get("metadata_digest")
-    _digest(numeric_metadata_digest, "numeric metadata_digest")
-    numeric_without_digest = dict(numeric_sidecar)
-    numeric_without_digest.pop("metadata_digest", None)
-    if content_digest("experiment.numeric-export", numeric_without_digest) != numeric_metadata_digest:
-        raise ContractError("numeric export metadata digest does not match")
-    episodes = tuple(numeric_sidecar.get("episodes", ()))
-    if not episodes:
-        raise ContractError("numeric export sidecar contains no episodes")
-    branch_ancestry = []
-    for branch_digest in selected:
-        branch_rows = [row for row in projection.rows if row.branch_digest == branch_digest]
-        branch_ancestry.append(
-            {
-                "branch_digest": branch_digest,
-                "parent_branch_digest": branch_rows[0].parent_branch_digest,
-                "branch_depth": branch_rows[0].branch_depth,
-                "branch_label": branch_rows[0].branch_label,
-            }
-        )
-    payload: dict[str, Any] = {
-        "schema_version": RUNTIME_FACADE_TRAINING_EXPORT_SCHEMA,
-        "surface_id": surface_id,
-        "agent_id": agent_id,
-        "seed": seed,
-        "split": split,
-        "projection_digest": projection.digest,
-        "manifest_digests": sorted({row.manifest_digest for row in projection.rows if row.branch_digest in selected}),
-        "branch_digests": list(selected),
-        "branch_ancestry": branch_ancestry,
-        "packet_provenance": "facade_observation_packet",
-        "numeric_metadata_digest": numeric_metadata_digest,
-        "episodes": list(episodes),
-    }
-    metadata_digest = content_digest("experiment.runtime-facade-training-export", payload)
-    payload["metadata_digest"] = metadata_digest
+    metadata_digest = ""
+
+    def finalize_sidecar(numeric_receipt: NumericExportReceipt) -> None:
+        nonlocal metadata_digest
+        numeric_sidecar = _load_json(Path(numeric_receipt.metadata_path))
+        numeric_metadata_digest = numeric_sidecar.get("metadata_digest")
+        _digest(numeric_metadata_digest, "numeric metadata_digest")
+        numeric_without_digest = dict(numeric_sidecar)
+        numeric_without_digest.pop("metadata_digest", None)
+        if content_digest("experiment.numeric-export", numeric_without_digest) != numeric_metadata_digest:
+            raise ContractError("numeric export metadata digest does not match")
+        episodes = tuple(numeric_sidecar.get("episodes", ()))
+        if not episodes:
+            raise ContractError("numeric export sidecar contains no episodes")
+        branch_ancestry = []
+        for branch_digest in selected:
+            branch_rows = [row for row in projection.rows if row.branch_digest == branch_digest]
+            branch_ancestry.append(
+                {
+                    "branch_digest": branch_digest,
+                    "parent_branch_digest": branch_rows[0].parent_branch_digest,
+                    "branch_depth": branch_rows[0].branch_depth,
+                    "branch_label": branch_rows[0].branch_label,
+                }
+            )
+        payload: dict[str, Any] = {
+            "schema_version": RUNTIME_FACADE_TRAINING_EXPORT_SCHEMA,
+            "surface_id": surface_id,
+            "agent_id": agent_id,
+            "seed": seed,
+            "split": split,
+            "projection_digest": projection.digest,
+            "manifest_digests": sorted({row.manifest_digest for row in projection.rows if row.branch_digest in selected}),
+            "branch_digests": list(selected),
+            "branch_ancestry": branch_ancestry,
+            "packet_provenance": "facade_observation_packet",
+            "numeric_metadata_digest": numeric_metadata_digest,
+            "episodes": list(episodes),
+        }
+        metadata_digest = content_digest("experiment.runtime-facade-training-export", payload)
+        payload["metadata_digest"] = metadata_digest
+        metadata_path = Path(numeric_receipt.root_dir) / _RUNTIME_EXPORT_SIDECAR
+        metadata_path.write_bytes(canonical_bytes(payload) + b"\n")
+
+    numeric_receipt = write_episode_store(exports, root_dir, finalize_staging=finalize_sidecar)
     metadata_path = Path(numeric_receipt.root_dir) / _RUNTIME_EXPORT_SIDECAR
-    metadata_path.write_bytes(canonical_bytes(payload) + b"\n")
     return RuntimeFacadeTrainingExportReceipt(
         root_dir=numeric_receipt.root_dir,
         metadata_path=str(metadata_path),
