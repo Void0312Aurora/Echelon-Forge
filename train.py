@@ -166,8 +166,13 @@ def main() -> int:
     print_training_bootstrap_summary(bootstrap)
     warn_execution_visual_rollout_memory(bootstrap)
 
+    route_model_paths = (
+        resolve_cooperative_policy_models(train_config)
+        if agent_layer == "cooperative_execution"
+        else {}
+    )
     test_only_load_path = _resolve_test_only_load_path(args, exp_dir) if args.test_only else None
-    if args.test_only and test_only_load_path is None:
+    if args.test_only and test_only_load_path is None and not route_model_paths:
         print_test_only_preflight_runtime_summary(bootstrap)
         print("Error: --test_only requires --resume_path or a valid existing run directory with final_model.zip")
         return 1
@@ -210,8 +215,6 @@ def main() -> int:
     # Test Mode
     if args.test_only:
         load_path = test_only_load_path
-        assert load_path is not None
-        route_model_paths = resolve_cooperative_policy_models(train_config) if agent_layer == "cooperative_execution" else {}
         if not route_model_paths and not _validate_launch_decision_checkpoint_for_config(load_path, train_config):
             return 1
         route_models = {}
@@ -226,6 +229,7 @@ def main() -> int:
                 )
             model = None
         else:
+            assert load_path is not None
             print(f"Loading model for testing: {load_path}")
             model = algo_cls.load(load_path, env=vec_env)
         if not route_model_paths:
@@ -260,7 +264,7 @@ def main() -> int:
         return 0
 
     # 4. Training Setup
-    if agent_layer == "cooperative_execution" and resolve_cooperative_policy_models(train_config):
+    if route_model_paths:
         print(
             "Error: cooperative_execution.policy_models is currently an inference/test-only route surface; "
             "synchronized multi-policy PPO training is not admitted by this entrypoint. "

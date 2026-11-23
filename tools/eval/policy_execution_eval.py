@@ -405,6 +405,8 @@ def _run_cooperative_eval(args: argparse.Namespace) -> int:
     train_config = load_json_config(os.path.abspath(args.train_config))
     env_settings = make_env_settings(train_config, args, include_runtime_overrides=True)
     route_model_paths = resolve_cooperative_policy_models(train_config)
+    if not route_model_paths and not args.model:
+        raise ValueError("cooperative evaluation requires --model or cooperative_execution.policy_models")
     model = None
     route_models = {}
     if route_model_paths:
@@ -436,8 +438,10 @@ def _run_cooperative_eval(args: argparse.Namespace) -> int:
                 deterministic=not bool(args.stochastic),
                 max_world_steps=args.max_world_steps,
                 policy_factory=(
-                    lambda current_env: CooperativeRoutePolicyDispatcher(
-                        route_models, CooperativeRouteLayout.from_env(current_env)
+                    (
+                        lambda current_env: CooperativeRoutePolicyDispatcher(
+                            route_models, CooperativeRouteLayout.from_env(current_env)
+                        )
                     )
                     if route_models
                     else None
@@ -563,6 +567,7 @@ def _build_mode_parser(mode: str) -> argparse.ArgumentParser:
             seed_default=0,
             episodes_help="Number of world episodes to evaluate.",
             seed_help="Starting seed. Each episode increments by 1.",
+            model_required=False,
         )
         parser.add_argument("--max_world_steps", type=int, default=None)
         parser.add_argument("--n_worlds", type=int, default=1, help="Evaluation world count. Recommended to keep at 1.")
