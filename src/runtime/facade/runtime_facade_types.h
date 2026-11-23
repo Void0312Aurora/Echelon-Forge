@@ -19,6 +19,9 @@
 
 class FlecsCpuBackend;
 struct ObservationBatchPacket;
+namespace runtime::facade::testing {
+class RuntimeFacadeTestAccess;
+}
 
 struct RuntimeCapabilities {
 #define EF_RUNTIME_CAPABILITIES_FIELD(type, name, default_value) type name = default_value;
@@ -123,6 +126,7 @@ class RuntimeFacadeNativeBranch {
     RuntimeFacadeNativeBranch(const ConstructionKey &, std::shared_ptr<State> state) noexcept;
 
   private:
+    friend class runtime::facade::testing::RuntimeFacadeTestAccess;
     std::shared_ptr<State> state_;
 };
 
