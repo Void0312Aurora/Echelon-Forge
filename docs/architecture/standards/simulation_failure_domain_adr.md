@@ -98,8 +98,7 @@ including the new composition-evidence export guard, and is now integrated on
 Native 3/4-world serial/parallel proofs exercise mixed world advancement, a setup
 exception after timestep mutation, guarded exports/retry, invalid recovery input
 and explicit reset. Python and the maintained facade consume the same local
-native fence. This is qualification evidence, not proof that upstream `main`
-already provides that projection. All-unknown aggregate evidence reports
+native fence, now integrated on `main`. All-unknown aggregate evidence reports
 `failed` with explicit reset/recreate required; it does not claim known per-world
 commit status. The mechanism child
 fault proof separately observes state mutation without outer packet publication.
@@ -116,7 +115,9 @@ with all affected worlds unknown and generation termination required; it does
 not claim to provide the supervisor or isolate a blocked native call.
 The native batch proof also injects a worker-launch failure and checks that joined
 workers, guarded exports, failed recovery and explicit reset remain fail-closed.
-These bounded changes do not close the broader #210 contract. The running-system probe
+The bounded #210 implementation acceptance is recorded in the
+[WorldBatch failure contract](world_batch_failure_contract.md); the broader #251
+ADR and production supervision scope remain open. The running-system probe
 mutates native ECS state before throwing; it verifies that unfinished pipeline
 scopes reject reset and raw step, while the batch owner reports
 `batch_requires_host_recreate()`. Python translates that native decision into
