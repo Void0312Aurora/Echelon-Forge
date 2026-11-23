@@ -7,6 +7,7 @@
 #include "components/visual/visual_sensor.h"
 #include "gpu/gpu_world_batch_visual_binding_compatibility.h"
 #include "runtime/facade/runtime_facade.h"
+#include "runtime/facade/internal/testing/runtime_facade_test_access.h"
 
 #include <doctest/doctest.h>
 
@@ -21,6 +22,45 @@ static_assert(!std::is_polymorphic_v<WorldBatchRuntime>,
               "WorldBatchRuntime compatibility ABI must remain non-polymorphic");
 
 TEST_SUITE("world_batch_runtime") {
+
+    TEST_CASE("native branch retires after a partially published pilot action") {
+        RuntimeFacade facade(1);
+        BatchWorldSetupRequest setup{};
+        WorldSpawnRequest spawn{};
+        spawn.type_name = "Aircraft";
+        spawn.entity_name = "BranchFault";
+        spawn.is_agent = true;
+        spawn.z = 3000.0;
+        spawn.vx = 150.0;
+        setup.spawn_requests = {spawn};
+        const auto result = facade.apply_world_setup(setup);
+        REQUIRE(result.entity_ids.size() == 1);
+        auto branch = facade.fork_native_branch(0, std::string(64, 'a'), 2);
+        REQUIRE(branch != nullptr);
+        const auto parent_before = facade.native_snapshot_facts();
+        auto &kernel = runtime::facade::testing::RuntimeFacadeTestAccess::native_branch_kernel(*branch);
+        unsigned published = 0;
+        {
+            auto lease = kernel.acquire_world_lease();
+            lease.world().observer<PilotAction>().event(flecs::OnSet).each(
+                [&](PilotAction &) {
+                    ++published;
+                    throw std::runtime_error("injected action publication failure");
+                });
+        }
+        WorldPilotActionAssignment action{};
+        action.entity_id = result.entity_ids.front();
+        action.action.active = true;
+        CHECK_FALSE(branch->step_pilot_actions({action}));
+        CHECK(published == 1);
+        CHECK_FALSE(branch->valid());
+        CHECK_FALSE(branch->snapshot_facts().well_formed());
+        CHECK(branch->checkpoint() == nullptr);
+        CHECK(branch->fork_native_branch(std::string(64, 'b'), 1) == nullptr);
+        CHECK_FALSE(branch->step_pilot_actions({action}));
+        CHECK(published == 1);
+        CHECK(facade.native_snapshot_facts() == parent_before);
+    }
 
     TEST_CASE("world batch applies gravity without an active command") {
         WorldBatchRuntime runtime(1);

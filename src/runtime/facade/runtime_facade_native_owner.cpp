@@ -1,6 +1,7 @@
 #include "runtime/facade/runtime_facade_types.h"
 
 #include "runtime/facade/internal/flecs_cpu_backend.h"
+#include "runtime/facade/internal/testing/runtime_facade_test_access.h"
 #include "runtime/facade/runtime_facade_internal.h"
 #include "runtime/crypto/sha256.h"
 #include "runtime/contracts/composition/resolved_execution_plan.v1.generated.h"
@@ -189,6 +190,14 @@ bool RuntimeFacadeNativeBranch::valid() const noexcept {
     return state_ != nullptr && state_->valid && state_->kernel != nullptr;
 }
 
+SimulationKernel &runtime::facade::testing::RuntimeFacadeTestAccess::native_branch_kernel(
+    RuntimeFacadeNativeBranch &branch) {
+    if (!branch.valid()) {
+        throw std::logic_error("native branch is unavailable");
+    }
+    return *branch.state_->kernel;
+}
+
 RuntimeNativeSnapshotFacts RuntimeFacadeNativeBranch::snapshot_facts() const {
     if (!valid()) {
         return {};
@@ -205,6 +214,7 @@ bool RuntimeFacadeNativeBranch::step_pilot_actions(
     if (!valid() || state_->remaining_steps == 0 || actions.size() > 64) {
         return false;
     }
+    bool mutation_started = false;
     try {
         std::vector<std::pair<std::uint64_t, const PilotAction *>> translated;
         translated.reserve(actions.size());
@@ -231,11 +241,17 @@ bool RuntimeFacadeNativeBranch::step_pilot_actions(
             }
         }
         SimulationKernelCommandSurface commands(*state_->kernel);
+        mutation_started = true;
         for (const auto &[entity_id, action] : translated) {
             commands.set_pilot_action(entity_id, *action);
         }
         state_->kernel->step();
     } catch (...) {
+        // Preflight rejection is retryable; a partially applied action batch
+        // or native step has no rollback and must retire this child owner.
+        if (mutation_started) {
+            state_->valid = false;
+        }
         return false;
     }
     ++state_->step;
