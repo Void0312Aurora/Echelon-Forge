@@ -38,15 +38,15 @@ TEST_SUITE("world_batch_runtime") {
         auto branch = facade.fork_native_branch(0, std::string(64, 'a'), 2);
         REQUIRE(branch != nullptr);
         const auto parent_before = facade.native_snapshot_facts();
-        auto &kernel = runtime::facade::testing::RuntimeFacadeTestAccess::native_branch_kernel(*branch);
+        auto &kernel =
+            runtime::facade::testing::RuntimeFacadeTestAccess::native_branch_kernel(*branch);
         unsigned published = 0;
         {
             auto lease = kernel.acquire_world_lease();
-            lease.world().observer<PilotAction>().event(flecs::OnSet).each(
-                [&](PilotAction &) {
-                    ++published;
-                    throw std::runtime_error("injected action publication failure");
-                });
+            lease.world().observer<PilotAction>().event(flecs::OnSet).each([&](PilotAction &) {
+                ++published;
+                throw std::runtime_error("injected action publication failure");
+            });
         }
         WorldPilotActionAssignment action{};
         action.entity_id = result.entity_ids.front();
