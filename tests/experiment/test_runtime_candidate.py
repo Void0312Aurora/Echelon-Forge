@@ -684,6 +684,58 @@ def test_failed_observation_capture_poisons_the_branch_instead_of_retrying() -> 
     assert session.trace(session.baseline).transitions == ()
 
 
+@pytest.mark.parametrize("child", [False, True])
+def test_backend_failure_after_step_blocks_retry_checkpoint_and_fork(child) -> None:
+    class PostStepFailure(CheckpointBackend):
+        def step(self, actions):
+            super().step(actions)
+            raise OSError("post-step observation read failed")
+
+        def step_branch(self, handle, actions):
+            super().step_branch(handle, actions)
+            raise OSError("post-step observation read failed")
+
+    backend = PostStepFailure()
+    session = _session(backend)
+    baseline_snapshot = session.checkpoint()
+    branch = session.baseline
+    if child:
+        branch = session.fork(
+            branch, baseline_snapshot, intervention=_actions(), label="fault", horizon=2
+        )
+    snapshot = session.checkpoint(branch)
+    with pytest.raises(RuntimeCandidateError, match="must be discarded"):
+        session.step_branch(branch, _actions(), observation_provenance=OBSERVATION)
+    cursors = (backend.cursor, dict(backend.branch_cursor))
+    with pytest.raises(RuntimeCandidateError, match="unusable"):
+        session.step_branch(branch, _actions(), observation_provenance=OBSERVATION)
+    with pytest.raises(RuntimeCandidateError, match="unusable"):
+        session.checkpoint(branch)
+    with pytest.raises(RuntimeCandidateError, match="unusable"):
+        session.fork(branch, snapshot, intervention=_actions(), label="retry")
+    assert (backend.cursor, backend.branch_cursor) == cursors
+    assert session.trace(branch).transitions == ()
+
+
+def test_backend_rejection_with_unchanged_native_facts_remains_retryable() -> None:
+    class RejectOnce(FakeBackend):
+        reject = True
+
+        def step(self, actions):
+            if self.reject:
+                self.reject = False
+                raise RuntimeCandidateError("action rejected before mutation")
+            return super().step(actions)
+
+    backend = RejectOnce()
+    session = _session(backend)
+    with pytest.raises(RuntimeCandidateError, match="before mutation"):
+        session.step(_actions(), observation_provenance=OBSERVATION)
+    assert backend.cursor == 0
+    session.step(_actions(), observation_provenance=OBSERVATION)
+    assert backend.cursor == 1
+
+
 class PacketCheckpointBackend(CheckpointBackend):
     supports_agent_observation_refs = True
     drift_step: int | None = None

@@ -11,6 +11,8 @@ namespace runtime::facade::testing {
 // the maintained facade without adding a production binding or runtime hook.
 class RuntimeFacadeTestAccess final {
   public:
+    static SimulationKernel &native_branch_kernel(RuntimeFacadeNativeBranch &branch);
+
     static WorldBatchRuntime &world_batch_runtime(RuntimeFacade &facade) {
         auto *backend = dynamic_cast<FlecsCpuBackend *>(facade.runtime_.get());
         if (backend == nullptr) {

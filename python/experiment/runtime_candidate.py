@@ -560,17 +560,20 @@ class RuntimeCandidateSession:
             raise RuntimeCandidateError(
                 "native state changed outside the session before this step"
             )
-        if record.handle is None:
-            result = self._backend.step(pairs)
-        else:
-            if self._native_branch_backend is None:
-                raise RuntimeCandidateError("runtime native branch capability is unavailable")
-            result = self._native_branch_backend.step_branch(record.handle, pairs)
-        # The native world has advanced from here on. Build the whole record,
+        if record.handle is not None and self._native_branch_backend is None:
+            raise RuntimeCandidateError("runtime native branch capability is unavailable")
+        # Backend calls can fail while reading the result of an applied step.
+        # Build the whole record,
         # including every Agent observation, before changing session state; if
         # any part fails, the branch can no longer be trusted, so poison it
         # instead of reporting the step as not applied.
+        native_returned = False
         try:
+            if record.handle is None:
+                result = self._backend.step(pairs)
+            else:
+                result = self._native_branch_backend.step_branch(record.handle, pairs)
+            native_returned = True
             if not isinstance(result, RuntimeStepResult):
                 raise RuntimeCandidateError("backend must return RuntimeStepResult")
             target = self._snapshot_from_facts(
@@ -589,8 +592,15 @@ class RuntimeCandidateSession:
             )
             captured = self._read_agent_observations(record)
         except Exception as exc:
+            if not native_returned:
+                try:
+                    unchanged = self._current_facts(record) == record.facts
+                except Exception:
+                    unchanged = False
+                if unchanged:
+                    raise
             record.poisoned = (
-                f"step {record.head.step} advanced natively but was not recorded ({exc})"
+                f"step {record.head.step} may have advanced natively but was not recorded ({exc})"
             )
             raise RuntimeCandidateError(
                 f"{record.poisoned}; the branch must be discarded"
@@ -619,6 +629,8 @@ class RuntimeCandidateSession:
         if self._native_checkpoint_backend is None:
             raise RuntimeCandidateError("runtime candidate does not support snapshot restore")
         record = self._record(branch or self._baseline)
+        if record.poisoned:
+            raise RuntimeCandidateError(f"branch is unusable: {record.poisoned}")
         if record.terminated:
             raise RuntimeCandidateError("cannot checkpoint a terminal snapshot")
         if record.head.digest not in record.checkpoints:
@@ -671,6 +683,8 @@ class RuntimeCandidateSession:
         if self._native_branch_backend is None:
             raise RuntimeCandidateError("runtime candidate does not support branch fork")
         record = self._record(parent)
+        if record.poisoned:
+            raise RuntimeCandidateError(f"branch is unusable: {record.poisoned}")
         if not isinstance(snapshot, SnapshotRef):
             raise RuntimeCandidateError("snapshot must be a SnapshotRef")
         saved = record.checkpoints.get(snapshot.digest)
