@@ -453,7 +453,13 @@ def test_native_infantry_consumes_arnis_raster_and_stops_on_water() -> None:
     boundary_before = tuple(sim.get_unit_position(boundary_id))
     sim.step()
     assert tuple(sim.get_unit_velocity(boundary_id)) == (0.0, 0.0, 0.0)
-    assert tuple(sim.get_unit_position(boundary_id)) == boundary_before
+    boundary_after = tuple(sim.get_unit_position(boundary_id))
+    # Blocking holds horizontal position; the movement owner still projects
+    # the anchor onto the source terrain's absolute elevation.
+    assert boundary_after[:2] == boundary_before[:2]
+    assert boundary_after[2] == pytest.approx(
+        float(sim.get_ground_terrain_observation(*boundary_after[:2])[0])
+    )
 
 
 def test_native_infantry_ground_rifle_requires_track_and_applies_damage() -> None:
