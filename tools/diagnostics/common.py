@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import csv
+import hashlib
 import json
 import math
 import os
@@ -428,6 +430,39 @@ def write_json_output(
             allow_nan=allow_nan,
         )
         f.write("\n")
+
+
+def file_sha256(path: Path) -> str:
+    """Hash evidence bytes in bounded chunks, including empty artifacts."""
+
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def write_csv_rows(
+    path: Path,
+    rows: list[dict[str, Any]],
+    *,
+    value_transform: Callable[[Any], Any],
+    write_empty_header: bool = False,
+) -> None:
+    """Write the sorted union of row keys using the caller's cell encoding.
+
+    Empty input creates an empty file unless write_empty_header is set.
+    Parent directories must already exist,
+    matching the guidance evidence bundle writers' existing contract.
+    """
+
+    fieldnames = sorted({key for row in rows for key in row})
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
+        if fieldnames or write_empty_header:
+            writer.writeheader()
+            for row in rows:
+                writer.writerow({key: value_transform(row.get(key)) for key in fieldnames})
 
 
 def finite_float(value: Any, default: float = float("nan")) -> float:

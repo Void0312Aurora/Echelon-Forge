@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import math
 import sys
@@ -29,6 +28,8 @@ from matplotlib.colors import BoundaryNorm, ListedColormap, TwoSlopeNorm  # noqa
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
+
+from tools.diagnostics.common import file_sha256 as _sha256  # noqa: E402
 
 SCHEMA_VERSION = "a2.kill_chain_guidance_calibration_visualization_manifest.v1"
 STAGE4_SCHEMA_VERSION = "a2.kill_chain_guidance_envelope_rebuild.v1"
@@ -101,14 +102,6 @@ def _write_json(path: Path, value: dict[str, Any]) -> None:
   with path.open("w", encoding="utf-8") as handle:
     json.dump(value, handle, ensure_ascii=True, indent=2, sort_keys=True)
     handle.write("\n")
-
-
-def _sha256(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-      digest.update(chunk)
-  return digest.hexdigest()
 
 
 def _file_record(path: Path) -> dict[str, Any]:
