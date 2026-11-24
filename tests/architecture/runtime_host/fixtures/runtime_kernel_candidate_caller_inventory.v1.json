@@ -8,11 +8,19 @@
     "EpochReferenceFence"
   ],
   "references": {
-    "CMakeLists.txt": ["runtime_kernel_candidate"],
-    "pyproject.toml": ["candidate_adapter"],
+    "CMakeLists.txt": [
+      "runtime_kernel_candidate"
+    ],
+    "pyproject.toml": [
+      "candidate_adapter"
+    ],
     "python/rl/runtime/world_batch/candidate_adapter.py": [
       "EpochReferenceFence",
       "candidate_adapter"
+    ],
+    "src/runtime/host/integration/python_runtime_candidate_module.cpp": [
+      "RuntimeKernelCandidate",
+      "runtime_kernel_candidate"
     ],
     "src/runtime/host/integration/runtime_kernel_candidate.cpp": [
       "RuntimeKernelCandidate",
@@ -67,6 +75,7 @@
   },
   "classified_callers": {
     "build_tree_candidate": [
+      "src/runtime/host/integration/python_runtime_candidate_module.cpp",
       "src/runtime/host/integration/runtime_kernel_candidate.cpp",
       "src/runtime/host/integration/runtime_kernel_candidate.h",
       "src/runtime/host/integration/runtime_kernel_candidate_facade.cpp",
@@ -100,5 +109,5 @@
   ],
   "maintained_surface_violations": [],
   "production_authority": "forbidden",
-  "inventory_sha256": "debc0aeefb28658a44c105f2605deb716e755379d5135d254df6de0a9f58f065"
+  "inventory_sha256": "5ae5f5439562b826a6f945ff2920cd964a44d8c8b6b165c1ce80fba2f12e3b4e"
 }

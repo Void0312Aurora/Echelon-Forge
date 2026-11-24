@@ -1,5 +1,6 @@
 #include "runtime/host/integration/runtime_kernel_candidate.h"
 #include "runtime/host/integration/runtime_kernel_candidate_facade.h"
+#include "runtime/host/integration/runtime_pilot_action_codec.h"
 #include "runtime/contracts/authority/runtime_authority_contract.h"
 
 #include <doctest/doctest.h>
@@ -10,7 +11,9 @@
 #include <fstream>
 #include <functional>
 #include <nlohmann/json.hpp>
+#include <random>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -18,6 +21,42 @@ using runtime::host::RuntimeHostState;
 using runtime::host::integration::RuntimeKernelCandidate;
 
 namespace {
+
+class TemporaryReleasePackage final {
+  public:
+    TemporaryReleasePackage() {
+        std::random_device random;
+        const auto temporary_root = std::filesystem::temp_directory_path();
+        for (unsigned int attempt = 0; attempt < 128; ++attempt) {
+            const auto candidate =
+                temporary_root / ("ef_p5b_release_mutation_" + std::to_string(random()) + "_" +
+                                  std::to_string(random()));
+            std::error_code error;
+            if (std::filesystem::create_directory(candidate, error)) {
+                root_ = candidate;
+                return;
+            }
+            if (error) {
+                throw std::filesystem::filesystem_error(
+                    "create isolated release mutation directory", candidate, error);
+            }
+        }
+        throw std::runtime_error("could not reserve a release mutation directory");
+    }
+
+    TemporaryReleasePackage(const TemporaryReleasePackage &) = delete;
+    TemporaryReleasePackage &operator=(const TemporaryReleasePackage &) = delete;
+
+    ~TemporaryReleasePackage() {
+        std::error_code error;
+        (void)std::filesystem::remove_all(root_, error);
+    }
+
+    [[nodiscard]] std::filesystem::path path() const { return root_ / "release.bin"; }
+
+  private:
+    std::filesystem::path root_;
+};
 
 class CandidateRunStore final : public runtime::host::RuntimeRunRecorderStore {
   public:
@@ -515,6 +554,83 @@ TEST_SUITE("runtime_kernel_candidate") {
         REQUIRE(evidence_output.good());
     }
 
+    TEST_CASE("native pilot action transport is closed and preserves every DTO field") {
+        using runtime::host::integration::decode_pilot_actions;
+        using runtime::host::integration::encode_pilot_actions;
+        WorldPilotActionAssignment assignment{};
+        assignment.entity_id = 587;
+        auto &action = assignment.action;
+        action.active = true;
+        action.throttle = 0.75;
+        action.stick_pitch = -0.125;
+        action.stick_roll = 0.25;
+        action.rudder = -0.5;
+        action.flaps = 0.1f;
+        action.gear_handle = 1.0f;
+        action.speedbrake = 0.3f;
+        action.brake = 0.2;
+        action.brake_left = true;
+        action.brake_right = true;
+        action.radar_active = true;
+        action.radar_scan_az = 12.5;
+        action.radar_scan_el = -5.0;
+        action.tms_up = true;
+        action.master_arm = true;
+        action.fire_weapon = true;
+        action.fire_gun = true;
+        action.weapon_select_id = 3;
+        action.jettison_emergency = true;
+        action.program_chaff = true;
+        action.program_flare = true;
+        action.jammer_transmit = true;
+        action.jammer_mode = 2;
+        const auto payload = encode_pilot_actions({assignment});
+        REQUIRE(payload);
+        const auto decoded = decode_pilot_actions(*payload);
+        REQUIRE(decoded);
+        REQUIRE(decoded->size() == 1);
+        const auto &restored = decoded->front().action;
+        CHECK(restored.active == action.active);
+        CHECK(restored.stick_pitch == action.stick_pitch);
+        CHECK(restored.stick_roll == action.stick_roll);
+        CHECK(restored.rudder == action.rudder);
+        CHECK(restored.throttle == action.throttle);
+        CHECK(restored.gear_handle == action.gear_handle);
+        CHECK(restored.flaps == action.flaps);
+        CHECK(restored.speedbrake == action.speedbrake);
+        CHECK(restored.brake == action.brake);
+        CHECK(restored.brake_left == action.brake_left);
+        CHECK(restored.brake_right == action.brake_right);
+        CHECK(restored.radar_active == action.radar_active);
+        CHECK(restored.radar_scan_az == action.radar_scan_az);
+        CHECK(restored.radar_scan_el == action.radar_scan_el);
+        CHECK(restored.tms_up == action.tms_up);
+        CHECK(restored.master_arm == action.master_arm);
+        CHECK(restored.fire_weapon == action.fire_weapon);
+        CHECK(restored.fire_gun == action.fire_gun);
+        CHECK(restored.weapon_select_id == action.weapon_select_id);
+        CHECK(restored.jettison_emergency == action.jettison_emergency);
+        CHECK(restored.program_chaff == action.program_chaff);
+        CHECK(restored.program_flare == action.program_flare);
+        CHECK(restored.jammer_transmit == action.jammer_transmit);
+        CHECK(restored.jammer_mode == action.jammer_mode);
+        CHECK(encode_pilot_actions(*decoded) == payload);
+        auto malformed = nlohmann::json::parse(payload->begin(), payload->end());
+        malformed["assignments"][0]["action"]["unknown"] = true;
+        const auto unknown = malformed.dump();
+        CHECK_FALSE(decode_pilot_actions({unknown.begin(), unknown.end()}));
+        malformed["assignments"][0]["action"].erase("unknown");
+        malformed["assignments"][0]["action"].erase("jammer_mode");
+        const auto missing = malformed.dump();
+        CHECK_FALSE(decode_pilot_actions({missing.begin(), missing.end()}));
+        malformed = nlohmann::json::parse(payload->begin(), payload->end());
+        malformed["assignments"][0]["action"]["active"] = 1;
+        const auto coercion = malformed.dump();
+        CHECK_FALSE(decode_pilot_actions({coercion.begin(), coercion.end()}));
+        assignment.world_index = 1;
+        CHECK_FALSE(encode_pilot_actions({assignment}));
+    }
+
     TEST_CASE("P5-B recorder admission and mutation ACKs gate the real candidate") {
         CandidateRunStore tampered_authority_store;
         auto tampered_header = nlohmann::json::parse(run_header_for_run("run-tampered-authority"));
@@ -772,11 +888,11 @@ TEST_SUITE("runtime_kernel_candidate") {
         CHECK(completed_lifecycle.back().at("durable_sequence") ==
               terminal_store.final_receipt.at("payload").at("journal_last_sequence"));
 
-        const auto mutable_package =
-            std::filesystem::temp_directory_path() / "ef_p5b_candidate_release_mutation.bin";
+        const TemporaryReleasePackage temporary_package;
+        const auto mutable_package = temporary_package.path();
         std::error_code copy_error;
         std::filesystem::copy_file(EF_CANDIDATE_RELEASE_PACKAGE_PATH, mutable_package,
-                                   std::filesystem::copy_options::overwrite_existing, copy_error);
+                                   std::filesystem::copy_options::none, copy_error);
         REQUIRE_FALSE(copy_error);
         auto mutable_sources = execution_sources();
         mutable_sources.package_path = mutable_package.string();
@@ -805,8 +921,6 @@ TEST_SUITE("runtime_kernel_candidate") {
         CHECK(mutated_package_store.final_receipt.at("payload").at("terminal_state") == "failed");
         CHECK(mutated_package_store.final_receipt.at("payload").at("terminal_reason") ==
               "execution provenance changed after admission");
-        std::filesystem::remove(mutable_package, copy_error);
-
         CandidateRunStore outcome_failure_store;
         RuntimeKernelCandidate outcome_failure({
             .host_id = {.high = 0x5035422D4F555443ULL, .low = 1},
@@ -950,6 +1064,143 @@ TEST_SUITE("runtime_kernel_candidate") {
         CHECK_FALSE(facade.try_get_entity_kinematics(stale, &state));
         REQUIRE(candidate.shutdown(10, 100).status);
         CHECK_FALSE(facade.step_batch());
+    }
+
+    TEST_CASE("Route B native kernel sibling continues from an owner-transferred parent") {
+        RuntimeKernelCandidate candidate({
+            .host_id = {.high = 0x524F555445422D31ULL, .low = 1},
+            .mode = runtime::host::RuntimeHostMode::Shadow,
+            .lifecycle_deadline_tick = 1000,
+        });
+        REQUIRE(candidate.start());
+        WorldSpawnRequest request{};
+        request.side = Side::Blue;
+        request.type_name = "Aircraft";
+        request.x = 100.0;
+        request.y = 200.0;
+        request.z = 3000.0;
+        REQUIRE(candidate.spawn_unit(candidate.world_ref(), request).has_value());
+        REQUIRE(candidate.native_step(std::string(64, 'a')));
+        const auto parent_before = candidate.native_snapshot_facts();
+        REQUIRE(parent_before.step == 1);
+        REQUIRE(parent_before.state_digest.size() == 64);
+        REQUIRE(parent_before.rng_digest.size() == 64);
+        CHECK(candidate.fork_native_branch("malformed", 4) == nullptr);
+        CHECK(candidate.fork_native_branch(std::string(64, 'x'), 0) == nullptr);
+        CHECK(candidate.native_snapshot_facts().step == parent_before.step);
+
+        const auto branch = candidate.fork_native_branch(std::string(64, 'b'), 4);
+        REQUIRE(branch != nullptr);
+        REQUIRE(branch->valid());
+        CHECK(branch->snapshot_facts().step == parent_before.step);
+        CHECK(branch->snapshot_facts().state_digest == parent_before.state_digest);
+        CHECK(branch->snapshot_facts().rng_digest == parent_before.rng_digest);
+
+        REQUIRE(branch->step(std::string(64, 'c')));
+        const auto child_after = branch->snapshot_facts();
+        CHECK(child_after.step == parent_before.step + 1);
+        CHECK(child_after.event_cursor == parent_before.event_cursor + 1);
+        CHECK(child_after.state_digest != parent_before.state_digest);
+        CHECK(candidate.native_snapshot_facts().step == parent_before.step);
+        CHECK(candidate.native_snapshot_facts().state_digest == parent_before.state_digest);
+
+        const auto sibling = candidate.fork_native_branch(std::string(64, 'd'), 4);
+        REQUIRE(sibling != nullptr);
+        REQUIRE(sibling->valid());
+        CHECK(sibling->snapshot_facts().state_digest == parent_before.state_digest);
+        REQUIRE(sibling->step(std::string(64, 'e')));
+        CHECK(sibling->snapshot_facts().step == parent_before.step + 1);
+        CHECK(branch->snapshot_facts().state_digest == child_after.state_digest);
+        CHECK(candidate.native_snapshot_facts().step == parent_before.step);
+
+        const auto checkpoint = branch->checkpoint();
+        REQUIRE(checkpoint != nullptr);
+        REQUIRE(checkpoint->valid());
+        CHECK(checkpoint->branch_ref().depth == branch->branch_ref().depth + 1);
+        CHECK(checkpoint->snapshot_facts().step == child_after.step);
+        CHECK(checkpoint->snapshot_facts().state_digest == child_after.state_digest);
+        REQUIRE(checkpoint->step(std::string(64, 'f')));
+        REQUIRE(branch->step(std::string(64, 'f')));
+        CHECK(checkpoint->snapshot_facts().step == branch->snapshot_facts().step);
+        CHECK(checkpoint->snapshot_facts().event_cursor == branch->snapshot_facts().event_cursor);
+        CHECK(checkpoint->snapshot_facts().rng_digest == branch->snapshot_facts().rng_digest);
+        CHECK(checkpoint->snapshot_facts().state_digest == branch->snapshot_facts().state_digest);
+
+        const auto saved = candidate.native_checkpoint();
+        REQUIRE(saved != nullptr);
+        REQUIRE(candidate.native_step(std::string(64, 'a')));
+        const auto continued_parent = candidate.native_snapshot_facts();
+        const auto descendant = saved->fork_native_branch(std::string(64, '9'), 3);
+        REQUIRE(descendant != nullptr);
+        CHECK(descendant->branch_ref().intervention_sha256 == std::string(64, '9'));
+        CHECK(descendant->branch_ref().depth == saved->branch_ref().depth + 1);
+        CHECK(descendant->branch_ref().parent_snapshot_sha256 ==
+              saved->snapshot_facts().state_digest);
+        CHECK(saved->fork_native_branch("malformed", 3) == nullptr);
+        CHECK(saved->fork_native_branch(std::string(64, '9'), 0) == nullptr);
+        REQUIRE(descendant->step(std::string(64, 'a')));
+        CHECK(descendant->snapshot_facts().state_digest == continued_parent.state_digest);
+        CHECK(descendant->snapshot_facts().rng_digest == continued_parent.rng_digest);
+        CHECK(descendant->snapshot_facts().event_cursor == continued_parent.event_cursor);
+        CHECK(saved->snapshot_facts().state_digest == parent_before.state_digest);
+    }
+
+    TEST_CASE("Route B sibling checkpoints preserve independent remaining step budgets") {
+        RuntimeKernelCandidate candidate({
+            .host_id = {.high = 0x524F555445422D32ULL, .low = 2},
+            .mode = runtime::host::RuntimeHostMode::Shadow,
+            .lifecycle_deadline_tick = 1000,
+        });
+        REQUIRE(candidate.start());
+        REQUIRE(candidate.native_step(std::string(64, 'a')));
+        const auto branch = candidate.fork_native_branch(std::string(64, 'b'), 2);
+        REQUIRE(branch != nullptr);
+        CHECK_FALSE(branch->step("invalid-digest"));
+        REQUIRE(branch->step(std::string(64, 'c')));
+        const auto checkpoint = branch->checkpoint();
+        REQUIRE(checkpoint != nullptr);
+        REQUIRE(branch->step(std::string(64, 'd')));
+        REQUIRE(checkpoint->step(std::string(64, 'd')));
+
+        const auto assert_rejected_without_mutation = [](const auto &owner) {
+            const auto before = owner->snapshot_facts();
+            CHECK_FALSE(owner->step(std::string(64, 'e')));
+            const auto after = owner->snapshot_facts();
+            CHECK(after.step == before.step);
+            CHECK(after.state_digest == before.state_digest);
+            CHECK(after.rng_digest == before.rng_digest);
+            CHECK(after.event_cursor == before.event_cursor);
+            CHECK(after.terminated == before.terminated);
+        };
+        assert_rejected_without_mutation(branch);
+        assert_rejected_without_mutation(checkpoint);
+
+        const auto exhausted_checkpoint = checkpoint->checkpoint();
+        REQUIRE(exhausted_checkpoint != nullptr);
+        CHECK(exhausted_checkpoint->valid());
+        assert_rejected_without_mutation(exhausted_checkpoint);
+        const auto renewed = exhausted_checkpoint->fork_native_branch(std::string(64, 'f'), 1);
+        REQUIRE(renewed != nullptr);
+        REQUIRE(renewed->step(std::string(64, 'a')));
+        assert_rejected_without_mutation(renewed);
+    }
+
+    TEST_CASE("explicit candidate journals remain caller-owned after clean shutdown") {
+        const TemporaryReleasePackage temporary_journal;
+        const auto journal_path = temporary_journal.path();
+        {
+            RuntimeKernelCandidate candidate({
+                .host_id = {.high = 0x524F555445422D33ULL, .low = 3},
+                .mode = runtime::host::RuntimeHostMode::Shadow,
+                .lifecycle_deadline_tick = 1000,
+                .journal_path = journal_path.string(),
+            });
+            REQUIRE(candidate.start());
+            REQUIRE(candidate.native_step(std::string(64, 'a')));
+            CHECK(std::filesystem::exists(journal_path));
+            REQUIRE(candidate.shutdown(10, 1000).status);
+        }
+        CHECK(std::filesystem::exists(journal_path));
     }
 
     TEST_CASE("P4-C candidate sustains repeated epochs and fences retired references") {

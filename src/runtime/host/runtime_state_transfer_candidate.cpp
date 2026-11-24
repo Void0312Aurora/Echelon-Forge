@@ -585,6 +585,7 @@ bool category_requires_truth_schema(RuntimeStateCategory category) {
     case RuntimeStateCategory::DelayedEventsQueues:
     case RuntimeStateCategory::CommandsLinksPendingIntent:
     case RuntimeStateCategory::EpisodeRewardTermination:
+    case RuntimeStateCategory::ScenarioSettings:
         return true;
     default:
         return false;
@@ -629,6 +630,7 @@ struct RuntimeEpisodeBarrierToken {
     std::weak_ptr<RuntimeEpisodeCoordinatorState> coordinator;
     RuntimeIdentity128 coordinator_nonce;
     RuntimeIdentity128 barrier_nonce;
+    RuntimeEpisodeBarrierKind kind = RuntimeEpisodeBarrierKind::Replacement;
     RuntimeEpisodeCoordinatorSnapshot snapshot;
     RuntimeIdentity128 host_instance_nonce;
     std::uint64_t world_slot = 0;
@@ -716,11 +718,17 @@ void release_unclaimed_barrier(const std::shared_ptr<RuntimeEpisodeBarrierToken>
         const auto coordinator = token->coordinator.lock();
         if (coordinator != nullptr) {
             std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
-            if (coordinator->phase == RuntimeEpisodePhase::ReplacementBarrier &&
+            const RuntimeEpisodePhase expected_phase =
+                token->kind == RuntimeEpisodeBarrierKind::Branch
+                    ? RuntimeEpisodePhase::BranchBarrier
+                    : RuntimeEpisodePhase::ReplacementBarrier;
+            if (coordinator->phase == expected_phase &&
                 coordinator->coordinator_nonce == token->coordinator_nonce &&
                 coordinator->open_barrier_nonce == token->barrier_nonce &&
                 coordinator->barrier_sequence == token->snapshot.barrier_sequence) {
-                coordinator->phase = RuntimeEpisodePhase::Terminal;
+                coordinator->phase = token->kind == RuntimeEpisodeBarrierKind::Branch
+                                         ? RuntimeEpisodePhase::Running
+                                         : RuntimeEpisodePhase::Terminal;
                 coordinator->open_barrier_nonce = {};
             }
         }
@@ -823,6 +831,7 @@ struct OwnerImportReceiptGuard {
     ~OwnerImportReceiptGuard() noexcept {
         if (active && receipt != nullptr) {
             receipt->observations.clear();
+            receipt->categories_not_carried_by_source.clear();
             receipt->transaction.reset();
         }
     }
@@ -861,6 +870,7 @@ RuntimeStateTransferStatus validate_profile(const RuntimeStateTransferProfile &p
             row.owner_id != runtime_state_owner_id(row.category) ||
             row.schema_id != runtime_state_schema_id(row.category) ||
             row.minimum_schema_generation < decoder_rule->previous_schema_generation ||
+            row.minimum_schema_generation < decoder_rule->introduced_generation ||
             row.maximum_schema_generation > decoder_rule->current_schema_generation ||
             row.maximum_schema_generation > kRuntimeStateTransferContractGeneration) {
             return failure(RuntimeStateTransferError::InvalidCensusProfile,
@@ -901,6 +911,7 @@ validate_category_semantics(const RuntimeStateCensusEntry &entry,
     case RuntimeStateCategory::ClockCadence:
     case RuntimeStateCategory::DelayedEventsQueues:
     case RuntimeStateCategory::EpisodeRewardTermination:
+    case RuntimeStateCategory::ScenarioSettings:
         if (entry.disposition != RuntimeStateDisposition::Transfer) {
             return failure(RuntimeStateTransferError::DispositionMismatch,
                            "truth state category requires canonical transfer");
@@ -1162,13 +1173,15 @@ bool same_source_census(const RuntimeStateCensus &expected, const RuntimeStateCe
 RuntimeStateTransferStatus validate_source_artifacts(const RuntimeStateTransferProfile &profile,
                                                      const RuntimeStateCensus &census,
                                                      const RuntimeStateOwnerExport &source_export) {
-    if (source_export.artifacts.size() != kRuntimeStateCategoryCount) {
+    if (source_export.artifacts.size() !=
+        runtime_state_category_count(census.contract_generation)) {
         return failure(RuntimeStateTransferError::MissingCategory,
                        "owner source export does not contain one artifact per category");
     }
     std::array<const RuntimeStateOwnerArtifact *, kRuntimeStateCategoryCount> artifacts{};
     for (const RuntimeStateOwnerArtifact &artifact : source_export.artifacts) {
-        if (!supported_category(artifact.category)) {
+        if (!supported_category(artifact.category) ||
+            !runtime_state_category_present(artifact.category, census.contract_generation)) {
             return failure(RuntimeStateTransferError::SchemaMismatch,
                            "owner source export contains an unsupported artifact category");
         }
@@ -1185,6 +1198,9 @@ RuntimeStateTransferStatus validate_source_artifacts(const RuntimeStateTransferP
         }
     }
     for (const RuntimeStateCensusRowPolicy &policy : profile.rows) {
+        if (!runtime_state_category_present(policy.category, census.contract_generation)) {
+            continue;
+        }
         const auto entry = std::find_if(census.entries.begin(), census.entries.end(),
                                         [&](const RuntimeStateCensusEntry &candidate) {
                                             return candidate.category == policy.category;
@@ -2166,9 +2182,10 @@ RuntimeStateOwnerImportReceipt RuntimeStateOwnerAdapterRegistry::import_and_obse
         source_export.census.profile_generation != profile.profile_generation ||
         source_export.census.source_plan_sha256 != profile.source_plan_sha256 ||
         source_export.census.target_plan_sha256 != profile.target_plan_sha256 ||
-        source_export.census.entries.size() != kRuntimeStateCategoryCount ||
         (source_export.census.contract_generation != kRuntimeStateTransferContractGeneration &&
-         source_export.census.contract_generation != kRuntimeStateTransferPreviousGeneration)) {
+         source_export.census.contract_generation != kRuntimeStateTransferPreviousGeneration) ||
+        source_export.census.entries.size() !=
+            runtime_state_category_count(source_export.census.contract_generation)) {
         receipt.status =
             failure(RuntimeStateTransferError::InvalidArgument,
                     "owner source export does not bind the admitted profile and source slot");
@@ -2187,6 +2204,14 @@ RuntimeStateOwnerImportReceipt RuntimeStateOwnerAdapterRegistry::import_and_obse
         transactions.reserve(kRuntimeStateCategoryCount);
         OwnerImportPreparationGuard transactions_abort{.transactions = &transactions};
         for (const RuntimeStateCensusRowPolicy &policy : profile.rows) {
+            if (!runtime_state_category_present(policy.category,
+                                                source_export.census.contract_generation)) {
+                // The N-1 producer predates this category. Import nothing for
+                // it, so the target keeps its own state, and say so in the
+                // receipt instead of fabricating a source row.
+                receipt.categories_not_carried_by_source.push_back(policy.category);
+                continue;
+            }
             const auto entry = std::find_if(source_export.census.entries.begin(),
                                             source_export.census.entries.end(),
                                             [&](const RuntimeStateCensusEntry &candidate) {
@@ -2204,6 +2229,12 @@ RuntimeStateOwnerImportReceipt RuntimeStateOwnerAdapterRegistry::import_and_obse
                 return receipt;
             }
             const auto &registration = registrations_[static_cast<std::size_t>(policy.category)];
+            if (artifact->schema_generation < policy.minimum_schema_generation) {
+                // Covers a category introduced at N: no N-1 bytes can exist for it.
+                receipt.status = failure(RuntimeStateTransferError::SchemaMismatch,
+                                         "owner adapter source generation predates its category");
+                return receipt;
+            }
             RuntimeStateOwnerArtifact admitted_artifact = *artifact;
             if (artifact->schema_generation == kRuntimeStateTransferPreviousGeneration) {
                 admitted_artifact = registration.migrate_previous(*artifact);
@@ -2296,6 +2327,8 @@ std::string_view runtime_state_category_name(RuntimeStateCategory category) noex
         return "external-side-effects";
     case RuntimeStateCategory::DiagnosticsTelemetry:
         return "diagnostics-telemetry";
+    case RuntimeStateCategory::ScenarioSettings:
+        return "scenario-settings";
     }
     return "unsupported";
 }
@@ -2344,6 +2377,8 @@ std::string_view runtime_state_owner_id(RuntimeStateCategory category) noexcept 
         return "native.side-effect-outbox";
     case RuntimeStateCategory::DiagnosticsTelemetry:
         return "native.telemetry-owner";
+    case RuntimeStateCategory::ScenarioSettings:
+        return "native.scenario-settings-owner";
     }
     return "unsupported";
 }
@@ -2374,6 +2409,8 @@ std::string_view runtime_state_schema_id(RuntimeStateCategory category) noexcept
         return "echelon_forge.runtime_state.side_effect_outbox.v1";
     case RuntimeStateCategory::DiagnosticsTelemetry:
         return "echelon_forge.runtime_state.telemetry.v1";
+    case RuntimeStateCategory::ScenarioSettings:
+        return "echelon_forge.runtime_state.scenario_settings.v1";
     }
     return "unsupported";
 }
@@ -2404,7 +2441,7 @@ runtime_state_decoder_replay_matrix() noexcept {
                  // Missile field tables and serialized component reflection.
                  // Pinned by
                  // test_runtime_state_transfer_candidate_contract.py.
-             "916f09fd927bbd8112ac5235fe98f4e51c426d2227c10c340a0a8176eb231060"},
+             "60db6e7ba4e17b8d9553374d985fa5c8367a666caf394bb810dacdb8d5ae2134"},
             {.category = RuntimeStateCategory::RngState,
              .disposition = RuntimeStateDisposition::Transfer,
              .owner_id = "native.rng-owner",
@@ -2485,6 +2522,17 @@ runtime_state_decoder_replay_matrix() noexcept {
              .replay_policy = RuntimeStateReplayPolicy::Rederive,
              .migration_sha256 =
                  "3f205d207034c8f48dc00408a8836da76bd0a7cfe4e82b24e4c80a3ad5ccfd66"},
+            {.category = RuntimeStateCategory::ScenarioSettings,
+             .disposition = RuntimeStateDisposition::Transfer,
+             .owner_id = "native.scenario-settings-owner",
+             .schema_id = "echelon_forge.runtime_state.scenario_settings.v1",
+             .unknown_field_policy = RuntimeStateUnknownFieldPolicy::Reject,
+             .replay_policy = RuntimeStateReplayPolicy::Transfer,
+             .migration_sha256 =
+                 // SHA-256 of the normalized scenario-settings codec source.
+                 // Pinned by test_runtime_state_transfer_candidate_contract.py.
+             "7f3698be9665340af2e10fa3e84c05b7a5fdba4cab12b4c012d1127bbf6766e2",
+             .introduced_generation = 6},
         }};
     return matrix;
 }
@@ -2496,6 +2544,20 @@ runtime_state_decoder_replay_rule(RuntimeStateCategory category) noexcept {
         return nullptr;
     }
     return &runtime_state_decoder_replay_matrix()[index];
+}
+
+bool runtime_state_category_present(RuntimeStateCategory category,
+                                    std::uint32_t contract_generation) noexcept {
+    const RuntimeStateDecoderReplayRule *rule = runtime_state_decoder_replay_rule(category);
+    return rule != nullptr && rule->introduced_generation <= contract_generation;
+}
+
+std::size_t runtime_state_category_count(std::uint32_t contract_generation) noexcept {
+    const auto &matrix = runtime_state_decoder_replay_matrix();
+    return static_cast<std::size_t>(
+        std::count_if(matrix.begin(), matrix.end(), [&](const RuntimeStateDecoderReplayRule &rule) {
+            return rule.introduced_generation <= contract_generation;
+        }));
 }
 
 RuntimeStateTransferProfile runtime_state_transfer_profile_from_decoder_matrix(
@@ -2514,7 +2576,8 @@ RuntimeStateTransferProfile runtime_state_transfer_profile_from_decoder_matrix(
             .disposition = rule.disposition,
             .owner_id = std::string(rule.owner_id),
             .schema_id = std::string(rule.schema_id),
-            .minimum_schema_generation = rule.previous_schema_generation,
+            .minimum_schema_generation =
+                std::max(rule.previous_schema_generation, rule.introduced_generation),
             .maximum_schema_generation = rule.current_schema_generation,
             .truth_affecting = category_requires_truth_schema(rule.category),
         });
@@ -2576,6 +2639,9 @@ canonical_episode_transition_intent_bytes(const RuntimeEpisodeTransitionIntent &
     append_number(output, "expected_step_sequence", intent.expected_step_sequence);
     append_identity(output, "idempotency_key", intent.idempotency_key);
     append_text(output, "payload_sha256", intent.payload_sha256);
+    if (!intent.action_payload.empty()) {
+        append_number(output, "action_payload_size", intent.action_payload.size());
+    }
     append_number(output, "production_authorized", intent.production_authorized ? 1 : 0);
     return output;
 }
@@ -2650,6 +2716,12 @@ RuntimeEpisodeCoordinatorCandidate::submit(const RuntimeEpisodeTransitionIntent 
         !intent.idempotency_key.well_formed() || !is_lower_hex_sha256(intent.payload_sha256)) {
         return {.status = failure(RuntimeStateTransferError::InvalidArgument,
                                   "episode transition intent is malformed")};
+    }
+    if (!intent.action_payload.empty() &&
+        (intent.kind != RuntimeEpisodeIntentKind::Action || intent.action_payload.size() > 65536 ||
+         runtime_state_payload_sha256(intent.action_payload) != intent.payload_sha256)) {
+        return {.status = failure(RuntimeStateTransferError::InvalidArgument,
+                                  "action payload does not match its admitted digest or budget")};
     }
     const std::string fingerprint = intent_fingerprint(intent);
     const auto existing =
@@ -2886,6 +2958,44 @@ RuntimeEpisodeBarrierAdmission RuntimeEpisodeCoordinatorCandidate::open_replacem
     token->coordinator = state_;
     token->coordinator_nonce = state_->coordinator_nonce;
     token->barrier_nonce = state_->open_barrier_nonce;
+    token->kind = RuntimeEpisodeBarrierKind::Replacement;
+    token->snapshot = snapshot;
+    return {.status = success(), .capability = RuntimeEpisodeBarrierCapability(std::move(token))};
+}
+
+RuntimeEpisodeBarrierAdmission
+RuntimeEpisodeCoordinatorCandidate::open_branch_barrier(const RuntimeEpisodeRef &expected_episode,
+                                                        std::uint64_t expected_step_sequence) {
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    if (!same_episode(expected_episode, state_->episode) ||
+        expected_step_sequence != state_->step_sequence) {
+        return {.status = failure(RuntimeStateTransferError::StaleIntent,
+                                  "branch barrier expectation is stale")};
+    }
+    if (state_->phase != RuntimeEpisodePhase::Running || state_->mutation_in_progress) {
+        return {.status = failure(RuntimeStateTransferError::BarrierRequired,
+                                  "branch requires a running native episode boundary")};
+    }
+    if (state_->barrier_sequence == std::numeric_limits<std::uint64_t>::max()) {
+        return {.status = failure(RuntimeStateTransferError::SequenceExhausted,
+                                  "episode barrier sequence is exhausted")};
+    }
+    ++state_->barrier_sequence;
+    state_->phase = RuntimeEpisodePhase::BranchBarrier;
+    state_->open_barrier_nonce = mint_nonce();
+    RuntimeEpisodeCoordinatorSnapshot snapshot{
+        .episode = state_->episode,
+        .phase = state_->phase,
+        .step_sequence = state_->step_sequence,
+        .barrier_sequence = state_->barrier_sequence,
+        .snapshot_id = state_->snapshot_id,
+        .snapshot_sha256 = state_->snapshot_sha256,
+    };
+    auto token = std::make_shared<RuntimeEpisodeBarrierToken>();
+    token->coordinator = state_;
+    token->coordinator_nonce = state_->coordinator_nonce;
+    token->barrier_nonce = state_->open_barrier_nonce;
+    token->kind = RuntimeEpisodeBarrierKind::Branch;
     token->snapshot = snapshot;
     return {.status = success(), .capability = RuntimeEpisodeBarrierCapability(std::move(token))};
 }
@@ -2926,6 +3036,10 @@ RuntimeStateTransferStatus RuntimeEpisodeCoordinatorCandidate::abort_replacement
                        "replacement barrier capability is empty");
     }
     const auto token = std::move(capability.token_);
+    if (token->kind != RuntimeEpisodeBarrierKind::Replacement) {
+        return failure(RuntimeStateTransferError::BarrierRequired,
+                       "replacement abort received a branch barrier");
+    }
     std::lock_guard<std::mutex> token_lock(token->mutex);
     if (token->claimed || token->released) {
         return failure(RuntimeStateTransferError::BarrierReplay,
@@ -2944,6 +3058,40 @@ RuntimeStateTransferStatus RuntimeEpisodeCoordinatorCandidate::abort_replacement
                        "replacement barrier is no longer current");
     }
     state_->phase = RuntimeEpisodePhase::Terminal;
+    state_->open_barrier_nonce = {};
+    token->released = true;
+    return success();
+}
+
+RuntimeStateTransferStatus RuntimeEpisodeCoordinatorCandidate::abort_branch_barrier(
+    RuntimeEpisodeBarrierCapability &&capability) {
+    if (capability.token_ == nullptr) {
+        return failure(RuntimeStateTransferError::InvalidArgument,
+                       "branch barrier capability is empty");
+    }
+    const auto token = std::move(capability.token_);
+    if (token->kind != RuntimeEpisodeBarrierKind::Branch) {
+        return failure(RuntimeStateTransferError::BarrierRequired,
+                       "branch abort received a replacement barrier");
+    }
+    std::lock_guard<std::mutex> token_lock(token->mutex);
+    if (token->claimed || token->released) {
+        return failure(RuntimeStateTransferError::BarrierReplay,
+                       "branch barrier capability is already claimed");
+    }
+    const auto coordinator = token->coordinator.lock();
+    if (coordinator != state_) {
+        return failure(RuntimeStateTransferError::StaleIntent,
+                       "branch barrier belongs to another coordinator");
+    }
+    std::lock_guard<std::mutex> coordinator_lock(state_->mutex);
+    if (state_->phase != RuntimeEpisodePhase::BranchBarrier ||
+        state_->open_barrier_nonce != token->barrier_nonce ||
+        state_->barrier_sequence != token->snapshot.barrier_sequence) {
+        return failure(RuntimeStateTransferError::StaleIntent,
+                       "branch barrier is no longer current");
+    }
+    state_->phase = RuntimeEpisodePhase::Running;
     state_->open_barrier_nonce = {};
     token->released = true;
     return success();
@@ -3115,13 +3263,20 @@ bool RuntimeEpisodeBarrierCapability::valid() const noexcept {
             return false;
         }
         std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
-        return coordinator->phase == RuntimeEpisodePhase::ReplacementBarrier &&
+        const RuntimeEpisodePhase expected_phase = token_->kind == RuntimeEpisodeBarrierKind::Branch
+                                                       ? RuntimeEpisodePhase::BranchBarrier
+                                                       : RuntimeEpisodePhase::ReplacementBarrier;
+        return coordinator->phase == expected_phase &&
                coordinator->coordinator_nonce == token_->coordinator_nonce &&
                coordinator->open_barrier_nonce == token_->barrier_nonce &&
                coordinator->barrier_sequence == token_->snapshot.barrier_sequence;
     } catch (...) {
         return false;
     }
+}
+
+RuntimeEpisodeBarrierKind RuntimeEpisodeBarrierCapability::kind() const noexcept {
+    return token_ == nullptr ? RuntimeEpisodeBarrierKind::Replacement : token_->kind;
 }
 
 RuntimeEpisodeCoordinatorSnapshot RuntimeEpisodeBarrierCapability::snapshot() const noexcept {
@@ -3209,6 +3364,28 @@ RuntimeHostQuiescenceCapability RuntimeHostQuiescenceCapability::mint_for_host(
     token->source_read_only_result_leases = source_read_only_result_leases;
     token->cooperative_cancellation_acknowledged = cooperative_cancellation_acknowledged;
     return RuntimeHostQuiescenceCapability(std::move(token));
+}
+
+RuntimeHostQuiescenceCapability RuntimeHostQuiescenceCapability::mint_for_branch(
+    const RuntimeIncarnationRef &source_slot, std::string source_plan_sha256,
+    std::string target_plan_sha256, RuntimeIdentity128 source_resource_identity,
+    RuntimeIdentity128 candidate_resource_identity,
+    std::shared_ptr<RuntimeStateTransferOwnerRegistry> source_owner_registry,
+    std::shared_ptr<RuntimeStateTransferOwnerRegistry> target_owner_registry,
+    const RuntimeIdentity128 &branch_authority_nonce, std::function<bool()> branch_revalidate,
+    std::function<void()> branch_rollback, std::function<bool()> child_begin_transfer,
+    std::function<bool()> branch_claim_transfer, std::function<void()> child_end_transfer,
+    std::uint64_t lifecycle_ticket, std::uint64_t branch_sequence,
+    std::uint64_t mutation_fence_sequence, std::size_t source_read_only_result_leases,
+    bool cooperative_cancellation_acknowledged) {
+    return mint_for_host(source_slot, std::move(source_plan_sha256), std::move(target_plan_sha256),
+                         source_resource_identity, candidate_resource_identity,
+                         std::move(source_owner_registry), std::move(target_owner_registry),
+                         branch_authority_nonce, std::move(branch_revalidate),
+                         std::move(branch_rollback), std::move(child_begin_transfer),
+                         std::move(branch_claim_transfer), std::move(child_end_transfer),
+                         lifecycle_ticket, branch_sequence, mutation_fence_sequence,
+                         source_read_only_result_leases, cooperative_cancellation_acknowledged);
 }
 
 bool RuntimeHostQuiescenceCapability::valid() const noexcept {
@@ -3343,7 +3520,8 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
         }
     }
     const RuntimeEpisodeCoordinatorSnapshot barrier_snapshot = request.episode_barrier.snapshot();
-    if (barrier_snapshot.phase != RuntimeEpisodePhase::ReplacementBarrier ||
+    if ((barrier_snapshot.phase != RuntimeEpisodePhase::ReplacementBarrier &&
+         barrier_snapshot.phase != RuntimeEpisodePhase::BranchBarrier) ||
         barrier_snapshot.episode.world.incarnation != request.census.source_slot) {
         return {.status = failure(RuntimeStateTransferError::StaleIntent,
                                   "state census does not bind the current source barrier"),
@@ -3361,9 +3539,11 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
     transfer_reservation.release = quiescence_token->host_end_transfer;
     transfer_reservation.active = true;
 
+    const std::uint32_t census_generation = request.census.contract_generation;
     std::array<const RuntimeStateCensusEntry *, kRuntimeStateCategoryCount> entries{};
     for (const RuntimeStateCensusEntry &entry : request.census.entries) {
-        if (!supported_category(entry.category)) {
+        if (!supported_category(entry.category) ||
+            !runtime_state_category_present(entry.category, census_generation)) {
             return {.status = failure(RuntimeStateTransferError::InvalidArgument,
                                       "state census contains an unsupported category"),
                     .transfer = {}};
@@ -3377,13 +3557,18 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
         entries[index] = &entry;
     }
     for (std::size_t index = 0; index < entries.size(); ++index) {
-        if (entries[index] == nullptr) {
+        if (entries[index] == nullptr &&
+            runtime_state_category_present(static_cast<RuntimeStateCategory>(index),
+                                           census_generation)) {
             return {.status = failure(RuntimeStateTransferError::MissingCategory,
                                       "state census omits a required category"),
                     .transfer = {}};
         }
     }
     for (const RuntimeStateCensusRowPolicy &policy : request.profile.rows) {
+        if (!runtime_state_category_present(policy.category, census_generation)) {
+            continue;
+        }
         status = validate_entry(policy, *entries[static_cast<std::size_t>(policy.category)],
                                 barrier_snapshot);
         if (!status) {
@@ -3436,16 +3621,34 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
                                   "owner import transaction is not in the prepared state"),
                 .transfer = {}};
     }
+    // Every profile row is either observed or explicitly not carried by an
+    // older source census, never both and never neither.
+    std::size_t expected_not_carried = 0;
+    for (const RuntimeStateCensusRowPolicy &policy : request.profile.rows) {
+        if (!runtime_state_category_present(policy.category, census_generation)) {
+            ++expected_not_carried;
+            if (std::find(owner_receipt.categories_not_carried_by_source.begin(),
+                          owner_receipt.categories_not_carried_by_source.end(), policy.category) ==
+                owner_receipt.categories_not_carried_by_source.end()) {
+                return {.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
+                                          "owner receipt does not record a category the source "
+                                          "census generation predates"),
+                        .transfer = {}};
+            }
+        }
+    }
     if (owner_receipt.candidate_resource_identity !=
             request.host_quiescence.candidate_resource_identity() ||
-        owner_receipt.observations.size() != kRuntimeStateCategoryCount) {
+        owner_receipt.observations.size() != runtime_state_category_count(census_generation) ||
+        owner_receipt.categories_not_carried_by_source.size() != expected_not_carried) {
         return {.status = failure(RuntimeStateTransferError::SemanticEvidenceMissing,
                                   "owner receipt is not bound to the complete candidate import"),
                 .transfer = {}};
     }
     std::array<const RuntimeStateOwnerObservation *, kRuntimeStateCategoryCount> observations{};
     for (const RuntimeStateOwnerObservation &observation : owner_receipt.observations) {
-        if (!supported_category(observation.category)) {
+        if (!supported_category(observation.category) ||
+            !runtime_state_category_present(observation.category, census_generation)) {
             return {.status = failure(RuntimeStateTransferError::SchemaMismatch,
                                       "owner receipt contains an unsupported category"),
                     .transfer = {}};
@@ -3459,6 +3662,9 @@ RuntimeStateTransferValidator::validate(RuntimeStateTransferValidationRequest &&
         observations[index] = &observation;
     }
     for (const RuntimeStateCensusRowPolicy &policy : request.profile.rows) {
+        if (!runtime_state_category_present(policy.category, census_generation)) {
+            continue;
+        }
         const RuntimeStateCensusEntry &entry = *entries[static_cast<std::size_t>(policy.category)];
         const RuntimeStateOwnerObservation &observation =
             *observations[static_cast<std::size_t>(policy.category)];
@@ -3690,7 +3896,10 @@ RuntimeStateTransferStatus RuntimeValidatedStateTransfer::prepare_for_host(
                        "validated native barrier is no longer live");
     }
     std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
-    if (coordinator->phase != RuntimeEpisodePhase::ReplacementBarrier ||
+    const RuntimeEpisodePhase expected_barrier_phase =
+        token->kind == RuntimeEpisodeBarrierKind::Branch ? RuntimeEpisodePhase::BranchBarrier
+                                                         : RuntimeEpisodePhase::ReplacementBarrier;
+    if (coordinator->phase != expected_barrier_phase ||
         coordinator->coordinator_nonce != token->coordinator_nonce ||
         coordinator->open_barrier_nonce != token->barrier_nonce ||
         coordinator->barrier_sequence != state_->episode_barrier_sequence) {
@@ -3771,9 +3980,17 @@ RuntimeValidatedStateTransfer::commit_for_host(std::uint64_t now_tick,
                 const auto coordinator = token->coordinator.lock();
                 if (coordinator != nullptr) {
                     std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
-                    if (coordinator->phase == RuntimeEpisodePhase::ReplacementBarrier &&
+                    const RuntimeEpisodePhase expected_barrier_phase =
+                        token->kind == RuntimeEpisodeBarrierKind::Branch
+                            ? RuntimeEpisodePhase::BranchBarrier
+                            : RuntimeEpisodePhase::ReplacementBarrier;
+                    if (coordinator->phase == expected_barrier_phase &&
                         coordinator->open_barrier_nonce == token->barrier_nonce) {
-                        coordinator->phase = RuntimeEpisodePhase::TransferCommitted;
+                        if (token->kind == RuntimeEpisodeBarrierKind::Branch) {
+                            coordinator->phase = RuntimeEpisodePhase::Running;
+                        } else {
+                            coordinator->phase = RuntimeEpisodePhase::TransferCommitted;
+                        }
                         coordinator->open_barrier_nonce = {};
                     }
                 }
@@ -3847,10 +4064,19 @@ RuntimeValidatedStateTransfer::recover_for_host(std::uint64_t now_tick,
                 const auto coordinator = token->coordinator.lock();
                 if (coordinator != nullptr) {
                     std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
-                    if (coordinator->phase == RuntimeEpisodePhase::ReplacementBarrier &&
+                    const RuntimeEpisodePhase expected_barrier_phase =
+                        token->kind == RuntimeEpisodeBarrierKind::Branch
+                            ? RuntimeEpisodePhase::BranchBarrier
+                            : RuntimeEpisodePhase::ReplacementBarrier;
+                    if (coordinator->phase == expected_barrier_phase &&
                         coordinator->open_barrier_nonce == token->barrier_nonce) {
-                        coordinator->phase = committed ? RuntimeEpisodePhase::TransferCommitted
-                                                       : RuntimeEpisodePhase::Terminal;
+                        if (token->kind == RuntimeEpisodeBarrierKind::Branch) {
+                            coordinator->phase = RuntimeEpisodePhase::Running;
+                        } else if (committed) {
+                            coordinator->phase = RuntimeEpisodePhase::TransferCommitted;
+                        } else {
+                            coordinator->phase = RuntimeEpisodePhase::Terminal;
+                        }
                         coordinator->open_barrier_nonce = {};
                     }
                 }
@@ -3973,9 +4199,15 @@ void RuntimeValidatedStateTransfer::abort_for_host() noexcept {
                 const auto coordinator = token->coordinator.lock();
                 if (coordinator != nullptr) {
                     std::lock_guard<std::mutex> coordinator_lock(coordinator->mutex);
-                    if (coordinator->phase == RuntimeEpisodePhase::ReplacementBarrier &&
+                    const RuntimeEpisodePhase expected_barrier_phase =
+                        token->kind == RuntimeEpisodeBarrierKind::Branch
+                            ? RuntimeEpisodePhase::BranchBarrier
+                            : RuntimeEpisodePhase::ReplacementBarrier;
+                    if (coordinator->phase == expected_barrier_phase &&
                         coordinator->open_barrier_nonce == token->barrier_nonce) {
-                        coordinator->phase = RuntimeEpisodePhase::Terminal;
+                        coordinator->phase = token->kind == RuntimeEpisodeBarrierKind::Branch
+                                                 ? RuntimeEpisodePhase::Running
+                                                 : RuntimeEpisodePhase::Terminal;
                         coordinator->open_barrier_nonce = {};
                     }
                 }
