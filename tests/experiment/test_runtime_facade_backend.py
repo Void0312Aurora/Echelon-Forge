@@ -1,0 +1,641 @@
+"""Maintained RuntimeFacade adapter boundary tests."""
+
+from __future__ import annotations
+
+import os
+from types import SimpleNamespace
+
+import pytest
+
+from observation_replay_fixtures import make_observation_packet
+from python.experiment.runtime_candidate import RuntimeCandidateError
+from python.experiment.runtime_candidate import RuntimeCandidateSession
+from python.experiment.runtime_candidate import RuntimeSnapshotFacts
+from python.experiment.runtime_candidate import runtime_config_digest
+from python.experiment.runtime_facade_backend import RuntimeFacadeCandidateBackend
+from python.experiment.runtime_facade_backend import RuntimeFacadeMissionOwnerMapping
+from python.experiment.runtime_facade_backend import RuntimeFacadeNativeIdentityOwner
+from python.experiment.runtime_facade_backend import SECOND_AIR_MISSION_SURFACE
+from python.tasking_contracts.common.agent_contracts import OBS_FACADE_OBSERVATION_PACKET
+
+
+AGENTS = ("agent_0", "agent_1")
+UNSORTED_AGENTS = ("agent_1", "agent_0")
+
+
+class _IdentityOwner:
+    def __init__(self) -> None:
+        self.step = 0
+
+    def snapshot_facts(self) -> RuntimeSnapshotFacts:
+        return RuntimeSnapshotFacts(
+            step=self.step,
+            state_digest=f"{self.step + 1:064x}",
+            event_cursor=self.step,
+            rng_digest=f"{self.step + 101:064x}",
+            episode_seed=19,
+        )
+
+
+class _Runtime:
+    def __init__(self, identity: _IdentityOwner) -> None:
+        self.identity = identity
+        self.setups = 0
+        self.steps = 0
+        self.actions: list[tuple[tuple[str, str], ...]] = []
+        self.capabilities = SimpleNamespace(
+            has_observation_batch_request=True,
+            has_export_observation_packet=True,
+        )
+
+    def apply_world_setup(self, _request: object) -> dict[str, object]:
+        self.setups += 1
+        return {
+            agent_id: SimpleNamespace(world_index=0, entity_id=index + 1)
+            for index, agent_id in enumerate(AGENTS)
+        }
+
+    def set_actions(self, actions: tuple[tuple[str, str], ...]) -> None:
+        self.actions.append(actions)
+
+    def step_batch(self) -> None:
+        self.steps += 1
+        self.identity.step += 1
+
+    def read_observation_packet(self, refs: list[object], **_kwargs: object) -> object:
+        return make_observation_packet(refs[0], self.steps)
+
+    def native_snapshot_facts(self, _world_index: int = 0) -> object:
+        return SimpleNamespace(
+            step=self.identity.step,
+            state_digest=f"{self.identity.step + 1:064x}",
+            event_cursor=self.identity.step,
+            rng_digest=f"{self.identity.step + 101:064x}",
+            terminated=False,
+            episode_seed=19,
+        )
+
+
+def _setup(runtime: object) -> dict[str, object]:
+    return runtime.apply_world_setup(object())
+
+
+def _backend() -> tuple[RuntimeFacadeCandidateBackend, _Runtime, _IdentityOwner]:
+    identity = _IdentityOwner()
+    runtime = _Runtime(identity)
+
+    def reward_reader(
+        _runtime: object,
+        actions: tuple[tuple[str, str], ...],
+        _before: RuntimeSnapshotFacts,
+        _after: RuntimeSnapshotFacts,
+    ) -> dict[str, int]:
+        return {agent_id: index for index, (agent_id, _action) in enumerate(actions)}
+
+    backend = RuntimeFacadeCandidateBackend(
+        runtime,
+        agent_ids=AGENTS,
+        setup_applier=_setup,
+        action_applier=lambda value, actions: value.set_actions(actions),
+        identity_owner=identity,
+        reward_reader=reward_reader,
+    )
+    return backend, runtime, identity
+
+
+def _session(backend: RuntimeFacadeCandidateBackend) -> RuntimeCandidateSession:
+    return RuntimeCandidateSession(
+        session_id="facade_session",
+        backend_id="runtime_candidate",
+        scenario_ref="scenario:maintained",
+        config_digest=runtime_config_digest({"world_count": 1, "time_step_units": 1}),
+        seed=19,
+        agent_ids=AGENTS,
+        policy_ref="policy:fixture",
+        backend=backend,
+    )
+
+
+def test_maintained_facade_step_uses_native_identity_and_packets() -> None:
+    backend, runtime, _identity = _backend()
+    session = _session(backend)
+
+    transition = session.step(
+        {"agent_0": "hold", "agent_1": "turn"},
+        observation_provenance=OBS_FACADE_OBSERVATION_PACKET,
+    )
+
+    assert runtime.steps == 1
+    assert runtime.setups == 1
+    assert runtime.actions == [(('agent_0', 'hold'), ('agent_1', 'turn'))]
+    assert transition.rewards == (("agent_0", 0), ("agent_1", 1))
+    assert session.capabilities.can_agent_observation_refs
+    assert not session.capabilities.can_fork
+    assert not session.capabilities.can_snapshot_restore
+    assert len(session.agent_observation_packet_series("agent_0")) == 2
+
+
+def test_maintained_facade_keeps_fork_disabled_without_branch_action_owner() -> None:
+    backend, _runtime, _identity = _backend()
+    session = _session(backend)
+
+    assert not backend.supports_fork
+    assert not backend.supports_checkpoints
+    assert not session.capabilities.can_fork
+    assert not session.capabilities.can_snapshot_restore
+
+
+def test_native_identity_owner_reads_bound_facade_facts() -> None:
+    runtime = _Runtime(_IdentityOwner())
+    owner = RuntimeFacadeNativeIdentityOwner(runtime)
+
+    facts = owner.snapshot_facts()
+
+    assert facts == RuntimeSnapshotFacts(
+        step=0,
+        state_digest="1".zfill(64),
+        event_cursor=0,
+        rng_digest="65".zfill(64),
+        terminated=False,
+        episode_seed=19,
+    )
+
+
+class _TwoWorldRuntime(_Runtime):
+    """Two worlds whose identity facts differ, so reading the wrong one is visible."""
+
+    def __init__(self, identity) -> None:
+        super().__init__(identity)
+        self.fact_reads: list[int] = []
+
+    def native_snapshot_facts(self, world_index: int = 0) -> object:
+        self.fact_reads.append(world_index)
+        facts = super().native_snapshot_facts(world_index)
+        if world_index == 1:
+            facts.state_digest = f"{self.identity.step + 7:064x}"
+        return facts
+
+
+def test_default_identity_owner_reads_the_selected_world() -> None:
+    runtime = _TwoWorldRuntime(_IdentityOwner())
+    backend = RuntimeFacadeCandidateBackend(
+        runtime,
+        agent_ids=AGENTS,
+        setup_applier=_setup,
+        action_applier=lambda value, actions: value.set_actions(actions),
+        reward_reader=lambda _runtime, actions, _before, _after: {
+            agent_id: 0 for agent_id, _action in actions
+        },
+        world_index=1,
+    )
+    session = _session(backend)
+    assert session.head().state_digest == f"{7:064x}"
+    assert runtime.fact_reads and set(runtime.fact_reads) == {1}
+
+
+def test_maintained_facade_rejects_external_identity_mutation() -> None:
+    backend, runtime, identity = _backend()
+    session = _session(backend)
+    identity.step = 1
+
+    # The session checks live identity before delegating; the backend's own
+    # boundary check is the second line of defence. Either must stop the step.
+    with pytest.raises(RuntimeCandidateError, match="outside the session"):
+        session.step(
+            {"agent_0": "hold", "agent_1": "hold"},
+            observation_provenance=OBS_FACADE_OBSERVATION_PACKET,
+        )
+    assert runtime.steps == 0
+
+
+def test_maintained_facade_canonicalizes_action_pairs_for_session_agents() -> None:
+    identity = _IdentityOwner()
+    runtime = _Runtime(identity)
+    backend = RuntimeFacadeCandidateBackend(
+        runtime,
+        agent_ids=UNSORTED_AGENTS,
+        setup_applier=_setup,
+        action_applier=lambda value, actions: value.set_actions(actions),
+        identity_owner=identity,
+        reward_reader=lambda _runtime, actions, _before, _after: {
+            agent_id: index for index, (agent_id, _action) in enumerate(actions)
+        },
+    )
+    backend.initial_snapshot()
+    backend.step((('agent_1', 'turn'), ('agent_0', 'hold')))
+
+    assert runtime.actions == [(('agent_0', 'hold'), ('agent_1', 'turn'))]
+
+
+def test_maintained_facade_requires_identity_and_observation_capabilities() -> None:
+    identity = _IdentityOwner()
+    runtime = _Runtime(identity)
+    runtime.capabilities.has_export_observation_packet = False
+    with pytest.raises(RuntimeCandidateError, match="packet bindings"):
+        RuntimeFacadeCandidateBackend(
+            runtime,
+            agent_ids=AGENTS,
+            setup_applier=_setup,
+            action_applier=lambda _runtime, _actions: None,
+            identity_owner=identity,
+            reward_reader=lambda *_args: {agent_id: 0 for agent_id in AGENTS},
+        )
+
+
+def test_maintained_facade_rejects_malformed_native_digests() -> None:
+    identity = _IdentityOwner()
+    identity.snapshot_facts = lambda: RuntimeSnapshotFacts(  # type: ignore[method-assign]
+        step=0,
+        state_digest="A" * 64,
+        event_cursor=0,
+        rng_digest="b" * 64,
+    )
+    runtime = _Runtime(identity)
+    backend = RuntimeFacadeCandidateBackend(
+        runtime,
+        agent_ids=AGENTS,
+        setup_applier=_setup,
+        action_applier=lambda _runtime, _actions: None,
+        identity_owner=identity,
+        reward_reader=lambda *_args: {agent_id: 0 for agent_id in AGENTS},
+    )
+
+    with pytest.raises(RuntimeCandidateError, match="malformed digests"):
+        backend.initial_snapshot()
+
+
+def test_maintained_facade_rejects_setup_without_exact_agent_refs() -> None:
+    identity = _IdentityOwner()
+    runtime = _Runtime(identity)
+    with pytest.raises(RuntimeCandidateError, match="exactly one maintained ref"):
+        RuntimeFacadeCandidateBackend(
+            runtime,
+            agent_ids=AGENTS,
+            setup_applier=lambda _runtime: {"agent_0": object()},
+            action_applier=lambda _runtime, _actions: None,
+            identity_owner=identity,
+            reward_reader=lambda *_args: {agent_id: 0 for agent_id in AGENTS},
+        )
+
+
+def test_maintained_facade_requires_native_identity_owner() -> None:
+    runtime = _Runtime(_IdentityOwner())
+    with pytest.raises(RuntimeCandidateError, match="native identity owner"):
+        RuntimeFacadeCandidateBackend(
+            runtime,
+            agent_ids=AGENTS,
+            setup_applier=_setup,
+            action_applier=lambda _runtime, _actions: None,
+            identity_owner=object(),
+            reward_reader=lambda *_args: {agent_id: 0 for agent_id in AGENTS},
+        )
+
+
+def test_second_air_mission_owner_mapping_preserves_setup_step_packet_identity() -> None:
+    mapping = RuntimeFacadeMissionOwnerMapping(
+        surface_id=SECOND_AIR_MISSION_SURFACE,
+        agent_action_kinds=(("agent_0", "takeoff_control"), ("agent_1", "takeoff_control")),
+        agent_ref_kinds=(("agent_0", "aircraft_ref"), ("agent_1", "aircraft_ref")),
+    )
+    backend, runtime, _identity = _backend()
+    qualified = RuntimeFacadeCandidateBackend(
+        runtime,
+        agent_ids=AGENTS,
+        setup_applier=_setup,
+        action_applier=lambda value, actions: value.set_actions(actions),
+        identity_owner=_identity,
+        reward_reader=lambda _runtime, actions, _before, _after: {
+            agent_id: index for index, (agent_id, _action) in enumerate(actions)
+        },
+        mission_owner=mapping,
+    )
+    assert qualified.mission_owner == mapping
+    assert qualified.mission_owner.agent_ids == AGENTS
+    session = _session(qualified)
+    transition = session.step(
+        {"agent_0": "rotate", "agent_1": "climb"},
+        observation_provenance=OBS_FACADE_OBSERVATION_PACKET,
+    )
+    assert session.head().step == 1
+    assert runtime.actions == [(('agent_0', 'rotate'), ('agent_1', 'climb'))]
+    packet_series = session.agent_observation_packet_series("agent_0")
+    assert len(packet_series) == 2
+    assert packet_series[0].provenance.source_label == OBS_FACADE_OBSERVATION_PACKET
+    assert backend.mission_owner is None
+
+
+def test_second_air_mission_owner_mapping_rejects_unsupported_or_misaligned_paths() -> None:
+    with pytest.raises(RuntimeCandidateError, match="second Air mission"):
+        RuntimeFacadeMissionOwnerMapping(
+            surface_id="air.execution.unknown.v1",
+            agent_action_kinds=(("agent_0", "takeoff_control"), ("agent_1", "takeoff_control")),
+            agent_ref_kinds=(("agent_0", "aircraft_ref"), ("agent_1", "aircraft_ref")),
+        )
+    mapping = RuntimeFacadeMissionOwnerMapping(
+        surface_id=SECOND_AIR_MISSION_SURFACE,
+        agent_action_kinds=(("agent_0", "takeoff_control"),),
+        agent_ref_kinds=(("agent_0", "aircraft_ref"),),
+    )
+    identity = _IdentityOwner()
+    runtime = _Runtime(identity)
+    with pytest.raises(RuntimeCandidateError, match="exactly the session Agents"):
+        RuntimeFacadeCandidateBackend(
+            runtime,
+            agent_ids=AGENTS,
+            setup_applier=_setup,
+            action_applier=lambda value, actions: value.set_actions(actions),
+            identity_owner=identity,
+            reward_reader=lambda *_args: {agent_id: 0 for agent_id in AGENTS},
+            mission_owner=mapping,
+        )
+
+
+def test_bound_facade_branch_owner_runs_session_checkpoint_and_nested_fork() -> None:
+    ef_py = pytest.importorskip("ef_py")
+    runtime = ef_py.RuntimeFacade(1)
+    agent_ids = ("agent_0",)
+
+    def setup(value: object) -> dict[str, object]:
+        request = ef_py.BatchWorldSetupRequest()
+        request.seeds = [42]
+        request.time_steps = [1.0]
+        spawn = ef_py.WorldSpawnRequest()
+        spawn.type_name = "Aircraft"
+        spawn.entity_name = "controlled_aircraft"
+        spawn.is_agent = True
+        spawn.z = 3000.0
+        spawn.vx = 150.0
+        request.spawn_requests = [spawn]
+        result = value.apply_world_setup(request)
+        ref = ef_py.WorldEntityRef()
+        ref.entity_id = result.entity_ids[0]
+        return {"agent_0": ref}
+
+    def assignment(_owner: object, actions: tuple[tuple[str, str], ...]) -> list[object]:
+        action = ef_py.PilotAction()
+        action.active = True
+        action.throttle = 0.0 if actions[0][1] == "idle" else 1.0
+        ref = ef_py.WorldEntityRef()
+        ref.entity_id = entity_id[0]
+        item = ef_py.WorldPilotActionAssignment()
+        item.entity_id = ref.entity_id
+        item.action = action
+        return [item]
+
+    entity_id = [0]
+
+    def setup_and_remember(value: object) -> dict[str, object]:
+        refs = setup(value)
+        entity_id[0] = refs["agent_0"].entity_id
+        return refs
+
+    def apply(value: object, actions: tuple[tuple[str, str], ...]) -> None:
+        value.set_pilot_actions_batch(assignment(value, actions))
+
+    def rewards(
+        _value: object,
+        _actions: tuple[tuple[str, str], ...],
+        _before: RuntimeSnapshotFacts,
+        _after: RuntimeSnapshotFacts,
+    ) -> dict[str, int]:
+        return {"agent_0": 0}
+
+    branch_refs: list[object] = []
+
+    def branch_ref_factory(handle: object, _agent_id: str, baseline: object) -> object:
+        branch_refs.append(handle)
+        return baseline
+
+    backend = RuntimeFacadeCandidateBackend(
+        runtime,
+        agent_ids=agent_ids,
+        setup_applier=setup_and_remember,
+        action_applier=apply,
+        branch_action_applier=assignment,
+        branch_ref_factory=branch_ref_factory,
+        reward_reader=rewards,
+    )
+    session = RuntimeCandidateSession(
+        session_id="bound_facade_branch",
+        backend_id="runtime_candidate",
+        scenario_ref="scenario:aircraft",
+        config_digest=runtime_config_digest({"world_count": 1, "time_step_units": 1}),
+        seed=42,
+        agent_ids=agent_ids,
+        policy_ref="policy:test",
+        backend=backend,
+    )
+    assert session.capabilities.can_fork
+    assert session.capabilities.can_snapshot_restore
+    session.step({"agent_0": "idle"}, observation_provenance=OBS_FACADE_OBSERVATION_PACKET)
+    saved = session.checkpoint()
+    branch = session.fork(
+        session.baseline,
+        saved,
+        intervention={"agent_0": "idle"},
+        label="idle_child",
+        horizon=1,
+    )
+    transition = session.step_branch(
+        branch, {"agent_0": "idle"}, observation_provenance=OBS_FACADE_OBSERVATION_PACKET
+    )
+    assert transition.target_snapshot_digest
+    nested = session.fork(
+        branch,
+        session.head(branch),
+        intervention={"agent_0": "idle"},
+        label="nested",
+        horizon=1,
+    )
+    assert session.step_branch(
+        nested, {"agent_0": "idle"}, observation_provenance=OBS_FACADE_OBSERVATION_PACKET
+    ).target_snapshot_digest
+    assert len(session.agent_observation_packet_series("agent_0", branch)) == 2
+    assert branch_refs
+    # The baseline's single-ref transport version remains 1 while native
+    # branches use step+1. Their full observation payloads must still replay.
+    session.step({"agent_0": "idle"}, observation_provenance=OBS_FACADE_OBSERVATION_PACKET)
+    replay = session.replay(session.baseline, saved, label="facade_verified")
+    assert session.head(replay) == session.head()
+    assert session.capabilities.can_verify_observation_replay
+
+
+def test_takeoff_owner_real_facade_checkpoint_fork_nested_replay_continuation() -> None:
+    try:
+        import ef_py
+    except ModuleNotFoundError:
+        if os.environ.get("CI"):
+            pytest.fail("CI native host must provide the real ef_py fixture")
+        pytest.skip("local ef_py fixture is unavailable")
+
+    runtime = ef_py.RuntimeFacade(1)
+    agent_ids = ("agent_0",)
+    entity_id = [0]
+    action_trace: list[tuple[tuple[str, str], ...]] = []
+
+    def setup(value: object) -> dict[str, object]:
+        request = ef_py.BatchWorldSetupRequest()
+        request.seeds = [42]
+        request.time_steps = [1.0]
+        spawn = ef_py.WorldSpawnRequest()
+        spawn.type_name = "Aircraft"
+        spawn.entity_name = "takeoff_owner_aircraft"
+        spawn.is_agent = True
+        spawn.z = 3000.0
+        spawn.vx = 150.0
+        request.spawn_requests = [spawn]
+        result = value.apply_world_setup(request)
+        entity_id[0] = result.entity_ids[0]
+        ref = ef_py.WorldEntityRef()
+        ref.entity_id = entity_id[0]
+        return {"agent_0": ref}
+
+    def assignment(_owner: object, actions: tuple[tuple[str, str], ...]) -> list[object]:
+        action_trace.append(actions)
+        action = ef_py.PilotAction()
+        action.active = True
+        action.throttle = 0.0 if actions[0][1] == "idle" else 1.0
+        item = ef_py.WorldPilotActionAssignment()
+        item.entity_id = entity_id[0]
+        item.action = action
+        return [item]
+
+    def apply(value: object, actions: tuple[tuple[str, str], ...]) -> None:
+        value.set_pilot_actions_batch(assignment(value, actions))
+
+    def rewards(
+        _value: object,
+        _actions: tuple[tuple[str, str], ...],
+        _before: RuntimeSnapshotFacts,
+        _after: RuntimeSnapshotFacts,
+    ) -> dict[str, int]:
+        return {"agent_0": 0}
+
+    mapping = RuntimeFacadeMissionOwnerMapping(
+        surface_id=SECOND_AIR_MISSION_SURFACE,
+        agent_action_kinds=(("agent_0", "takeoff_control"),),
+        agent_ref_kinds=(("agent_0", "aircraft_ref"),),
+    )
+    branch_refs: list[object] = []
+
+    def branch_ref_factory(handle: object, _agent_id: str, baseline: object) -> object:
+        branch_refs.append(handle)
+        return baseline
+
+    backend = RuntimeFacadeCandidateBackend(
+        runtime,
+        agent_ids=agent_ids,
+        setup_applier=setup,
+        action_applier=apply,
+        branch_action_applier=assignment,
+        branch_ref_factory=branch_ref_factory,
+        reward_reader=rewards,
+        mission_owner=mapping,
+    )
+    session = RuntimeCandidateSession(
+        session_id="takeoff_owner_continuation",
+        backend_id="runtime_candidate",
+        scenario_ref="scenario:takeoff",
+        config_digest=runtime_config_digest({"world_count": 1, "time_step_units": 1}),
+        seed=42,
+        agent_ids=agent_ids,
+        policy_ref="policy:takeoff",
+        backend=backend,
+    )
+    assert backend.mission_owner == mapping
+    assert session.capabilities.can_fork
+    assert session.capabilities.can_snapshot_restore
+
+    session.step({"agent_0": "idle"}, observation_provenance=OBS_FACADE_OBSERVATION_PACKET)
+    checkpoint = session.checkpoint()
+    source = session.head()
+    branch = session.fork(
+        session.baseline,
+        checkpoint,
+        intervention={"agent_0": "takeoff"},
+        label="takeoff_child",
+        horizon=1,
+    )
+    branch_step = session.step_branch(
+        branch, {"agent_0": "takeoff"}, observation_provenance=OBS_FACADE_OBSERVATION_PACKET
+    )
+    assert branch_step.target_snapshot_digest
+    assert session.head(branch).step == source.step + 1
+    assert session.head(branch).state_digest != source.state_digest
+    assert session.head().step == source.step
+
+    nested = session.fork(
+        branch,
+        session.head(branch),
+        intervention={"agent_0": "climb"},
+        label="takeoff_nested",
+        horizon=1,
+    )
+    nested_step = session.step_branch(
+        nested, {"agent_0": "climb"}, observation_provenance=OBS_FACADE_OBSERVATION_PACKET
+    )
+    assert nested_step.target_snapshot_digest
+    assert session.head(nested).step == session.head(branch).step + 1
+    assert session.head(nested).state_digest != session.head(branch).state_digest
+
+    session.step({"agent_0": "idle"}, observation_provenance=OBS_FACADE_OBSERVATION_PACKET)
+    replay = session.replay(session.baseline, checkpoint, label="takeoff_replay")
+    assert session.head(replay) == session.head()
+    assert session.head(branch).state_digest != session.head().state_digest
+    assert session.capabilities.can_verify_observation_replay
+    # Replay re-executes the checkpoint action on a fresh native child.
+    assert branch_refs and len(action_trace) == 5
+    assert all(
+        packet.provenance.source_label == OBS_FACADE_OBSERVATION_PACKET
+        for packet in session.agent_observation_packet_series("agent_0", branch)
+    )
+
+
+@pytest.mark.parametrize("actual_seed", [0, 42])
+def test_bound_facade_seed_mismatch_leaves_setup_world_untouched(actual_seed: int) -> None:
+    ef_py = pytest.importorskip("ef_py")
+    runtime = ef_py.RuntimeFacade(1)
+    refs: dict[str, object] = {}
+
+    def setup(value: object) -> dict[str, object]:
+        request = ef_py.BatchWorldSetupRequest()
+        request.seeds = [actual_seed]
+        spawn = ef_py.WorldSpawnRequest()
+        spawn.type_name = "Aircraft"
+        spawn.entity_name = "seed_owner_aircraft"
+        spawn.is_agent = True
+        spawn.z = 3000.0
+        spawn.vx = 150.0
+        request.spawn_requests = [spawn]
+        entity = value.apply_world_setup(request).entity_ids[0]
+        ref = ef_py.WorldEntityRef()
+        ref.entity_id = entity
+        refs["agent_0"] = ref
+        return dict(refs)
+
+    backend = RuntimeFacadeCandidateBackend(
+        runtime,
+        agent_ids=("agent_0",),
+        setup_applier=setup,
+        action_applier=lambda *_args: pytest.fail("seed validation dispatched an action"),
+        reward_reader=lambda *_args: {"agent_0": 0},
+    )
+    before = runtime.native_snapshot_facts()
+    with pytest.raises(RuntimeCandidateError, match="session seed differs"):
+        RuntimeCandidateSession(
+            session_id="wrong_seed",
+            backend_id="runtime_candidate",
+            scenario_ref="scenario:seed_owner",
+            config_digest=runtime_config_digest({"world_count": 1}),
+            seed=19,
+            agent_ids=("agent_0",),
+            policy_ref="policy:test",
+            backend=backend,
+        )
+    after = runtime.native_snapshot_facts()
+    assert after.state_digest == before.state_digest
+    assert after.rng_digest == before.rng_digest
+    assert after.episode_seed == before.episode_seed == actual_seed
+    assert after.step == before.step == 0
+    packet = runtime.export_observation_packet([refs["agent_0"]])
+    assert packet.agent_observations[0].speed == 150.0

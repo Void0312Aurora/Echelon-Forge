@@ -1,0 +1,373 @@
+{
+  "evidence_label": "runtime_candidate",
+  "protocol": {
+    "altitude_m": 3000,
+    "evaluation": "speed_change_mmps_v1",
+    "horizon": 20,
+    "paired_controls": [
+      "idle",
+      "full"
+    ],
+    "policy_observation": "fixed_protocol_no_policy_observation",
+    "seeds": [
+      19,
+      83,
+      191
+    ],
+    "speed_mps": 150,
+    "time_step_ms": 50,
+    "warmup_actions": [
+      "idle"
+    ]
+  },
+  "protocol_digest": "3770cc480679b1bc03c68affdc03820b1efab1636f06894dc561179a371bab7d",
+  "runs": [
+    {
+      "agent_observation_refs": true,
+      "branches": [
+        {
+          "action": "idle",
+          "agent_observation_ref_count": 21,
+          "branch_digest": "6000d2abf482c0f0830cca181723eba0f6e218675b2becdec6a3839340db0682",
+          "final_speed_mmps": 148855,
+          "initial_speed_mmps": 149953,
+          "replay_branch_digest": "6e5368522a5122a617450e996b56cb31aba8232bdd71b3b2064cb3bf29ee27c8",
+          "replay_verified_steps": 20,
+          "reward_sum_mmps": -1098,
+          "state_digest": "f4d49639fcd1e3755fe1d636958454bf31f01a0b0920615bcb601901d69e9072"
+        },
+        {
+          "action": "full",
+          "agent_observation_ref_count": 21,
+          "branch_digest": "cad1378246dce8f06863f649b34472dec8d0bc01293a5cff483b18b8bce7b9f1",
+          "final_speed_mmps": 149820,
+          "initial_speed_mmps": 149953,
+          "replay_branch_digest": "c215765e5ba12469dcbe6a3991c0934bad34810826792a6446db5f6fe4051b73",
+          "replay_verified_steps": 20,
+          "reward_sum_mmps": -133,
+          "state_digest": "3e1615a048a888447a288d5bcdfc5633b98040d3b80d1b6993a2d37bb1a862c6"
+        }
+      ],
+      "full_minus_idle_mmps": 965,
+      "manifest_digest": "42f8849c88efe1b2291f18702f457bf903b46dd29878a51b44ed7be40d421258",
+      "numeric_export": {
+        "agent_id": "pilot",
+        "consumer": "ppo",
+        "episodes": [
+          {
+            "action_dim": 1,
+            "branch_digest": "6000d2abf482c0f0830cca181723eba0f6e218675b2becdec6a3839340db0682",
+            "observation_count": 21,
+            "observation_dim": 2,
+            "packet_provenance": "facade_observation_packet",
+            "split": "training",
+            "transition_count": 20
+          },
+          {
+            "action_dim": 1,
+            "branch_digest": "cad1378246dce8f06863f649b34472dec8d0bc01293a5cff483b18b8bce7b9f1",
+            "observation_count": 21,
+            "observation_dim": 2,
+            "packet_provenance": "facade_observation_packet",
+            "split": "training",
+            "transition_count": 20
+          }
+        ],
+        "metadata_digest": null,
+        "persisted": false,
+        "projection_digest": "86a5791259f76652c988476f95153b075eb91ae12a9b379b7838db290a6c9ac8"
+      },
+      "protocol": {
+        "catalog": {
+          "full": {
+            "pitch": 0,
+            "roll": 0,
+            "rudder": 0,
+            "throttle": 1000
+          },
+          "idle": {
+            "pitch": 0,
+            "roll": 0,
+            "rudder": 0,
+            "throttle": 0
+          }
+        },
+        "context": {
+          "altitude_m": 3000,
+          "horizon": 20,
+          "speed_mps": 150,
+          "time_step_ms": 50
+        },
+        "entity_bindings": [
+          [
+            "pilot",
+            "comparison_aircraft"
+          ]
+        ],
+        "evaluator": {
+          "identity": "speed_change_mmps_v1"
+        },
+        "other_pilot_fields": "maintained_dto_defaults_active_true",
+        "schema": "echelon_forge.native_pilot_protocol.v1"
+      },
+      "protocol_digest": "c80969d59d596dc9898d49606f06911bf439bc1563f7d6206d63273414f0a5dc",
+      "seed": 19,
+      "source_isolation_verified": true,
+      "source_snapshot_digest": "fe45eb2f86cac432b02e0f05aa84b9182561e25058825590237dabe30eec9550"
+    },
+    {
+      "agent_observation_refs": true,
+      "branches": [
+        {
+          "action": "idle",
+          "agent_observation_ref_count": 21,
+          "branch_digest": "ec6120ea593373f993f6a51b5cbe6cce61f38820f6cd84225cab312279c0d16d",
+          "final_speed_mmps": 148855,
+          "initial_speed_mmps": 149953,
+          "replay_branch_digest": "3732597f46391267748d3a26e693a95c07b108a56fb17e41deef0026709414a6",
+          "replay_verified_steps": 20,
+          "reward_sum_mmps": -1098,
+          "state_digest": "f4d49639fcd1e3755fe1d636958454bf31f01a0b0920615bcb601901d69e9072"
+        },
+        {
+          "action": "full",
+          "agent_observation_ref_count": 21,
+          "branch_digest": "1d7a733d7cffbfac9c5ebe654ba667b27d378b2aa756701de9069e8ea7766b72",
+          "final_speed_mmps": 149820,
+          "initial_speed_mmps": 149953,
+          "replay_branch_digest": "3add5a5b1be289352c828bf3edd0b3a01a22f37adaeb34c640646e9d6a19423c",
+          "replay_verified_steps": 20,
+          "reward_sum_mmps": -133,
+          "state_digest": "3e1615a048a888447a288d5bcdfc5633b98040d3b80d1b6993a2d37bb1a862c6"
+        }
+      ],
+      "full_minus_idle_mmps": 965,
+      "manifest_digest": "d26863cca86424185563cde282bae8977f5c410f5264090d7f088a442ec4ebf4",
+      "numeric_export": {
+        "agent_id": "pilot",
+        "consumer": "ppo",
+        "episodes": [
+          {
+            "action_dim": 1,
+            "branch_digest": "1d7a733d7cffbfac9c5ebe654ba667b27d378b2aa756701de9069e8ea7766b72",
+            "observation_count": 21,
+            "observation_dim": 2,
+            "packet_provenance": "facade_observation_packet",
+            "split": "training",
+            "transition_count": 20
+          },
+          {
+            "action_dim": 1,
+            "branch_digest": "ec6120ea593373f993f6a51b5cbe6cce61f38820f6cd84225cab312279c0d16d",
+            "observation_count": 21,
+            "observation_dim": 2,
+            "packet_provenance": "facade_observation_packet",
+            "split": "training",
+            "transition_count": 20
+          }
+        ],
+        "metadata_digest": null,
+        "persisted": false,
+        "projection_digest": "63ddacc2c948576e772d306caefd836f3fd6007e28d2742a2460e381b2a08cc3"
+      },
+      "protocol": {
+        "catalog": {
+          "full": {
+            "pitch": 0,
+            "roll": 0,
+            "rudder": 0,
+            "throttle": 1000
+          },
+          "idle": {
+            "pitch": 0,
+            "roll": 0,
+            "rudder": 0,
+            "throttle": 0
+          }
+        },
+        "context": {
+          "altitude_m": 3000,
+          "horizon": 20,
+          "speed_mps": 150,
+          "time_step_ms": 50
+        },
+        "entity_bindings": [
+          [
+            "pilot",
+            "comparison_aircraft"
+          ]
+        ],
+        "evaluator": {
+          "identity": "speed_change_mmps_v1"
+        },
+        "other_pilot_fields": "maintained_dto_defaults_active_true",
+        "schema": "echelon_forge.native_pilot_protocol.v1"
+      },
+      "protocol_digest": "c80969d59d596dc9898d49606f06911bf439bc1563f7d6206d63273414f0a5dc",
+      "seed": 83,
+      "source_isolation_verified": true,
+      "source_snapshot_digest": "3c744f2cc0386e29665b33769571a37b02bfa774a1d5052e883e916de6e8c8ee"
+    },
+    {
+      "agent_observation_refs": true,
+      "branches": [
+        {
+          "action": "idle",
+          "agent_observation_ref_count": 21,
+          "branch_digest": "3d68f052725fe920b99c4861179f4a69dbc8ce50f87170748809b7a64c954e91",
+          "final_speed_mmps": 148855,
+          "initial_speed_mmps": 149953,
+          "replay_branch_digest": "935d024a34a16d905354eb0f445602dc3e44cc9e55099529930c228fd02dbe77",
+          "replay_verified_steps": 20,
+          "reward_sum_mmps": -1098,
+          "state_digest": "f4d49639fcd1e3755fe1d636958454bf31f01a0b0920615bcb601901d69e9072"
+        },
+        {
+          "action": "full",
+          "agent_observation_ref_count": 21,
+          "branch_digest": "3d96fc11958c02fa089abd4536f5d67dfb108c6390506077264e5e33bc766f2f",
+          "final_speed_mmps": 149820,
+          "initial_speed_mmps": 149953,
+          "replay_branch_digest": "9bc7ed388ecf517516395f3c285fad8e89d7f3ca13777114542320005ffa84c4",
+          "replay_verified_steps": 20,
+          "reward_sum_mmps": -133,
+          "state_digest": "3e1615a048a888447a288d5bcdfc5633b98040d3b80d1b6993a2d37bb1a862c6"
+        }
+      ],
+      "full_minus_idle_mmps": 965,
+      "manifest_digest": "98e9681406ef15141136c6d39d63b5378d448f492d9946aa4df4f59b5a2e9c26",
+      "numeric_export": {
+        "agent_id": "pilot",
+        "consumer": "ppo",
+        "episodes": [
+          {
+            "action_dim": 1,
+            "branch_digest": "3d68f052725fe920b99c4861179f4a69dbc8ce50f87170748809b7a64c954e91",
+            "observation_count": 21,
+            "observation_dim": 2,
+            "packet_provenance": "facade_observation_packet",
+            "split": "evaluation",
+            "transition_count": 20
+          },
+          {
+            "action_dim": 1,
+            "branch_digest": "3d96fc11958c02fa089abd4536f5d67dfb108c6390506077264e5e33bc766f2f",
+            "observation_count": 21,
+            "observation_dim": 2,
+            "packet_provenance": "facade_observation_packet",
+            "split": "evaluation",
+            "transition_count": 20
+          }
+        ],
+        "metadata_digest": null,
+        "persisted": false,
+        "projection_digest": "d083eec58fb87605975b29f7fce4ea9500a5d3cd9fa0205cf3f21761c8f6c97d"
+      },
+      "protocol": {
+        "catalog": {
+          "full": {
+            "pitch": 0,
+            "roll": 0,
+            "rudder": 0,
+            "throttle": 1000
+          },
+          "idle": {
+            "pitch": 0,
+            "roll": 0,
+            "rudder": 0,
+            "throttle": 0
+          }
+        },
+        "context": {
+          "altitude_m": 3000,
+          "horizon": 20,
+          "speed_mps": 150,
+          "time_step_ms": 50
+        },
+        "entity_bindings": [
+          [
+            "pilot",
+            "comparison_aircraft"
+          ]
+        ],
+        "evaluator": {
+          "identity": "speed_change_mmps_v1"
+        },
+        "other_pilot_fields": "maintained_dto_defaults_active_true",
+        "schema": "echelon_forge.native_pilot_protocol.v1"
+      },
+      "protocol_digest": "c80969d59d596dc9898d49606f06911bf439bc1563f7d6206d63273414f0a5dc",
+      "seed": 191,
+      "source_isolation_verified": true,
+      "source_snapshot_digest": "fb0e3a55a7122245156ea45de97c2605ed3d529d4ed7c36f7aeb825d43b9a7b7"
+    }
+  ],
+  "schema": "echelon_forge.native_pilot_comparison.v1",
+  "scope": "in_process_cpu_fixed_flight_control_diagnostic",
+  "trace_projection": {
+    "consumers": {
+      "bc": {
+        "manifest_digests": [
+          "42f8849c88efe1b2291f18702f457bf903b46dd29878a51b44ed7be40d421258",
+          "98e9681406ef15141136c6d39d63b5378d448f492d9946aa4df4f59b5a2e9c26",
+          "d26863cca86424185563cde282bae8977f5c410f5264090d7f088a442ec4ebf4"
+        ],
+        "projection_digest": "99a9a728c3c471c1629f2c04a4f8b0b4fca275e038e322f0dcafced62e7c9003",
+        "rows": 243,
+        "rows_by_split": {
+          "evaluation": 81,
+          "training": 162
+        }
+      },
+      "evaluation": {
+        "manifest_digests": [
+          "42f8849c88efe1b2291f18702f457bf903b46dd29878a51b44ed7be40d421258",
+          "98e9681406ef15141136c6d39d63b5378d448f492d9946aa4df4f59b5a2e9c26",
+          "d26863cca86424185563cde282bae8977f5c410f5264090d7f088a442ec4ebf4"
+        ],
+        "projection_digest": "ecbd66ba866a46aeec31605c6cb4b09e34737f3b597e70de49ebe203e1520dd4",
+        "rows": 243,
+        "rows_by_split": {
+          "evaluation": 81,
+          "training": 162
+        }
+      },
+      "ppo": {
+        "manifest_digests": [
+          "42f8849c88efe1b2291f18702f457bf903b46dd29878a51b44ed7be40d421258",
+          "98e9681406ef15141136c6d39d63b5378d448f492d9946aa4df4f59b5a2e9c26",
+          "d26863cca86424185563cde282bae8977f5c410f5264090d7f088a442ec4ebf4"
+        ],
+        "projection_digest": "e3d1a13ec117759ea781613dd6b16bb66ff0767d95f267fbb27e780a811b818e",
+        "rows": 243,
+        "rows_by_split": {
+          "evaluation": 81,
+          "training": 162
+        }
+      },
+      "world_model": {
+        "manifest_digests": [
+          "42f8849c88efe1b2291f18702f457bf903b46dd29878a51b44ed7be40d421258",
+          "98e9681406ef15141136c6d39d63b5378d448f492d9946aa4df4f59b5a2e9c26",
+          "d26863cca86424185563cde282bae8977f5c410f5264090d7f088a442ec4ebf4"
+        ],
+        "projection_digest": "817e802beed449326d13f73cbf1fa67334feee86f04ae98fbaccf70438e23d13",
+        "rows": 243,
+        "rows_by_split": {
+          "evaluation": 81,
+          "training": 162
+        }
+      }
+    },
+    "schema": "echelon_forge.experiment_trace_projection_summary.v1",
+    "split_spec": {
+      "evaluation": [
+        191
+      ],
+      "training": [
+        19,
+        83
+      ]
+    }
+  }
+}
