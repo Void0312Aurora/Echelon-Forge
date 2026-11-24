@@ -81,6 +81,7 @@ IMPLEMENTATION_CALLERS = {
     "src/runtime/host/integration/runtime_kernel_candidate.h",
     "src/runtime/host/integration/runtime_kernel_candidate_facade.cpp",
     "src/runtime/host/integration/runtime_kernel_candidate_facade.h",
+    "src/runtime/host/integration/python_runtime_candidate_module.cpp",
 }
 TEST_ONLY_CALLERS = {
     "src/tests/test_runtime_kernel_candidate.cpp",

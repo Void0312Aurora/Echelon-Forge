@@ -429,6 +429,42 @@ class IEnvironmentModel {
         return geodesy::kDefaultGeodeticAnchor;
     }
     virtual geodesy::EarthModel get_earth_model() const { return {}; }
+
+    // Scenario settings applied through the setters above, for state
+    // transfer. Loaded terrain content (raster and Arnis bundles) is not part
+    // of it. Zones keep their stored order: replaying add_zone could reorder
+    // zones of equal z_order.
+    struct ZoneSettings {
+        std::string name;
+        double center_x = 0.0;
+        double center_y = 0.0;
+        double center_z = 0.0;
+        double width = 0.0;
+        double length = 0.0;
+        double heading_deg = 0.0;
+        int type = 0;
+        SurfaceType surface = SurfaceType::Concrete;
+        double friction = 0.0;
+        double roughness = 0.0;
+        double vegetation_density = 0.0;
+        double runway_heading_deg = 0.0;
+        int z_order = 0;
+    };
+    struct Settings {
+        double wind_speed_mps = 0.0;
+        double wind_dir_from_deg = 0.0;
+        double wind_shear_mps_per_km = 0.0;
+        double sun_azimuth_deg = 0.0;
+        double sun_elevation_deg = 0.0;
+        MaritimeState maritime_state{};
+        geodesy::GeodeticAnchor geodetic_anchor{};
+        bool flat_terrain = false;
+        std::vector<ZoneSettings> zones;
+    };
+    // Providers that cannot reproduce their settings exactly return false;
+    // state transfer then fails closed instead of copying a partial state.
+    virtual bool export_settings(Settings * /*out*/) const { return false; }
+    virtual bool restore_settings(const Settings & /*settings*/) { return false; }
 };
 
 // Geodetic position of a local-frame point in the world that owns `env`; falls
