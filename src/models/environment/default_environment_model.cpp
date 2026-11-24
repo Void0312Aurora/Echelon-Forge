@@ -1007,6 +1007,80 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
 
     geodesy::GeodeticAnchor get_geodetic_anchor() const override { return geodetic_anchor_; }
 
+    bool export_settings(Settings *out) const override {
+        // The settings codec does not carry loaded raster/overlay bytes or a
+        // content identity with which a fresh child could reload them. Reject
+        // a partial export instead of silently changing the child's terrain.
+        if (out == nullptr || raster_layer_.arnis_metric_bundle ||
+            raster_layer_.field_overlay_loaded) {
+            return false;
+        }
+        Settings settings{
+            .wind_speed_mps = base_wind_speed_mps_,
+            .wind_dir_from_deg = base_wind_dir_from_deg_,
+            .wind_shear_mps_per_km = wind_shear_mps_per_km_,
+            .sun_azimuth_deg = sun_azimuth_deg_,
+            .sun_elevation_deg = sun_elevation_deg_,
+            .maritime_state = maritime_state_,
+            .geodetic_anchor = geodetic_anchor_,
+            .flat_terrain = flat_terrain_,
+        };
+        settings.zones.reserve(zones_.size());
+        for (const Zone &zone : zones_) {
+            settings.zones.push_back({
+                .name = zone.name,
+                .center_x = zone.center.x,
+                .center_y = zone.center.y,
+                .center_z = zone.center.z,
+                .width = zone.width,
+                .length = zone.length,
+                .heading_deg = zone.heading,
+                .type = zone.type,
+                .surface = zone.surface,
+                .friction = zone.friction,
+                .roughness = zone.roughness,
+                .vegetation_density = zone.vegetation_density,
+                .runway_heading_deg = zone.runway_heading,
+                .z_order = zone.z_order,
+            });
+        }
+        *out = std::move(settings);
+        return true;
+    }
+
+    // Restores exported values as stored. They already passed the setters'
+    // normalization at the source, so this does not re-normalize them.
+    bool restore_settings(const Settings &settings) override {
+        std::vector<Zone> zones;
+        zones.reserve(settings.zones.size());
+        for (const ZoneSettings &zone : settings.zones) {
+            zones.push_back({
+                .name = zone.name,
+                .center = {zone.center_x, zone.center_y, zone.center_z},
+                .width = zone.width,
+                .length = zone.length,
+                .heading = zone.heading_deg,
+                .type = zone.type,
+                .surface = zone.surface,
+                .friction = zone.friction,
+                .roughness = zone.roughness,
+                .vegetation_density = zone.vegetation_density,
+                .runway_heading = zone.runway_heading_deg,
+                .z_order = zone.z_order,
+            });
+        }
+        base_wind_speed_mps_ = settings.wind_speed_mps;
+        base_wind_dir_from_deg_ = settings.wind_dir_from_deg;
+        wind_shear_mps_per_km_ = settings.wind_shear_mps_per_km;
+        sun_azimuth_deg_ = settings.sun_azimuth_deg;
+        sun_elevation_deg_ = settings.sun_elevation_deg;
+        maritime_state_ = settings.maritime_state;
+        geodetic_anchor_ = settings.geodetic_anchor;
+        flat_terrain_ = settings.flat_terrain;
+        zones_ = std::move(zones);
+        return true;
+    }
+
     bool snapshot_to(DefaultEnvironmentSnapshot *out) const {
         if (out == nullptr) {
             return false;

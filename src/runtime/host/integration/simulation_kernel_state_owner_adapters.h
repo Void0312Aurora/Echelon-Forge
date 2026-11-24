@@ -63,6 +63,15 @@ class SimulationKernelStateOwnerBridge {
     [[nodiscard]] static std::string
     serialize_episode_barrier(const RuntimeEpisodeCoordinatorSnapshot &barrier);
     [[nodiscard]] static std::string serialize_composition(SimulationKernel &kernel);
+    // Scenario settings (environment settings and missile tuning). Both
+    // throw or return false when the kernel's providers cannot reproduce
+    // them exactly. Defined in simulation_kernel_scenario_settings_codec.cpp.
+    [[nodiscard]] static std::string serialize_scenario_settings(SimulationKernel &kernel);
+    [[nodiscard]] static bool restore_scenario_settings(SimulationKernel &kernel,
+                                                        const std::vector<std::uint8_t> &payload);
+    // Decodes the payload completely without applying it.
+    [[nodiscard]] static bool
+    scenario_settings_well_formed(const std::vector<std::uint8_t> &payload) noexcept;
 };
 
 } // namespace runtime::host::integration
