@@ -2,6 +2,7 @@
 
 #include "core/engine/state_transfer_component_reflection.h"
 
+#include "components/basic/stable_identity.h"
 #include "components/basic/tags.h"
 #include "components/command/common/comm_message.h"
 #include "components/combat/common/damage_common.h"
@@ -10,6 +11,7 @@
 #include "core/engine/simulation_kernel.h"
 #include "core/interfaces/unit_factory.h"
 #include "runtime/contracts/backend_profile_contracts.h"
+#include "core/engine/native_world_state_codec.h"
 
 #include <flecs/addons/json.h>
 #include <nlohmann/json.hpp>
@@ -28,6 +30,12 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+// Added to the pinned flecs amalgamation by
+// cmake/patches/flecs_exact_json_precision.cmake. It restores the double world
+// time and the frame count exactly; ecs_frame_begin's float delta cannot.
+extern "C" void ef_flecs_restore_clock(ecs_world_t *world, double world_time_total,
+                                       int64_t frame_count_total);
 
 namespace runtime::host::integration {
 
@@ -164,56 +172,20 @@ std::string text(const std::vector<std::uint8_t> &value) {
     return {reinterpret_cast<const char *>(value.data()), value.size()};
 }
 
-std::string flecs_json_value(const nlohmann::json &value) {
-    if (value.is_number_float()) {
-        std::array<char, 768> buffer{};
-        const auto [end, error] =
-            std::to_chars(buffer.data(), buffer.data() + buffer.size(), value.get<double>(),
-                          std::chars_format::fixed, std::numeric_limits<double>::max_digits10);
-        if (error != std::errc{}) {
-            throw std::runtime_error("floating-point value cannot be formatted for Flecs restore");
-        }
-        std::string formatted(buffer.data(), end);
-        if (const auto dot = formatted.find('.'); dot != std::string::npos) {
-            while (formatted.back() == '0') {
-                formatted.pop_back();
-            }
-            if (formatted.back() == '.') {
-                formatted.push_back('0');
-            }
-        }
-        return formatted;
-    }
-    if (value.is_array()) {
-        std::string formatted = "[";
-        bool first = true;
-        for (const auto &element : value) {
-            if (!first) {
-                formatted.push_back(',');
-            }
-            first = false;
-            formatted += flecs_json_value(element);
-        }
-        formatted.push_back(']');
-        return formatted;
-    }
-    if (value.is_object()) {
-        std::string formatted = "{";
-        bool first = true;
-        for (const auto &[key, element] : value.items()) {
-            if (!first) {
-                formatted.push_back(',');
-            }
-            first = false;
-            formatted += nlohmann::json(key).dump();
-            formatted.push_back(':');
-            formatted += flecs_json_value(element);
-        }
-        formatted.push_back('}');
-        return formatted;
-    }
-    return value.dump();
-}
+struct DecodedRngState {
+    std::uint64_t draw_position = 0;
+    std::mt19937 engine;
+};
+
+struct DecodedClockState {
+    double world_time = 0.0;
+    double time_step = 0.0;
+    std::uint64_t step_sequence = 0;
+    std::uint64_t barrier_sequence = 0;
+    // clock.v3 only; clock.v2 producers did not record it.
+    bool has_frame_count = false;
+    std::int64_t frame_count = 0;
+};
 
 std::string f64_bits(double value) {
     constexpr char hex[] = "0123456789abcdef";
@@ -1194,7 +1166,7 @@ bool decode_entity_references(
     }
     return true;
 }
-
+#ifndef EF_RUNTIME_KERNEL_STATE_CODEC_ONLY
 std::string identity_text(const RuntimeIdentity128 &identity) {
     return std::to_string(identity.high) + ":" + std::to_string(identity.low);
 }
@@ -1304,18 +1276,6 @@ struct StagedImport {
     bool python_caches_applied = false;
 };
 
-struct DecodedRngState {
-    std::uint64_t draw_position = 0;
-    std::mt19937 engine;
-};
-
-struct DecodedClockState {
-    double world_time = 0.0;
-    double time_step = 0.0;
-    std::uint64_t step_sequence = 0;
-    std::uint64_t barrier_sequence = 0;
-};
-
 bool is_lower_hex_sha256(std::string_view value) {
     return value.size() == 64 && std::all_of(value.begin(), value.end(), [](char character) {
                return (character >= '0' && character <= '9') ||
@@ -1388,6 +1348,7 @@ bool decode_in_flight_policy(std::string_view encoded, std::size_t expected_read
            parse_prefixed_uint64(lines[7], "source_barrier_sequence=", &barrier_sequence) &&
            step_sequence == expected_step_sequence && barrier_sequence == expected_barrier_sequence;
 }
+#endif // EF_RUNTIME_KERNEL_STATE_CODEC_ONLY
 
 bool decode_rng_state(std::string_view encoded, DecodedRngState *decoded) {
     if (decoded == nullptr) {
@@ -1415,13 +1376,19 @@ bool decode_clock_state(std::string_view encoded, DecodedClockState *decoded) {
     std::istringstream input{std::string(encoded)};
     std::string header;
     DecodedClockState candidate;
-    if (!std::getline(input, header) || header != "clock.v2" ||
+    if (!std::getline(input, header) || (header != "clock.v3" && header != "clock.v2") ||
         !(input >> candidate.world_time >> candidate.time_step >> candidate.step_sequence >>
           candidate.barrier_sequence) ||
         !std::isfinite(candidate.world_time) || candidate.world_time < 0.0 ||
         !std::isfinite(candidate.time_step) || candidate.time_step <= 0.0 ||
         candidate.barrier_sequence == 0) {
         return false;
+    }
+    if (header == "clock.v3") {
+        if (!(input >> candidate.frame_count) || candidate.frame_count < 0) {
+            return false;
+        }
+        candidate.has_frame_count = true;
     }
     input >> std::ws;
     if (!input.eof()) {
@@ -1431,6 +1398,7 @@ bool decode_clock_state(std::string_view encoded, DecodedClockState *decoded) {
     return true;
 }
 
+#ifndef EF_RUNTIME_KERNEL_STATE_CODEC_ONLY
 bool decode_episode_barrier(std::string_view encoded, RuntimeEpisodeCoordinatorSnapshot *decoded) {
     if (decoded == nullptr) {
         return false;
@@ -1454,18 +1422,62 @@ bool decode_episode_barrier(std::string_view encoded, RuntimeEpisodeCoordinatorS
     }
     input >> std::ws;
     if (!input.eof() ||
-        phase != static_cast<unsigned int>(RuntimeEpisodePhase::ReplacementBarrier) ||
+        (phase != static_cast<unsigned int>(RuntimeEpisodePhase::ReplacementBarrier) &&
+         phase != static_cast<unsigned int>(RuntimeEpisodePhase::BranchBarrier)) ||
         !candidate.episode.well_formed() || candidate.barrier_sequence == 0 ||
         !candidate.snapshot_id.well_formed() || !is_lower_hex_sha256(candidate.snapshot_sha256)) {
         return false;
     }
-    candidate.phase = RuntimeEpisodePhase::ReplacementBarrier;
+    candidate.phase = static_cast<RuntimeEpisodePhase>(phase);
     *decoded = std::move(candidate);
     return true;
 }
+#endif // EF_RUNTIME_KERNEL_STATE_CODEC_ONLY
 
 } // namespace
 
+// The world-level identity singleton travels with the entities it numbers:
+// draw seeds hash `episode_seed`, and `next_serial` must stay ahead of every
+// transferred StableEntitySerial or the next spawn reuses a serial.
+static nlohmann::json encode_stable_identity(const StableIdentityState &identity) {
+    return {{"next_serial", identity.next_serial}, {"episode_seed", identity.episode_seed}};
+}
+
+static bool decode_stable_identity(const nlohmann::json &encoded, StableIdentityState *out) {
+    if (out == nullptr || !only_object_keys(encoded, {"next_serial", "episode_seed"}) ||
+        !encoded.contains("next_serial") || !encoded.contains("episode_seed") ||
+        !encoded["next_serial"].is_number_unsigned() ||
+        !encoded["episode_seed"].is_number_unsigned()) {
+        return false;
+    }
+    const auto next_serial = encoded["next_serial"].get<std::uint64_t>();
+    if (next_serial == 0) {
+        return false;
+    }
+    *out = StableIdentityState{.next_serial = next_serial,
+                               .episode_seed = encoded["episode_seed"].get<std::uint64_t>()};
+    return true;
+}
+
+// next_serial must exceed every serial in the document.
+static bool identity_covers_serials(const nlohmann::json &document,
+                                    const StableIdentityState &identity) {
+    for (const auto &result : document.at("results")) {
+        const auto components = result.find("components");
+        if (components == result.end() || !components->contains("StableEntitySerial")) {
+            continue;
+        }
+        const auto &serial = (*components)["StableEntitySerial"];
+        if (!serial.is_object() || !serial.contains("value") ||
+            !serial["value"].is_number_unsigned() ||
+            serial["value"].get<std::uint64_t>() >= identity.next_serial) {
+            return false;
+        }
+    }
+    return true;
+}
+
+#ifndef EF_RUNTIME_STATE_OWNER_ADAPTERS_CANDIDATE_ONLY
 std::string SimulationKernelStateOwnerBridge::serialize_world(SimulationKernel &kernel) {
     auto lock = kernel.acquire_composition_operation();
     kernel.ensure_active("state_transfer_export_world");
@@ -1683,11 +1695,18 @@ std::string SimulationKernelStateOwnerBridge::serialize_world(SimulationKernel &
         }
         throw std::runtime_error(detail.str());
     }
+    const auto *identity = kernel.ecs.get<StableIdentityState>();
+    if (identity == nullptr) {
+        throw std::runtime_error("ECS snapshot requires the StableIdentityState singleton");
+    }
+    document["identity"] = encode_stable_identity(*identity);
     return document.dump();
 }
 
-bool validate_component_payload(ecs_world_t *world, std::string_view component_name,
-                                const nlohmann::json &decoded_value) {
+#endif // EF_RUNTIME_STATE_OWNER_ADAPTERS_CANDIDATE_ONLY
+
+static bool validate_component_payload(ecs_world_t *world, std::string_view component_name,
+                                       const nlohmann::json &decoded_value) {
     if (world == nullptr) {
         return false;
     }
@@ -1724,7 +1743,7 @@ bool validate_component_payload(ecs_world_t *world, std::string_view component_n
     }
     ecs_from_json_desc_t descriptor{};
     descriptor.strict = true;
-    const std::string value_json = flecs_json_value(decoded_value);
+    const std::string value_json = decoded_value.dump();
     const char *end =
         ecs_ptr_from_json(world, component_id, candidate, value_json.c_str(), &descriptor);
     bool valid = end != nullptr;
@@ -1745,7 +1764,7 @@ bool validate_component_payload(ecs_world_t *world, std::string_view component_n
 // Its four serialized bools therefore contain enable/sea/bearing/padding.
 // Normalize that exact legacy shape before strict decoding; current RF shapes
 // must never accept the retired field as a way to bypass their schema.
-bool normalize_legacy_sensor_reflection(nlohmann::json &sensor) {
+static bool normalize_legacy_sensor_reflection(nlohmann::json &sensor) {
     if (!sensor.is_object() || !sensor.contains("enforce_radar_horizon")) return true;
     for (const char *key :
          {"enforce_radar_horizon", "enable_ducting", "sea_clutter_enabled", "bearing_only"}) {
@@ -1765,7 +1784,7 @@ bool normalize_legacy_sensor_reflection(nlohmann::json &sensor) {
 }
 
 // ECS truth migration implementation: normalize_legacy_ecs_sensors
-bool normalize_legacy_ecs_sensors(nlohmann::json &document) {
+static bool normalize_legacy_ecs_sensors(nlohmann::json &document) {
     for (auto &result : document.at("results")) {
         if (!result.is_object() || !result.contains("components") ||
             !result["components"].is_object()) {
@@ -1795,7 +1814,7 @@ bool normalize_legacy_ecs_sensors(nlohmann::json &document) {
 // Preserve that reference circle; the old low-speed rate floor has no physical
 // equivalent in the new law. T'=1 is a migration default, not trial calibration;
 // sigma=1 preserves the old law's absence of a steady-turn speed penalty.
-bool normalize_legacy_ship_reflection(nlohmann::json &ship) {
+static bool normalize_legacy_ship_reflection(nlohmann::json &ship) {
     if (!ship.is_object()) return false;
     if (!ship.contains("max_turn_rate_deg_s") && !ship.contains("low_speed_turn_factor")) {
         return true;
@@ -1827,10 +1846,10 @@ bool normalize_legacy_ship_reflection(nlohmann::json &ship) {
 }
 
 // ECS truth migration implementation: normalize_legacy_ecs_ships
-bool normalize_legacy_ecs_ships(nlohmann::json &document) {
-    if (!only_object_keys(document, {"results", "child_of"}) || !document.contains("results") ||
-        !document["results"].is_array() || !document.contains("child_of") ||
-        !document["child_of"].is_array())
+static bool normalize_legacy_ecs_ships(nlohmann::json &document) {
+    if (!only_object_keys(document, {"results", "child_of", "identity"}) ||
+        !document.contains("results") || !document["results"].is_array() ||
+        !document.contains("child_of") || !document["child_of"].is_array())
         return false;
     for (auto &result : document["results"]) {
         if (!result.is_object() || !result.contains("components") ||
@@ -1853,7 +1872,7 @@ bool normalize_legacy_ecs_ships(nlohmann::json &document) {
 }
 
 // ECS truth migration implementation: normalize_legacy_ecs_aero_tuning
-bool normalize_legacy_ecs_aero_tuning(nlohmann::json &document) {
+static bool normalize_legacy_ecs_aero_tuning(nlohmann::json &document) {
     if (!document.is_object() || !document.contains("results") || !document["results"].is_array())
         return false;
     const AeroTuning defaults;
@@ -1884,8 +1903,31 @@ bool normalize_legacy_ecs_aero_tuning(nlohmann::json &document) {
     return true;
 }
 
+// ECS truth migration implementation: normalize_legacy_ecs_identity
+static bool normalize_legacy_ecs_identity(nlohmann::json &document, std::uint64_t episode_seed) {
+    if (!document.is_object() || !document.contains("results") || !document["results"].is_array())
+        return false;
+    if (document.contains("identity")) return false; // N-1 producers never wrote it
+    std::uint64_t max_serial = 0;
+    for (const auto &result : document["results"]) {
+        if (!result.is_object() || !result.contains("components") ||
+            !result["components"].is_object())
+            return false;
+        const auto &components = result["components"];
+        if (!components.contains("StableEntitySerial")) continue;
+        const auto &serial = components["StableEntitySerial"];
+        if (!serial.is_object() || !serial.contains("value") ||
+            !serial["value"].is_number_unsigned())
+            return false;
+        max_serial = std::max(max_serial, serial["value"].get<std::uint64_t>());
+    }
+    document["identity"] = encode_stable_identity(
+        StableIdentityState{.next_serial = max_serial + 1, .episode_seed = episode_seed});
+    return true;
+}
+
 // ECS truth migration implementation: normalize_legacy_ecs_ground_commands
-bool normalize_legacy_ecs_ground_commands(nlohmann::json &document) {
+static bool normalize_legacy_ecs_ground_commands(nlohmann::json &document) {
     if (!document.is_object() || !document.contains("results") || !document["results"].is_array())
         return false;
     for (auto &result : document["results"]) {
@@ -1911,6 +1953,7 @@ bool normalize_legacy_ecs_ground_commands(nlohmann::json &document) {
     return true;
 }
 
+#ifndef EF_RUNTIME_STATE_OWNER_ADAPTERS_CANDIDATE_ONLY
 bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
                                                      const std::vector<std::uint8_t> &payload) {
     // Validate and stage the complete document before mutating the live ECS.
@@ -1936,9 +1979,15 @@ bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
         } catch (const nlohmann::json::exception &) {
             return false;
         }
-        if (!only_object_keys(document, {"results", "child_of"}) || !document.contains("results") ||
-            !document.at("results").is_array() || !document.contains("child_of") ||
-            !document.at("child_of").is_array()) {
+        if (!only_object_keys(document, {"results", "child_of", "identity"}) ||
+            !document.contains("results") || !document.at("results").is_array() ||
+            !document.contains("child_of") || !document.at("child_of").is_array()) {
+            return false;
+        }
+        StableIdentityState restored_identity{};
+        if (!document.contains("identity") ||
+            !decode_stable_identity(document.at("identity"), &restored_identity) ||
+            !identity_covers_serials(document, restored_identity)) {
             return false;
         }
         if (!normalize_legacy_ecs_sensors(document)) return false;
@@ -2163,7 +2212,7 @@ bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
                 // as 1e-6 as an arithmetic expression on this supported version.
                 // Expand floating-point values to exact fixed notation before the
                 // strict decode so source values remain bit-representable.
-                const std::string value_json = flecs_json_value(decoded_value);
+                const std::string value_json = decoded_value.dump();
                 const char *end = ecs_ptr_from_json(kernel.ecs.c_ptr(), component_id, destination,
                                                     value_json.c_str(), &descriptor);
                 if (end == nullptr) {
@@ -2187,6 +2236,7 @@ bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
                 child.child_of(parent);
             }
         }
+        kernel.ecs.set<StableIdentityState>(restored_identity);
         kernel.world_state_mutated_ = true;
         return true;
     }();
@@ -2204,6 +2254,9 @@ bool SimulationKernelStateOwnerBridge::restore_world(SimulationKernel &kernel,
     return restored;
 }
 
+#endif // EF_RUNTIME_STATE_OWNER_ADAPTERS_CANDIDATE_ONLY
+
+#ifndef EF_RUNTIME_STATE_OWNER_ADAPTERS_CANDIDATE_ONLY
 std::string SimulationKernelStateOwnerBridge::serialize_rng(SimulationKernel &kernel) {
     auto lock = kernel.acquire_composition_operation();
     kernel.ensure_active("state_transfer_export_rng");
@@ -2232,13 +2285,15 @@ std::string SimulationKernelStateOwnerBridge::serialize_clock(SimulationKernel &
     kernel.ensure_active("state_transfer_export_clock");
     const ecs_world_info_t *info = ecs_get_world_info(kernel.ecs.c_ptr());
     const double world_time = info ? static_cast<double>(info->world_time_total) : 0.0;
+    const std::int64_t frame_count = info ? static_cast<std::int64_t>(info->frame_count_total) : 0;
     std::ostringstream output;
     output.precision(std::numeric_limits<double>::max_digits10);
-    output << "clock.v2\n"
+    output << "clock.v3\n"
            << world_time << '\n'
            << kernel.time_step << '\n'
            << step_sequence << '\n'
-           << barrier_sequence << '\n';
+           << barrier_sequence << '\n'
+           << frame_count << '\n';
     return output.str();
 }
 
@@ -2250,22 +2305,28 @@ bool SimulationKernelStateOwnerBridge::restore_clock(SimulationKernel &kernel,
     if (!decode_clock_state(text(payload), &restored)) {
         return false;
     }
-    ecs_reset_clock(kernel.ecs.c_ptr());
-    if (restored.world_time > 0.0) {
-        ecs_frame_begin(kernel.ecs.c_ptr(), static_cast<ecs_ftime_t>(restored.world_time));
-        ecs_frame_end(kernel.ecs.c_ptr());
-    }
+    // Set the double world time and frame count directly. Advancing one frame
+    // through ecs_frame_begin would round the time to float and add a frame.
+    // A clock.v2 payload has no frame count; keep the target's, as before.
+    const ecs_world_info_t *info = ecs_get_world_info(kernel.ecs.c_ptr());
+    const std::int64_t frame_count =
+        restored.has_frame_count ? restored.frame_count
+                                 : (info ? static_cast<std::int64_t>(info->frame_count_total) : 0);
+    ef_flecs_restore_clock(kernel.ecs.c_ptr(), restored.world_time, frame_count);
     kernel.time_step = restored.time_step;
     kernel.world_state_mutated_ = true;
     return true;
 }
+#endif // EF_RUNTIME_STATE_OWNER_ADAPTERS_CANDIDATE_ONLY
 
+#ifndef EF_RUNTIME_KERNEL_STATE_CODEC_ONLY
 std::string SimulationKernelStateOwnerBridge::serialize_episode_barrier(
     const RuntimeEpisodeCoordinatorSnapshot &barrier) {
-    if (barrier.phase != RuntimeEpisodePhase::ReplacementBarrier ||
+    if ((barrier.phase != RuntimeEpisodePhase::ReplacementBarrier &&
+         barrier.phase != RuntimeEpisodePhase::BranchBarrier) ||
         !barrier.episode.well_formed() || barrier.barrier_sequence == 0 ||
         !barrier.snapshot_id.well_formed() || !is_lower_hex_sha256(barrier.snapshot_sha256)) {
-        throw std::runtime_error("episode owner requires a well-formed host replacement barrier");
+        throw std::runtime_error("episode owner requires a well-formed native episode barrier");
     }
     std::ostringstream output;
     output << "episode-barrier.v2\n"
@@ -2365,8 +2426,10 @@ std::string serialize_component_subset(SimulationKernel &kernel, RuntimeStateCat
         result.erase("tags");
     }
     // Component-subset owners intentionally carry only their selected
-    // components; hierarchy closure belongs to the ECS truth owner.
+    // components; hierarchy closure and the identity singleton belong to the
+    // ECS truth owner.
     document.erase("child_of");
+    document.erase("identity");
     document["owner_schema"] = component_subset_schema(category);
     document["step_sequence"] = step_sequence;
     document["barrier_sequence"] = barrier_sequence;
@@ -2506,7 +2569,7 @@ bool restore_component_subset(SimulationKernel &kernel, RuntimeStateCategory cat
                     if (type_info == nullptr || type_info->size == 0 || destination == nullptr) {
                         return false;
                     }
-                    const std::string value_json = flecs_json_value(decoded_value);
+                    const std::string value_json = decoded_value.dump();
                     const char *end = ecs_ptr_from_json(ecs.c_ptr(), component_id, destination,
                                                         value_json.c_str(), &descriptor);
                     if (end == nullptr) {
@@ -2558,6 +2621,8 @@ std::vector<std::uint8_t> export_category_payload(SimulationKernel &kernel,
                                                 barrier.barrier_sequence));
     case RuntimeStateCategory::EpisodeRewardTermination:
         return bytes(serialize_episode_owner(kernel, barrier));
+    case RuntimeStateCategory::ScenarioSettings:
+        return bytes(SimulationKernelStateOwnerBridge::serialize_scenario_settings(kernel));
     case RuntimeStateCategory::PythonLoaderControllerCaches:
     case RuntimeStateCategory::BackendDeviceAllocationsLeases:
     case RuntimeStateCategory::InFlightRequestsResults:
@@ -2586,6 +2651,9 @@ bool apply_staged(StagedImport &staged) {
         return staged.episode_barrier_validated &&
                restore_component_subset(*staged.kernel, staged.category, staged.source_payload,
                                         staged.step_sequence, staged.barrier_sequence);
+    case RuntimeStateCategory::ScenarioSettings:
+        return SimulationKernelStateOwnerBridge::restore_scenario_settings(*staged.kernel,
+                                                                           staged.source_payload);
     case RuntimeStateCategory::PythonLoaderControllerCaches:
         if (!staged.rederive_python_caches) {
             staged.python_caches_applied = true;
@@ -2616,6 +2684,9 @@ bool abort_staged(StagedImport &staged) {
         return staged.episode_barrier_validated &&
                restore_component_subset(*staged.kernel, staged.category, staged.before_payload,
                                         staged.step_sequence, staged.barrier_sequence);
+    case RuntimeStateCategory::ScenarioSettings:
+        return SimulationKernelStateOwnerBridge::restore_scenario_settings(*staged.kernel,
+                                                                           staged.before_payload);
     case RuntimeStateCategory::PythonLoaderControllerCaches:
         if (staged.rollback_python_caches &&
             !staged.rollback_python_caches(staged.before_payload)) {
@@ -2648,6 +2719,10 @@ RuntimeStateOwnerImportTransactionPhase recover_staged(StagedImport &staged) {
         break;
     case RuntimeStateCategory::EpisodeRewardTermination:
         current = bytes(serialize_episode_owner(*staged.kernel, staged.episode_barrier));
+        break;
+    case RuntimeStateCategory::ScenarioSettings:
+        current =
+            bytes(SimulationKernelStateOwnerBridge::serialize_scenario_settings(*staged.kernel));
         break;
     case RuntimeStateCategory::PythonLoaderControllerCaches:
         if (staged.recover_python_caches) {
@@ -2707,7 +2782,8 @@ SimulationKernelStateOwnerBridge::create_registry(SimulationKernelStateOwnerRegi
             if (!barrier.episode.well_formed() ||
                 barrier.episode.world.incarnation != source_slot ||
                 barrier.episode.world.world_slot != 0 ||
-                barrier.phase != RuntimeEpisodePhase::ReplacementBarrier ||
+                (barrier.phase != RuntimeEpisodePhase::ReplacementBarrier &&
+                 barrier.phase != RuntimeEpisodePhase::BranchBarrier) ||
                 barrier.step_sequence == 0 || barrier.barrier_sequence == 0) {
                 throw std::runtime_error(
                     "owner export is not bound to the quiesced host episode barrier");
@@ -2751,30 +2827,42 @@ SimulationKernelStateOwnerBridge::create_registry(SimulationKernelStateOwnerRegi
             return RuntimeStateOwnerAdapterExport{.census_entry = std::move(entry),
                                                   .artifact = std::move(artifact)};
         };
-        registration.migrate_previous =
-            [category = rule.category](const RuntimeStateOwnerArtifact &source) {
-                RuntimeStateOwnerArtifact migrated = source;
-                migrated.schema_generation = kRuntimeStateTransferContractGeneration;
-                if (category == RuntimeStateCategory::EcsComponentTruth) {
-                    if (source.category != category ||
-                        source.schema_generation != kRuntimeStateTransferPreviousGeneration) {
-                        throw std::runtime_error(
-                            "ECS byte migration requires an admitted N-1 artifact");
-                    }
-                    auto document = nlohmann::json::parse(text(source.payload));
-                    if (!normalize_legacy_ecs_ships(document) ||
-                        !normalize_legacy_ecs_aero_tuning(document) ||
-                        !normalize_legacy_ecs_ground_commands(document)) {
-                        throw std::runtime_error(
-                            "N-1 ECS state is malformed or mixes component schemas");
-                    }
-                    migrated.payload = bytes(document.dump());
+        registration.migrate_previous = [category = rule.category, kernel = config.kernel](
+                                            const RuntimeStateOwnerArtifact &source) {
+            RuntimeStateOwnerArtifact migrated = source;
+            migrated.schema_generation = kRuntimeStateTransferContractGeneration;
+            if (category == RuntimeStateCategory::EcsComponentTruth) {
+                if (source.category != category ||
+                    source.schema_generation != kRuntimeStateTransferPreviousGeneration) {
+                    throw std::runtime_error(
+                        "ECS byte migration requires an admitted N-1 artifact");
                 }
-                // Other categories retain their explicit reader promotion. The
-                // generation admission still prevents anything older than N-1.
-                migrated.payload_sha256 = runtime_state_payload_sha256(migrated.payload);
-                return migrated;
-            };
+                auto document = nlohmann::json::parse(text(source.payload));
+                // N-1 producers wrote no identity. The importing kernel's
+                // episode seed is the one their imports already used.
+                const std::uint64_t episode_seed = [&] {
+                    const auto lease = std::as_const(*kernel).acquire_world_lease();
+                    const auto *identity = lease.world().get<StableIdentityState>();
+                    if (identity == nullptr) {
+                        throw std::runtime_error(
+                            "N-1 ECS migration requires the target identity singleton");
+                    }
+                    return identity->episode_seed;
+                }();
+                if (!normalize_legacy_ecs_ships(document) ||
+                    !normalize_legacy_ecs_aero_tuning(document) ||
+                    !normalize_legacy_ecs_ground_commands(document) ||
+                    !normalize_legacy_ecs_identity(document, episode_seed)) {
+                    throw std::runtime_error(
+                        "N-1 ECS state is malformed or mixes component schemas");
+                }
+                migrated.payload = bytes(document.dump());
+            }
+            // Other categories retain their explicit reader promotion. The
+            // generation admission still prevents anything older than N-1.
+            migrated.payload_sha256 = runtime_state_payload_sha256(migrated.payload);
+            return migrated;
+        };
         registration.import_state = [kernel = config.kernel, journal = config.journal,
                                      transaction_namespace = config.transaction_namespace,
                                      rederive_python_caches = config.rederive_python_caches,
@@ -2846,6 +2934,10 @@ SimulationKernelStateOwnerBridge::create_registry(SimulationKernelStateOwnerRegi
                 }
                 staged->episode_barrier_validated = true;
                 staged->episode_barrier = decoded;
+            } else if (category == RuntimeStateCategory::ScenarioSettings &&
+                       !SimulationKernelStateOwnerBridge::scenario_settings_well_formed(
+                           admitted_artifact.payload)) {
+                throw std::runtime_error("scenario settings owner payload is malformed");
             } else if (category == RuntimeStateCategory::ExternalSideEffects) {
                 const auto expected =
                     explicit_policy_payload(*kernel, category,
@@ -2910,6 +3002,10 @@ SimulationKernelStateOwnerBridge::create_registry(SimulationKernelStateOwnerRegi
             case RuntimeStateCategory::EpisodeRewardTermination:
                 staged->before_payload =
                     bytes(serialize_episode_owner(*kernel, staged->episode_barrier));
+                break;
+            case RuntimeStateCategory::ScenarioSettings:
+                staged->before_payload =
+                    bytes(SimulationKernelStateOwnerBridge::serialize_scenario_settings(*kernel));
                 break;
             case RuntimeStateCategory::PythonLoaderControllerCaches:
                 if (staged->snapshot_python_caches) {
@@ -3019,5 +3115,54 @@ SimulationKernelStateOwnerBridge::create_registry(SimulationKernelStateOwnerRegi
         std::move(registrations), config.bound_resource_identity, config.kernel);
     return registry->registration_status() ? registry : nullptr;
 }
+#endif // EF_RUNTIME_KERNEL_STATE_CODEC_ONLY
 
 } // namespace runtime::host::integration
+
+#ifndef EF_RUNTIME_STATE_OWNER_ADAPTERS_CANDIDATE_ONLY
+namespace runtime::contracts {
+
+std::string serialize_native_world_state(SimulationKernel &kernel) {
+    return runtime::host::integration::SimulationKernelStateOwnerBridge::serialize_world(kernel);
+}
+
+bool restore_native_world_state(SimulationKernel &kernel,
+                                const std::vector<std::uint8_t> &payload) {
+    return runtime::host::integration::SimulationKernelStateOwnerBridge::restore_world(kernel,
+                                                                                       payload);
+}
+
+std::string serialize_native_rng_state(SimulationKernel &kernel) {
+    return runtime::host::integration::SimulationKernelStateOwnerBridge::serialize_rng(kernel);
+}
+
+bool restore_native_rng_state(SimulationKernel &kernel, const std::vector<std::uint8_t> &payload) {
+    return runtime::host::integration::SimulationKernelStateOwnerBridge::restore_rng(kernel,
+                                                                                     payload);
+}
+
+std::string serialize_native_clock_state(SimulationKernel &kernel, std::uint64_t step_sequence,
+                                         std::uint64_t barrier_sequence) {
+    return runtime::host::integration::SimulationKernelStateOwnerBridge::serialize_clock(
+        kernel, step_sequence, barrier_sequence);
+}
+
+bool restore_native_clock_state(SimulationKernel &kernel,
+                                const std::vector<std::uint8_t> &payload) {
+    return runtime::host::integration::SimulationKernelStateOwnerBridge::restore_clock(kernel,
+                                                                                       payload);
+}
+
+std::string serialize_native_scenario_settings(SimulationKernel &kernel) {
+    return runtime::host::integration::SimulationKernelStateOwnerBridge::
+        serialize_scenario_settings(kernel);
+}
+
+bool restore_native_scenario_settings(SimulationKernel &kernel,
+                                      const std::vector<std::uint8_t> &payload) {
+    return runtime::host::integration::SimulationKernelStateOwnerBridge::restore_scenario_settings(
+        kernel, payload);
+}
+
+} // namespace runtime::contracts
+#endif // EF_RUNTIME_STATE_OWNER_ADAPTERS_CANDIDATE_ONLY

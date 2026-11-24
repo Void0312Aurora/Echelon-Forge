@@ -1,0 +1,139 @@
+# Keep Flecs' JSON state-transfer numbers round-trippable for native restore.
+# The pinned amalgamation defaults to ten decimal places, which changes real
+# simulation doubles when the owner adapter decodes the snapshot with exact
+# double precision. Its JSON tokenizer also splits signed exponents and does
+# not bound numeric tokens. Patch only the formatter and JSON number reader.
+
+if (NOT DEFINED FLECS_SOURCE_FILE)
+    message(FATAL_ERROR "FLECS_SOURCE_FILE must be defined")
+endif()
+if (NOT EXISTS "${FLECS_SOURCE_FILE}")
+    message(FATAL_ERROR "Flecs source not found: ${FLECS_SOURCE_FILE}")
+endif()
+
+file(READ "${FLECS_SOURCE_FILE}" _flecs_source)
+
+function(_flecs_replace_once _original _replacement _label)
+    string(FIND "${_flecs_source}" "${_replacement}" _applied)
+    if (NOT _applied EQUAL -1)
+        # A replacement may intentionally retain the original function, as
+        # the clock setter does. Count complete replacements before looking
+        # for original text left outside that replacement.
+        string(REPLACE "${_replacement}" "" _without_replacement "${_flecs_source}")
+        string(LENGTH "${_flecs_source}" _source_length)
+        string(LENGTH "${_without_replacement}" _remaining_length)
+        string(LENGTH "${_replacement}" _replacement_length)
+        math(EXPR _applied_length "${_source_length} - ${_remaining_length}")
+        string(FIND "${_without_replacement}" "${_original}" _unpatched)
+        if (_applied_length EQUAL _replacement_length AND _unpatched EQUAL -1)
+            return()
+        endif()
+        message(FATAL_ERROR
+            "Flecs exact JSON precision patch requires exactly one pinned ${_label}; "
+            "inspect the upstream source before changing the patch.")
+    endif()
+    string(REPLACE "${_original}" "" _without_original "${_flecs_source}")
+    string(LENGTH "${_flecs_source}" _source_length)
+    string(LENGTH "${_without_original}" _without_length)
+    string(LENGTH "${_original}" _original_length)
+    math(EXPR _removed_length "${_source_length} - ${_without_length}")
+    if (NOT _removed_length EQUAL _original_length)
+        message(FATAL_ERROR
+            "Flecs exact JSON precision patch requires exactly one pinned ${_label}; "
+            "inspect the upstream source before changing the patch.")
+    endif()
+    string(REPLACE "${_original}" "${_replacement}" _updated "${_flecs_source}")
+    set(_flecs_source "${_updated}" PARENT_SCOPE)
+endfunction()
+
+set(_flecs_original_float_call "flecs_strbuf_ftoa(b, flt, 10, nan_delim);")
+set(_flecs_previous_float_call [=[if (nan_delim && (ecs_os_isnan(flt) || ecs_os_isinf(flt))) {
+        ecs_strbuf_appendch(b, nan_delim);
+        ecs_strbuf_append(b, "%s", ecs_os_isnan(flt) ? "NaN" : (flt < 0 ? "-Inf" : "Inf"));
+        ecs_strbuf_appendch(b, nan_delim);
+    } else {
+        ecs_strbuf_append(b, "%.*g", 17, flt);
+    }]=])
+string(REPLACE "ecs_strbuf_append(b, \"%.*g\", 17, flt);"
+               "ecs_strbuf_append(b, flt == 0 ? \"%.1f\" : \"%.17g\", flt);"
+               _flecs_exact_float_call "${_flecs_previous_float_call}")
+# Upgrade the known earlier formatter patch in an existing generated source.
+string(REPLACE "${_flecs_previous_float_call}" "${_flecs_exact_float_call}"
+       _flecs_source "${_flecs_source}")
+_flecs_replace_once("${_flecs_original_float_call}" "${_flecs_exact_float_call}" "formatter call")
+
+set(_flecs_number_reader [=[const char *result = json;
+        if (*result == '-') {
+            result ++;
+        }
+        if (*result == '0') {
+            result ++;
+        } else if (*result >= '1' && *result <= '9') {
+            do { result ++; } while (isdigit((unsigned char)*result));
+        } else {
+            token_kind[0] = JsonInvalid;
+            return NULL;
+        }
+        if (*result == '.') {
+            result ++;
+            if (!isdigit((unsigned char)*result)) {
+                token_kind[0] = JsonInvalid;
+                return NULL;
+            }
+            do { result ++; } while (isdigit((unsigned char)*result));
+        }
+        if (*result == 'e' || *result == 'E') {
+            result ++;
+            if (*result == '+' || *result == '-') {
+                result ++;
+            }
+            if (!isdigit((unsigned char)*result)) {
+                token_kind[0] = JsonInvalid;
+                return NULL;
+            }
+            do { result ++; } while (isdigit((unsigned char)*result));
+        }
+        if ((result - json >= ECS_MAX_TOKEN_SIZE) ||
+            (*result && !isspace((unsigned char)*result) &&
+             *result != ',' && *result != '}' && *result != ']')) {
+            token_kind[0] = JsonInvalid;
+            return NULL;
+        }
+        ecs_size_t number_length = (ecs_size_t)(result - json);
+        ecs_os_memcpy(token, json, number_length);
+        token[number_length] = '\0';]=])
+_flecs_replace_once("const char *result = flecs_parse_digit(json, token);"
+                    "${_flecs_number_reader}" "JSON number reader")
+_flecs_replace_once("if (!strchr(token, '.')) {"
+                    "if (!strchr(token, '.') && !strchr(token, 'e') && !strchr(token, 'E')) {"
+                    "JSON large integer check")
+
+# Exact clock restore. ecs_get_world_info() returns a const view and the pinned
+# version has no setter, while ecs_frame_begin() takes an ecs_ftime_t (float)
+# delta. A restored world therefore cannot reproduce the source's double world
+# time or its frame count. Add one narrow setter next to ecs_reset_clock. Its
+# only caller, the native state-owner adapter, declares it with C linkage.
+_flecs_replace_once([=[void ecs_reset_clock(
+    ecs_world_t *world)
+{
+    world->info.world_time_total = 0;
+    world->info.world_time_total_raw = 0;
+}]=] [=[void ecs_reset_clock(
+    ecs_world_t *world)
+{
+    world->info.world_time_total = 0;
+    world->info.world_time_total_raw = 0;
+}
+
+void ef_flecs_restore_clock(
+    ecs_world_t *world,
+    double world_time_total,
+    int64_t frame_count_total)
+{
+    world->info.world_time_total = world_time_total;
+    world->info.world_time_total_raw = world_time_total;
+    world->info.frame_count_total = frame_count_total;
+}]=] "clock restore setter")
+
+file(WRITE "${FLECS_SOURCE_FILE}" "${_flecs_source}")
+message(STATUS "Flecs exact JSON precision patch: applied")

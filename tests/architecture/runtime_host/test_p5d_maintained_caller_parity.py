@@ -89,7 +89,8 @@ def test_p5d_native_inventory_and_closure_bind_to_the_same_migration_boundary() 
     assert "simulation_kernel.native_default_callers" not in surfaces
     assert surfaces["runtime_facade.maintained_host"]["callers"]
     assert surfaces["simulation_kernel.native_explicit_callers"]["callers"] == [
-        "src/core/engine/world_batch_runtime.cpp"
+        "src/core/engine/world_batch_runtime.cpp",
+        "src/runtime/facade/runtime_facade_native_owner.cpp",
     ]
 
 

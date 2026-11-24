@@ -44,4 +44,9 @@ class IUnitFactory {
         if (error) *error = "UnitFactory does not support loading definitions.";
         return false;
     }
+
+    // Native branches currently recreate the built-in factory. A provider
+    // must explicitly attest that this reproduces its definition state;
+    // loaded catalogs require a content owner/rehydration contract first.
+    [[nodiscard]] virtual bool has_only_builtin_definitions() const noexcept { return false; }
 };

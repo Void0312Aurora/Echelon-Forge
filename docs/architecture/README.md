@@ -52,7 +52,8 @@ records executable evidence and the owner review/production boundaries.
   baseline, P1 target decisions, the complete P3-A/P3-B/P3-C public contract,
   authority-envelope, ledger, and compatibility foundations, and the P4-A
   dark/shadow host lifecycle and the P4-B/P4-C internal candidate tasks are
-  accepted. P2-A/P2-B controls, bounded P5-D rollout and retirement of production rebuild authority, P6 lane governance, P7 local retention, and P8 Windows CPU in-process acceptance are now recorded. Wider deployment and external-host topologies remain fail-closed; bounded acceptance is not a general production release.
+  accepted; P2 control-lifecycle and P5-P8 remain open, while no production
+  truth publication, runtime migration or production cutover is accepted.
 
 ## Completed Work
 
@@ -67,6 +68,11 @@ records executable evidence and the owner review/production boundaries.
 - [Stable entity identity for stochastic draws](work/active/stable_entity_identity/README.md):
   English-only task package replacing raw Flecs ids in per-engagement and
   per-detection seeds with a per-world serial and the reset seed.
+- [Simulation experiment platform](work/active/simulation_experiment_platform/README.md):
+  English-only task package for versioned experiment sessions, state identity,
+  branch timelines, and training projections. Only a standard-library
+  reference session is in scope today; it does not admit a maintained runtime
+  snapshot/restore implementation.
 
 ## Open Issues
 
@@ -79,20 +85,13 @@ records executable evidence and the owner review/production boundaries.
 - [Architecture and performance research follow-up](work/issues/architecture_and_performance_research_followup.md)
 - [Runtime facade contract](work/issues/runtime_facade_contract_plan.md)
 - [C++ dependency and DTO residuals](work/issues/cpp_dependency_and_dto_residuals.md)
-- [Python dependency boundaries](work/issues/python_dependency_boundaries.md): executable import and layer-boundary census with a ratcheted transition register.
 - [Runtime composition registry sync](work/issues/runtime_composition_registry_sync.md):
   the causal order for regenerating composition evidence after a registry change.
 - [Stable entity identity for stochastic draws](work/issues/stable_entity_identity_for_stochastic_draws.md):
-  superseded historical defect; bounded stable identity has landed in `main`, with semantic-reference portability still tracked separately.
+  draft; seeds keyed on raw Flecs ids are not reproducible across registry changes,
+  unrelated spawns, or same-seed resets.
 - [Exact-runtime refactor](work/issues/exact_runtime/cpp_exact_runtime_refactor_plan.md)
 - [GPU mainline integration checklist](work/issues/exact_runtime/gpu_execution_mainline_integration_checklist.md)
-
-## Active Work
-
-- [Simulation experiment platform](work/active/simulation_experiment_platform/README.md):
-  versioned sessions, state identity, replay, branch timelines, and training
-  projections. The current package does not yet admit a maintained runtime
-  snapshot/restore implementation.
 
 ## Reviews
 

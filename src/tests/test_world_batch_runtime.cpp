@@ -8,6 +8,7 @@
 #include "components/visual/visual_sensor.h"
 #include "gpu/gpu_world_batch_visual_binding_compatibility.h"
 #include "runtime/facade/runtime_facade.h"
+#include "runtime/facade/internal/testing/runtime_facade_test_access.h"
 
 #include <doctest/doctest.h>
 
@@ -23,6 +24,53 @@ static_assert(!std::is_polymorphic_v<WorldBatchRuntime>,
               "WorldBatchRuntime compatibility ABI must remain non-polymorphic");
 
 TEST_SUITE("world_batch_runtime") {
+
+    TEST_CASE("native branch retires when stepping fails after pilot action publication") {
+        RuntimeFacade facade(1);
+        BatchWorldSetupRequest setup{};
+        WorldSpawnRequest spawn{};
+        spawn.type_name = "Aircraft";
+        spawn.entity_name = "BranchFault";
+        spawn.is_agent = true;
+        spawn.z = 3000.0;
+        spawn.vx = 150.0;
+        setup.spawn_requests = {spawn};
+        const auto result = facade.apply_world_setup(setup);
+        REQUIRE(result.entity_ids.size() == 1);
+        auto branch = facade.fork_native_branch(0, std::string(64, 'a'), 2);
+        REQUIRE(branch != nullptr);
+        const auto parent_before = facade.native_snapshot_facts();
+        auto &kernel =
+            runtime::facade::testing::RuntimeFacadeTestAccess::native_branch_kernel(*branch);
+        unsigned published = 0;
+        {
+            auto lease = kernel.acquire_world_lease();
+            lease.world().observer<PilotAction>().event(flecs::OnSet).each([&](PilotAction &) {
+                ++published;
+            });
+        }
+        // The existing trace guard rejects the native step after the command
+        // write. Keep the fixture paired; no exception unwinds through Flecs.
+        struct TraceFrame {
+            SimulationKernel &kernel;
+            explicit TraceFrame(SimulationKernel &value) : kernel(value) {
+                kernel.begin_exact_stage_trace_frame();
+            }
+            ~TraceFrame() { kernel.end_exact_stage_trace_frame(); }
+        } trace_frame(kernel);
+        WorldPilotActionAssignment action{};
+        action.entity_id = result.entity_ids.front();
+        action.action.active = true;
+        CHECK_FALSE(branch->step_pilot_actions({action}));
+        CHECK(published == 1);
+        CHECK_FALSE(branch->valid());
+        CHECK_FALSE(branch->snapshot_facts().well_formed());
+        CHECK(branch->checkpoint() == nullptr);
+        CHECK(branch->fork_native_branch(std::string(64, 'b'), 1) == nullptr);
+        CHECK_FALSE(branch->step_pilot_actions({action}));
+        CHECK(published == 1);
+        CHECK(facade.native_snapshot_facts() == parent_before);
+    }
 
     TEST_CASE("world batch applies gravity without an active command") {
         WorldBatchRuntime runtime(1);
@@ -524,6 +572,10 @@ TEST_SUITE("world_batch_runtime") {
         CHECK_FALSE(failed.requires_host_recreate);
         CHECK(failed.failure_reason.find("Unknown terrain_type") != std::string::npos);
         CHECK_THROWS_AS(facade.step_batch(), std::logic_error);
+        // Branching reads raw world state, so it must honor the same fence.
+        const std::string intervention_digest(64, 'a');
+        CHECK_THROWS_AS(facade.native_snapshot_facts(0), std::logic_error);
+        CHECK_THROWS_AS(facade.fork_native_branch(0, intervention_digest, 1), std::logic_error);
 
         facade.reset_batch();
         const auto recovered = facade.batch_failure_status();
@@ -532,6 +584,8 @@ TEST_SUITE("world_batch_runtime") {
         CHECK_FALSE(recovered.requires_host_recreate);
         CHECK(recovered.failure_reason.empty());
         CHECK_NOTHROW(facade.step_batch());
+        CHECK_NOTHROW(facade.native_snapshot_facts(0));
+        CHECK(facade.fork_native_branch(0, intervention_digest, 1) != nullptr);
     }
 
     TEST_CASE("facade worker launch failure fences the native generation") {

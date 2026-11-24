@@ -11,13 +11,21 @@ import subprocess
 import pytest
 
 from python.experiment.air_combat_matrix import MATRIX_ENTRIES, REGISTRY
+from python.experiment.input_lock_artifacts import (
+    load_resolved_input_lock_artifacts,
+    write_resolved_input_lock_artifacts,
+)
 from python.experiment.resolved_input_lock import (
     InputLockError,
     build_resolved_input_lock,
-    canonical_json_bytes,
     compare_resolved_input_locks,
     join_run_receipt_path,
     project_compiled_scenario_dependencies,
+)
+from python.rl.runtime.resolved_input_lock_binding import (
+    InputLockBindingError,
+    assert_run_receipt_input_lock_binding,
+    load_resolved_input_lock_path,
 )
 from python.scenario.compiler import ScenarioCompiler
 from python.tasking_contracts.failure_domains import (
@@ -48,7 +56,7 @@ def native_candidate_binary():
     return binary
 
 
-@pytest.mark.parametrize("mode", ["complete", "drift", "missing"])
+@pytest.mark.parametrize("mode", ["complete", "drift", "missing", "wrong_artifact_role"])
 def test_native_host_persists_and_reopens_input_lock_reference(
     native_candidate_binary, tmp_path, mode
 ):
@@ -61,15 +69,19 @@ def test_native_host_persists_and_reopens_input_lock_reference(
         effective_seeds=(42,),
         dependencies=project_compiled_scenario_dependencies(compiled, repo_root=ROOT),
     )
-    artifact = tmp_path / "input-lock.json"
-    # Hash exactly the owner-defined input_lock component; the larger experiment
-    # projection includes status/provenance outside this identity.
-    artifact.write_bytes(canonical_json_bytes(candidate.as_dict()["input_lock"]))
+    projection = tmp_path / "resolved-experiment.json"
+    artifact = tmp_path / "native-input-lock.json"
+    write_resolved_input_lock_artifacts(
+        candidate, projection_path=projection, native_input_lock_path=artifact
+    )
+    candidate = load_resolved_input_lock_artifacts(
+        projection_path=projection, native_input_lock_path=artifact
+    )
     environment = dict(os.environ)
     environment.update(
-        EF_RFC_INPUT_LOCK_PATH=str(artifact),
+        EF_RFC_INPUT_LOCK_PATH=str(projection if mode == "wrong_artifact_role" else artifact),
         EF_RFC_OUTPUT_DIR=str(tmp_path),
-        EF_RFC_RECEIPT_MODE=mode,
+        EF_RFC_RECEIPT_MODE="complete" if mode == "wrong_artifact_role" else mode,
     )
     result = subprocess.run(
         [
@@ -91,6 +103,18 @@ def test_native_host_persists_and_reopens_input_lock_reference(
         assert not receipt_path.exists()
         return
     receipt = validate_run_receipt(json.loads(receipt_path.read_bytes()))
+    if mode == "wrong_artifact_role":
+        # Native correctly reports the bytes it actually received. Passing the
+        # larger projection in its slot must not become an input-lock binding.
+        assert receipt["payload"]["inputs"]["artifacts"]["resolved_input_lock"] == hashlib.sha256(
+            projection.read_bytes()
+        ).hexdigest()
+        with pytest.raises(InputLockBindingError, match="receipt_input_binding_mismatch"):
+            assert_run_receipt_input_lock_binding(load_resolved_input_lock_path(projection), receipt)
+        return
+    # Consume the full projection with the maintained runtime reader after the
+    # native owner has durably reopened a receipt that measured the other file.
+    assert_run_receipt_input_lock_binding(load_resolved_input_lock_path(projection), receipt)
     payload = receipt["payload"]
     assert payload["inputs"]["artifacts"]["resolved_input_lock"] == candidate.digest
     assert payload["completion"]["durable_ack"] is True
@@ -165,6 +189,7 @@ def test_native_host_persists_and_reopens_input_lock_reference(
                     native_world_scope_path=scope_blob,
                 )
         blob = tmp_path / "ledger" / "blobs" / f"{candidate.digest}.data"
+        assert blob.read_bytes() == artifact.read_bytes()
         for audit_mode, damaged_blob in (
             ("audit_missing_blob", blob),
             ("audit_missing_topology", topology_blob),

@@ -3,6 +3,8 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -14,6 +16,12 @@
 #include "runtime/contracts/runtime_dto_contracts.h"
 #include "runtime/contracts/runtime_composition_evidence_contract.h"
 #include "runtime/contracts/world_batch_contracts.h"
+
+class FlecsCpuBackend;
+struct ObservationBatchPacket;
+namespace runtime::facade::testing {
+class RuntimeFacadeTestAccess;
+}
 
 struct RuntimeCapabilities {
 #define EF_RUNTIME_CAPABILITIES_FIELD(type, name, default_value) type name = default_value;
@@ -72,6 +80,54 @@ struct RuntimeFidelityRequest {
 struct RuntimeFidelityAdmission {
 #define EF_RUNTIME_FIDELITY_ADMISSION_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/runtime/runtime_fidelity_admission.inc"
+};
+
+// Native identity facts are detached observations of the maintained engine
+// owner.  The facade never derives these values from observation packet
+// versions, entity references, or Python-side mirrors.
+struct RuntimeNativeSnapshotFacts {
+    std::uint64_t step = 0;
+    std::string state_digest;
+    std::uint64_t event_cursor = 0;
+    std::string rng_digest;
+    bool terminated = false;
+    // Read from the exact serialized StableIdentityState used by state_digest.
+    // Absence is distinct from the valid seed zero.
+    std::optional<std::uint64_t> episode_seed;
+
+    [[nodiscard]] bool well_formed() const noexcept;
+    bool operator==(const RuntimeNativeSnapshotFacts &) const = default;
+};
+
+// Opaque, native-owned sibling branch.  The child owns an independent native
+// world restored from the parent's complete native state bundle.
+// No Python state or raw parent handle crosses this boundary.
+class RuntimeFacadeNativeBranch {
+  public:
+    RuntimeFacadeNativeBranch(const RuntimeFacadeNativeBranch &) = delete;
+    RuntimeFacadeNativeBranch &operator=(const RuntimeFacadeNativeBranch &) = delete;
+    RuntimeFacadeNativeBranch(RuntimeFacadeNativeBranch &&) noexcept;
+    RuntimeFacadeNativeBranch &operator=(RuntimeFacadeNativeBranch &&) noexcept;
+    ~RuntimeFacadeNativeBranch();
+
+    [[nodiscard]] bool valid() const noexcept;
+    [[nodiscard]] RuntimeNativeSnapshotFacts snapshot_facts() const;
+    [[nodiscard]] bool step_pilot_actions(const std::vector<WorldPilotActionAssignment> &actions);
+    [[nodiscard]] ObservationBatchPacket
+    read_observation_packet(const std::vector<WorldEntityRef> &refs) const;
+    [[nodiscard]] std::unique_ptr<RuntimeFacadeNativeBranch> checkpoint() const;
+    [[nodiscard]] std::unique_ptr<RuntimeFacadeNativeBranch>
+    fork_native_branch(std::string intervention_digest, std::uint64_t horizon) const;
+
+    // Construction is private to the facade implementation, which defines the
+    // key type; consumers only ever receive a branch from the facade.
+    struct ConstructionKey;
+    struct State;
+    RuntimeFacadeNativeBranch(const ConstructionKey &, std::shared_ptr<State> state) noexcept;
+
+  private:
+    friend class runtime::facade::testing::RuntimeFacadeTestAccess;
+    std::shared_ptr<State> state_;
 };
 
 struct BatchResetRequest {

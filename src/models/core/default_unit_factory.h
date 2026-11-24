@@ -730,9 +730,14 @@ class DefaultUnitFactory : public IUnitFactory {
         }
 
         for (const auto &def : loaded) {
+            only_builtin_definitions_ = false;
             definitions_[def.name] = def;
         }
         return true;
+    }
+
+    [[nodiscard]] bool has_only_builtin_definitions() const noexcept override {
+        return only_builtin_definitions_;
     }
 
   private:
@@ -805,6 +810,7 @@ class DefaultUnitFactory : public IUnitFactory {
     }
 
     std::unordered_map<std::string, UnitDefinition> definitions_;
+    bool only_builtin_definitions_ = true;
 
     static void resolve_spawn_orientation(const SpawnParams &params, double &heading_init,
                                           double &pitch_init, double roll_init) {
