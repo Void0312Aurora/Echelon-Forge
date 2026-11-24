@@ -23,7 +23,7 @@ static_assert(!std::is_polymorphic_v<WorldBatchRuntime>,
 
 TEST_SUITE("world_batch_runtime") {
 
-    TEST_CASE("native branch retires after a partially published pilot action") {
+    TEST_CASE("native branch retires when stepping fails after pilot action publication") {
         RuntimeFacade facade(1);
         BatchWorldSetupRequest setup{};
         WorldSpawnRequest spawn{};
@@ -45,9 +45,17 @@ TEST_SUITE("world_batch_runtime") {
             auto lease = kernel.acquire_world_lease();
             lease.world().observer<PilotAction>().event(flecs::OnSet).each([&](PilotAction &) {
                 ++published;
-                throw std::runtime_error("injected action publication failure");
             });
         }
+        // The existing trace guard rejects the native step after the command
+        // write. Keep the fixture paired; no exception unwinds through Flecs.
+        struct TraceFrame {
+            SimulationKernel &kernel;
+            explicit TraceFrame(SimulationKernel &value) : kernel(value) {
+                kernel.begin_exact_stage_trace_frame();
+            }
+            ~TraceFrame() { kernel.end_exact_stage_trace_frame(); }
+        } trace_frame(kernel);
         WorldPilotActionAssignment action{};
         action.entity_id = result.entity_ids.front();
         action.action.active = true;
