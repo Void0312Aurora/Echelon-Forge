@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/typed_mechanism_ports_adr.md`
 Owner: `architecture/mechanism-contracts`
-Last verified: `2026-10-12`
+Last verified: `2026-11-26`
 
 **状态：** 待评审的资格验证设计；不启用生产路径。
 
@@ -53,6 +53,43 @@ projection 明确标记为不可执行，并拒绝无效、重复、adapter-only
 多个 owner vocabulary 现在可以合并为带版本的 qualification registry；只有 owner 相同的重复
 schema 才会合并，owner 冲突会 fail closed。该 registry 只是显式 owner 证据的组合 seam，
 不表示全仓库 canonical packet vocabulary 已经完整，也不提供可执行 dispatcher。
+
+## 所有权与保留审计（#292）
+
+Cordis admitted catalog lock 负责 descriptor 的准入、`owner_id`、category authority、capability、
+实现及版本、来源与信任决定；其 lock 身份、版本、canonical bytes 与摘要仍由现有 native
+composition 契约负责。它不定义 Air 试点的细粒度端口 schema、单位、坐标系或采样语义。
+`StageNodeManifest` 负责 stage 的 packet 名称、状态分片及发布策略；packet 名称也不能代替类型化
+端口兼容性。完整逐字段对应关系以[英文规范页的审计表](typed_mechanism_ports_adr.md#ownership-and-retention-audit-292)为准。
+
+| 类型与字段 | 所有权与保留决定 |
+| --- | --- |
+| `MechanismSchemaVocabulary.vocabulary_id`、`version`、`entries`（`schema`、`owner_ref`） | owner 提供的编译输入；保留独立命名空间、版本和 schema 所有权。`schema_names` 与 `identity_digest` 为派生视图；`owner_ref` 不表示 Cordis 已准入或信任该实现。 |
+| `MechanismSchemaVocabularyRegistry.registry_id`、`version`、`vocabularies` | 编译器输入视图，**不是单独持久化的产物或 catalog lock**。`vocabulary_id` 是 `registry_id` 的接口别名。 |
+| Registry 的 `entries`、`schema_names`、`identity_digest` | 从排序后的 owner vocabulary 派生，移除单独存储的 merged entries。相同 owner 的重复 schema 合并，冲突在构造时拒绝；序列化内容和摘要保持兼容。 |
+| `NativeStageContractProjection.node_id`、`authored_node` | 保留 authored 节点绑定及端口、时钟、状态、实现、capability、backend、clock policy 证据；parameters 由图摘要绑定。 |
+| `NativeStageContractProjection.owner_contract` | 保留与源对象分离且冻结的 native 快照，禁止由 Python authored ports 推导 native manifest。 |
+| `stage_node_id`、`owner_module`、`identity_digest` | 从冻结的 owner contract 与现有绑定 payload 派生，移除独立存储；保留原有序列化别名及摘要字节。 |
+| `StageManifestQualificationProjection.graph_identity_digest`、`manifest_registry_digest` | 分别保留 authored 图身份与按图节点顺序绑定的 manifest 快照摘要。后者不是完整 runtime registry 或 Cordis lock 的摘要。 |
+| `node_contracts`、`edge_bindings`、`identity_digest`、`qualification_only`、`executable` | 保留 owner 绑定、含延迟窗口及状态 owner 的边、组合资格身份与显式不可执行标记。它们不授予 scheduler 准入权。 |
+
+owner 快照保留 `node_id`、`semantic_stage`、`owner_module`、`input_packets`、`output_packets`、
+`read_state_shards`、`write_state_shards`、`read_snapshot_policy`、`write_commit_policy`、
+`clock_domain`、`latency_policy`、`sync_policy`、`allowed_same_window_edges`、`required_barriers`、
+`event_families_emitted`、`diagnostic_trace_obligations`、`facade_visibility`、
+`adapter_projection_allowed`；可选 legacy `native_system` 仅补充 realized order 证据。
+验证与计算摘要使用同一份分离后的值。native validator 未经 Python binding 暴露，因此对外部 mapping
+fixture 的字段形状、publish barrier、event 检查仍需保留；绑定闭包、节点身份、writer 冲突和顺序检查
+属于 authored selection 的边界。端口 freshness、visibility 和数值时钟与 manifest 发布/读取、延迟、
+facade 可见性各有语义，均不能相互代替。
+
+native manifest 没有独立版本计数器，带版本的 `node_id` 和完整快照内容共同参与摘要。复用资格证据时可
+提供 `expected_manifest_registry_digest`；快照不匹配会以 `mechanism.native_stage_manifest_stale`
+拒绝，同一 node ID 下的策略变化也会触发。未指定预期摘要时仅验证传入快照，不声称它是当前 runtime
+registry。回归测试固定既有 vocabulary、图、节点、manifest、projection 和 Air seeker composite 摘要；
+native 集成测试把 Air launch-to-observation 图绑定到实际 `fire_control_launch.v1` 与
+`observation_export.v1` 快照。三个 seeker helper 没有独立的 native scheduler manifest。
+此次不变更 schema、实现、manifest 或 canonicalization 版本。
 
 这仍是静态机制图契约试点。qualification/shadow 编译和生产接纳是分开的 gate；通过现有
 manifest machinery 产出的 artifact 不会自动变成可执行机制。

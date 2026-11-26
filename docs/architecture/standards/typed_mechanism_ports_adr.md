@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/typed_mechanism_ports_adr.md`
 Owner: `architecture/mechanism-contracts`
-Last verified: `2026-10-12`
+Last verified: `2026-11-26`
 
 **Status:** proposed qualification design; no production activation.
 
@@ -122,6 +122,67 @@ registry. Duplicate schema entries are accepted only when they name the same
 owner; conflicting ownership fails closed. The registry is a composition seam
 for explicit owner evidence, not the repository-wide canonical packet
 vocabulary or an executable dispatcher.
+
+## Ownership and retention audit (#292)
+
+The Cordis admitted catalog lock owns descriptor admission: `descriptor_id`,
+`owner_id`, category authorities, capabilities, implementation/version,
+provenance and trust decision. Its `lock_id`, `lock_version`, contract/schema
+versions, request/authority bindings, canonical bytes and `lock_sha256` remain
+owned by the existing native composition contracts. The lock does not define
+the Air pilot's port schema labels or their units, frames and sampling semantics.
+Native `StageNodeManifest` owns stage packet names, shards and publication
+policies; packet names alone do not define typed port compatibility. Neither
+the vocabulary nor the qualification projection replaces either native owner.
+
+| Qualification type and every field | Semantic owner and retention decision |
+| --- | --- |
+| `MechanismSchemaVocabulary.vocabulary_id`, `version` | Owner-supplied compiler namespace/revision; retain because these identify port evidence independently of catalog lock and implementation versions. |
+| `MechanismSchemaVocabulary.entries` (`schema`, `owner_ref`) | Explicit owner declarations for port labels and implementation references; retain. `owner_ref` is not a Cordis admission or trust decision. `schema_names` is a derived membership view. |
+| `MechanismSchemaVocabulary.identity_digest` | Derived frontend qualification evidence; retain its existing payload and bytes, without applying it to native canonicalization. |
+| `MechanismSchemaVocabularyRegistry.registry_id`, `version`, `vocabularies` | Compiler input view selecting explicit owner vocabularies, **not a separately persisted artifact or catalog lock**. Retain source identities/revisions, sorted by vocabulary ID. `vocabulary_id` is a compiler interface alias for `registry_id`. |
+| `MechanismSchemaVocabularyRegistry.entries`, `schema_names`, `identity_digest` | Derive the merged membership from source vocabularies, without a stored shadow entry tuple. Shared schema names require identical owners; conflicting owners fail at construction. Preserve the existing serialized `entries` view and digest for compatibility. |
+| `NativeStageContractProjection.node_id`, `authored_node` | Frontend binding and typed authoring evidence: mechanism/version, ports, statefulness, clock/delay, implementation, capabilities, backend and clock policy. Retain separately from the native owner contract. Parameters remain bound by `graph_identity_digest`. |
+| `NativeStageContractProjection.owner_contract` | Detached, frozen native snapshot; retain all selected manifest values verbatim. Never synthesize an owner manifest from authored ports. |
+| `NativeStageContractProjection.stage_node_id`, `owner_module` | Derive from `owner_contract.node_id` and `.owner_module`; remove independent storage. Retain the serialized aliases to avoid changing existing qualification hashes. |
+| `NativeStageContractProjection.identity_digest` | Derive from the existing serialized binding payload; remove independent storage so it cannot disagree with its frozen owner contract. |
+| `StageManifestQualificationProjection.graph_identity_digest` | Retain the authored graph identity, including parameters, port semantics, vocabulary revisions and edges. It is distinct from the owner snapshot identity. |
+| `StageManifestQualificationProjection.manifest_registry_digest` | Retain the existing digest of **bound** snapshots in graph-node order, including their versioned node IDs. This is not a hash of the entire runtime registry or a catalog lock. |
+| `StageManifestQualificationProjection.node_contracts`, `edge_bindings` | Retain node-to-owner evidence and authored edges, including delayed edge windows/state owners. A native manifest does not own authored graph connectivity. |
+| `StageManifestQualificationProjection.identity_digest` | Retain the existing combined qualification identity; no replacement for requested/resolved composition hashes. |
+| `StageManifestQualificationProjection.qualification_only`, `executable` | Retain explicit `true`/`false` evidence markers; they grant no scheduler admission. |
+
+The frozen owner contract retains `node_id`, `semantic_stage`, `owner_module`,
+`input_packets`, `output_packets`, `read_state_shards`, `write_state_shards`,
+`read_snapshot_policy`, `write_commit_policy`, `clock_domain`, `latency_policy`,
+`sync_policy`, `allowed_same_window_edges`, `required_barriers`,
+`event_families_emitted`, `diagnostic_trace_obligations`, `facade_visibility`
+and `adapter_projection_allowed`. Optional legacy `native_system` remains
+supplemental realized-order evidence; native manifests do not declare it.
+Snapshot validation and hashing consume the same detached values. Strict
+field/shape, publish-barrier and event checks remain necessary for caller-supplied
+mapping fixtures: the Python binding does not expose the native validator.
+Binding coverage, versioned node identity, writer conflicts and realized order
+checks validate the authored selection, which the catalog lock does not cover.
+
+Port freshness/visibility and authored numerical/publication clocks remain
+distinct from manifest read/commit, latency and facade visibility policies.
+None can be inferred from another or removed as a duplicate. The native
+manifest has no separate version counter: its versioned `node_id` and complete
+snapshot content must both remain in qualification digests. Callers reusing
+qualification evidence can supply `expected_manifest_registry_digest` from
+their expected snapshot; a different snapshot fails with
+`mechanism.native_stage_manifest_stale`, including policy changes under an
+unchanged node ID. Without an expected digest, projection qualifies only the
+supplied snapshot and makes no claim that it is the current runtime registry.
+
+Regression tests pin pre-change vocabulary, graph, node, manifest and projection
+digests, plus the existing Air seeker fixture and recursive composite identity.
+The native integration test binds an Air launch-to-observation graph to real
+`fire_control_launch.v1` and `observation_export.v1` runtime snapshots. The
+three seeker helper functions remain a bounded typed composition proof; the
+native registry does not publish individual scheduler manifests for them.
+No schema, implementation, manifest or canonicalization version is bumped.
 
 This remains a static mechanism-graph contract pilot. Qualification/shadow
 compilation and production admission are separate gates; an artifact emitted
