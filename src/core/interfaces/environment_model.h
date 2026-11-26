@@ -184,6 +184,229 @@ class IEnvironmentModel {
 
     virtual TerrainCell get_terrain_at(double x, double y) = 0;
 
+    // P2-A additive contract; legacy methods above keep their existing behavior.
+    // See environment_runtime_p2a_contract_20261124.md. No default below infers
+    // coverage, datum, time, or a clear line of sight from legacy scalar queries.
+    enum class QueryStatus : uint8_t {
+        Unavailable = 0,
+        Valid,
+        OutOfCoverage,
+        NoData,
+        InvalidDatum,
+        InvalidFrame,
+        InvalidTime,
+        Unsupported
+    };
+
+    enum class EnvironmentLayer : uint8_t {
+        TerrainElevation,
+        TerrainSurface,
+        Bathymetry,
+        WaterBody,
+        Coastline,
+        Atmosphere,
+        Wind,
+        SeaState,
+        Illumination,
+        OceanAcoustics
+    };
+
+    struct QueryContext {
+        std::string horizontal_frame{};
+        std::string vertical_datum{};
+        double simulation_time_s = std::numeric_limits<double>::quiet_NaN();
+        // Optional absolute clock value, tied to the same scenario clock.
+        std::optional<double> utc_unix_time_s{};
+    };
+
+    struct QueryPoint {
+        double x_m = std::numeric_limits<double>::quiet_NaN();
+        double y_m = std::numeric_limits<double>::quiet_NaN();
+        double z_m = std::numeric_limits<double>::quiet_NaN();
+    };
+
+    struct QueryMetadata {
+        QueryStatus status = QueryStatus::Unavailable;
+        std::string horizontal_frame{};
+        std::string vertical_datum{};
+        std::string source{};
+        std::string snapshot_id{};
+        std::vector<std::string> tile_ids{};
+        std::optional<double> resolution_x_m{};
+        std::optional<double> resolution_y_m{};
+        std::optional<double> valid_from_simulation_s{};
+        std::optional<double> valid_until_simulation_s{};
+    };
+
+    struct EnvironmentLayerDescriptor {
+        EnvironmentLayer layer = EnvironmentLayer::TerrainElevation;
+        QueryMetadata metadata{};
+        std::string layer_id{};
+        int32_t priority = 0;
+        // Half-open horizontal bounds in metadata.horizontal_frame.
+        double min_x_m = std::numeric_limits<double>::quiet_NaN();
+        double min_y_m = std::numeric_limits<double>::quiet_NaN();
+        double max_x_m = std::numeric_limits<double>::quiet_NaN();
+        double max_y_m = std::numeric_limits<double>::quiet_NaN();
+    };
+
+    struct TerrainObservation {
+        QueryMetadata metadata{};
+        // Valid requires BOTH elevation and surface from one coherent snapshot.
+        std::optional<double> elevation_m{};
+        std::optional<SurfaceType> surface{};
+        std::optional<uint32_t> landcover_code{};
+        std::optional<double> slope_deg{};
+    };
+
+    enum class WaterBodyKind : uint8_t { Unknown = 0, Sea, River, Lake, Reservoir };
+
+    struct WaterBodyObservation {
+        QueryMetadata metadata{};
+        std::string water_body_id{};
+        WaterBodyKind kind = WaterBodyKind::Unknown;
+        std::optional<double> surface_elevation_m{};
+        std::optional<double> bottom_elevation_m{};
+        std::optional<double> depth_m{};
+        std::optional<Vec3> flow_to_mps{};
+        std::optional<double> salinity_psu{};
+        std::optional<double> temperature_c{};
+    };
+
+    struct CoastlineObservation {
+        QueryMetadata metadata{};
+        std::string water_body_id{};
+        WaterBodyKind kind = WaterBodyKind::Unknown;
+        // Nonnegative horizontal distance; wet_side is independent of distance.
+        std::optional<double> distance_m{};
+        std::optional<QueryPoint> nearest_point{};
+        std::optional<bool> wet_side{};
+    };
+
+    enum class VariationMode : uint8_t { Unspecified = 0, Constant, SeededField };
+
+    struct VariationDescriptor {
+        VariationMode mode = VariationMode::Unspecified;
+        uint64_t seed = 0;
+        std::string algorithm_version{};
+        std::string parameters_id{};
+        std::optional<double> spatial_scale_m{};
+        std::optional<double> temporal_scale_s{};
+    };
+
+    struct WeatherObservation {
+        QueryMetadata metadata{};
+        VariationDescriptor variation{};
+        std::optional<AtmosphericData> atmosphere{};
+        std::optional<Vec3> wind_to_mps{};
+        std::optional<double> visibility_m{};
+        std::optional<double> precipitation_mm_per_hour{};
+    };
+
+    struct WaveComponent {
+        double significant_height_m = std::numeric_limits<double>::quiet_NaN();
+        double period_s = std::numeric_limits<double>::quiet_NaN();
+        double heading_to_deg = std::numeric_limits<double>::quiet_NaN();
+    };
+
+    struct SeaStateObservation {
+        QueryMetadata metadata{};
+        VariationDescriptor variation{};
+        std::optional<double> sea_state{};
+        std::optional<WaveComponent> wind_sea{};
+        std::optional<WaveComponent> swell{};
+    };
+
+    enum class IlluminationSource : uint8_t { Unspecified = 0, ScenarioFixed, ScenarioClock };
+
+    struct IlluminationObservation {
+        QueryMetadata metadata{};
+        IlluminationSource source = IlluminationSource::Unspecified;
+        std::optional<Vec3> sun_direction_to{};
+        std::optional<double> solar_elevation_deg{};
+    };
+
+    enum class OceanBottomClass : uint8_t { Unknown = 0, Mud, Sand, Gravel, Rock };
+
+    struct OceanAcousticSample {
+        double depth_below_surface_m = std::numeric_limits<double>::quiet_NaN();
+        std::optional<double> sound_speed_mps{};
+        std::optional<double> temperature_c{};
+        std::optional<double> salinity_psu{};
+    };
+
+    struct AmbientNoiseSample {
+        double frequency_hz = std::numeric_limits<double>::quiet_NaN();
+        double spectral_level_db_re_1_upa2_per_hz = std::numeric_limits<double>::quiet_NaN();
+    };
+
+    struct OceanAcousticObservation {
+        QueryMetadata metadata{};
+        std::optional<double> water_surface_elevation_m{};
+        std::vector<OceanAcousticSample> profile{};
+        std::optional<double> mixed_layer_depth_m{};
+        OceanBottomClass bottom_class = OceanBottomClass::Unknown;
+        std::vector<AmbientNoiseSample> ambient_noise{};
+    };
+
+    enum class HeightReference : uint8_t { Unspecified = 0, AbsoluteDatum, AboveTerrain };
+    enum class CurvatureMode : uint8_t { Unspecified = 0, LocalFlat, GeodeticEarth };
+    enum class TerrainVisibility : uint8_t { Unknown = 0, Clear, Occluded };
+
+    struct TerrainSightQuery {
+        QueryContext context{};
+        QueryPoint from{};
+        QueryPoint to{};
+        HeightReference from_height = HeightReference::Unspecified;
+        HeightReference to_height = HeightReference::Unspecified;
+        CurvatureMode curvature = CurvatureMode::Unspecified;
+    };
+
+    struct TerrainSightObservation {
+        QueryMetadata metadata{};
+        TerrainVisibility visibility = TerrainVisibility::Unknown;
+        CurvatureMode curvature = CurvatureMode::Unspecified;
+    };
+
+    struct TimedBathymetrySegmentObservation {
+        QueryMetadata metadata{};
+        // Minimum over the WHOLE horizontal segment at context.simulation_time_s.
+        std::optional<double> minimum_water_depth_m{};
+    };
+
+    // All seams are optional overrides. Empty means unavailable, never clear,
+    // dry land, calm water, zero altitude, or permission to move.
+    virtual std::vector<EnvironmentLayerDescriptor> get_environment_layers() const { return {}; }
+    virtual TerrainObservation query_terrain(const QueryContext &, const QueryPoint &) {
+        return {};
+    }
+    virtual WaterBodyObservation query_water_body(const QueryContext &, const QueryPoint &) {
+        return {};
+    }
+    virtual CoastlineObservation query_coastline(const QueryContext &, const QueryPoint &) {
+        return {};
+    }
+    virtual WeatherObservation query_weather(const QueryContext &, const QueryPoint &) {
+        return {};
+    }
+    virtual SeaStateObservation query_sea_state(const QueryContext &, const QueryPoint &) {
+        return {};
+    }
+    virtual IlluminationObservation query_illumination(const QueryContext &, const QueryPoint &) {
+        return {};
+    }
+    virtual OceanAcousticObservation query_ocean_acoustics(const QueryContext &,
+                                                           const QueryPoint &) {
+        return {};
+    }
+    virtual TerrainSightObservation query_terrain_visibility(const TerrainSightQuery &) {
+        return {};
+    }
+    virtual TimedBathymetrySegmentObservation
+    query_bathymetry_segment(const QueryContext &, const QueryPoint &, const QueryPoint &) {
+        return {};
+    }
+
     // Dynamic Configuration
     virtual void clear_zones() = 0;
     virtual void add_zone(const std::string &name, double x, double y, double width, double height,

@@ -4,11 +4,12 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/systems/environment/work/active/environment_runtime/README.md`
 Owner: `systems/environment`
-Last verified: `2026-11-16`
+Last verified: `2026-11-24`
 
 状态：`2026-10-29` active。`P0 Boundary` 已于 `2026-09-28` 获 owner 接受；`P1 Evidence`（`P1-A`、`P1-B`）
 于 `2026-10-29` 通过，见 [P1 清点](environment_runtime_p1_inventory_20261029.md)。`2026-11-16` 的源码状态复核
-也记录于该清点。`P2 Contract` 仍为 planned；本工作包尚无实现任务簇开工。
+也记录于该清点。`P2-A` 已于 `2026-11-24` 完成[契约与增量接口草案](environment_runtime_p2a_contract_20261124.md)编写；
+owner 审查及协调方编译、原生验证仍待完成。本工作包尚无实现任务簇开工。
 
 语言：
 
@@ -127,7 +128,7 @@ DM-G1 损伤已在该主线上。机动位姿投影（`ff9fafcca`）与按仿真
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | 冻结范围与分层运行时契约。 | owner 批准 | README 与任务簇获批 | accepted |
 | `P1 Evidence` | 清点每处环境读取、`main` 上的运行时，以及陆军分支对共享文件的改动。 | `P0` | 每个读取点与每项陆军新增都归为共享、陆军所有或退役 | pass `2026-10-29`（[清点](environment_runtime_p1_inventory_20261029.md)） |
-| `P2 Contract` | 分层状态、垂直基准、水体契约、瓦片模型、与域无关的查询 API。 | `P1` | 契约成文并有原生测试覆盖 | planned |
+| `P2 Contract` | 分层状态、垂直基准、水体契约、瓦片模型、与域无关的查询 API。 | `P1` | 契约成文并有原生测试覆盖 | P2-A 于 `2026-11-24` 成文；待审查与验证 |
 | `P3 Implementation` | 多瓦片栅格、水体、海岸线、可变天气与海况、时钟驱动的太阳、声学数据。 | `P2`；太阳位置与瓦片定位需 [大地坐标系](../../../../physics/work/active/geodetic_frame/README.zh.md) `P2-A` 的锚点 | 对照声明输入与参考值的原生与 Python 测试通过 | planned |
 | `P4 Migration` | 把陆军原生地形迁到共享运行时；陆军逻辑迁回陆军；其余使用方迁到查询上。 | `P3` | 共享文件不再引入任何域头文件；陆军验收测试重跑通过 | planned |
 | `P5 Validation` | 跨域回归与吞吐量。 | `P4` | 空、陆、海测试通过或按记录的量变化 | planned |
@@ -149,7 +150,7 @@ DM-G1 损伤已在该主线上。机动位姿投影（`ff9fafcca`）与按仿真
 - [environment_runtime_task_clusters_20260928.md](environment_runtime_task_clusters_20260928.md)
 
 历史任务簇表仍把 `P1-A` 和 `P1-B` 标为 planned；上文已记录的 P1 pass 取代这两格旧状态。
-`P2-A` 仍为 planned。
+`P2-A` 已成文，待 owner 审查与协调方验证，见[契约草案](environment_runtime_p2a_contract_20261124.md)。
 
 ## 产出与证据
 
@@ -179,10 +180,9 @@ DM-G1 损伤已在该主线上。机动位姿投影（`ff9fafcca`）与按仿真
 
 ## 遗留与下一步
 
-- `P2-A` 契约（主线程），依据 P1 清点的关键发现：高程与地表在瓦片外给出同一个结果、声明垂直基准、
-  通视使用绝对高度还是离地高度，以及地球曲率。
-  现有陆军 LOS 和边缘行为是该审查的输入，不代表更广契约已获接受。本次清点更新没有准入
-  `P2-B` 实现任务簇。
+- `P2-A` [契约与增量头文件草案](environment_runtime_p2a_contract_20261124.md)已于 `2026-11-24`
+  成文，明确统一基准、瓦片空隙、LOS 高度与曲率、带种子场、光照与声学、GPU 一致性和陆军迁移边界。
+  owner 批准以及协调方编译、原生测试仍待完成；本次编写不代表实现或使用方迁移已获准入。
 - **海洋数据线**（本 owner，在 `P2 Contract` 之后开启）：从经准入的公开来源导入水深、温盐
   气候态、海况与风、海岸线，并提供带种子的合成海洋生成器，供镜像与虚构场景使用。候选来源只作
   记录，在通过[准入标准](../../../../../research/standards/public_data_source_admission.zh.md)之前不算准入。

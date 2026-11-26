@@ -4,13 +4,14 @@ Document kind: `task`
 Lifecycle: `maintained`
 Canonical: `docs/systems/environment/work/active/environment_runtime/README.md`
 Owner: `systems/environment`
-Last verified: `2026-11-16`
+Last verified: `2026-11-24`
 
 Status: `2026-10-29` active. `P0 Boundary` accepted by the owner on `2026-09-28`;
 `P1 Evidence` (`P1-A`, `P1-B`) passed on `2026-10-29`, see the
 [P1 inventory](environment_runtime_p1_inventory_20261029.md). The source-state
-recheck on `2026-11-16` is recorded there. `P2 Contract` remains planned; no
-implementation cluster in this package has started.
+recheck on `2026-11-16` is recorded there. `P2-A` now has an [authored contract and additive interface draft](environment_runtime_p2a_contract_20261124.md)
+(`2026-11-24`); owner review and coordinator compilation/native validation remain pending.
+No implementation cluster in this package has started.
 
 Language:
 
@@ -169,7 +170,7 @@ Out of scope:
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | Freeze scope and the layered runtime contract. | owner approval | README and task clusters approved | accepted |
 | `P1 Evidence` | Inventory every environment read, the `main` runtime, and the Ground branch's shared-file changes. | `P0` | each read site and each Ground addition classified as shared, Ground-owned, or retired | pass `2026-10-29` ([inventory](environment_runtime_p1_inventory_20261029.md)) |
-| `P2 Contract` | Layered state, vertical datum, water-body contract, tile model, domain-neutral query API. | `P1` | contract documented and covered by native tests | planned |
+| `P2 Contract` | Layered state, vertical datum, water-body contract, tile model, domain-neutral query API. | `P1` | contract documented and covered by native tests | P2-A authored `2026-11-24`; review/validation pending |
 | `P3 Implementation` | Multi-tile rasters, water bodies, coastline, varying weather/sea state, clock-driven sun, acoustic data. | `P2`; geodetic anchor from [Geodetic Frame](../../../../physics/work/active/geodetic_frame/README.md) `P2-A` for sun position and tile placement | native and Python tests pass against declared inputs and references | planned |
 | `P4 Migration` | Move Ground's native terrain onto the shared runtime; move Ground logic back to Ground; move remaining consumers onto the queries. | `P3` | shared files include no domain header; Ground acceptance tests rerun green | planned |
 | `P5 Validation` | Cross-domain regression and throughput. | `P4` | air, ground, naval suites pass or change by documented amounts | planned |
@@ -198,7 +199,8 @@ Ground native terrain is on `main`, so the migration starts from `main`.
   single-raster API and tests; the full P2 contract and consumer migration remain open.
 
 The historical task-cluster table still labels `P1-A` and `P1-B` planned. Their
-recorded P1 pass above supersedes those status cells; `P2-A` remains planned.
+recorded P1 pass above supersedes those status cells; `P2-A` is now authored, pending owner review and coordinator validation.
+See the [P2-A contract](environment_runtime_p2a_contract_20261124.md).
 
 ## Outputs And Evidence
 
@@ -231,12 +233,11 @@ This package can be marked accepted only when:
 
 ## Residuals And Next Steps
 
-- `P2-A` contract (main thread), using the P1 inventory's decisive findings:
-  one out-of-tile result for elevation and surface, a declared vertical datum,
-  absolute versus above-terrain heights for line of sight, and earth curvature.
-  Existing army LOS and edge behavior are inputs to that review, not acceptance
-  of the broader contract. No `P2-B` implementation cluster is admitted by this
-  inventory update.
+- `P2-A` [contract and additive header draft](environment_runtime_p2a_contract_20261124.md)
+  authored `2026-11-24`: datum, coherent tile gaps, explicit LOS heights/curvature,
+  seeded fields, illumination/acoustics, GPU parity and Ground migration boundary.
+  Owner approval and coordinator compilation/native tests remain required; no
+  implementation or consumer migration is admitted by this authoring update.
 - **Ocean data line** (this owner, opens after `P2 Contract`): importers for
   bathymetry, temperature/salinity climatology, sea state and wind, and coastline
   from admitted public sources, plus a seeded synthetic ocean generator for
