@@ -310,3 +310,55 @@ def test_frame_and_anchor_metadata_are_preserved_in_identity() -> None:
     )
     assert first.identity_digest != second.identity_digest
     assert second.as_dict()["package_instances"][0]["anchor_ref"] == "a@1"
+
+
+def _compiled_snapshot():
+    root = ForcePackage(
+        "root.海", "1", "Blue",
+        (PackageMember("lead", "assembly", "air.lead", "air_control"),),
+        relationships=(PackageRelationship("communication", "lead", "lead"),),
+        anchor_ref="anchor", provenance_ref="source",
+    )
+    return compile_force_package(
+        root, packages={}, assemblies=_assemblies(),
+        role_capabilities={"air_control": frozenset({"air_control"})},
+        assembly_type_names={"air.lead": "NativeLead"},
+    )
+
+
+def test_compiled_identity_preserves_v1_digest_and_exports_detached_evidence() -> None:
+    compiled = _compiled_snapshot()
+    # Recorded from the v1 compiler before the identity implementation was shared.
+    assert compiled.identity_digest == "8bceb1dee5bea428bdcece9fbe64b65be2581aa1012400af482985cccb5a3181"
+    original = compiled.as_dict()
+    exported = compiled.as_dict()
+    exported["entities"][0]["role"] = "changed"
+    exported["relationships"][0]["target"] = "elsewhere"
+    exported["package_instances"][0]["anchor_ref"] = "elsewhere"
+    exported["assembly_type_bindings"][0]["native_type"] = "OtherType"
+    assert compiled.as_dict() == original
+    assert compiled.is_fresh()
+
+
+@pytest.mark.parametrize(
+    "mutator",
+    [
+        lambda c: replace(c, schema_version="other.schema"),
+        lambda c: replace(c, package_ref="other@1"),
+        lambda c: replace(c, identity_digest="0" * 64),
+        lambda c: replace(c, entities=()),
+        lambda c: replace(c, entities=(replace(c.entities[0], provenance=("changed",)),)),
+        lambda c: replace(c, relationships=(replace(c.relationships[0], target="elsewhere"),)),
+        lambda c: replace(c, package_instances=(replace(c.package_instances[0], anchor_ref="elsewhere"),)),
+        lambda c: replace(c, assembly_type_bindings=(("air.lead", "OtherType"),)),
+    ],
+    ids=["schema", "package_ref", "digest", "membership", "provenance", "graph", "anchor", "native_type"],
+)
+def test_compiled_snapshot_rejects_replacement_with_retained_identity(mutator) -> None:
+    assert not mutator(_compiled_snapshot()).is_fresh()
+
+
+def test_compiled_snapshot_detects_mutation_bypassing_frozen_records() -> None:
+    compiled = _compiled_snapshot()
+    object.__setattr__(compiled.package_instances[0], "reference_frame", "geodetic")
+    assert not compiled.is_fresh()

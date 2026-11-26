@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
+from dataclasses import asdict, dataclass, replace
+from typing import Any, Mapping
 
 SCHEMA_VERSION = "echelon_forge.force_package.v1"
 _SUPPORTED_FRAMES = frozenset({"local_enu", "geodetic"})
@@ -128,19 +128,32 @@ class CompiledForcePackage:
     package_instances: tuple[CompiledPackageInstance, ...] = ()
     assembly_type_bindings: tuple[tuple[str, str], ...] = ()
 
-    def as_dict(self) -> dict[str, Any]:
+    def _identity_payload(self) -> dict[str, Any]:
         return {
             "schema_version": self.schema_version,
             "package_ref": self.package_ref,
-            "entities": [entity.__dict__ for entity in self.entities],
-            "relationships": [relationship.__dict__ for relationship in self.relationships],
-            "package_instances": [instance.__dict__ for instance in self.package_instances],
+            "entities": [asdict(entity) for entity in self.entities],
+            "relationships": [asdict(relationship) for relationship in self.relationships],
+            "package_instances": [asdict(instance) for instance in self.package_instances],
             "assembly_type_bindings": [
                 {"assembly_id": assembly_id, "native_type": native_type}
                 for assembly_id, native_type in self.assembly_type_bindings
             ],
-            "identity_digest": self.identity_digest,
         }
+
+    def _calculate_identity_digest(self) -> str:
+        # Preserve the v1 serialization, including JSON's default ASCII escaping.
+        return hashlib.sha256(
+            json.dumps(self._identity_payload(), sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+
+    def is_fresh(self) -> bool:
+        """Check all compiled content, including the package graph and type bindings."""
+        return self.identity_digest == self._calculate_identity_digest()
+
+    def as_dict(self) -> dict[str, Any]:
+        """Export detached evidence without exposing frozen records' mutable dictionaries."""
+        return {**self._identity_payload(), "identity_digest": self.identity_digest}
 
 
 def compile_force_package(
@@ -258,29 +271,16 @@ def compile_force_package(
     )
     instances.sort(key=lambda item: item.instance_id)
     sorted_type_bindings = tuple(sorted(type_bindings.items()))
-    payload = {
-        "schema_version": SCHEMA_VERSION,
-        "package_ref": root.ref,
-        "entities": [entity.__dict__ for entity in entities],
-        "relationships": [relationship.__dict__ for relationship in relationships],
-        "package_instances": [instance.__dict__ for instance in instances],
-        "assembly_type_bindings": [
-            {"assembly_id": assembly_id, "native_type": native_type}
-            for assembly_id, native_type in sorted_type_bindings
-        ],
-    }
-    digest = hashlib.sha256(
-        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
-    return CompiledForcePackage(
+    compiled = CompiledForcePackage(
         SCHEMA_VERSION,
         root.ref,
         tuple(entities),
-        digest,
+        "",
         tuple(relationships),
         tuple(instances),
         sorted_type_bindings,
     )
+    return replace(compiled, identity_digest=compiled._calculate_identity_digest())
 
 
 __all__ = [
