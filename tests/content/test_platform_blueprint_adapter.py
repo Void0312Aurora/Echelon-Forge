@@ -658,3 +658,54 @@ def test_database_blueprint_native_factory_state_and_loadout_parity(relative_pat
         if step < 4:
             for facade in facades:
                 facade.step_batch()
+
+
+def test_canonical_bridge_preserves_lowered_digest_for_equal_value_int_float_override() -> None:
+    original, blueprint, modules, _, _ = _database_assembly("aircraft/units/f16c_block50.json")
+    assert original["flight_model"]["max_speed"] == 600.0
+    definition = {
+        **original,
+        "_qualification_native_owners": {
+            key: value[1].native_ref
+            for key, value in zip(
+                (slot for slot, _ in blueprint.slots),
+                sorted((slot, modules[slot]) for slot, _ in blueprint.slots),
+            )
+        },
+    }
+    blueprint_with_override = replace(blueprint, override_types=(("max_speed", "int"),))
+    plan = resolve_platform_assembly(
+        assembly_id=f"qualification.{original['name']}.int_override.v1",
+        blueprint=blueprint_with_override,
+        selections=tuple(ModuleSelection(slot, slot) for slot, _ in blueprint_with_override.slots),
+        modules=modules,
+        parameter_overrides={"max_speed": 600},
+        loadout=tuple(LoadoutSelection(hp.hardpoint_id, f"station_{hp.hardpoint_id}") for hp in blueprint_with_override.hardpoints),
+    )
+    projection = LegacyUnitProjection(
+        plan.blueprint_ref,
+        definition,
+        slot_paths=tuple((slot, f"_qualification_native_owners.{slot}") for slot, _ in blueprint_with_override.slots),
+        override_paths=(("max_speed", "flight_model.max_speed"),),
+        loadout_paths=tuple((hp.hardpoint_id, f"default_loadout.{hp.hardpoint_id}") for hp in blueprint_with_override.hardpoints),
+    )
+    canonical = _database_expand(blueprint_with_override, modules, plan, projection)
+    unsealed = _database_expand(blueprint_with_override, modules, replace(plan), projection)
+    assert canonical == unsealed
+    lowered = lower_to_legacy_unit_definition(plan, projection, modules=modules)
+    expected_digest = hashlib.sha256(
+        json.dumps(lowered, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()
+    ).hexdigest()
+    assert canonical.resolved_spawn_plan.resolved_platform_definition_ref.endswith(f"#{expected_digest}")
+
+
+def test_canonical_bridge_accepts_reordered_blueprint_slots_and_hardpoints() -> None:
+    _, blueprint, modules, plan, projection = _database_assembly("aircraft/units/f16c_block50.json")
+    reordered = replace(
+        blueprint,
+        slots=tuple(reversed(blueprint.slots)),
+        hardpoints=tuple(reversed(blueprint.hardpoints)),
+    )
+    canonical = _database_expand(reordered, modules, plan, projection)
+    unsealed = _database_expand(reordered, modules, replace(plan), projection)
+    assert canonical == unsealed

@@ -549,9 +549,18 @@ def _resolution_digest(
     # entries in a mutated plan. Bind complete owner records, including evidence
     # and per-module capabilities that the public aggregate digest omits.
     refs = {ref for _, ref in plan.modules} | {ref for _, ref, _ in plan.loadout}
+    blueprint_data = asdict(blueprint)
+    blueprint_data["slots"] = sorted(blueprint_data["slots"])
+    blueprint_data["override_types"] = sorted(blueprint_data["override_types"])
+    blueprint_data["override_ranges"] = sorted(blueprint_data["override_ranges"])
+    blueprint_data["slot_mount_requirements"] = sorted(blueprint_data["slot_mount_requirements"])
+    blueprint_data["hardpoints"] = sorted(
+        blueprint_data["hardpoints"],
+        key=lambda item: (item["hardpoint_id"], item["mount_class"]),
+    )
     return _json_digest({
         "plan": {item.name: getattr(plan, item.name) for item in fields(plan) if item.init},
-        "blueprint": asdict(blueprint),
+        "blueprint": blueprint_data,
         "modules": [(ref, asdict(indexed_modules[ref])) for ref in sorted(refs)],
     })
 
@@ -630,7 +639,8 @@ def validate_legacy_unit_projection(
     snapshot, digest = projection._snapshot_identity
     if projection.definition is not snapshot:
         raise PlatformAssemblyError("platform.native_definition_projection_mismatch")
-    _project_legacy_unit_definition(plan, projection, modules, snapshot, check_only=True)
+    if _project_legacy_unit_definition(plan, projection, modules, snapshot, check_only=True):
+        return _json_digest(lower_to_legacy_unit_definition(plan, projection, modules=modules))
     return digest
 
 
@@ -641,7 +651,7 @@ def _project_legacy_unit_definition(
     document: Mapping[str, Any],
     *,
     check_only: bool,
-) -> None:
+) -> bool:
     if projection.blueprint_ref != plan.blueprint_ref:
         raise PlatformAssemblyError("platform.blueprint_version_mismatch")
     slots = dict(projection.slot_paths)
@@ -657,7 +667,10 @@ def _project_legacy_unit_definition(
     if len(physical_by_slot) != len(plan.module_physical_parameters) or set(physical_by_slot) != set(slots):
         raise PlatformAssemblyError("platform.native_module_physical_projection_incomplete")
 
+    serialization_differs = False
+
     def assign(path: str, value: Any) -> None:
+        nonlocal serialization_differs
         parts = path.split(".")
         target = document
         for part in parts[:-1]:
@@ -667,8 +680,12 @@ def _project_legacy_unit_definition(
         if not isinstance(target, Mapping) or parts[-1] not in target:
             raise PlatformAssemblyError(f"platform.native_field_unknown:{path}")
         if check_only:
-            if target[parts[-1]] != freeze_json_value(value):
+            existing = target[parts[-1]]
+            frozen_projected = freeze_json_value(value)
+            if existing != frozen_projected or isinstance(existing, bool) != isinstance(frozen_projected, bool):
                 raise PlatformAssemblyError("platform.native_definition_projection_mismatch")
+            if _json_digest(existing) != _json_digest(frozen_projected):
+                serialization_differs = True
         else:
             target[parts[-1]] = value
 
@@ -731,6 +748,7 @@ def _project_legacy_unit_definition(
     # Reject invalid JSON before returning anything to a native caller.
     if not check_only:
         json.dumps(document, allow_nan=False)
+    return serialization_differs
 
 
 __all__ = [
