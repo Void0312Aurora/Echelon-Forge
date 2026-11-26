@@ -19,8 +19,6 @@ from __future__ import annotations
 
 import argparse
 import contextlib
-import csv
-import hashlib
 import json
 import math
 import os
@@ -37,6 +35,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
 
+from tools.diagnostics.common import file_sha256 as _sha256, write_csv_rows  # noqa: E402
 from tools.diagnostics import kill_chain_decoupling_probe as probe  # noqa: E402
 from tools.diagnostics import kill_chain_guidance_envelope_rebuild as envelope  # noqa: E402
 
@@ -1132,21 +1131,7 @@ def _csv_value(value: Any) -> Any:
 
 
 def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
-  fieldnames = sorted({key for row in rows for key in row})
-  with path.open("w", encoding="utf-8", newline="") as handle:
-    writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
-    if fieldnames:
-      writer.writeheader()
-      for row in rows:
-        writer.writerow({key: _csv_value(row.get(key)) for key in fieldnames})
-
-
-def _sha256(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-      digest.update(chunk)
-  return digest.hexdigest()
+  write_csv_rows(path, rows, value_transform=_csv_value)
 
 
 def _artifact_relpath(path: Path) -> str:
