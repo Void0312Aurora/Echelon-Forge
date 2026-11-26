@@ -10,7 +10,6 @@ and the existing ``DefaultUnitFactory`` remain authoritative.
 from __future__ import annotations
 
 import hashlib
-import json
 from typing import Any, Mapping
 
 from python.content.capability_bundles.registry import (
@@ -22,22 +21,19 @@ from python.content.capability_bundles.registry import (
 )
 from python.content.platform_blueprint import (
     LegacyUnitProjection,
-    LoadoutSelection,
     ModuleRecord,
     PlatformAssemblyError,
     PlatformBlueprint,
-    ModuleSelection,
     ResolvedPlatformSpawnPlan,
     SCHEMA_VERSION,
-    lower_to_legacy_unit_definition,
-    resolve_platform_assembly,
+    revalidate_resolved_platform_plan,
+    validate_legacy_unit_projection,
 )
 from python.content.capability_bundles.schema import (
     PLATFORM_CAPABILITY_FAMILY_VOCABULARY,
     PLATFORM_CAPABILITY_KEY_VOCABULARY,
     PlatformCapabilityKeyVocabulary,
 )
-from python.json_value import thaw_json_value
 
 
 _NATIVE_CAPABILITY_FAMILIES = frozenset(PLATFORM_CAPABILITY_FAMILY_VOCABULARY)
@@ -229,6 +225,10 @@ def to_expanded_typed_platform_request(
 
     hardpoints = {item.hardpoint_id: item for item in blueprint.hardpoints}
     for hardpoint, module_ref, quantity in plan.loadout:
+        if isinstance(quantity, bool) or quantity != 1:
+            raise PlatformAssemblyError(
+                f"platform.native_loadout_quantity_unsupported:{hardpoint}:{quantity}"
+            )
         module = indexed_modules.get(module_ref)
         contract = hardpoints.get(hardpoint)
         if module is None:
@@ -288,27 +288,8 @@ def to_expanded_typed_platform_request(
     if not capabilities:
         raise PlatformAssemblyError("platform.native_capabilities_required")
 
-    canonical_plan = resolve_platform_assembly(
-        assembly_id=plan.assembly_id,
-        blueprint=blueprint,
-        selections=tuple(ModuleSelection(slot, ref) for slot, ref in plan.modules),
-        modules=indexed_modules,
-        parameter_overrides=dict(plan.parameter_overrides),
-        loadout=tuple(
-            LoadoutSelection(hardpoint, ref, quantity)
-            for hardpoint, ref, quantity in plan.loadout
-        ),
-    )
-    if canonical_plan != plan:
-        raise PlatformAssemblyError("platform.native_plan_identity_mismatch")
-    lowered = lower_to_legacy_unit_definition(plan, projection, modules=modules)
-    if lowered != thaw_json_value(projection.definition):
-        raise PlatformAssemblyError("platform.native_definition_projection_mismatch")
-    definition_digest = hashlib.sha256(
-        json.dumps(
-            lowered, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
-        ).encode("utf-8")
-    ).hexdigest()
+    revalidate_resolved_platform_plan(plan, blueprint, indexed_modules)
+    definition_digest = validate_legacy_unit_projection(plan, projection, modules=modules)
     request_digest = hashlib.sha256(
         f"{plan.identity_digest}:{definition_digest}:{capability_vocabulary.identity_digest}".encode(
             "utf-8"

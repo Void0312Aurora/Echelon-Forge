@@ -1,10 +1,15 @@
 from __future__ import annotations
 
-from dataclasses import replace
+import hashlib
+import json
+from dataclasses import fields, replace
+from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 from python.content.capability_bundles import SpawnPlacement
+import python.content.platform_blueprint as blueprint_owner
 from python.content.capability_bundles.schema import (
     PLATFORM_CAPABILITY_KEY_VOCABULARY,
     PlatformCapabilityKeyVocabulary,
@@ -373,7 +378,7 @@ def test_native_typed_projection_rejects_module_selection_not_loaded_in_snapshot
         _expand(blueprint, modules, plan)
 
 
-def test_native_typed_projection_preserves_multi_store_quantity() -> None:
+def test_native_typed_projection_rejects_multi_store_but_keeps_legacy_import() -> None:
     blueprint, modules, _ = _fixture()
     weapon = ModuleRecord(
         "fixture.weapon",
@@ -407,7 +412,8 @@ def test_native_typed_projection_preserves_multi_store_quantity() -> None:
         projection,
         loadout_paths=(("station_1", "default_loadout.1"),),
     )
-    expanded_multi = _expand(blueprint, modules, plan, projection=projection)
+    with pytest.raises(PlatformAssemblyError, match="native_loadout_quantity_unsupported"):
+        _expand(blueprint, modules, plan, projection=projection)
     lowered_multi = lower_to_legacy_unit_definition(plan, projection, modules=modules)
     assert lowered_multi["default_loadout"]["1"] == ["FixtureWeapon", "FixtureWeapon"]
 
@@ -436,3 +442,270 @@ def test_native_typed_projection_preserves_multi_store_quantity() -> None:
     assert len(launching) == 1
     assert "platform.hardpoint:station_1" in launching[0].evidence_refs
     assert "platform.loadout_quantity:station_1:1" in launching[0].evidence_refs
+
+
+@pytest.mark.parametrize("owner_change", [
+    "plan", "physical", "evidence", "capabilities", "blueprint", "hardpoint",
+])
+def test_canonical_plan_rejects_stale_owner_records(owner_change) -> None:
+    blueprint, modules, plan = _fixture()
+    if owner_change == "plan":
+        object.__setattr__(plan, "assembly_id", "mutated-in-place")
+    elif owner_change == "blueprint":
+        blueprint = replace(blueprint, mass_limit_kg=1.0)
+    elif owner_change == "hardpoint":
+        blueprint = replace(blueprint, hardpoints=(HardpointContract("new", "rail"),))
+    else:
+        changes = {
+            "physical": {"mass_kg": 1.0},
+            "evidence": {"evidence_refs": ("changed:owner",)},
+            # The aggregate capabilities are unchanged: sensing already exists.
+            "capabilities": {"capabilities": frozenset({"mobility", "sensing"})},
+        }
+        modules["engine"] = replace(modules["engine"], **changes[owner_change])
+    with pytest.raises(PlatformAssemblyError, match="native_plan_identity_mismatch"):
+        _expand(blueprint, modules, plan)
+
+
+def test_external_plan_keeps_full_validation_and_versioned_public_identity() -> None:
+    blueprint, modules, plan = _fixture()
+    document = json.loads(json.dumps(plan.as_dict()))
+    assert document["schema_version"] == blueprint_owner.SCHEMA_VERSION
+    assert not any(key.startswith("_") for key in document)
+    # Reconstruct only public constructor fields, as an external adapter would.
+    imported = type(plan)(**{item.name: getattr(plan, item.name) for item in fields(plan) if item.init})
+    with patch.object(blueprint_owner, "resolve_platform_assembly", wraps=resolve_platform_assembly) as resolve:
+        assert _expand(blueprint, modules, imported) == _expand(blueprint, modules, plan)
+        assert resolve.call_count == 1
+    with pytest.raises(PlatformAssemblyError, match="required_capability_missing"):
+        _expand(replace(blueprint, required_capabilities=frozenset({"launching"})), modules, imported)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("identity_digest", "0" * 64),
+    ("capabilities", ("mobility",)),
+    ("module_physical_parameters", ()),
+    ("module_digests", ()),
+    ("native_module_refs", ()),
+    ("loadout_physical_parameters", (("ghost", 1.0, 0.0, (), 1),)),
+])
+def test_canonical_plan_detects_in_place_mutation(field, value) -> None:
+    blueprint, modules, plan = _fixture()
+    object.__setattr__(plan, field, value)
+    with pytest.raises(PlatformAssemblyError):
+        _expand(blueprint, modules, plan)
+
+
+_DATABASE = Path(__file__).resolve().parents[2] / "examples/config/database"
+_PARITY_UNITS = [
+    "aircraft/units/f16c_block50.json",
+    "ground/units/ground_infantry_soldier_mvp.json",
+]
+
+
+def _database_assembly(relative_path):
+    """Explicit qualification mapping reviewed against DefaultUnitFactory.
+
+    Owner references live in ignored metadata: native fields, physical values
+    and station loadouts remain the exact authored content. They are not a
+    second capability resolver; the integration test compares the actual owner.
+    """
+    original = json.loads((_DATABASE / relative_path).read_text(encoding="utf-8"))
+    if original["type"] == "Aircraft":
+        capabilities = {
+            "sensor_ref": "sensing",
+            "airframe": "mobility", "landing_gear": "mobility",
+            "default_loadout": "launching", "data_link": "communication",
+            "health_and_damage_model": "survivability",
+            "aircraft_vulnerability_synthetic_profile": "survivability",
+        }
+    else:
+        capabilities = {
+            "ground_mobility_flat_deferred": "mobility", "land_tactics": "doctrine",
+            "command_link": "command", "health_and_damage_model": "survivability",
+        }
+    token = original["name"].lower().replace("-", "_")
+    native_owner = f"platform.definition.{token}"
+    content_digest = hashlib.sha256(json.dumps(original, sort_keys=True).encode()).hexdigest()
+    modules = {
+        key: ModuleRecord(
+            f"qualification.{token}.{key}", key, frozenset({family}),
+            evidence_refs=(f"legacy-content:{relative_path}:{key}",),
+            content_digest=content_digest, native_ref=native_owner,
+        )
+        for key, family in capabilities.items()
+    }
+    definition = {**original, "_qualification_native_owners": dict.fromkeys(capabilities, native_owner)}
+    hardpoints, loadout, loadout_paths = [], [], []
+    for station, weapon in original.get("default_loadout", {}).items():
+        assert isinstance(weapon, str), "this bounded fixture requires single-store stations"
+        # Physical validation remains owned by the native database/factory here;
+        # the blueprint carries no invented store mass or power measurement.
+        hardpoints.append(HardpointContract(station, "qualified_station"))
+        key = f"station_{station}"
+        modules[key] = ModuleRecord(
+            f"qualification.{token}.{key}", "store", evidence_refs=(f"legacy-content:{weapon}",),
+            content_digest=content_digest, native_ref=weapon,
+            mount_classes=frozenset({"qualified_station"}),
+        )
+        loadout.append(LoadoutSelection(station, key))
+        loadout_paths.append((station, f"default_loadout.{station}"))
+    blueprint = PlatformBlueprint(
+        f"qualification.{token}", "1", original["type"],
+        slots=tuple((key, key) for key in capabilities),
+        required_capabilities=frozenset(capabilities.values()), hardpoints=tuple(hardpoints),
+    )
+    plan = resolve_platform_assembly(
+        assembly_id=f"qualification.{token}.assembly.v1", blueprint=blueprint, modules=modules,
+        selections=tuple(ModuleSelection(key, key) for key in capabilities), loadout=tuple(loadout),
+    )
+    projection = LegacyUnitProjection(
+        plan.blueprint_ref, definition,
+        slot_paths=tuple((key, f"_qualification_native_owners.{key}") for key in capabilities),
+        loadout_paths=tuple(loadout_paths),
+    )
+    return original, blueprint, modules, plan, projection
+
+
+def _database_expand(blueprint, modules, plan, projection, *, factory_plan=None):
+    return to_expanded_typed_platform_request(
+        plan=plan, blueprint=blueprint, modules=modules, projection=projection,
+        source_type_name=projection.definition["name"], request_id="qualification:parity",
+        placement=SpawnPlacement(
+            entity_name="ParityUnit", x=100000.0, y=100000.0,
+            z=1200.0 if blueprint.platform_family == "Aircraft" else 0.0,
+            vy=180.0 if blueprint.platform_family == "Aircraft" else 0.0,
+        ), factory_plan=factory_plan,
+    )
+
+
+@pytest.mark.parametrize("relative_path", _PARITY_UNITS)
+def test_database_canonical_bridge_retires_repeated_resolution_and_projection(relative_path) -> None:
+    original, blueprint, modules, plan, projection = _database_assembly(relative_path)
+    lowered = lower_to_legacy_unit_definition(plan, projection, modules=modules)
+    assert {key: value for key, value in lowered.items() if key != "_qualification_native_owners"} == original
+    # Full validation of an unsealed copy is the compatibility reference.
+    reference = _database_expand(blueprint, modules, replace(plan), projection)
+    with (
+        patch.object(blueprint_owner, "resolve_platform_assembly", side_effect=AssertionError("second resolution")),
+        patch.object(blueprint_owner, "lower_to_legacy_unit_definition", side_effect=AssertionError("second projection")),
+        patch.object(blueprint_owner, "thaw_json_value", side_effect=AssertionError("snapshot roundtrip")),
+    ):
+        assert _database_expand(blueprint, modules, plan, projection) == reference
+        assert _database_expand(blueprint, modules, plan, projection) == reference
+    definition_digest = hashlib.sha256(json.dumps(
+        lowered, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False,
+    ).encode()).hexdigest()
+    assert reference.resolved_spawn_plan.resolved_platform_definition_ref.endswith(f"#{definition_digest}")
+
+
+@pytest.mark.parametrize("relative_path", _PARITY_UNITS)
+def test_database_blueprint_native_factory_state_and_loadout_parity(relative_path, tmp_path, monkeypatch) -> None:
+    ef_py = pytest.importorskip("ef_py")
+    from python.content.capability_bundles.bindings_adapter import to_typed_platform_spawn_request
+
+    original, blueprint, modules, plan, projection = _database_assembly(relative_path)
+    lowered = lower_to_legacy_unit_definition(plan, projection, modules=modules)
+    path = tmp_path / "resolved-unit.json"
+    path.write_text(json.dumps({"units": [lowered]}), encoding="utf-8")
+    runtime = ef_py.WorldBatchRuntime(1)
+    assert runtime.load_database(str(_DATABASE))
+    factory_plan = runtime.resolve_factory_platform_spawn_plan(0, original["name"])
+    assert factory_plan.admitted
+    facades = [ef_py.RuntimeFacade(1), ef_py.RuntimeFacade(1)]
+    assert all(facade.load_database(str(_DATABASE)) for facade in facades)
+    assert facades[1].load_unit_definitions(str(path))
+    def redundant(*args, **kwargs):
+        pytest.fail("canonical bridge repeated resolution or legacy projection")
+    monkeypatch.setattr(blueprint_owner, "resolve_platform_assembly", redundant)
+    monkeypatch.setattr(blueprint_owner, "lower_to_legacy_unit_definition", redundant)
+    expanded = _database_expand(blueprint, modules, plan, projection, factory_plan=factory_plan)
+    refs = []
+    for index, facade in enumerate(facades):
+        setup = ef_py.BatchWorldSetupRequest()
+        setup.seeds, setup.time_steps = [123], [0.05]
+        if index == 0:
+            spawn = ef_py.WorldSpawnRequest()
+            spawn.type_name, spawn.side = original["name"], ef_py.Side.Blue
+            for key in ("entity_name", "x", "y", "z", "vy"):
+                setattr(spawn, key, getattr(expanded.placement, key))
+            setup.spawn_requests = [spawn]
+            result = facade.apply_world_setup(setup)
+            assert len(result.entity_ids) == 1
+            entity_id = result.entity_ids[0]
+        else:
+            setup.typed_platform_spawn_requests = [to_typed_platform_spawn_request(ef_py, expanded)]
+            result = facade.apply_world_setup(setup).typed_platform_spawn_results[0]
+            assert result.admitted and result.materialized and not result.fail_closed
+            assert result.setup_surface == "maintained_typed_setup"
+            entity_id = result.entity_id
+        assert entity_id > 0
+        ref = ef_py.WorldEntityRef()
+        ref.entity_id = entity_id
+        refs.append(ref)
+    def snapshot(observation):
+        return {name: repr(getattr(observation, name)) for name in dir(observation)
+                if not name.startswith("_") and not callable(getattr(observation, name))}
+    for step in range(5):
+        observations = [facade.get_agent_observations_batch([ref])[0] for facade, ref in zip(facades, refs)]
+        instruments = [facade.get_instrument_states_batch([ref])[0] for facade, ref in zip(facades, refs)]
+        assert snapshot(observations[0]) == snapshot(observations[1])
+        assert snapshot(instruments[0]) == snapshot(instruments[1])
+        if original["type"] == "Aircraft":
+            assert lowered["default_loadout"] == original["default_loadout"]
+            assert len(plan.loadout) == len(original["default_loadout"])
+            assert observations[1].missiles_remaining == observations[0].missiles_remaining
+        if step < 4:
+            for facade in facades:
+                facade.step_batch()
+
+
+def test_canonical_bridge_preserves_lowered_digest_for_equal_value_int_float_override() -> None:
+    original, blueprint, modules, _, _ = _database_assembly("aircraft/units/f16c_block50.json")
+    assert original["flight_model"]["max_speed"] == 600.0
+    definition = {
+        **original,
+        "_qualification_native_owners": {
+            key: value[1].native_ref
+            for key, value in zip(
+                (slot for slot, _ in blueprint.slots),
+                sorted((slot, modules[slot]) for slot, _ in blueprint.slots),
+            )
+        },
+    }
+    blueprint_with_override = replace(blueprint, override_types=(("max_speed", "int"),))
+    plan = resolve_platform_assembly(
+        assembly_id=f"qualification.{original['name']}.int_override.v1",
+        blueprint=blueprint_with_override,
+        selections=tuple(ModuleSelection(slot, slot) for slot, _ in blueprint_with_override.slots),
+        modules=modules,
+        parameter_overrides={"max_speed": 600},
+        loadout=tuple(LoadoutSelection(hp.hardpoint_id, f"station_{hp.hardpoint_id}") for hp in blueprint_with_override.hardpoints),
+    )
+    projection = LegacyUnitProjection(
+        plan.blueprint_ref,
+        definition,
+        slot_paths=tuple((slot, f"_qualification_native_owners.{slot}") for slot, _ in blueprint_with_override.slots),
+        override_paths=(("max_speed", "flight_model.max_speed"),),
+        loadout_paths=tuple((hp.hardpoint_id, f"default_loadout.{hp.hardpoint_id}") for hp in blueprint_with_override.hardpoints),
+    )
+    canonical = _database_expand(blueprint_with_override, modules, plan, projection)
+    unsealed = _database_expand(blueprint_with_override, modules, replace(plan), projection)
+    assert canonical == unsealed
+    lowered = lower_to_legacy_unit_definition(plan, projection, modules=modules)
+    expected_digest = hashlib.sha256(
+        json.dumps(lowered, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()
+    ).hexdigest()
+    assert canonical.resolved_spawn_plan.resolved_platform_definition_ref.endswith(f"#{expected_digest}")
+
+
+def test_canonical_bridge_accepts_reordered_blueprint_slots_and_hardpoints() -> None:
+    _, blueprint, modules, plan, projection = _database_assembly("aircraft/units/f16c_block50.json")
+    reordered = replace(
+        blueprint,
+        slots=tuple(reversed(blueprint.slots)),
+        hardpoints=tuple(reversed(blueprint.hardpoints)),
+    )
+    canonical = _database_expand(reordered, modules, plan, projection)
+    unsealed = _database_expand(reordered, modules, replace(plan), projection)
+    assert canonical == unsealed
