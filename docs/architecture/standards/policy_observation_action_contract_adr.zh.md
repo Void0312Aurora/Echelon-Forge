@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/policy_observation_action_contract_adr.md`
 Owner: `architecture/agent-contracts`
-Last verified: `2026-10-12`
+Last verified: `2026-11-26`
 
 **状态：** 待评审的资格验证设计；现有 `DecisionModel`、Gym space 和领域 packet owner 不变。
 
@@ -43,6 +43,52 @@ action timing/维度及 action callbacks；artifact digest 正确也不能绕过
 投影前调用 owner action-authorizer，由 owner 判断实时 mask、authority 和 expiry；通过后再交给
 显式 owner projector。生产 native action endpoint 的实际 wiring 仍待验收。此层不会自动接纳 Python
 或第三方代码；通过生产 owner 加载真实外部 checkpoint 仍待验收。
+
+## Admission receipt 威胁模型与验证分工（#295）
+
+`_AdmissionValidationToken` / `PolicyAdmission._validation_marker` 是进程内一致性
+receipt，不是密码学凭证、秘密、签名或沙箱。快照绑定完整 `PolicyDescriptor`、签发时的
+`AgentBinding`、admission schema version 以及全部公开 admission 字段。`as_dict()` 只输出
+证据，不输出 marker；从序列化证据重建对象不会恢复接纳资格。
+
+| 输入或行为方 | 边界与保证 |
+| --- | --- |
+| 调用方意外错误 | 拒绝手工 `admitted=True`、篡改字段、将拒绝结果改成通过，以及把旧 receipt 用于变更后的 descriptor/version/checkpoint owner。Agent binding 改变必须重新接纳；与新 binding 比较时拒绝旧 receipt。runtime 同时拒绝不同角色或显式不兼容的 authority scope。 |
+| 外部 checkpoint 字节 | 字节不能提供 receipt 或权限。binding gate 在 checkpoint seam 和 owner loader 之前执行；不可变字节副本的 SHA-256 通过后才交给 owner。digest 只证明内容身份，不证明发布者可信或可执行反序列化安全；metadata 来源、loader 选择与模型协议仍由可信 owner 负责。 |
+| 同进程 Python 代码 | 属于可信代码，不在隔离威胁模型内。它可以导入私有 token 类型、制造匹配 receipt、故意修改 frozen 对象或替换 validator；下划线和 frozen dataclass 不能阻止这些操作。敌对可执行 Policy 需要另行设计进程隔离，本试点不提供该能力。 |
+
+共享 `validate_policy_admission` 检查 receipt 一致性，不重复 catalogue 协商，也不联系撤权服务。
+静态 descriptor、catalogue 或 grants 改变时，owner 必须重新接纳；receipt 无法自行发现外部
+owner 状态已经变化。
+
+验证分三层：`admit_policy` 使用 owner 证据检查字段语义和来源、观测与动作 major/minor
+version、动作接口/维度/时序、Agent 权限和 checkpoint metadata 一致性；binding 构造函数检查
+receipt 与参数；artifact factory 复用同一 gate，在任何 loader 前检查有限有序 bounds 和全部
+可选 callback，并冻结 bounds/defaults。owner callback 后的构造保留一次轻量 gate，不重新
+运行 catalogue 接纳；digest 与返回模型的生命周期协议检查继续独立存在。
+
+每次 `decide` 继续校验 observation 值与 provenance、动作维度/bounds/timing，再由配置的 owner
+authorizer 检查当前 mask、权限和 expiry，通过后才能投影。receipt 不缓存动态授权；held output
+的有效性继续由现有 action-hold/endpoint owner 管理。
+
+## 带版本的 legacy 迁移适配器（#295）
+
+`LegacyDecisionModelAdapter` 使用显式 `echelon_forge.legacy_decision_model.v1` 格式，字段为
+`schema_version`、`model_id`、`domain`、`role_id`、`model_kind`。缺失或未知版本、多余字段
+均拒绝。现有未带版本的 Python consumer 可显式构造 adapter；
+`DecisionRuntimeAgentSpec.legacy_adapter` 提供该转换。registration、registry selection 和
+runtime 共用 `normalize_legacy_model_kind`；`DECISION_MODEL_KINDS` 仅为 v1 兼容词表，
+不是开放 `PolicyDescriptor.categories` 的词表，更不授予权限。
+
+迁移顺序：取得 adapter，向其 `admit_policy` 传入现有 registry、descriptor、Agent binding
+和 owner catalogue/version 证据；确认通过后由现有 `registry.create_for` 构造模型，再用
+`PolicyRuntimeBinding` 包裹并交给 `DecisionRuntimeAgent`。adapter 在普通 Policy 接纳前核对
+model ID/domain/role/kind/status 与显式 `legacy_model_kind`；自身不调用 factory，不新增
+reset/decide/close dispatcher，也不把 `human`、`commander` 或未知 category 转成 kind 或权限。
+
+测试覆盖四种 v1 kind 的 runtime 动作一致性、迁移不匹配与未授权拒绝，以及不合格 binding 下
+checkpoint seam 和 owner loader 的零调用。Air 资格测试使用现有 mission field catalogue、
+维护中的 `takeoff4` bounds 与 `build_pilot_action`，对比直接 legacy 动作和迁移后的路径。
 
 ## 方案比较与实现检查点
 

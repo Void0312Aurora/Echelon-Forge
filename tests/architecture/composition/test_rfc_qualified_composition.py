@@ -548,10 +548,15 @@ def test_two_policy_implementations_share_owned_air_catalogue_and_native_action(
     assert space.shape == (action.dimension,)
     outputs = []
     for category, model_id in (("scripted", "a"), ("community.stand_in", "b")):
-        policy = PolicyDescriptor(category, "1", (category,), observation, action)
-        admission = admit_policy(
-            policy,
-            binding,
+        kind = registry.get(model_id).model_kind
+        spec = DecisionRuntimeAgentSpec(
+            model_id, model_id, "air", "pilot", model_kind=kind, authority_scope="platform_control"
+        )
+        policy = PolicyDescriptor(
+            category, "1", (category,), observation, action, legacy_model_kind=kind
+        )
+        admission = spec.legacy_adapter.admit_policy(
+            registry, policy, binding,
             field_catalogue={f.name: f for f in fields},
             observation_version=(1, 0),
             action_versions={action.interface_ref: (1, 0)},
@@ -567,6 +572,18 @@ def test_two_policy_implementations_share_owned_air_catalogue_and_native_action(
         outputs.append((native.stick_pitch, native.stick_roll, native.rudder, native.throttle))
         implementation.close()
         assert implementation.closed
+        migrated = registry.create_for(domain="air", role_id="pilot", model_id=model_id, model_kind=kind)
+        runtime = DecisionRuntimeAgent(spec, PolicyRuntimeBinding(
+            policy, admission, migrated, bounds=bounds, timing="window",
+            action_projector=lambda values: build_pilot_action(values, action_mode="takeoff4"),
+        ))
+        runtime.reset()
+        projected = runtime.step(
+            observation=dict(zip((field.name for field in fields), (1, 2, 0, 8))), clock_s=0.05,
+        ).action
+        assert (projected.stick_pitch, projected.stick_roll, projected.rudder, projected.throttle) == outputs[-1]
+        runtime.close()
+        assert migrated.closed
     assert outputs[0] == outputs[1]
     with pytest.raises(ValueError, match="kind"):
         registry.create_for(domain="air", role_id="pilot", model_id="a", model_kind="learned")

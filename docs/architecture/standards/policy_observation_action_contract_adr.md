@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `proposed`
 Canonical: `docs/architecture/standards/policy_observation_action_contract_adr.md`
 Owner: `architecture/agent-contracts`
-Last verified: `2026-10-12`
+Last verified: `2026-11-26`
 
 **Status:** proposed qualification design; current `DecisionModel`, Gym spaces
 and domain packet owners remain unchanged.
@@ -46,7 +46,71 @@ admitted only through a declared projection/default policy that preserves tensor
 ordering and provenance. Legacy `model_kind` callers use a staged explicit
 bridge: deterministic `policy_id` selection and category matching happen in
 this opt-in descriptor, while existing registry kind checks and report fields
-remain authoritative until a separate migration decision replaces them.
+remain authoritative for legacy selection and reporting until a separate
+migration decision replaces them. They never establish action authority.
+
+## Admission receipt threat model and validation ownership (#295)
+
+`_AdmissionValidationToken` and `PolicyAdmission._validation_marker` are private,
+in-process consistency receipts. They are intentionally not cryptographic tokens,
+secrets, signatures or a sandbox. The receipt snapshots the complete
+`PolicyDescriptor`, the issuing `AgentBinding`, the admission schema version and
+all public admission fields. `as_dict()` exports evidence without the marker;
+reconstructing an admission from serialized evidence cannot restore admission.
+
+| Input / actor | Boundary and guarantee |
+| --- | --- |
+| Accidental caller bugs | Reject a hand-built `admitted=True`, altered admission fields, a resealed rejection, or reuse with a changed descriptor/version/checkpoint owner. A changed Agent binding requires fresh admission; an existing receipt is rejected when compared with the new binding. The runtime also rejects a different role or an explicit incompatible authority scope. |
+| External checkpoint bytes | Bytes cannot supply a receipt or grants. Binding gates run before either checkpoint loader seam or owner loader; SHA-256 is checked on an immutable byte copy before owner loading. Digest identity does not prove publisher trust or make executable deserialization safe; the trusted owner controls metadata provenance, loader selection and model protocol. |
+| Same-process Python code | Trusted and outside the isolation threat model. Such code can import the private token type, construct a matching receipt, mutate frozen objects deliberately or replace validators. Neither an underscore nor a frozen dataclass prevents this. Hostile executable policies require a separate process/isolation design, which this pilot does not provide. |
+
+The common `validate_policy_admission` helper checks receipt consistency. It
+does not repeat owner catalogue negotiation or contact a revocation service.
+Owners must re-admit when static descriptors, catalogues or grants change;
+the stored receipt cannot discover a later external owner change by itself.
+
+Validation has three distinct responsibilities:
+
+1. `admit_policy` negotiates static field semantics/source visibility,
+   observation/action major and minor versions, action interface/dimension/timing,
+   Agent grants and checkpoint metadata agreement once using owner evidence.
+2. `PolicyRuntimeBinding.__init__` checks the receipt and binding inputs.
+   `from_checkpoint_artifact()` uses the same gate **before** loading, including
+   finite ordered bounds and all optional callbacks, and freezes caller bounds
+   and defaults. Construction repeats the cheap gate after the owner callback;
+   it never re-runs catalogue admission. This deliberate boundary check is kept,
+   as are digest verification and the returned model's lifecycle protocol check.
+3. Every `decide` checks observation values/provenance and produced action
+   dimension/bounds/timing, then invokes the configured owner action authorizer
+   for current mask, authority and expiry before projection. A receipt never
+   caches dynamic authorization. Held-output validity stays with the existing
+   action-hold/endpoint owner.
+
+## Versioned legacy migration adapter (#295)
+
+`LegacyDecisionModelAdapter` consumes the explicit
+`echelon_forge.legacy_decision_model.v1` format: `schema_version`, `model_id`,
+`domain`, `role_id`, `model_kind`. Missing/unknown versions and extra fields
+fail closed. Existing unversioned Python consumers can construct the adapter
+explicitly; `DecisionRuntimeAgentSpec.legacy_adapter` provides this conversion.
+Registration, registry selection and runtime checks share
+`normalize_legacy_model_kind`; `DECISION_MODEL_KINDS` remains the v1 compatibility
+vocabulary, not the vocabulary of open `PolicyDescriptor.categories`.
+
+The migration sequence is explicit: obtain the adapter, call its `admit_policy`
+with the existing registry, descriptor, Agent binding and owner catalogue/version
+evidence, require a positive admission, create through existing `registry.create_for`,
+then wrap in `PolicyRuntimeBinding` and pass it to `DecisionRuntimeAgent`.
+The adapter verifies model ID/domain/role/kind/status selection and the descriptor's
+explicit `legacy_model_kind` before ordinary Policy admission. It invokes no
+factory and has no reset/decide/close dispatcher. Categories are never translated
+to kinds or grants, including `human`, `commander` or unknown author tags.
+
+Tests compare all four v1 kinds through the existing runtime, reject mismatched
+or unauthorized migration, and assert zero checkpoint-loader and owner-loader
+calls for inadmissible inputs. The Air qualification compares direct legacy
+actions with the adapter/admission/runtime path using the existing mission field
+catalogue, maintained `takeoff4` bounds and `build_pilot_action` projection.
 
 ## Proof and boundaries
 

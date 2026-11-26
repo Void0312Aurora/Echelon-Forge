@@ -19,15 +19,28 @@ from python.tasking_contracts.policy import (
     load_policy_checkpoint,
     select_policy,
     validate_policy_action,
+    validate_policy_admission,
     project_policy_observation,
+)
+from python.tasking_contracts import policy as policy_contract
+from python.tasking_contracts.common.decision_registry import (
+    DecisionModelRegistration,
+    DecisionModelRegistry,
+    LegacyDecisionModelAdapter,
 )
 from python.tasking_contracts.common.decision_runtime import (
     DecisionRuntimeAgent,
     DecisionRuntimeAgentSpec,
 )
-from python.rl.runtime.world_batch.typed_observation_view import (
-    maintained_observation_view_spec,
-)
+
+
+def maintained_observation_view_spec():
+    # Only the maintained-view integration cases require the native adapter.
+    pytest.importorskip("ef_py")
+    from python.rl.runtime.world_batch.typed_observation_view import (
+        maintained_observation_view_spec as owner_spec,
+    )
+    return owner_spec()
 
 
 class _BoundModel:
@@ -94,6 +107,16 @@ def _checkpoint(policy: PolicyDescriptor) -> PolicyCheckpoint:
         action_minor=policy.action.minor,
         owner_ref="owner://policy-registry",
     )
+
+
+def _admit(policy: PolicyDescriptor, binding: AgentBinding | None = None, **overrides):
+    evidence = dict(
+        field_catalogue=_catalogue(), observation_version=(1, 1),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4}, checkpoint=policy.checkpoint,
+    )
+    evidence.update(overrides)
+    return admit_policy(policy, _binding() if binding is None else binding, **evidence)
 
 
 def test_scripted_and_learned_categories_share_contract_admission() -> None:
@@ -331,8 +354,22 @@ def test_checkpoint_artifact_binding_factory_keeps_owner_loader_in_the_existing_
     ("dimension", ValueError, "action_dimension_mismatch"),
     ("authorizer", TypeError, "action_authorizer must be callable"),
     ("projector", TypeError, "action_projector must be callable"),
+    ("false_projector", TypeError, "action_projector must be callable"),
+    ("observation_projector", TypeError, "observation_projector must be callable"),
+    ("action_values", TypeError, "action_values must be callable"),
+    ("schema", ValueError, "admission_not_owner_validated"),
+    ("identity", ValueError, "runtime_binding_not_admitted"),
+    ("view_receipt", ValueError, "admission_not_owner_validated"),
+    ("resealed", ValueError, "admission_not_owner_validated"),
+    ("stale_policy", ValueError, "runtime_binding_policy_mismatch"),
+    ("stale_owner", ValueError, "runtime_binding_checkpoint_mismatch"),
+    ("nonfinite_bounds", ValueError, "bounds must be finite and ordered"),
+    ("reversed_bounds", ValueError, "bounds must be finite and ordered"),
+    ("malformed_bounds", ValueError, "bounds must be finite and ordered"),
 ])
-def test_checkpoint_binding_rejects_invalid_contract_before_owner_loader(case, exception, error):
+def test_checkpoint_binding_rejects_invalid_contract_before_owner_loader(
+    case, exception, error, monkeypatch
+):
     payload = b"owner-checkpoint-bytes"
     base = _policy(category="learned")
     checkpoint = replace(_checkpoint(base), artifact_sha256=hashlib.sha256(payload).hexdigest())
@@ -361,15 +398,194 @@ def test_checkpoint_binding_rejects_invalid_contract_before_owner_loader(case, e
         kwargs["bounds"] = ((-1, 1),) * 3
     elif case == "authorizer":
         kwargs["action_authorizer"] = object()
-    else:
+    elif case == "projector":
         kwargs["action_projector"] = object()
+    elif case == "false_projector":
+        kwargs["action_projector"] = False
+    elif case in {"observation_projector", "action_values"}:
+        kwargs[case] = object()
+    elif case == "schema":
+        admission = replace(admission, schema_version="echelon_forge.policy_contract.v2")
+    elif case == "identity":
+        admission = replace(admission, policy_id="another.policy")
+    elif case == "view_receipt":
+        admission = replace(admission, observation_view_ref="another.view")
+    elif case == "resealed":
+        rejected = _admit(policy, field_catalogue={})
+        admission = replace(rejected, admitted=True, diagnostics=())
+    elif case == "stale_policy":
+        policy = replace(policy, stateful=True)
+    elif case == "stale_owner":
+        policy = replace(policy, checkpoint=replace(checkpoint, owner_ref="owner://changed"))
+    elif case == "nonfinite_bounds":
+        kwargs["bounds"] = ((-math.inf, 1),) * 4
+    elif case == "reversed_bounds":
+        kwargs["bounds"] = ((1, -1),) * 4
+    elif case == "malformed_bounds":
+        kwargs["bounds"] = ((-1, 0, 1),) * 4
     loaded = []
+    checkpoint_loads = []
+    original_loader = policy_contract.load_policy_checkpoint
+
+    def checkpoint_loader(*args, **loader_kwargs):
+        checkpoint_loads.append(True)
+        return original_loader(*args, **loader_kwargs)
+
+    monkeypatch.setattr(policy_contract, "load_policy_checkpoint", checkpoint_loader)
     with pytest.raises(exception, match=error):
         PolicyRuntimeBinding.from_checkpoint_artifact(
             policy, admission, payload,
             owner_loader=lambda value: loaded.append(value) or _BoundModel(), **kwargs,
         )
     assert loaded == []
+    assert checkpoint_loads == []
+
+
+def test_checkpoint_binding_freezes_owner_inputs_before_loading() -> None:
+    payload = b"owner-checkpoint-bytes"
+    base = _policy()
+    checkpoint = replace(_checkpoint(base), artifact_sha256=hashlib.sha256(payload).hexdigest())
+    policy = replace(base, checkpoint=checkpoint)
+    bounds = [[-1, 1] for _ in range(4)]
+
+    def load_owner(value):
+        assert value == payload
+        bounds[0][:] = [math.nan, -math.inf]
+        return _BoundModel()
+
+    binding = PolicyRuntimeBinding.from_checkpoint_artifact(
+        policy, _admit(policy), payload, owner_loader=load_owner, bounds=bounds, timing="window"
+    )
+    assert binding.bounds == ((-1, 1),) * 4
+
+
+@pytest.mark.parametrize("change", ["version", "observation", "action", "legacy_kind"])
+def test_admission_cannot_be_reused_for_a_changed_descriptor(change) -> None:
+    policy = _policy()
+    admission = _admit(policy)
+    changed = {
+        "version": replace(policy, version="2"),
+        "observation": replace(policy, observation=replace(policy.observation, major=2)),
+        "action": replace(policy, action=replace(policy.action, authority_scope="mission_command")),
+        "legacy_kind": replace(policy, legacy_model_kind="human"),
+    }[change]
+    with pytest.raises(ValueError, match="runtime_binding_policy_mismatch"):
+        PolicyRuntimeBinding(changed, admission, _BoundModel(), bounds=((-1, 1),) * 4, timing="window")
+    with pytest.raises(ValueError, match="runtime_binding_policy_mismatch"):
+        project_policy_observation(changed, admission, {}, optional_defaults={})
+
+
+def test_admission_requires_fresh_validation_for_changed_owner_binding() -> None:
+    policy = _policy()
+    owner = _binding()
+    admission = _admit(policy, owner)
+    assert validate_policy_admission(policy, admission, binding=owner) == owner
+    changed_owner = replace(owner, allowed_authority_scopes=frozenset())
+    with pytest.raises(ValueError, match="owner_binding_mismatch"):
+        validate_policy_admission(policy, admission, binding=changed_owner)
+    assert not _admit(policy, changed_owner).admitted
+
+
+@pytest.mark.parametrize("role,scope,error", [
+    ("commander", "platform_control", "owner_role_mismatch"),
+    ("autopilot", "mission_command", "owner_authority_mismatch"),
+])
+def test_runtime_rejects_policy_admission_under_another_owner(role, scope, error) -> None:
+    policy = _policy()
+    binding = PolicyRuntimeBinding(
+        policy, _admit(policy), _BoundModel(), bounds=((-1, 1),) * 4, timing="window"
+    )
+    with pytest.raises(ValueError, match=error):
+        DecisionRuntimeAgent(
+            DecisionRuntimeAgentSpec("a", policy.policy_id, "air", role, authority_scope=scope), binding
+        )
+
+
+def test_serialized_admission_is_evidence_and_cannot_restore_a_receipt() -> None:
+    policy = _policy()
+    document = _admit(policy).as_dict()
+    assert "_validation_marker" not in document
+    reconstructed = PolicyAdmission(**document)
+    with pytest.raises(ValueError, match="not_owner_validated"):
+        project_policy_observation(policy, reconstructed, {}, optional_defaults={})
+
+
+@pytest.mark.parametrize("kind", ["scripted", "learned", "human", "hybrid"])
+def test_versioned_legacy_adapter_preserves_existing_runtime_action_parity(kind) -> None:
+    policy = replace(_policy(), categories=("commander", "community.new"), legacy_model_kind=kind)
+    registration = DecisionModelRegistration("air.legacy", "air", ("autopilot",), _BoundModel, kind)
+    registry = DecisionModelRegistry((registration,))
+    spec = DecisionRuntimeAgentSpec("a", registration.model_id, "air", "autopilot", model_kind=kind)
+    adapter = LegacyDecisionModelAdapter.from_dict(spec.legacy_adapter.as_dict())
+    admission = adapter.admit_policy(
+        registry, policy, _binding(), field_catalogue=_catalogue(), observation_version=(1, 1),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+    )
+    assert admission.admitted
+    runtimes = []
+    for migrated in (False, True):
+        model = registry.create_for(
+            domain=adapter.domain, role_id=adapter.role_id,
+            model_id=adapter.model_id, model_kind=adapter.model_kind,
+        )
+        bound = PolicyRuntimeBinding(
+            policy, admission, model, bounds=((-1, 1),) * 4, timing="window"
+        ) if migrated else model
+        runtime = DecisionRuntimeAgent(spec, bound)
+        runtime.reset(episode_seed=7)
+        runtimes.append((runtime, model))
+    outputs = [runtime.step(observation={"ownship.velocity": [1, 2, 3]}, clock_s=0.1)
+               for runtime, _model in runtimes]
+    assert outputs[0] == outputs[1]
+    for runtime, model in runtimes:
+        runtime.close()
+        assert model.closed
+
+
+@pytest.mark.parametrize("case", ["kind", "role", "domain", "status"])
+def test_legacy_adapter_rejects_selection_mismatch_without_constructing_models(case) -> None:
+    created = []
+    registry = DecisionModelRegistry((DecisionModelRegistration(
+        "legacy", "air", ("autopilot",), lambda: created.append(True) or _BoundModel(),
+        "scripted", status="demo" if case == "status" else "maintained",
+    ),))
+    adapter = LegacyDecisionModelAdapter("legacy", "air", "autopilot", "scripted")
+    policy = _policy()
+    if case == "kind":
+        policy = replace(policy, legacy_model_kind="learned")
+    elif case == "role":
+        adapter = replace(adapter, role_id="commander")
+    elif case == "domain":
+        adapter = replace(adapter, domain="naval")
+    with pytest.raises(ValueError, match="legacy_.*mismatch"):
+        adapter.admit_policy(registry, policy, _binding(), statuses=frozenset({"maintained"}))
+    assert created == []
+
+
+def test_legacy_adapter_does_not_translate_categories_or_kinds_into_rights() -> None:
+    registry = DecisionModelRegistry((DecisionModelRegistration(
+        "legacy", "air", ("autopilot",), _BoundModel, "human",
+    ),))
+    adapter = LegacyDecisionModelAdapter("legacy", "air", "autopilot", "human")
+    policy = replace(_policy(), categories=("human", "commander"), legacy_model_kind="human")
+    denied = adapter.admit_policy(
+        registry, policy, replace(_binding(), allowed_authority_scopes=frozenset()),
+        field_catalogue=_catalogue(), observation_version=(1, 1),
+        action_versions={"PilotActionAssignment": (1, 0)},
+        action_dimensions={"PilotActionAssignment": 4},
+    )
+    assert not denied.admitted
+    assert any("authority_scope_unauthorized" in error for error in denied.diagnostics)
+
+
+def test_legacy_adapter_requires_a_supported_explicit_format_version() -> None:
+    document = LegacyDecisionModelAdapter("legacy", "air", "autopilot", "scripted").as_dict()
+    with pytest.raises(ValueError, match="schema version"):
+        LegacyDecisionModelAdapter.from_dict({**document, "schema_version": "v2"})
+    del document["schema_version"]
+    with pytest.raises(ValueError, match="format fields invalid"):
+        LegacyDecisionModelAdapter.from_dict(document)
 
 
 def test_unknown_category_does_not_grant_authority() -> None:
@@ -698,13 +914,14 @@ def test_existing_runtime_path_runs_owner_action_authorization_before_projection
         action_dimensions={"PilotActionAssignment": 4},
     )
     projected: list[tuple[float, ...]] = []
+    owner_state = {"authorized": True}
 
     def owner_authorizer(action, context, _dt):
         del action
         errors = []
         if context.get("action_mask_open") is not True:
             errors.append("policy.action_mask_closed")
-        if context.get("authority_scope") != "platform_control":
+        if context.get("authority_scope") != "platform_control" or not owner_state["authorized"]:
             errors.append("policy.action_authority_missing")
         expiry = context.get("action_expires_at_s")
         if expiry is None or context["clock_s"] > expiry:
@@ -739,6 +956,22 @@ def test_existing_runtime_path_runs_owner_action_authorization_before_projection
         context={"action_mask_open": True, "action_expires_at_s": 1.0},
     )
     assert accepted.action == (0.0, 0.5, 0.0, -0.5)
+    assert projected == [accepted.action]
+
+    owner_state["authorized"] = False
+    with pytest.raises(ValueError, match="policy.action_authority_missing"):
+        runtime.step(
+            observation={"ownship.velocity": [1.0, 2.0, 3.0]}, clock_s=0.15,
+            context={"action_mask_open": True, "action_expires_at_s": 1.0},
+        )
+    assert projected == [accepted.action]
+    owner_state["authorized"] = True
+
+    with pytest.raises(ValueError, match="policy.action_mask_closed"):
+        runtime.step(
+            observation={"ownship.velocity": [1.0, 2.0, 3.0]}, clock_s=0.2,
+            context={"action_mask_open": False, "action_expires_at_s": 1.0},
+        )
     assert projected == [accepted.action]
 
     with pytest.raises(ValueError, match="policy.action_expired"):
