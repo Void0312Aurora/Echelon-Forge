@@ -378,6 +378,7 @@ class RuntimeFacadeAdapter:
         production_package_digest: str | None = None,
         production_wheel_digest: str | None = None,
         require_production_evidence_binding: bool = False,
+        native_run_recorder_config: dict[str, Any] | None = None,
     ):
         self._world_count = int(world_count)
         if not hasattr(ef_py, "RuntimeFacade"):
@@ -464,7 +465,11 @@ class RuntimeFacadeAdapter:
             raise RuntimeError(
                 "RuntimeFacadeAdapter production evidence binding requires an admitted RolloutDecision slot"
             )
-        self.facade = ef_py.RuntimeFacade(self._world_count)
+        if native_run_recorder_config is None:
+            self.facade = ef_py.RuntimeFacade(self._world_count)
+        else:
+            import json
+            self.facade = ef_py.RuntimeFacade(self._world_count, json.dumps(native_run_recorder_config))
         self._capabilities_facade_id: int | None = None
         self._capabilities: RuntimeFacadeAdapterCapabilities | None = None
         self._last_window_evidence: RuntimeWindowEvidence | None = None

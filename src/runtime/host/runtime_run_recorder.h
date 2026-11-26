@@ -274,6 +274,10 @@ class RuntimeRunRecorder final {
                           std::string_view world_id, std::string_view world_epoch,
                           std::string_view episode_id, std::string_view episode_epoch,
                           std::string_view request_id);
+    // Native multi-world owner projection; existing single-world binding is unchanged.
+    [[nodiscard]] RuntimeRunRecorderStatus
+    bind_runtime_scope(std::string_view host_boot_id, std::string_view incarnation_epoch,
+                       std::string_view execution_scope_json);
     [[nodiscard]] RuntimeRunRecorderStatus observe_entity(std::string_view entity_id,
                                                           std::string_view entity_epoch);
     [[nodiscard]] RuntimeRunRecorderStatus append(std::uint64_t sequence, std::string_view payload);

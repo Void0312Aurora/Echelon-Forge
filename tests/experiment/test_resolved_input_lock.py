@@ -508,3 +508,85 @@ def test_host_published_receipt_path_requires_canonical_owner_bytes(tmp_path) ->
             native_runtime=_native(),
             outcome=outcome,
         )
+
+
+def test_policy_axis_only_permits_policy_keys_in_training_configuration():
+    registry = _registry()
+    left = _completed_lock(_experiment(), registry, policy={"id": "a"})
+    from dataclasses import replace
+
+    right_experiment = replace(_experiment(), config=ConfigComposition(
+        "air_base_v1", {"n_envs": 2, "policy": "b", "policy_kwargs": {"net_arch": [16]}}))
+    right = _completed_lock(right_experiment, registry, policy={"id": "b"})
+    assert compare_resolved_input_locks(left, right, intentional_axes=frozenset({"policy"})).comparable
+    changed_budget = replace(_experiment(), config=ConfigComposition(
+        "air_base_v1", {"n_envs": 2, "policy": "b", "total_timesteps": 999}))
+    changed = _completed_lock(changed_budget, registry, policy={"id": "b"})
+    result = compare_resolved_input_locks(left, changed, intentional_axes=frozenset({"policy"}))
+    assert not result.comparable
+    assert "config" in result.differences
+
+
+def test_policy_axis_permits_nested_hyperparameters_policy_kwargs_only():
+    from dataclasses import replace
+
+    registry = _registry()
+    left = _completed_lock(
+        replace(
+            _experiment(),
+            config=ConfigComposition(
+                "air_base_v1",
+                {
+                    "n_envs": 2,
+                    "policy": "MultiInputPolicy",
+                    "hyperparameters": {
+                        "learning_rate": 3e-4,
+                        "policy_kwargs": {"net_arch": [64, 64]},
+                    },
+                },
+            ),
+        ),
+        registry,
+        policy={"id": "a"},
+    )
+    right = _completed_lock(
+        replace(
+            _experiment(),
+            config=ConfigComposition(
+                "air_base_v1",
+                {
+                    "n_envs": 2,
+                    "policy": "SquashedMultiInputPolicy",
+                    "hyperparameters": {
+                        "learning_rate": 3e-4,
+                        "policy_kwargs": {"net_arch": [128, 128]},
+                    },
+                },
+            ),
+        ),
+        registry,
+        policy={"id": "b"},
+    )
+    assert compare_resolved_input_locks(left, right, intentional_axes=frozenset({"policy"})).comparable
+
+    changed_lr = _completed_lock(
+        replace(
+            _experiment(),
+            config=ConfigComposition(
+                "air_base_v1",
+                {
+                    "n_envs": 2,
+                    "policy": "SquashedMultiInputPolicy",
+                    "hyperparameters": {
+                        "learning_rate": 1e-4,
+                        "policy_kwargs": {"net_arch": [128, 128]},
+                    },
+                },
+            ),
+        ),
+        registry,
+        policy={"id": "b"},
+    )
+    result = compare_resolved_input_locks(left, changed_lr, intentional_axes=frozenset({"policy"}))
+    assert not result.comparable
+    assert "config" in result.differences

@@ -62,6 +62,7 @@ from python.rl.policy_checkpoint import (
     write_sb3_launch_decision_sidecar,
     load_sb3_policy,
 )
+from python.experiment.resolved_input_lock import InputLockError
 from python.rl.policy_algo.model_contracts import resolve_launch_decision_contract
 
 __all__ = [
@@ -145,6 +146,12 @@ def _build_launch_decision_checkpoint_callback(deps, *, save_freq: int, save_pat
     )
 
 
+def _mark_training_env_failed(vec_env, reason: str) -> None:
+    marker = getattr(vec_env, "mark_recorded_run_failed", None)
+    if callable(marker):
+        marker(reason)
+
+
 def main() -> int:
     parser = build_train_arg_parser()
     args = parser.parse_args()
@@ -193,272 +200,291 @@ def main() -> int:
     else:
         vec_env = build_leader_vec_env(bootstrap)
 
-    effective_n_envs = int(getattr(vec_env, "num_envs", n_envs))
-    curriculum_cfg = train_config.get("curriculum", {})
-    algo_name = str(train_config.get("algo", "PPO"))
-    algo_cls = deps.PPO
-    if algo_name in ("AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
-        algo_cls = deps.AdaptiveKLPPO
-
-    # Apply curriculum stage 0 *before* SB3 does its initial env.reset() inside learn().
+    training_completed = False
+    exit_failure_reason: str | None = None
     try:
+        effective_n_envs = int(getattr(vec_env, "num_envs", n_envs))
+        curriculum_cfg = train_config.get("curriculum", {})
+        algo_name = str(train_config.get("algo", "PPO"))
+        algo_cls = deps.PPO
+        if algo_name in ("AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
+            algo_cls = deps.AdaptiveKLPPO
+
+        # Apply curriculum stage 0 *before* SB3 does its initial env.reset() inside learn().
         apply_initial_curriculum_stage(
             vec_env, curriculum_cfg, agent_layer=agent_layer, evidence_dir=exp_dir
         )
-    except Exception:
-        try:
-            vec_env.close()
-        finally:
-            bootstrap.exp_lock.close()
-        raise
-    
-    # Test Mode
-    if args.test_only:
-        load_path = test_only_load_path
-        if not route_model_paths and not _validate_launch_decision_checkpoint_for_config(load_path, train_config):
-            return 1
-        route_models = {}
+
+        # Test Mode
+        if args.test_only:
+            load_path = test_only_load_path
+            if not route_model_paths and not _validate_launch_decision_checkpoint_for_config(load_path, train_config):
+                exit_failure_reason = "training_test_only_validation_failed"
+                return 1
+            route_models = {}
+            if route_model_paths:
+                for route, path in route_model_paths.items():
+                    resolved_path = path if os.path.isabs(path) else os.path.join(os.path.dirname(train_cfg_path), path)
+                    print(f"Loading route model for testing: route={route} path={os.path.abspath(resolved_path)}")
+                    route_models[route] = load_sb3_policy(
+                        os.path.abspath(resolved_path),
+                        algo=str(algo_name),
+                        device=str(train_config.get("hyperparameters", {}).get("device", "auto")),
+                    )
+                model = None
+            else:
+                assert load_path is not None
+                print(f"Loading model for testing: {load_path}")
+                model = algo_cls.load(load_path, env=vec_env)
+            if not route_model_paths:
+                try:
+                    validate_loaded_sb3_launch_decision_checkpoint(
+                        load_path,
+                        model=model,
+                        expected_config=train_config,
+                    )
+                except LaunchDecisionMigrationError as exc:
+                    print(f"Error: loaded launch-decision artifacts are incompatible: {exc}")
+                    exit_failure_reason = "training_test_only_checkpoint_incompatible"
+                    return 1
+
+            obs = vec_env.reset()
+            route_dispatcher = (
+                CooperativeRoutePolicyDispatcher(route_models, CooperativeRouteLayout.from_env(vec_env))
+                if route_models
+                else None
+            )
+            for i in range(1000):
+                if route_dispatcher is not None:
+                    action, _ = route_dispatcher.predict(obs, deterministic=True)
+                else:
+                    assert model is not None
+                    action, _ = model.predict(obs, deterministic=True)
+                obs, rewards, dones, info = vec_env.step(action)
+                if i % 100 == 0:
+                    print(f"Step {i}: Reward={rewards[0]:.2f}")
+                if dones[0]:
+                    print("Episode Done.")
+                    obs = vec_env.reset()
+            exit_failure_reason = "training_entrypoint_test_only"
+            return 0
+
+        # 4. Training Setup
         if route_model_paths:
-            for route, path in route_model_paths.items():
-                resolved_path = path if os.path.isabs(path) else os.path.join(os.path.dirname(train_cfg_path), path)
-                print(f"Loading route model for testing: route={route} path={os.path.abspath(resolved_path)}")
-                route_models[route] = load_sb3_policy(
-                    os.path.abspath(resolved_path),
-                    algo=str(algo_name),
-                    device=str(train_config.get("hyperparameters", {}).get("device", "auto")),
-                )
-            model = None
-        else:
-            assert load_path is not None
-            print(f"Loading model for testing: {load_path}")
-            model = algo_cls.load(load_path, env=vec_env)
-        if not route_model_paths:
+            print(
+                "Error: cooperative_execution.policy_models is currently an inference/test-only route surface; "
+                "synchronized multi-policy PPO training is not admitted by this entrypoint. "
+                "Use --test_only or tools/eval/policy_execution_eval.py for route-dispatched models."
+            )
+            exit_failure_reason = "training_route_model_paths_rejected"
+            return 1
+        hyperparams = train_config.get("hyperparameters", {})
+        if training_seed is not None and "seed" not in hyperparams:
+            hyperparams = dict(hyperparams)
+            hyperparams["seed"] = int(training_seed)
+        total_timesteps = train_config.get("total_timesteps", 100000)
+        save_freq = int(train_config.get("save_freq", 50000))
+        # SB3 CheckpointCallback counts callback invocations, not aggregate env timesteps.
+        # Interpret config `save_freq` as total timesteps so multi-env runs checkpoint on the
+        # expected cadence instead of being stretched by `n_envs`.
+        checkpoint_freq = max(1, int(math.ceil(float(save_freq) / float(max(1, effective_n_envs)))))
+
+        # Feature Extractor Logic
+        apply_policy_kwargs_feature_extractor_classes(hyperparams)
+
+        if args.resume_path:
+            if not _validate_launch_decision_checkpoint_for_config(args.resume_path, train_config):
+                exit_failure_reason = "training_resume_validation_failed"
+                return 1
+            print(f"Loading Checkpoint: {args.resume_path}")
+            model = algo_cls.load(args.resume_path, env=vec_env, tensorboard_log=log_dir)
             try:
                 validate_loaded_sb3_launch_decision_checkpoint(
-                    load_path,
+                    args.resume_path,
                     model=model,
                     expected_config=train_config,
                 )
             except LaunchDecisionMigrationError as exc:
                 print(f"Error: loaded launch-decision artifacts are incompatible: {exc}")
+                exit_failure_reason = "training_resume_checkpoint_incompatible"
                 return 1
-        
-        obs = vec_env.reset()
-        route_dispatcher = (
-            CooperativeRoutePolicyDispatcher(route_models, CooperativeRouteLayout.from_env(vec_env))
-            if route_models
-            else None
-        )
-        for i in range(1000):
-            if route_dispatcher is not None:
-                action, _ = route_dispatcher.predict(obs, deterministic=True)
-            else:
-                assert model is not None
-                action, _ = model.predict(obs, deterministic=True)
-            obs, rewards, dones, info = vec_env.step(action)
-            if i % 100 == 0:
-                print(f"Step {i}: Reward={rewards[0]:.2f}")
-            if dones[0]:
-                print("Episode Done.")
-                obs = vec_env.reset()
-        return 0
-
-    # 4. Training Setup
-    if route_model_paths:
-        print(
-            "Error: cooperative_execution.policy_models is currently an inference/test-only route surface; "
-            "synchronized multi-policy PPO training is not admitted by this entrypoint. "
-            "Use --test_only or tools/eval/policy_execution_eval.py for route-dispatched models."
-        )
-        vec_env.close()
-        bootstrap.exp_lock.close()
-        return 1
-    hyperparams = train_config.get("hyperparameters", {})
-    if training_seed is not None and "seed" not in hyperparams:
-        hyperparams = dict(hyperparams)
-        hyperparams["seed"] = int(training_seed)
-    total_timesteps = train_config.get("total_timesteps", 100000)
-    save_freq = int(train_config.get("save_freq", 50000))
-    # SB3 CheckpointCallback counts callback invocations, not aggregate env timesteps.
-    # Interpret config `save_freq` as total timesteps so multi-env runs checkpoint on the
-    # expected cadence instead of being stretched by `n_envs`.
-    checkpoint_freq = max(1, int(math.ceil(float(save_freq) / float(max(1, effective_n_envs)))))
-
-    # Feature Extractor Logic
-    apply_policy_kwargs_feature_extractor_classes(hyperparams)
-
-    if args.resume_path:
-        if not _validate_launch_decision_checkpoint_for_config(args.resume_path, train_config):
-            return 1
-        print(f"Loading Checkpoint: {args.resume_path}")
-        model = algo_cls.load(args.resume_path, env=vec_env, tensorboard_log=log_dir)
-        try:
-            validate_loaded_sb3_launch_decision_checkpoint(
-                args.resume_path,
-                model=model,
-                expected_config=train_config,
-            )
-        except LaunchDecisionMigrationError as exc:
-            print(f"Error: loaded launch-decision artifacts are incompatible: {exc}")
-            return 1
-    else:
-        policy_name = train_config.get("policy", "MultiInputPolicy")
-        policy_cls = policy_name
-        if policy_name == "SquashedMultiInputPolicy":
-            policy_cls = deps.SquashedMultiInputPolicy
-        elif policy_name == "HierarchicalMoEExecutionPolicy":
-            policy_cls = deps.HierarchicalMoEExecutionPolicy
-        model = algo_cls(policy_cls, vec_env, verbose=1, tensorboard_log=log_dir, **hyperparams)
-        hmoe_bootstrapped = maybe_initialize_hmoe_from_shared(
-            model,
-            train_config=train_config,
-            args=args,
-        )
-        if hmoe_bootstrapped:
-            print("HMoE bootstrap: initialized family heads from shared action head and reset subexpert residuals.")
-        if args.init_from:
-            init_path = os.path.abspath(args.init_from)
-            if not os.path.exists(init_path):
-                print(f"Error: Initialization checkpoint not found: {init_path}")
-                return 1
-            print(f"Initializing Parameters From: {init_path}")
-            model.set_parameters(init_path, exact_match=False, device=hyperparams.get("device", "auto"))
-        elif agent_layer in {"execution", "cooperative_execution"} and not args.no_init_safe_action_bias:
-            apply_safe_action_bias(model, env_settings["action_mode"], scenario_path, train_config=train_config)
-        elif agent_layer == "leader":
-            apply_leader_action_bias(model)
-
-    print(f"Rollout buffer: {type(model.rollout_buffer).__name__}")
-
-    diagnostics_cfg = train_config.get("diagnostics", {}) if isinstance(train_config.get("diagnostics", {}), dict) else {}
-    nonfinite_probe_enabled = diagnostics_cfg.get("nonfinite_probe")
-    if args.nonfinite_probe is not None:
-        nonfinite_probe_enabled = bool(args.nonfinite_probe)
-    nonfinite_probe_enabled = bool(nonfinite_probe_enabled)
-
-    nonfinite_probe_report = args.nonfinite_probe_report
-    if nonfinite_probe_report is None:
-        nonfinite_probe_report = diagnostics_cfg.get("nonfinite_probe_report")
-    if nonfinite_probe_report is None:
-        nonfinite_probe_report = os.path.join(exp_dir, "nonfinite_probe_report.json")
-    elif not os.path.isabs(nonfinite_probe_report):
-        nonfinite_probe_report = os.path.abspath(os.path.join(exp_dir, nonfinite_probe_report))
-
-    nonfinite_probe_history = args.nonfinite_probe_history
-    if nonfinite_probe_history is None:
-        nonfinite_probe_history = diagnostics_cfg.get("nonfinite_probe_history", 384)
-    nonfinite_probe_history = max(32, int(nonfinite_probe_history))
-
-    probe = None
-    if nonfinite_probe_enabled:
-        probe = deps.NonFiniteTrainingProbe(
-            report_path=str(nonfinite_probe_report),
-            history_limit=int(nonfinite_probe_history),
-            run_metadata={
-                "scenario": scenario_path,
-                "train_config": train_cfg_path,
-                "exp_dir": exp_dir,
-                "run_name": run_name,
-                "agent_layer": agent_layer,
-                "resume_path": os.path.abspath(args.resume_path) if args.resume_path else None,
-                "seed": None if training_seed is None else int(training_seed),
-            },
-            enabled=True,
-        )
-        probe.install(model)
-        print(
-            "Non-finite probe: "
-            f"enabled=1 report={nonfinite_probe_report} history={int(nonfinite_probe_history)}"
-        )
-    else:
-        print("Non-finite probe: enabled=0")
-    
-    print(
-        f"Starting Training for {total_timesteps} steps... "
-        f"(checkpoint every {save_freq} total timesteps -> every {checkpoint_freq} callback steps)"
-    )
-
-    checkpoint_callback = _build_launch_decision_checkpoint_callback(
-        deps,
-        save_freq=checkpoint_freq,
-        save_path=ckpt_dir,
-        train_config=train_config,
-    )
-    callbacks = [checkpoint_callback]
-    force_hmoe_diagnostics = bool(getattr(model, "policy", None) is not None and hasattr(model.policy, "get_hmoe_route_stats"))
-    if args.diagnostics or force_hmoe_diagnostics:
-        callbacks.append(
-            deps.CMODiagnosticsCallback(
-                log_every_timesteps=int(args.diagnostics_every),
-                preterm_window_steps=int(args.diagnostics_preterm_window),
-            )
-        )
-        if force_hmoe_diagnostics and not args.diagnostics:
-            print("Diagnostics: auto-enabled for HMoE route/parameter observability.")
-    if isinstance(curriculum_cfg, dict) and curriculum_cfg.get("stages"):
-        callbacks.append(
-            deps.ScenarioCurriculumCallback(
-                stages=list(curriculum_cfg["stages"]),
-                check_freq=int(curriculum_cfg.get("check_freq", 10_000)),
-            )
-        )
-
-    early_stop_cfg = train_config.get("early_stop", {}) if isinstance(train_config.get("early_stop", {}), dict) else {}
-    best_ema_ckpt = os.path.join(ckpt_dir, "best_ema_model.zip")
-    if bool(early_stop_cfg.get("enabled", False)):
-        callbacks.append(
-            deps.RewardPlateauEarlyStopCallback(
-                min_timesteps=int(early_stop_cfg.get("min_timesteps", 200_000)),
-                check_every_timesteps=int(early_stop_cfg.get("check_every_timesteps", 20_000)),
-                patience_checks=int(early_stop_cfg.get("patience_checks", 6)),
-                min_improvement=float(early_stop_cfg.get("min_improvement", 0.5)),
-                ema_alpha=float(early_stop_cfg.get("ema_alpha", 0.05)),
-                best_model_path=os.path.join(ckpt_dir, "best_ema_model"),
-                verbose=1,
-            )
-        )
-
-    callback = deps.CallbackList(callbacks) if len(callbacks) > 1 else checkpoint_callback
-    
-    try:
-        # If resuming, we might want to adjust total_timesteps? 
-        # reset_num_timesteps=False allows continuing TB logs seamlessly
-        model.learn(total_timesteps=total_timesteps, callback=callback, reset_num_timesteps=(not args.resume_path))
-        
-        final_path = os.path.join(exp_dir, "final_model")
-        export_best = bool(early_stop_cfg.get("enabled", False)) and bool(
-            early_stop_cfg.get("export_best_as_final", True)
-        )
-        if export_best and os.path.exists(best_ema_ckpt):
-            print(f"Saving final model from best EMA checkpoint: {best_ema_ckpt}")
-            best_model = algo_cls.load(best_ema_ckpt, env=vec_env, tensorboard_log=log_dir)
-            best_model.save(final_path)
-            _write_launch_decision_sidecar(final_path, best_model, train_config)
         else:
-            print(f"Saving final model to {final_path}")
-            model.save(final_path)
-            _write_launch_decision_sidecar(final_path, model, train_config)
-        print("Training Complete.")
-        
-    except KeyboardInterrupt:
-        print("\nTraining Interrupted by User!")
-        save_path = os.path.join(ckpt_dir, "interrupted_model")
-        print(f"Saving emergency checkpoint to {save_path}...")
-        model.save(save_path)
-        _write_launch_decision_sidecar(save_path, model, train_config)
-        print("Done.")
-        return 130
-    except deps.NonFiniteProbeError as exc:
-        print("\nTraining aborted by non-finite probe.")
-        if probe is not None:
-            report_path = probe.write_error_report(model, exc)
-            print(f"Non-finite probe report written to {report_path}")
-        save_path = os.path.join(ckpt_dir, "nonfinite_probe_abort_model")
-        print(f"Saving abort checkpoint to {save_path}...")
-        model.save(save_path)
-        _write_launch_decision_sidecar(save_path, model, train_config)
-        print("Done.")
+            policy_name = train_config.get("policy", "MultiInputPolicy")
+            policy_cls = policy_name
+            if policy_name == "SquashedMultiInputPolicy":
+                policy_cls = deps.SquashedMultiInputPolicy
+            elif policy_name == "HierarchicalMoEExecutionPolicy":
+                policy_cls = deps.HierarchicalMoEExecutionPolicy
+            model = algo_cls(policy_cls, vec_env, verbose=1, tensorboard_log=log_dir, **hyperparams)
+            hmoe_bootstrapped = maybe_initialize_hmoe_from_shared(
+                model,
+                train_config=train_config,
+                args=args,
+            )
+            if hmoe_bootstrapped:
+                print("HMoE bootstrap: initialized family heads from shared action head and reset subexpert residuals.")
+            if args.init_from:
+                init_path = os.path.abspath(args.init_from)
+                if not os.path.exists(init_path):
+                    print(f"Error: Initialization checkpoint not found: {init_path}")
+                    exit_failure_reason = "training_init_checkpoint_missing"
+                    return 1
+                print(f"Initializing Parameters From: {init_path}")
+                model.set_parameters(init_path, exact_match=False, device=hyperparams.get("device", "auto"))
+            elif agent_layer in {"execution", "cooperative_execution"} and not args.no_init_safe_action_bias:
+                apply_safe_action_bias(model, env_settings["action_mode"], scenario_path, train_config=train_config)
+            elif agent_layer == "leader":
+                apply_leader_action_bias(model)
+
+        print(f"Rollout buffer: {type(model.rollout_buffer).__name__}")
+
+        diagnostics_cfg = train_config.get("diagnostics", {}) if isinstance(train_config.get("diagnostics", {}), dict) else {}
+        nonfinite_probe_enabled = diagnostics_cfg.get("nonfinite_probe")
+        if args.nonfinite_probe is not None:
+            nonfinite_probe_enabled = bool(args.nonfinite_probe)
+        nonfinite_probe_enabled = bool(nonfinite_probe_enabled)
+
+        nonfinite_probe_report = args.nonfinite_probe_report
+        if nonfinite_probe_report is None:
+            nonfinite_probe_report = diagnostics_cfg.get("nonfinite_probe_report")
+        if nonfinite_probe_report is None:
+            nonfinite_probe_report = os.path.join(exp_dir, "nonfinite_probe_report.json")
+        elif not os.path.isabs(nonfinite_probe_report):
+            nonfinite_probe_report = os.path.abspath(os.path.join(exp_dir, nonfinite_probe_report))
+
+        nonfinite_probe_history = args.nonfinite_probe_history
+        if nonfinite_probe_history is None:
+            nonfinite_probe_history = diagnostics_cfg.get("nonfinite_probe_history", 384)
+        nonfinite_probe_history = max(32, int(nonfinite_probe_history))
+
+        probe = None
+        if nonfinite_probe_enabled:
+            probe = deps.NonFiniteTrainingProbe(
+                report_path=str(nonfinite_probe_report),
+                history_limit=int(nonfinite_probe_history),
+                run_metadata={
+                    "scenario": scenario_path,
+                    "train_config": train_cfg_path,
+                    "exp_dir": exp_dir,
+                    "run_name": run_name,
+                    "agent_layer": agent_layer,
+                    "resume_path": os.path.abspath(args.resume_path) if args.resume_path else None,
+                    "seed": None if training_seed is None else int(training_seed),
+                },
+                enabled=True,
+            )
+            probe.install(model)
+            print(
+                "Non-finite probe: "
+                f"enabled=1 report={nonfinite_probe_report} history={int(nonfinite_probe_history)}"
+            )
+        else:
+            print("Non-finite probe: enabled=0")
+
+        print(
+            f"Starting Training for {total_timesteps} steps... "
+            f"(checkpoint every {save_freq} total timesteps -> every {checkpoint_freq} callback steps)"
+        )
+
+        checkpoint_callback = _build_launch_decision_checkpoint_callback(
+            deps,
+            save_freq=checkpoint_freq,
+            save_path=ckpt_dir,
+            train_config=train_config,
+        )
+        callbacks = [checkpoint_callback]
+        force_hmoe_diagnostics = bool(getattr(model, "policy", None) is not None and hasattr(model.policy, "get_hmoe_route_stats"))
+        if args.diagnostics or force_hmoe_diagnostics:
+            callbacks.append(
+                deps.CMODiagnosticsCallback(
+                    log_every_timesteps=int(args.diagnostics_every),
+                    preterm_window_steps=int(args.diagnostics_preterm_window),
+                )
+            )
+            if force_hmoe_diagnostics and not args.diagnostics:
+                print("Diagnostics: auto-enabled for HMoE route/parameter observability.")
+        if isinstance(curriculum_cfg, dict) and curriculum_cfg.get("stages"):
+            callbacks.append(
+                deps.ScenarioCurriculumCallback(
+                    stages=list(curriculum_cfg["stages"]),
+                    check_freq=int(curriculum_cfg.get("check_freq", 10_000)),
+                )
+            )
+
+        early_stop_cfg = train_config.get("early_stop", {}) if isinstance(train_config.get("early_stop", {}), dict) else {}
+        best_ema_ckpt = os.path.join(ckpt_dir, "best_ema_model.zip")
+        if bool(early_stop_cfg.get("enabled", False)):
+            callbacks.append(
+                deps.RewardPlateauEarlyStopCallback(
+                    min_timesteps=int(early_stop_cfg.get("min_timesteps", 200_000)),
+                    check_every_timesteps=int(early_stop_cfg.get("check_every_timesteps", 20_000)),
+                    patience_checks=int(early_stop_cfg.get("patience_checks", 6)),
+                    min_improvement=float(early_stop_cfg.get("min_improvement", 0.5)),
+                    ema_alpha=float(early_stop_cfg.get("ema_alpha", 0.05)),
+                    best_model_path=os.path.join(ckpt_dir, "best_ema_model"),
+                    verbose=1,
+                )
+            )
+
+        callback = deps.CallbackList(callbacks) if len(callbacks) > 1 else checkpoint_callback
+
+        try:
+            # If resuming, we might want to adjust total_timesteps?
+            # reset_num_timesteps=False allows continuing TB logs seamlessly
+            model.learn(total_timesteps=total_timesteps, callback=callback, reset_num_timesteps=(not args.resume_path))
+
+            final_path = os.path.join(exp_dir, "final_model")
+            export_best = bool(early_stop_cfg.get("enabled", False)) and bool(
+                early_stop_cfg.get("export_best_as_final", True)
+            )
+            if export_best and os.path.exists(best_ema_ckpt):
+                print(f"Saving final model from best EMA checkpoint: {best_ema_ckpt}")
+                best_model = algo_cls.load(best_ema_ckpt, env=vec_env, tensorboard_log=log_dir)
+                best_model.save(final_path)
+                _write_launch_decision_sidecar(final_path, best_model, train_config)
+            else:
+                print(f"Saving final model to {final_path}")
+                model.save(final_path)
+                _write_launch_decision_sidecar(final_path, model, train_config)
+            print("Training Complete.")
+            vec_env.close()
+            training_completed = True
+        except KeyboardInterrupt:
+            print("\nTraining Interrupted by User!")
+            save_path = os.path.join(ckpt_dir, "interrupted_model")
+            print(f"Saving emergency checkpoint to {save_path}...")
+            model.save(save_path)
+            _write_launch_decision_sidecar(save_path, model, train_config)
+            print("Done.")
+            exit_failure_reason = "training_interrupted"
+            return 130
+        except deps.NonFiniteProbeError as exc:
+            print("\nTraining aborted by non-finite probe.")
+            if probe is not None:
+                report_path = probe.write_error_report(model, exc)
+                print(f"Non-finite probe report written to {report_path}")
+            save_path = os.path.join(ckpt_dir, "nonfinite_probe_abort_model")
+            print(f"Saving abort checkpoint to {save_path}...")
+            model.save(save_path)
+            _write_launch_decision_sidecar(save_path, model, train_config)
+            print("Done.")
+            exit_failure_reason = "training_nonfinite_probe_abort"
+            raise
+    except Exception as exc:
+        if exit_failure_reason is None:
+            exit_failure_reason = f"training_exception:{type(exc).__name__}"
         raise
+    finally:
+        try:
+            if not training_completed:
+                _mark_training_env_failed(vec_env, exit_failure_reason or "training_incomplete_exit")
+                try:
+                    vec_env.close()
+                except InputLockError:
+                    pass
+        finally:
+            if getattr(bootstrap, "exp_lock", None) is not None:
+                bootstrap.exp_lock.close()
 
     return 0
 
