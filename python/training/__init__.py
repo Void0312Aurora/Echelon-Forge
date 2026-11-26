@@ -27,6 +27,12 @@ from .vec_env_factory import (
     print_test_only_preflight_runtime_summary,
     resolve_vec_env_spec,
 )
+from .cooperative_policy_dispatch import (
+    CooperativePolicyDispatchError,
+    CooperativeRouteLayout,
+    CooperativeRoutePolicyDispatcher,
+    resolve_cooperative_policy_models,
+)
 
 __all__ = [
     "TrainingBootstrap",
@@ -50,4 +56,8 @@ __all__ = [
     "resolve_vec_env_spec",
     "warn_execution_visual_rollout_memory",
     "translate_launch_decision_config",
+    "CooperativePolicyDispatchError",
+    "CooperativeRouteLayout",
+    "CooperativeRoutePolicyDispatcher",
+    "resolve_cooperative_policy_models",
 ]
