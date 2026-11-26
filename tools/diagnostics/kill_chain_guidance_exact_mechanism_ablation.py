@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import math
 import os
@@ -24,7 +23,7 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.diagnostics.common import native_stdout_to_stderr
+from tools.diagnostics.common import native_stdout_to_stderr, write_csv_rows
 from tools.diagnostics import kill_chain_decoupling_probe as probe  # noqa: E402
 
 SCHEMA_VERSION = "a2.kill_chain_guidance_exact_mechanism_ablation.v2"
@@ -670,12 +669,7 @@ def _csv_value(value: Any) -> Any:
   return value
 
 def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
-  fieldnames = sorted({key for row in rows for key in row})
-  with path.open("w", encoding="utf-8", newline="") as handle:
-    writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
-    writer.writeheader()
-    for row in rows:
-      writer.writerow({key: _csv_value(row.get(key)) for key in fieldnames})
+  write_csv_rows(path, rows, value_transform=_csv_value)
 
 def render_markdown(report: dict[str, Any]) -> str:
   effect_summary = dict(report.get("summary", {}).get("matched_effects", {}) or {})
