@@ -139,21 +139,37 @@ class NativeStageContractProjection:
     """
 
     node_id: str
-    stage_node_id: str
-    owner_module: str
     authored_node: Mapping[str, Any]
     owner_contract: Mapping[str, Any]
-    identity_digest: str
 
-    def as_dict(self) -> dict[str, Any]:
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "authored_node", freeze_json_mapping(self.authored_node))
+        object.__setattr__(self, "owner_contract", freeze_json_mapping(self.owner_contract))
+
+    @property
+    def stage_node_id(self) -> str:
+        return self.owner_contract["node_id"]
+
+    @property
+    def owner_module(self) -> str:
+        return self.owner_contract["owner_module"]
+
+    def _identity_payload(self) -> dict[str, Any]:
         return {
             "node_id": self.node_id,
             "stage_node_id": self.stage_node_id,
             "owner_module": self.owner_module,
             "authored_node": thaw_json_value(self.authored_node),
             "owner_contract": thaw_json_value(self.owner_contract),
-            "identity_digest": self.identity_digest,
         }
+
+    @property
+    def identity_digest(self) -> str:
+        return _digest(self._identity_payload())
+
+    def as_dict(self) -> dict[str, Any]:
+        payload = self._identity_payload()
+        return {**payload, "identity_digest": _digest(payload)}
 
 
 @dataclass(frozen=True)
@@ -203,9 +219,10 @@ class SchemaVocabularyEntry:
 class MechanismSchemaVocabulary:
     """Immutable owner vocabulary used to qualify mechanism port schemas.
 
-    This is a qualification artifact.  It identifies the native owner of each
-    schema, but it does not publish a dispatcher or create an executable
-    contract on its own.
+    Schema labels and owner references are compiler input evidence. Cordis
+    catalog locks own descriptor admission, implementation versions and trust;
+    StageNodeManifest owns packet/shard/publication contracts. Neither owner
+    defines the finer port units, frames or freshness labels in this view.
     """
 
     vocabulary_id: str
@@ -250,15 +267,14 @@ class MechanismSchemaVocabulary:
 class MechanismSchemaVocabularyRegistry:
     """Merge owner-supplied schema vocabularies without inventing ownership.
 
-    A registry is still a qualification input.  Every entry must come from an
-    explicit owner vocabulary, and conflicting owners for one schema fail
-    closed.  It does not make a schema executable or publish a dispatcher.
+    This is a compiler input view, not a separately persisted catalog lock.
+    Entries are derived from the owner vocabularies; the existing serialized
+    view and digest remain stable for qualification identity compatibility.
     """
 
     registry_id: str
     version: str
     vocabularies: tuple[MechanismSchemaVocabulary, ...]
-    entries: tuple[SchemaVocabularyEntry, ...] = field(init=False)
 
     def __post_init__(self) -> None:
         for field_name in ("registry_id", "version"):
@@ -273,29 +289,26 @@ class MechanismSchemaVocabularyRegistry:
         vocabulary_ids = [item.vocabulary_id for item in vocabularies]
         if len(set(vocabulary_ids)) != len(vocabulary_ids):
             raise ValueError("schema vocabulary registry ids must be unique")
-        owners: dict[str, str] = {}
-        for vocabulary in vocabularies:
-            for entry in vocabulary.entries:
-                previous = owners.get(entry.schema)
-                if previous is not None and previous != entry.owner_ref:
-                    raise ValueError(
-                        f"schema registry owner conflict for {entry.schema!r}: "
-                        f"{previous!r} versus {entry.owner_ref!r}"
-                    )
-                owners[entry.schema] = entry.owner_ref
         object.__setattr__(
             self,
             "vocabularies",
             tuple(sorted(vocabularies, key=lambda item: item.vocabulary_id)),
         )
-        object.__setattr__(
-            self,
-            "entries",
-            tuple(
-                SchemaVocabularyEntry(schema, owner_ref)
-                for schema, owner_ref in sorted(owners.items())
-            ),
-        )
+        _ = self.entries  # Validate ownership at construction, before compilation.
+
+    @property
+    def entries(self) -> tuple[SchemaVocabularyEntry, ...]:
+        owners: dict[str, SchemaVocabularyEntry] = {}
+        for vocabulary in self.vocabularies:
+            for entry in vocabulary.entries:
+                previous = owners.get(entry.schema)
+                if previous is not None and previous != entry:
+                    raise ValueError(
+                        f"schema registry owner conflict for {entry.schema!r}: "
+                        f"{previous.owner_ref!r} versus {entry.owner_ref!r}"
+                    )
+                owners[entry.schema] = entry
+        return tuple(owners[schema] for schema in sorted(owners))
 
     @property
     def vocabulary_id(self) -> str:
@@ -995,14 +1008,25 @@ def project_stage_manifest_qualification(
     node_stage_bindings: Mapping[str, str],
     stage_manifests: Mapping[str, Any],
     pipeline_order: Sequence[str] = (),
+    expected_manifest_registry_digest: str | None = None,
 ) -> StageManifestQualificationProjection:
     """Project an authored graph onto owner StageNodeManifest snapshots.
 
     This is a deterministic, non-executing qualification artifact.  It fails
     closed on any validation diagnostic and never lowers authored nodes into a
-    native scheduler or provider request.
+    native scheduler or provider request. A caller reusing prior qualification
+    evidence can pin its manifest_registry_digest to reject a stale snapshot.
+    This digest covers the selected binding snapshots, not the Cordis lock or
+    a native canonicalization/version authority.
     """
 
+    # Validate and hash the same detached owner values, even for mutable native
+    # binding objects. Do not infer manifests from authored mechanism ports.
+    stage_manifests = {
+        stage_id: _manifest_contract_payload(stage_manifests[stage_id])
+        for stage_id in set(node_stage_bindings.values())
+        if stage_id in stage_manifests and stage_manifests[stage_id] is not None
+    }
     diagnostics = validate_stage_manifest_bindings(
         graph,
         node_stage_bindings=node_stage_bindings,
@@ -1016,28 +1040,11 @@ def project_stage_manifest_qualification(
 
     node_contracts: list[NativeStageContractProjection] = []
     for node_id, spec in graph.nodes:
-        stage_node_id = node_stage_bindings[node_id]
-        manifest = stage_manifests[stage_node_id]
-        owner_contract = _manifest_contract_payload(manifest)
-        owner_module = _manifest_field(manifest, "owner_module")
-        node_payload = _authored_node_payload(spec)
-        node_identity = _digest(
-            {
-                "node_id": node_id,
-                "stage_node_id": stage_node_id,
-                "owner_module": owner_module,
-                "authored_node": thaw_json_value(node_payload),
-                "owner_contract": thaw_json_value(owner_contract),
-            }
-        )
         node_contracts.append(
             NativeStageContractProjection(
                 node_id=node_id,
-                stage_node_id=stage_node_id,
-                owner_module=owner_module,
-                authored_node=node_payload,
-                owner_contract=owner_contract,
-                identity_digest=node_identity,
+                authored_node=_authored_node_payload(spec),
+                owner_contract=stage_manifests[node_stage_bindings[node_id]],
             )
         )
 
@@ -1052,6 +1059,14 @@ def project_stage_manifest_qualification(
         ]
     }
     manifest_registry_digest = _digest(registry_payload)
+    if (
+        expected_manifest_registry_digest is not None
+        and manifest_registry_digest != expected_manifest_registry_digest
+    ):
+        raise MechanismGraphError(
+            "native stage qualification rejected: mechanism.native_stage_manifest_stale: "
+            "owner snapshot differs from expected manifest_registry_digest"
+        )
     identity_payload = {
         "graph_identity_digest": graph.identity_digest,
         "manifest_registry_digest": manifest_registry_digest,
@@ -1112,7 +1127,7 @@ def validate_stage_manifest_bindings(
     graph: CompiledMechanismGraph,
     *,
     node_stage_bindings: Mapping[str, str],
-    stage_manifests: Mapping[str, Mapping[str, Any]],
+    stage_manifests: Mapping[str, Any],
     pipeline_order: Sequence[str] = (),
     require_native_contract: bool = False,
 ) -> tuple[GraphDiagnostic, ...]:
