@@ -124,14 +124,15 @@ authored definition exactly unchanged. F-16 station assignments are explicit
 single-store hardpoint selections. Ground retains its authored capability and
 movement declarations. The tests compare canonical DTOs with fully revalidated
 copies, assert that repeat resolution/lowering/thawing does not occur, and check
-unchanged full-definition digest semantics. The native fixtures load the lowered
-snapshot through the existing JSON loader, compare complete capability semantics
-against the actual factory plan, then compare all public observation fields and
-F-16 missile inventory at setup and after each of four steps against legacy
-spawning. Negative fixtures cover stale blueprint constraints, owner physical
-parameters/evidence/capabilities, direct plan mutation and external-plan errors.
+unchanged full-definition digest semantics. Native parity exercises load the lowered snapshot through the existing JSON
+loader, compare complete capability semantics against the actual factory plan,
+then compare all public `AgentObservation` and `InstrumentState` fields plus
+F-16 `default_loadout` and matching `missiles_remaining` semantics at setup and
+across four simulation steps against legacy spawning. Negative fixtures cover
+stale blueprint constraints, owner physical parameters/evidence/capabilities,
+direct plan mutation, hardpoint `quantity != 1` (including booleans), and
+external-plan errors.
 
 Native parity remains a required execution gate on a host with a local `ef_py`
-build. The implementation checkout on Windows has no such build; fixture
-presence and passing content tests alone do not establish native execution or
-production admission.
+build; passing content-only tests without a native build does not establish
+native execution or production admission.
