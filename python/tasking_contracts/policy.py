@@ -187,8 +187,17 @@ def load_policy_checkpoint(
 
 @dataclass(frozen=True)
 class _AdmissionValidationToken:
-    """Private snapshot binding an admission marker to its validated fields."""
+    """In-process bug-detection receipt, not a secret or a security capability.
 
+    Bind the complete descriptor and owner binding to the admission snapshot.
+    This catches accidental construction, dataclass replacement and stale reuse.
+    External bytes never supply this token; same-process code can manufacture
+    it or mutate Python objects and is trusted. See the Policy ADR threat model.
+    """
+
+    policy: PolicyDescriptor
+    binding: AgentBinding
+    schema_version: str
     admitted: bool
     policy_id: str
     diagnostics: tuple[str, ...]
@@ -261,6 +270,7 @@ class PolicyAdmission:
     )
 
     def as_dict(self) -> dict[str, object]:
+        # Evidence only: serialized admission is never a transferable receipt.
         return {
             "schema_version": self.schema_version,
             "admitted": self.admitted,
@@ -270,6 +280,63 @@ class PolicyAdmission:
             "observation_view_ref": self.observation_view_ref,
             "observation_view_schema_version": self.observation_view_schema_version,
         }
+
+
+def validate_policy_admission(
+    policy: PolicyDescriptor,
+    admission: PolicyAdmission,
+    *,
+    binding: AgentBinding | None = None,
+) -> AgentBinding:
+    """Check receipt consistency, without repeating owner catalogue negotiation.
+
+    A changed descriptor or owner binding needs a fresh ``admit_policy`` call.
+    This receipt has no revocation service: live rights remain the action
+    owner's per-decision responsibility. It does not authenticate Python code.
+    """
+    if not isinstance(policy, PolicyDescriptor) or not isinstance(admission, PolicyAdmission):
+        raise TypeError("policy admission requires PolicyDescriptor and PolicyAdmission")
+    if not admission.admitted or admission.policy_id != policy.policy_id:
+        raise ValueError("policy.runtime_binding_not_admitted")
+    marker = admission._validation_marker
+    if not isinstance(marker, _AdmissionValidationToken):
+        raise ValueError("policy.runtime_binding_admission_not_owner_validated")
+    expected = _AdmissionValidationToken(
+        policy=marker.policy,
+        binding=marker.binding,
+        schema_version=admission.schema_version,
+        admitted=admission.admitted,
+        policy_id=admission.policy_id,
+        diagnostics=admission.diagnostics,
+        checkpoint=admission.checkpoint,
+        observation_view_ref=admission.observation_view_ref,
+        observation_view_schema_version=admission.observation_view_schema_version,
+    )
+    if admission.schema_version != SCHEMA_VERSION or marker != expected:
+        raise ValueError("policy.runtime_binding_admission_not_owner_validated")
+    if admission.checkpoint != policy.checkpoint:
+        raise ValueError("policy.runtime_binding_checkpoint_mismatch")
+    if marker.policy != policy:
+        raise ValueError("policy.runtime_binding_policy_mismatch")
+    if binding is not None and marker.binding != binding:
+        raise ValueError("policy.runtime_binding_owner_binding_mismatch")
+    return marker.binding
+
+
+def _validate_action_bounds(bounds: Sequence[tuple[float, float]]) -> None:
+    for pair in bounds:
+        if len(pair) != 2:
+            raise ValueError("owner action bounds must be finite and ordered")
+        low, high = pair
+        try:
+            invalid = (
+                isinstance(low, bool) or isinstance(high, bool)
+                or not math.isfinite(low) or not math.isfinite(high) or low > high
+            )
+        except (TypeError, ValueError):
+            invalid = True
+        if invalid:
+            raise ValueError("owner action bounds must be finite and ordered")
 
 
 class PolicyRuntimeBinding:
@@ -295,8 +362,10 @@ class PolicyRuntimeBinding:
         | None = None,
         action_projector: Callable[[Any], Any] | None = None,
     ) -> None:
+        frozen_bounds = tuple(tuple(pair) for pair in bounds)
         self._validate_binding_inputs(
-            policy, admission, bounds=bounds, timing=timing,
+            policy, admission, bounds=frozen_bounds, timing=timing,
+            observation_projector=observation_projector, action_values=action_values,
             action_authorizer=action_authorizer, action_projector=action_projector,
         )
         if not all(callable(getattr(model, name, None)) for name in ("reset", "decide", "close")):
@@ -304,43 +373,37 @@ class PolicyRuntimeBinding:
         self.policy = policy
         self.admission = admission
         self.model = model
-        self.bounds = tuple(bounds)
+        self.bounds = frozen_bounds
         self.timing = timing
         self.optional_defaults = dict(optional_defaults or {})
-        self._observation_projector = observation_projector or (lambda values, _sources: values)
-        self._action_values = action_values or self._default_action_values
+        self._observation_projector = (
+            (lambda values, _sources: values)
+            if observation_projector is None else observation_projector
+        )
+        self._action_values = self._default_action_values if action_values is None else action_values
         self._action_authorizer = action_authorizer
-        self._action_projector = action_projector or (lambda value: value)
+        self._action_projector = (lambda value: value) if action_projector is None else action_projector
 
     @staticmethod
     def _validate_binding_inputs(
         policy: PolicyDescriptor, admission: PolicyAdmission, *,
         bounds: Sequence[tuple[float, float]], timing: str,
+        observation_projector: Any, action_values: Any,
         action_authorizer: Any, action_projector: Any,
     ) -> None:
         """Shared admission checks that must precede external model loading."""
-        if not admission.admitted or admission.policy_id != policy.policy_id:
-            raise ValueError("policy.runtime_binding_not_admitted")
-        expected_validation_token = _AdmissionValidationToken(
-            admitted=admission.admitted,
-            policy_id=admission.policy_id,
-            diagnostics=admission.diagnostics,
-            checkpoint=admission.checkpoint,
-            observation_view_ref=admission.observation_view_ref,
-            observation_view_schema_version=admission.observation_view_schema_version,
-        )
-        if admission._validation_marker != expected_validation_token:
-            raise ValueError("policy.runtime_binding_admission_not_owner_validated")
-        if admission.checkpoint != policy.checkpoint:
-            raise ValueError("policy.runtime_binding_checkpoint_mismatch")
+        validate_policy_admission(policy, admission)
         if timing != policy.action.timing:
             raise ValueError("policy.action_timing_mismatch:action.timing")
         if len(bounds) != policy.action.dimension:
             raise ValueError("policy.action_dimension_mismatch:action.bounds")
-        if action_authorizer is not None and not callable(action_authorizer):
-            raise TypeError("policy action_authorizer must be callable")
-        if action_projector and not callable(action_projector):
-            raise TypeError("policy action_projector must be callable")
+        _validate_action_bounds(bounds)
+        for name, callback in (
+            ("observation_projector", observation_projector), ("action_values", action_values),
+            ("action_authorizer", action_authorizer), ("action_projector", action_projector),
+        ):
+            if callback is not None and not callable(callback):
+                raise TypeError(f"policy {name} must be callable")
 
     @classmethod
     def from_checkpoint_artifact(
@@ -359,14 +422,20 @@ class PolicyRuntimeBinding:
         | None = None,
         action_projector: Callable[[Any], Any] | None = None,
     ) -> "PolicyRuntimeBinding":
-        """Validate admission before loading verified bytes through the owner."""
+        """Check binding inputs before any owner loader can observe the bytes.
+
+        Construction repeats the cheap receipt/input checks after the owner
+        callback. Neither check repeats admission's catalogue negotiation.
+        Digest verification remains an independent external-byte boundary.
+        """
 
         if policy.checkpoint is None:
             raise PolicyCheckpointLoadError("policy.checkpoint_required_for_artifact_binding")
-        frozen_bounds = tuple(bounds)
+        frozen_bounds = tuple(tuple(pair) for pair in bounds)
         frozen_defaults = dict(optional_defaults or {})
         cls._validate_binding_inputs(
             policy, admission, bounds=frozen_bounds, timing=timing,
+            observation_projector=observation_projector, action_values=action_values,
             action_authorizer=action_authorizer, action_projector=action_projector,
         )
         model = load_policy_checkpoint(
@@ -391,6 +460,14 @@ class PolicyRuntimeBinding:
     def model_kind(self) -> str | None:
         value = getattr(self.model, "model_kind", getattr(self.model, "_decision_model_kind", None))
         return None if value is None else str(value)
+
+    def validate_agent_binding(self, *, role_id: str, authority_scope: str) -> None:
+        """Reject reuse under a runtime role/scope other than the admitted owner."""
+        owner = validate_policy_admission(self.policy, self.admission)
+        if owner.role_id != role_id:
+            raise ValueError("policy.runtime_binding_owner_role_mismatch")
+        if authority_scope != "unspecified" and authority_scope != self.policy.action.authority_scope:
+            raise ValueError("policy.runtime_binding_owner_authority_mismatch")
 
     @staticmethod
     def _default_action_values(action: Any) -> Sequence[float]:
@@ -657,6 +734,9 @@ def admit_policy(
         observation_view_ref=admitted_view_ref,
         observation_view_schema_version=admitted_view_schema_version,
         _validation_marker=_AdmissionValidationToken(
+            policy=policy,
+            binding=binding,
+            schema_version=SCHEMA_VERSION,
             admitted=admitted,
             policy_id=policy.policy_id,
             diagnostics=tuple(diagnostics),
@@ -680,9 +760,8 @@ def validate_policy_action(
         errors.append("policy.action_timing_mismatch:action.timing")
     if len(values) != policy.action.dimension or len(bounds) != policy.action.dimension:
         return tuple(errors + ["policy.action_dimension_mismatch:action.values"])
+    _validate_action_bounds(bounds)
     for index, (value, (low, high)) in enumerate(zip(values, bounds)):
-        if not math.isfinite(low) or not math.isfinite(high) or low > high:
-            raise ValueError("owner action bounds must be finite and ordered")
         if (
             isinstance(value, bool)
             or not isinstance(value, (int, float))
@@ -729,8 +808,7 @@ def project_policy_observation(
     This bounded numeric projection follows admission; domain owners still own
     normalization/tensor encoding. Absent optional values are never invented.
     """
-    if not admission.admitted or admission.policy_id != policy.policy_id:
-        raise ValueError("policy.projection_not_admitted")
+    validate_policy_admission(policy, admission)
 
     def checked(value: Any, shape: tuple[int, ...], name: str) -> Any:
         if not shape:
@@ -777,5 +855,6 @@ __all__ = [
     "load_policy_checkpoint",
     "select_policy",
     "validate_policy_action",
+    "validate_policy_admission",
     "project_policy_observation",
 ]

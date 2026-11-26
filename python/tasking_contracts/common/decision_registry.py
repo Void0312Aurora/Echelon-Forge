@@ -21,13 +21,92 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, Callable, Mapping, Protocol, runtime_checkable
 
+from ..policy import AgentBinding, PolicyAdmission, PolicyDescriptor, admit_policy
 
+# Compatibility vocabulary for legacy selection/report formats, never rights.
 DECISION_MODEL_KINDS: frozenset[str] = frozenset(
     {"scripted", "learned", "human", "hybrid"}
 )
 DECISION_MODEL_STATUSES: frozenset[str] = frozenset(
     {"maintained", "adapter", "demo", "diagnostics"}
 )
+LEGACY_DECISION_MODEL_SCHEMA_VERSION = "echelon_forge.legacy_decision_model.v1"
+
+
+def normalize_legacy_model_kind(value: str) -> str:
+    """Validate the closed legacy discriminator without interpreting categories."""
+    kind = str(value).strip().lower()
+    if kind not in DECISION_MODEL_KINDS:
+        raise ValueError(f"unknown decision model kind: {value!r}")
+    return kind
+
+
+@dataclass(frozen=True)
+class LegacyDecisionModelAdapter:
+    """Versioned legacy selection data lowered to ordinary Policy admission.
+
+    This adapter invokes no factory and dispatches no decisions. Consumers
+    admit with owner evidence, then use the existing registry construction,
+    PolicyRuntimeBinding and DecisionModel reset/decide/close path. The legacy
+    kind constrains selection only; neither it nor open categories grant rights.
+    """
+
+    model_id: str
+    domain: str
+    role_id: str
+    model_kind: str
+    schema_version: str = LEGACY_DECISION_MODEL_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        if self.schema_version != LEGACY_DECISION_MODEL_SCHEMA_VERSION:
+            raise ValueError("unsupported legacy decision model schema version")
+        for name in ("model_id", "domain", "role_id"):
+            value = getattr(self, name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"legacy decision model {name} must be non-empty")
+            object.__setattr__(self, name, value.strip().lower() if name == "domain" else value.strip())
+        object.__setattr__(self, "model_kind", normalize_legacy_model_kind(self.model_kind))
+
+    @classmethod
+    def from_dict(cls, document: Mapping[str, Any]) -> LegacyDecisionModelAdapter:
+        if set(document) != {"schema_version", "model_id", "domain", "role_id", "model_kind"}:
+            raise ValueError("legacy decision model format fields invalid")
+        return cls(**document)
+
+    def as_dict(self) -> dict[str, str]:
+        return {
+            "schema_version": self.schema_version,
+            "model_id": self.model_id,
+            "domain": self.domain,
+            "role_id": self.role_id,
+            "model_kind": self.model_kind,
+        }
+
+    def admit_policy(
+        self,
+        registry: DecisionModelRegistry,
+        policy: PolicyDescriptor,
+        binding: AgentBinding,
+        *,
+        statuses: frozenset[str] | None = None,
+        **owner_evidence: Any,
+    ) -> PolicyAdmission:
+        """Require legacy selection agreement, then negotiate owner contracts.
+
+        ``owner_evidence`` is exactly the catalogue/version/checkpoint evidence
+        accepted by ``admit_policy``. No authority is inferred from model_kind.
+        A mismatch fails before construction; incompatible contracts return the
+        usual rejected PolicyAdmission and must never be bound or loaded.
+        """
+        registration = registry.get(self.model_id)
+        matches = registry.resolve(
+            domain=self.domain, role_id=self.role_id, model_kind=self.model_kind, statuses=statuses
+        )
+        if registration not in matches or binding.role_id != self.role_id:
+            raise ValueError("policy.legacy_registration_mismatch")
+        if policy.legacy_model_kind != self.model_kind:
+            raise ValueError("policy.legacy_model_kind_mismatch")
+        return admit_policy(policy, binding, **owner_evidence)
 
 
 @runtime_checkable
@@ -76,9 +155,7 @@ class DecisionModelRegistration:
             raise ValueError("decision model role_ids must be unique")
         if not callable(self.factory):
             raise TypeError("decision model factory must be callable")
-        model_kind = str(self.model_kind).strip().lower()
-        if model_kind not in DECISION_MODEL_KINDS:
-            raise ValueError(f"unknown decision model kind: {self.model_kind!r}")
+        model_kind = normalize_legacy_model_kind(self.model_kind)
         status = str(self.status).strip().lower()
         if status not in DECISION_MODEL_STATUSES:
             raise ValueError(f"unknown decision model status: {self.status!r}")
@@ -128,9 +205,7 @@ class DecisionModelRegistry:
     ) -> tuple[DecisionModelRegistration, ...]:
         domain_key = str(domain).strip().lower()
         role_key = None if role_id is None else str(role_id).strip()
-        kind_key = None if model_kind is None else str(model_kind).strip().lower()
-        if kind_key is not None and kind_key not in DECISION_MODEL_KINDS:
-            raise ValueError(f"unknown decision model kind: {model_kind!r}")
+        kind_key = None if model_kind is None else normalize_legacy_model_kind(model_kind)
         allowed_statuses = DECISION_MODEL_STATUSES if statuses is None else frozenset(statuses)
         unknown_statuses = allowed_statuses - DECISION_MODEL_STATUSES
         if unknown_statuses:
@@ -186,9 +261,7 @@ class DecisionModelRegistry:
             registration = self.get(model_id)
             domain_key = str(domain).strip().lower()
             role_key = str(role_id).strip()
-            kind_key = None if model_kind is None else str(model_kind).strip().lower()
-            if kind_key is not None and kind_key not in DECISION_MODEL_KINDS:
-                raise ValueError(f"unknown decision model kind: {model_kind!r}")
+            kind_key = None if model_kind is None else normalize_legacy_model_kind(model_kind)
             allowed_statuses = DECISION_MODEL_STATUSES if statuses is None else frozenset(statuses)
             unknown_statuses = allowed_statuses - DECISION_MODEL_STATUSES
             if unknown_statuses:
@@ -241,6 +314,9 @@ class DecisionModelRegistry:
 __all__ = [
     "DECISION_MODEL_KINDS",
     "DECISION_MODEL_STATUSES",
+    "LEGACY_DECISION_MODEL_SCHEMA_VERSION",
+    "LegacyDecisionModelAdapter",
+    "normalize_legacy_model_kind",
     "DecisionModel",
     "DecisionModelFactory",
     "DecisionModelRegistration",

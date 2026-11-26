@@ -13,7 +13,13 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Any, Mapping, Sequence
 
-from .decision_registry import DECISION_MODEL_KINDS, DecisionModel, DecisionModelRegistry
+from ..policy import PolicyRuntimeBinding
+from .decision_registry import (
+    DecisionModel,
+    DecisionModelRegistry,
+    LegacyDecisionModelAdapter,
+    normalize_legacy_model_kind,
+)
 
 
 DECISION_RUNTIME_STATUS_READY = "ready"
@@ -64,9 +70,7 @@ class DecisionRuntimeAgentSpec:
         object.__setattr__(self, "model_id", str(self.model_id).strip())
         object.__setattr__(self, "domain", str(self.domain).strip().lower())
         object.__setattr__(self, "role_id", str(self.role_id).strip())
-        model_kind = str(self.model_kind).strip().lower()
-        if model_kind not in DECISION_MODEL_KINDS:
-            raise ValueError(f"unknown decision model kind: {self.model_kind!r}")
+        model_kind = normalize_legacy_model_kind(self.model_kind)
         object.__setattr__(self, "model_kind", model_kind)
         object.__setattr__(self, "communication_state", str(self.communication_state).strip())
         object.__setattr__(self, "authority_scope", str(self.authority_scope).strip())
@@ -74,6 +78,13 @@ class DecisionRuntimeAgentSpec:
             self,
             "decision_period_s",
             _finite_nonnegative(self.decision_period_s, name="decision_period_s"),
+        )
+
+    @property
+    def legacy_adapter(self) -> LegacyDecisionModelAdapter:
+        """Explicit v1 migration format; scheduling fields confer no Policy rights."""
+        return LegacyDecisionModelAdapter(
+            self.model_id, self.domain, self.role_id, self.model_kind
         )
 
 
@@ -118,14 +129,14 @@ class DecisionRuntimeAgent:
             raise ValueError(
                 f"decision model {spec.model_id!r} must declare model_kind before direct runtime construction"
             )
-        normalized_kind = str(declared_kind).strip().lower()
-        if normalized_kind not in DECISION_MODEL_KINDS:
-            raise ValueError(f"decision model {spec.model_id!r} declares unknown model kind: {declared_kind!r}")
+        normalized_kind = normalize_legacy_model_kind(declared_kind)
         if normalized_kind != spec.model_kind:
             raise ValueError(
                 f"decision model kind mismatch for {spec.model_id!r}: "
                 f"spec={spec.model_kind!r}, model={normalized_kind!r}"
             )
+        if isinstance(model, PolicyRuntimeBinding):
+            model.validate_agent_binding(role_id=spec.role_id, authority_scope=spec.authority_scope)
         self.spec = spec
         self.model = model
         self.status = DECISION_RUNTIME_STATUS_READY
