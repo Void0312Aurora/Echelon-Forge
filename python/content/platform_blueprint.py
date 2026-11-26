@@ -10,16 +10,30 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Mapping, Sequence
 
-from python.json_value import freeze_json_mapping, thaw_json_value
+from python.json_value import freeze_json_mapping, freeze_json_value, thaw_json_value
 
 SCHEMA_VERSION = "echelon_forge.platform_assembly.v1"
 
 
 class PlatformAssemblyError(ValueError):
     """Raised for malformed authoring documents."""
+
+
+def _json_digest(value: Any) -> str:
+    def encode(item: Any) -> Any:
+        if isinstance(item, Mapping):
+            return dict(item)
+        if isinstance(item, (set, frozenset)):
+            return sorted(item)
+        raise TypeError(f"unsupported identity value: {type(item).__name__}")
+
+    return hashlib.sha256(json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+        allow_nan=False, default=encode,
+    ).encode("utf-8")).hexdigest()
 
 
 def _optional_nonnegative_number(value: Any, label: str) -> float | None:
@@ -203,6 +217,9 @@ class ResolvedPlatformSpawnPlan:
     loadout_physical_parameters: tuple[
         tuple[str, float | None, float | None, tuple[str, ...], int], ...
     ] = ()
+    # Process-local resolver provenance. Construction/replace/import cannot
+    # claim it; it is excluded from public identity and serialized documents.
+    _resolution_digest: str = field(default="", init=False, repr=False, compare=False)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -497,16 +514,8 @@ def resolve_platform_assembly(
             ],
         },
     }
-    digest = hashlib.sha256(
-        json.dumps(
-            identity_payload,
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=False,
-            allow_nan=False,
-        ).encode("utf-8")
-    ).hexdigest()
-    return ResolvedPlatformSpawnPlan(
+    digest = _json_digest(identity_payload)
+    plan = ResolvedPlatformSpawnPlan(
         schema_version=SCHEMA_VERSION,
         assembly_id=assembly_id,
         blueprint_ref=f"{blueprint.blueprint_id}@{blueprint.version}",
@@ -523,6 +532,55 @@ def resolve_platform_assembly(
         loadout_native_refs=loadout_native_refs,
         loadout_physical_parameters=loadout_physical_parameters,
     )
+    indexed = {
+        f"{module.module_id}@{module.version}": module
+        for module in (*selected.values(), *(module for module, _ in selected_loadout.values()))
+    }
+    object.__setattr__(plan, "_resolution_digest", _resolution_digest(plan, blueprint, indexed))
+    return plan
+
+
+def _resolution_digest(
+    plan: ResolvedPlatformSpawnPlan,
+    blueprint: PlatformBlueprint,
+    indexed_modules: Mapping[str, ModuleRecord],
+) -> str:
+    # Keep ordered pairs intact: converting them to dicts would hide duplicate
+    # entries in a mutated plan. Bind complete owner records, including evidence
+    # and per-module capabilities that the public aggregate digest omits.
+    refs = {ref for _, ref in plan.modules} | {ref for _, ref, _ in plan.loadout}
+    return _json_digest({
+        "plan": {item.name: getattr(plan, item.name) for item in fields(plan) if item.init},
+        "blueprint": asdict(blueprint),
+        "modules": [(ref, asdict(indexed_modules[ref])) for ref in sorted(refs)],
+    })
+
+
+def revalidate_resolved_platform_plan(
+    plan: ResolvedPlatformSpawnPlan,
+    blueprint: PlatformBlueprint,
+    indexed_modules: Mapping[str, ModuleRecord],
+) -> None:
+    """Verify resolver ownership, or fully validate an external/copy plan.
+
+    A frozen dataclass alone is not provenance. Recompute the private seal over
+    current values so stale owners and even object.__setattr__ mutation fail.
+    The versioned public plan fields and identity digest remain unchanged.
+    """
+    if plan._resolution_digest:
+        if plan._resolution_digest != _resolution_digest(plan, blueprint, indexed_modules):
+            raise PlatformAssemblyError("platform.native_plan_identity_mismatch")
+        return
+    canonical = resolve_platform_assembly(
+        assembly_id=plan.assembly_id,
+        blueprint=blueprint,
+        selections=tuple(ModuleSelection(slot, ref) for slot, ref in plan.modules),
+        modules=indexed_modules,
+        parameter_overrides=dict(plan.parameter_overrides),
+        loadout=tuple(LoadoutSelection(hp, ref, qty) for hp, ref, qty in plan.loadout),
+    )
+    if canonical != plan:
+        raise PlatformAssemblyError("platform.native_plan_identity_mismatch")
 
 
 @dataclass(frozen=True)
@@ -534,12 +592,16 @@ class LegacyUnitProjection:
     slot_paths: tuple[tuple[str, str], ...] = ()
     override_paths: tuple[tuple[str, str], ...] = ()
     loadout_paths: tuple[tuple[str, str], ...] = ()
+    _snapshot_identity: tuple[Mapping[str, Any], str] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "definition", freeze_json_mapping(self.definition))
-        for paths in (self.slot_paths, self.override_paths, self.loadout_paths):
+        for name in ("slot_paths", "override_paths", "loadout_paths"):
+            paths = tuple(tuple(pair) for pair in getattr(self, name))
+            object.__setattr__(self, name, paths)
             if len(dict(paths)) != len(paths) or len({path for _, path in paths}) != len(paths):
                 raise ValueError("projection paths must be unique")
+        object.__setattr__(self, "_snapshot_identity", (self.definition, _json_digest(self.definition)))
 
 
 def lower_to_legacy_unit_definition(
@@ -553,9 +615,35 @@ def lower_to_legacy_unit_definition(
     This is a qualification authoring adapter. Native parsing, capability
     validation and DefaultUnitFactory still decide whether the unit may spawn.
     """
+    document = thaw_json_value(projection.definition)
+    _project_legacy_unit_definition(plan, projection, modules, document, check_only=False)
+    return document
+
+
+def validate_legacy_unit_projection(
+    plan: ResolvedPlatformSpawnPlan,
+    projection: LegacyUnitProjection,
+    *,
+    modules: Mapping[str, ModuleRecord],
+) -> str:
+    """Check mapped fields in a frozen source snapshot without lowering a copy."""
+    snapshot, digest = projection._snapshot_identity
+    if projection.definition is not snapshot:
+        raise PlatformAssemblyError("platform.native_definition_projection_mismatch")
+    _project_legacy_unit_definition(plan, projection, modules, snapshot, check_only=True)
+    return digest
+
+
+def _project_legacy_unit_definition(
+    plan: ResolvedPlatformSpawnPlan,
+    projection: LegacyUnitProjection,
+    modules: Mapping[str, ModuleRecord],
+    document: Mapping[str, Any],
+    *,
+    check_only: bool,
+) -> None:
     if projection.blueprint_ref != plan.blueprint_ref:
         raise PlatformAssemblyError("platform.blueprint_version_mismatch")
-    document = thaw_json_value(projection.definition)
     slots = dict(projection.slot_paths)
     overrides = dict(projection.override_paths)
     loadout_paths = dict(projection.loadout_paths)
@@ -573,12 +661,16 @@ def lower_to_legacy_unit_definition(
         parts = path.split(".")
         target = document
         for part in parts[:-1]:
-            if not isinstance(target, dict) or part not in target:
+            if not isinstance(target, Mapping) or part not in target:
                 raise PlatformAssemblyError(f"platform.native_field_unknown:{path}")
             target = target[part]
-        if not isinstance(target, dict) or parts[-1] not in target:
+        if not isinstance(target, Mapping) or parts[-1] not in target:
             raise PlatformAssemblyError(f"platform.native_field_unknown:{path}")
-        target[parts[-1]] = value
+        if check_only:
+            if target[parts[-1]] != freeze_json_value(value):
+                raise PlatformAssemblyError("platform.native_definition_projection_mismatch")
+        else:
+            target[parts[-1]] = value
 
     for slot, ref in plan.modules:
         module = by_ref.get(ref)
@@ -637,8 +729,8 @@ def lower_to_legacy_unit_definition(
     if not isinstance(document.get("name"), str) or not isinstance(document.get("type"), str):
         raise PlatformAssemblyError("platform.native_unit_identity_missing")
     # Reject invalid JSON before returning anything to a native caller.
-    json.dumps(document, allow_nan=False)
-    return document
+    if not check_only:
+        json.dumps(document, allow_nan=False)
 
 
 __all__ = [
@@ -653,4 +745,6 @@ __all__ = [
     "SCHEMA_VERSION",
     "resolve_platform_assembly",
     "lower_to_legacy_unit_definition",
+    "revalidate_resolved_platform_plan",
+    "validate_legacy_unit_projection",
 ]

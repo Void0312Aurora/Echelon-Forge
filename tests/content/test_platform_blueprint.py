@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import math
+import hashlib
+import json
 from dataclasses import replace
 
 import pytest
@@ -15,6 +17,7 @@ from python.content.platform_blueprint import (
     PlatformBlueprint,
     resolve_platform_assembly,
     lower_to_legacy_unit_definition,
+    validate_legacy_unit_projection,
 )
 
 
@@ -421,3 +424,32 @@ def test_legacy_projection_preserves_multi_store_quantity(
     )
     lowered = lower_to_legacy_unit_definition(plan, projection, modules=loadout_modules)
     assert lowered["default_loadout"]["1"] == ["Aim120", "Aim120"]
+
+
+def test_projection_snapshot_is_frozen_and_digest_matches_legacy_json(blueprint, modules) -> None:
+    native_modules = {
+        key: replace(module, native_ref=key, content_digest=f"digest:{key}")
+        for key, module in modules.items()
+    }
+    plan = resolve_platform_assembly(
+        assembly_id="snapshot.v1", blueprint=blueprint, selections=_selections(), modules=native_modules,
+    )
+    definition = {"name": "Snapshot", "type": "Aircraft", "bindings": {
+        selection.slot: selection.module_ref for selection in _selections()
+    }, "nested": {"array": [1, {"value": 2}]}}
+    paths = [[selection.slot, f"bindings.{selection.slot}"] for selection in _selections()]
+    projection = LegacyUnitProjection(plan.blueprint_ref, definition, slot_paths=paths)
+    lowered = lower_to_legacy_unit_definition(plan, projection, modules=native_modules)
+    assert lowered == definition
+    expected = hashlib.sha256(json.dumps(
+        lowered, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False,
+    ).encode()).hexdigest()
+    definition["nested"]["array"][1]["value"] = 99
+    paths[0][1] = "unknown"
+    assert validate_legacy_unit_projection(plan, projection, modules=native_modules) == expected
+    with pytest.raises(TypeError):
+        projection.definition["nested"]["array"][1]["value"] = 99
+    # Replacing even an unmapped field must not reuse the previous digest.
+    object.__setattr__(projection, "definition", {**lowered, "type": "Ground"})
+    with pytest.raises(PlatformAssemblyError, match="native_definition_projection_mismatch"):
+        validate_legacy_unit_projection(plan, projection, modules=native_modules)
