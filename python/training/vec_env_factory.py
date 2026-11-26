@@ -14,6 +14,7 @@ from typing import Any
 
 from .bootstrap import TrainingBootstrap
 from .deps import load_training_dependencies
+from .input_lock import assert_training_input_lock
 
 
 _PRODUCTION_EVIDENCE_FIELDS = frozenset(
@@ -259,6 +260,7 @@ def build_execution_world_batch_vec_env(bootstrap: TrainingBootstrap):
     the unsupported-action-wrapper fallback); the caller owns the retirement
     error for that raw-UniversalEnv path.
     """
+    assert_training_input_lock(bootstrap)
     deps = load_training_dependencies()
     train_config = bootstrap.train_config
     runtime_cfg = bootstrap.runtime_cfg

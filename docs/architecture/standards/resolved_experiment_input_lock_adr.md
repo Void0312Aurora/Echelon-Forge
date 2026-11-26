@@ -158,4 +158,15 @@ bound to a native RunReceipt or durably reopened. They therefore establish
 repeatable execution and an executable policy-only comparison surface, not
 comparability or production acceptance.
 
+### Training invocation preflight
+
+When `runtime.production_evidence.resolved_input_lock_path` is supplied, the
+maintained training factory checks the current effective configuration, seed,
+world count, environment settings, scenario path and ScenarioCompiler dependency
+closure before constructing the execution runtime. Evidence transport paths are
+excluded from the configuration comparison. Rejection here means the current
+invocation does not match the experiment owner's lock; acceptance does not
+establish native execution, completion or comparability. Current-training native
+RunRecorder integration and receipt-bound repeat/A-B runs remain open.
+
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.

@@ -60,12 +60,13 @@ def add_common_sb3_eval_args(
     seed_default: int = 0,
     episodes_help: str | None = None,
     seed_help: str | None = None,
+    model_required: bool = True,
 ) -> None:
     add_probe_run_args(parser, include=["scenario"], required={"scenario": True})
     add_model_load_args(
         parser,
         include=["train_config", "model", "algo"],
-        required={"train_config": True, "model": True},
+        required={"train_config": True, "model": model_required},
         defaults={"algo": "auto"},
         helps={"model": "Path to SB3 model zip.", "algo": "auto / AdaptiveKLPPO / PPO"},
     )
