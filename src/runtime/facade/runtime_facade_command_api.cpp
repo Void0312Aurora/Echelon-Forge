@@ -39,7 +39,14 @@ void RuntimeFacade::set_pilot_reports_maintained_batch(
 }
 
 void RuntimeFacade::step_batch() {
-    (void)runtime_->advance(runtime::backend::AdvanceRequest{});
+    try {
+        runtime_training_record_before_step(*this, *identity_);
+        (void)runtime_->advance(runtime::backend::AdvanceRequest{});
+        runtime_training_record_after_step(*this, *identity_);
+    } catch (...) {
+        runtime_training_record_failure(*identity_, "native batch step failed");
+        throw;
+    }
 }
 
 std::vector<MissionCommandMaintainedBatchContract>

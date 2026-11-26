@@ -26,12 +26,17 @@ struct RuntimeFacadeHostContext {
     std::string binding_version = "native.v1";
 };
 
+namespace runtime::host::integration {
+class RuntimeTrainingRunRecorder;
+}
+
 struct RuntimeFacadeIdentity {
     runtime::backend_provider::WorldBatchBackendProviderIdentity backend_identity;
     RuntimeFacadeHostContext host_context;
     // Backend/world generations may restart after a world is destroyed. This
     // facade-owned incarnation makes shrink/regrow evidence identities ABA-safe.
     std::uint64_t composition_incarnation = 1;
+    std::shared_ptr<runtime::host::integration::RuntimeTrainingRunRecorder> run_recorder;
 };
 
 namespace runtime_facade_internal {
@@ -120,3 +125,8 @@ inline void append_runtime_evidence_ref(std::vector<std::string> &evidence_refs,
 }
 
 } // namespace runtime_facade_internal
+
+// Always available hooks; disabled builds preserve the ordinary execution path.
+void runtime_training_record_before_step(RuntimeFacade &facade, RuntimeFacadeIdentity &identity);
+void runtime_training_record_after_step(RuntimeFacade &facade, RuntimeFacadeIdentity &identity);
+void runtime_training_record_failure(RuntimeFacadeIdentity &identity, const std::string &reason);

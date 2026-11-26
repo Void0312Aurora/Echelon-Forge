@@ -14,6 +14,7 @@ option(EF_ENABLE_CUDA_RESIDENT_BACKEND "Enable experimental CUDA-resident world-
 option(EF_ENABLE_PROJECT_WARNINGS "Enable warning flags for maintained project targets" ON)
 option(EF_ENABLE_COMPILER_CACHE "Route C/C++ compiles through a compiler cache (sccache/ccache) when one is installed" OFF)
 option(EF_FETCHCONTENT_REVALIDATE_PINS "Re-run the git update/patch steps of the pinned FetchContent dependencies on every configure" ON)
+option(EF_ENABLE_TRAINING_RUN_RECORDER "Enable opt-in native training RunRecorder binding" OFF)
 option(EF_PRODUCTION_FACADE_ONLY "Build the production Python module with facade/contracts only" OFF)
 option(EF_BUILD_DIAGNOSTICS_BINDINGS "Build the explicit opt-in ef_py_diagnostics raw binding module" OFF)
 
@@ -295,6 +296,7 @@ set(EF_RUNTIME_FACADE_SOURCES
     src/runtime/facade/runtime_facade.cpp
     src/runtime/facade/runtime_facade_composition_evidence.cpp
     src/runtime/facade/runtime_facade_config.cpp
+    src/runtime/facade/runtime_facade_training_recorder.cpp
     src/runtime/facade/runtime_facade_world_setup.cpp
     src/runtime/facade/runtime_facade_query.cpp
     src/runtime/facade/runtime_facade_command_api.cpp
@@ -672,6 +674,32 @@ target_link_libraries(ef_facade_backend PRIVATE
     nlohmann_json::nlohmann_json
     Threads::Threads
 )
+if(EF_ENABLE_TRAINING_RUN_RECORDER)
+    add_library(ef_runtime_training_run_recorder STATIC
+        src/runtime/host/integration/runtime_training_run_recorder.cpp
+    )
+    set_target_properties(ef_runtime_training_run_recorder PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
+    )
+    target_compile_features(ef_runtime_training_run_recorder PUBLIC cxx_std_20)
+    target_compile_definitions(ef_runtime_training_run_recorder PRIVATE
+        EF_ENABLE_TRAINING_RUN_RECORDER=1
+    )
+    target_include_directories(ef_runtime_training_run_recorder PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/host
+    )
+    target_link_libraries(ef_runtime_training_run_recorder PRIVATE
+        ef_runtime_run_recorder
+        ef_runtime_authority_contracts
+        ef_composition
+        nlohmann_json::nlohmann_json
+    )
+    foreach(recorder_consumer ef_facade ef_facade_backend)
+        target_compile_definitions(${recorder_consumer} PRIVATE EF_ENABLE_TRAINING_RUN_RECORDER=1)
+        target_link_libraries(${recorder_consumer} PRIVATE ef_runtime_training_run_recorder)
+    endforeach()
+endif()
 install(TARGETS ef_facade_backend
     RUNTIME DESTINATION lib
     LIBRARY DESTINATION lib
@@ -1087,6 +1115,11 @@ target_link_libraries(ef_runtime_facade_run_qualification_test PRIVATE
 target_compile_definitions(ef_runtime_facade_run_qualification_test PRIVATE
     EF_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
 )
+if (EF_ENABLE_TRAINING_RUN_RECORDER)
+    target_compile_definitions(ef_runtime_facade_run_qualification_test PRIVATE
+        EF_ENABLE_TRAINING_RUN_RECORDER=1
+    )
+endif()
 add_test(NAME runtime_facade_run_qualification COMMAND ef_runtime_facade_run_qualification_test)
 
 target_link_libraries(ef_runtime_contracts_compile_test PRIVATE

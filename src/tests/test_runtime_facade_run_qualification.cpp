@@ -11,6 +11,7 @@
 #include <random>
 #include <sstream>
 #include <stdexcept>
+#include <set>
 
 namespace runtime::host::integration {
 struct RuntimeFacadeRunQualificationTestAccess {
@@ -399,3 +400,216 @@ TEST_CASE("maintained facade receipt independently reopens" * doctest::skip()) {
     const auto receipt = reopen(directory / "ledger", run_id);
     write(directory / "receipt.json", receipt.dump());
 }
+
+#if defined(EF_ENABLE_TRAINING_RUN_RECORDER)
+namespace {
+Json training_configuration(const std::filesystem::path &directory) {
+    const Json training = {{"n_envs", 2}, {"total_timesteps", 4}, {"policy", "bounded-test"}};
+    const auto lock = directory / "training-input-lock.json";
+    write(lock, canonical(Json{{"config", training}, {"effective_seed_set", {42}}}));
+    const auto sources = sources_for(lock);
+    const auto measured = measured_config("training-current-attempt", sources);
+    const auto header = directory / "training-header.json";
+    const auto receipt = directory / "training-template.json";
+    write(header, measured.header_json);
+    write(receipt, measured.receipt_template_json);
+    return {{"run_id", measured.run_id},
+            {"writer_id", measured.writer_id},
+            {"ledger_root", (directory / "training-ledger").string()},
+            {"header_path", header.string()},
+            {"receipt_template_path", receipt.string()},
+            {"training_config", training},
+            {"training_seed", 42},
+            {"input_lock_digest", authority::sha256_hex(read(lock))},
+            {"execution_sources",
+             {{"resolved_execution_plan_path", sources.resolved_execution_plan_path},
+              {"request_path", sources.request_path},
+              {"package_path", sources.package_path},
+              {"wheel_path", sources.wheel_path},
+              {"resolved_input_lock_path", lock.string()},
+              {"owner_facts",
+               {{"build_mode", sources.owner_facts.build_mode},
+                {"build_dirty", sources.owner_facts.build_dirty},
+                {"linker", sources.owner_facts.linker},
+                {"cxx_abi", sources.owner_facts.cxx_abi},
+                {"python_abi", sources.owner_facts.python_abi},
+                {"node_abi", sources.owner_facts.node_abi}}}}}};
+}
+BatchWorldSetupRequest training_scene() {
+    auto request = scene();
+    request.seeds = {42, 43};
+    auto second = request.spawn_requests.front();
+    second.world_index = 1;
+    request.spawn_requests.push_back(second);
+    return request;
+}
+Json reopen_training(const Json &config) {
+    return Json::parse(
+        RuntimeFacade::reopen_recorded_run(config.at("ledger_root"), config.at("run_id")));
+}
+} // namespace
+
+TEST_CASE("native training recorder completes two worlds and reopens durable owner artifacts") {
+    REQUIRE(RuntimeFacade::training_run_recorder_enabled());
+    Directory directory;
+    const auto config = training_configuration(directory.path);
+    {
+        RuntimeFacade facade(2, config.dump());
+        (void)facade.apply_world_setup(training_scene());
+        facade.step_batch();
+        facade.step_batch();
+        facade.finish_recorded_run();
+        facade.finish_recorded_run();
+    }
+    const auto receipt = reopen_training(config);
+    const auto &payload = receipt.at("payload");
+    CHECK(payload.at("terminal_state") == "completed");
+    CHECK(payload.at("inputs").at("artifacts").at("resolved_input_lock") ==
+          config.at("input_lock_digest"));
+    CHECK(payload.at("execution_scope").at("world_ids").size() == 2);
+    CHECK(payload.at("execution_scope").at("episode_ids").size() == 2);
+    const auto &lifecycle = payload.at("lifecycle");
+    CHECK(lifecycle.back().at("event") == "terminal");
+    CHECK(lifecycle.at(lifecycle.size() - 2).at("event") == "reclamation");
+    CHECK(payload.at("results").at("native_validation").at("accepted") == true);
+    std::set<std::string> names;
+    std::filesystem::path topology_path;
+    for (const auto &artifact : payload.at("results").at("output_artifacts")) {
+        names.insert(artifact.at("name"));
+        const auto path = std::filesystem::path(config.at("ledger_root").get<std::string>()) /
+                          "blobs" / (artifact.at("digest").get<std::string>() + ".data");
+        CHECK(authority::sha256_hex(read(path)) == artifact.at("digest").get<std::string>());
+        if (artifact.at("name") == "runtime-world-scope-binding") {
+            const auto scope = Json::parse(read(path));
+            CHECK(scope.at("world_bindings").size() == 2);
+            CHECK(scope.at("episodes").size() == 2);
+        }
+        if (artifact.at("name") == "runtime-cpu-scheduler-topology") topology_path = path;
+    }
+    CHECK(names ==
+          std::set<std::string>{"runtime-cpu-scheduler-topology", "runtime-world-scope-binding",
+                                "runtime-training-observation", "runtime-training-validation"});
+    REQUIRE_FALSE(topology_path.empty());
+    write(topology_path, "corrupt");
+    CHECK_THROWS(reopen_training(config));
+}
+
+TEST_CASE("native training recorder rejects stale admission before world construction") {
+    Directory directory;
+    auto config = training_configuration(directory.path);
+    SUBCASE("world count") {
+        CHECK_THROWS(RuntimeFacade(1, config.dump()));
+    }
+    SUBCASE("seed") {
+        config["training_seed"] = 239;
+        CHECK_THROWS(RuntimeFacade(2, config.dump()));
+    }
+    SUBCASE("config") {
+        config["training_config"]["policy"] = "different";
+        CHECK_THROWS(RuntimeFacade(2, config.dump()));
+    }
+    SUBCASE("lock bytes") {
+        write(config.at("execution_sources").at("resolved_input_lock_path").get<std::string>(),
+              "{}");
+        CHECK_THROWS(RuntimeFacade(2, config.dump()));
+    }
+}
+
+TEST_CASE("native training recorder fences incomplete missing failed and changed generations") {
+    Directory directory;
+    const auto config = training_configuration(directory.path);
+    {
+        RuntimeFacade facade(2, config.dump());
+        SUBCASE("no episode setup") {
+            CHECK_THROWS(facade.step_batch());
+        }
+        SUBCASE("incomplete budget") {
+            (void)facade.apply_world_setup(training_scene());
+        }
+        SUBCASE("generation replacement") {
+            (void)facade.apply_world_setup(training_scene());
+            facade.step_batch();
+            facade.resize(1);
+            facade.resize(2);
+            CHECK_THROWS(facade.step_batch());
+        }
+        SUBCASE("failed setup generation") {
+            auto request = training_scene();
+            request.terrain_assignments = {{.world_index = 1, .terrain_type = "invalid-terrain"}};
+            CHECK_THROWS(facade.apply_world_setup(request));
+            CHECK_THROWS(facade.step_batch());
+        }
+        SUBCASE("changed source lock") {
+            (void)facade.apply_world_setup(training_scene());
+            facade.step_batch();
+            facade.step_batch();
+            write(config.at("execution_sources").at("resolved_input_lock_path").get<std::string>(),
+                  "{}");
+        }
+        facade.finish_recorded_run();
+    }
+    const auto receipt = reopen_training(config);
+    CHECK(receipt.at("payload").at("terminal_state") == "failed");
+    CHECK(receipt.at("payload").at("results").at("output_artifacts").empty());
+}
+
+TEST_CASE("native training recorder abandonment and move replacement produce failed receipts") {
+    Directory directory;
+    const auto config = training_configuration(directory.path);
+    {
+        RuntimeFacade facade(2, config.dump());
+        (void)facade.apply_world_setup(training_scene());
+        SUBCASE("destructor") {}
+        SUBCASE("move assignment") {
+            facade = RuntimeFacade(1);
+        }
+    }
+    CHECK(reopen_training(config).at("payload").at("terminal_state") == "failed");
+}
+
+TEST_CASE("native training recorder survives failure after backend teardown without UB") {
+    Directory directory;
+    const auto config = training_configuration(directory.path);
+    std::filesystem::path blocker;
+    {
+        RuntimeFacade facade(2, config.dump());
+        (void)facade.apply_world_setup(training_scene());
+        facade.step_batch();
+        facade.step_batch();
+        const auto journals_root =
+            std::filesystem::path(config.at("ledger_root").get<std::string>()) / "journals";
+        std::filesystem::path journal_dir;
+        for (const auto &entry : std::filesystem::directory_iterator(journals_root)) {
+            if (entry.is_directory()) {
+                journal_dir = entry.path();
+                break;
+            }
+        }
+        REQUIRE_FALSE(journal_dir.empty());
+        std::size_t frame_count = 0;
+        for (const auto &entry : std::filesystem::directory_iterator(journal_dir)) {
+            const auto name = entry.path().filename().string();
+            if (name.starts_with("frame-") && name.ends_with(".json")) ++frame_count;
+        }
+        blocker = journal_dir / ("frame-" + std::to_string(frame_count + 1U) + ".json");
+        REQUIRE(std::filesystem::create_directory(blocker));
+        write(blocker / "hold", "blocked");
+        CHECK_THROWS(facade.finish_recorded_run());
+        CHECK_THROWS(facade.finish_recorded_run());
+        std::filesystem::remove_all(blocker);
+    }
+    const auto receipt = reopen_training(config);
+    CHECK(receipt.at("payload").at("terminal_state") == "failed");
+    CHECK(receipt.at("payload").at("results").at("output_artifacts").empty());
+}
+#else
+TEST_CASE("default build preserves ordinary facade and rejects opt-in training recorder") {
+    CHECK_FALSE(RuntimeFacade::training_run_recorder_enabled());
+    RuntimeFacade ordinary(2);
+    CHECK(ordinary.world_count() == 2);
+    CHECK_THROWS_WITH(RuntimeFacade(2, "{}"),
+                      "training_recorder.disabled: build with EF_ENABLE_TRAINING_RUN_RECORDER=ON");
+    CHECK_THROWS_WITH(RuntimeFacade::reopen_recorded_run("unused", "unused"),
+                      "training_recorder.disabled");
+}
+#endif

@@ -21,6 +21,13 @@ void bind_runtime_facade(nb::module_ &m) {
     nb::class_<RuntimeFacade>(m, "RuntimeFacade")
         .def(nb::init<size_t>(), nb::arg("world_count") = 0)
         .def(nb::init<const RuntimeBatchConfig &>(), nb::arg("config"))
+        .def(nb::init<std::size_t, const std::string &>(), nb::arg("world_count"),
+             nb::arg("run_recorder_config_json"))
+        .def("finish_recorded_run", &RuntimeFacade::finish_recorded_run)
+        .def("fail_recorded_run", &RuntimeFacade::fail_recorded_run, nb::arg("reason"))
+        .def_static("training_run_recorder_enabled", &RuntimeFacade::training_run_recorder_enabled)
+        .def_static("reopen_recorded_run", &RuntimeFacade::reopen_recorded_run,
+                    nb::arg("ledger_root"), nb::arg("run_id"))
         .def("batch_config", &RuntimeFacade::batch_config)
         .def("batch_failure_status", &RuntimeFacade::batch_failure_status)
         .def("capabilities", &RuntimeFacade::capabilities)

@@ -34,6 +34,13 @@ class EF_RUNTIME_FACADE_API RuntimeFacade {
   public:
     explicit RuntimeFacade(std::size_t world_count = 0);
     explicit RuntimeFacade(const RuntimeBatchConfig &config);
+    // Opt-in native recorder admission precedes backend construction.
+    RuntimeFacade(std::size_t world_count, const std::string &run_recorder_config_json);
+    void finish_recorded_run();
+    void fail_recorded_run(const std::string &reason);
+    static bool training_run_recorder_enabled() noexcept;
+    static std::string reopen_recorded_run(const std::string &ledger_root,
+                                           const std::string &run_id);
     RuntimeFacade(RuntimeFacade &&) noexcept;
     RuntimeFacade &operator=(RuntimeFacade &&) noexcept;
     RuntimeFacade(const RuntimeFacade &) = delete;

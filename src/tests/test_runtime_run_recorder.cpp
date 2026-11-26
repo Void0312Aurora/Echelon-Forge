@@ -1197,3 +1197,67 @@ TEST_SUITE("runtime_run_recorder") {
     }
 
 } // TEST_SUITE
+
+TEST_CASE("multi-world runtime scope grows monotonically and persists owner identities") {
+    using namespace runtime::host;
+    FakeStore store;
+    RuntimeRunRecorder recorder(store, "run-1", "writer-1");
+    nlohmann::json scope = {
+        {"world_ids", {"world-0", "world-1"}},
+        {"entity_ids", nlohmann::json::array()},
+        {"episode_ids", {"episode-0", "episode-1"}},
+        {"request_ids", {"request-1"}},
+        {"epochs", {{"world", "1"}, {"entity", "0"}, {"episode", "2"}, {"request", "1"}}}};
+    CHECK_FALSE(recorder.bind_runtime_scope("boot-1", "1", scope.dump()));
+    REQUIRE(recorder.admit(vector_run_header("run-1")));
+    REQUIRE(recorder.bind_runtime_scope("boot-1", "1", scope.dump()));
+    const auto sequence = recorder.next_sequence();
+    REQUIRE(recorder.bind_runtime_scope("boot-1", "1", scope.dump()));
+    CHECK(recorder.next_sequence() == sequence);
+    scope["episode_ids"].push_back("episode-2");
+    scope["epochs"]["episode"] = "3";
+    REQUIRE(recorder.bind_runtime_scope("boot-1", "1", scope.dump()));
+    CHECK(recorder.next_sequence() == sequence + 1);
+    REQUIRE(recorder.finalize_observed(vector_receipt_json(), "failed", "scope projection test"));
+    CHECK(store.final_receipt.at("payload").at("execution_scope") == scope);
+    CHECK(store.final_receipt.at("payload").at("host_boot_id") == "boot-1");
+    CHECK_FALSE(recorder.bind_runtime_scope("boot-1", "1", scope.dump()));
+}
+
+TEST_CASE("multi-world runtime scope rejects malformed and regressing bindings") {
+    using namespace runtime::host;
+    for (const auto *mode : {"unsorted", "duplicate", "empty-world", "empty-episode", "epoch-type",
+                             "zero-world", "extra", "lost-world", "lost-episode", "epoch-regressed",
+                             "owner", "incarnation", "malformed"}) {
+        INFO(mode);
+        FakeStore store;
+        RuntimeRunRecorder recorder(store, "run-1", "writer-1");
+        REQUIRE(recorder.admit(vector_run_header("run-1")));
+        nlohmann::json scope = {
+            {"world_ids", {"world-0", "world-1"}},
+            {"entity_ids", nlohmann::json::array()},
+            {"episode_ids", {"episode-0", "episode-1"}},
+            {"request_ids", {"request-1"}},
+            {"epochs", {{"world", "1"}, {"entity", "0"}, {"episode", "2"}, {"request", "1"}}}};
+        REQUIRE(recorder.bind_runtime_scope("boot-1", "1", scope.dump()));
+        const std::string selected(mode);
+        if (selected == "unsorted") scope["world_ids"] = {"world-1", "world-0"};
+        if (selected == "duplicate") scope["world_ids"] = {"world-0", "world-0"};
+        if (selected == "empty-world") scope["world_ids"] = nlohmann::json::array();
+        if (selected == "empty-episode") scope["episode_ids"] = nlohmann::json::array();
+        if (selected == "epoch-type") scope["epochs"]["world"] = 1;
+        if (selected == "zero-world") scope["epochs"]["world"] = "0";
+        if (selected == "extra") scope["unexpected"] = true;
+        if (selected == "lost-world") scope["world_ids"] = {"world-0"};
+        if (selected == "lost-episode") scope["episode_ids"] = {"episode-0"};
+        if (selected == "epoch-regressed") scope["epochs"]["episode"] = "1";
+        const auto sequence = recorder.next_sequence();
+        const auto rejected = recorder.bind_runtime_scope(
+            selected == "owner" ? "boot-2" : "boot-1", selected == "incarnation" ? "2" : "1",
+            selected == "malformed" ? "{" : scope.dump());
+        CHECK_FALSE(rejected);
+        CHECK(rejected.code == "recorder.identity");
+        CHECK(recorder.next_sequence() == sequence);
+        CHECK(recorder.terminalizable());
+    }
+}

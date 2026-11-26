@@ -14,7 +14,7 @@ from typing import Any
 
 from .bootstrap import TrainingBootstrap
 from .deps import load_training_dependencies
-from .input_lock import assert_training_input_lock
+from .input_lock import assert_training_input_lock, training_run_recorder_config
 
 
 _PRODUCTION_EVIDENCE_FIELDS = frozenset(
@@ -261,6 +261,7 @@ def build_execution_world_batch_vec_env(bootstrap: TrainingBootstrap):
     error for that raw-UniversalEnv path.
     """
     assert_training_input_lock(bootstrap)
+    recorder_config = training_run_recorder_config(bootstrap)
     deps = load_training_dependencies()
     train_config = bootstrap.train_config
     runtime_cfg = bootstrap.runtime_cfg
@@ -298,6 +299,8 @@ def build_execution_world_batch_vec_env(bootstrap: TrainingBootstrap):
         post_launch_assessment_cfg.get("gamma", hyper_cfg.get("gamma", 0.999))
     )
     production_evidence_kwargs = _production_evidence_kwargs(runtime_cfg)
+    if recorder_config is not None:
+        production_evidence_kwargs["native_run_recorder_config"] = recorder_config
     vec_env = deps.WorldBatchVecEnv(
         scenario_path=bootstrap.scenario_path,
         n_envs=bootstrap.n_envs,

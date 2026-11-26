@@ -101,3 +101,58 @@ blob 丢失/篡改；双世界映射测试仍是合成 owner 契约夹具。这�
 生产信任或生产多世界准入。
 
 详见[原型证据和剩余门槛](../work/issues/rfc_qualified_composition_implementation.md)。Lifecycle 仍为 proposed；此检查点不代表 owner 批准或生产准入。
+
+
+### 显式启用的原生训练 RunRecorder
+
+`EF_ENABLE_TRAINING_RUN_RECORDER` 默认 `OFF`。静态 `ef_facade` 和共享
+`ef_facade_backend` 使用相同的 facade 钩子，仅 `ON` 链接现有原生
+RunRecorder。默认构造、RunReceipt v1 字段、规范化与普通执行行为保持原有契约。
+`RuntimeFacade.training_run_recorder_enabled()` 返回构建能力；关闭构建中显式
+构造或重开 recorder 会抛出 `training_recorder.disabled`。
+
+启用构建下，执行型 WorldBatch 训练工厂通过
+`runtime.run_recorder.enabled=true` 选择原生录制。配置提供 `run_id`、
+`writer_id`、`ledger_root`、`header_path`、`receipt_template_path`、
+`resolved_input_lock_path`、`run_receipt_path` 与 `execution_sources`。
+投影路径保存完整的预运行实验文档；
+`execution_sources.resolved_input_lock_path` 保存独立的规范 input-lock payload，
+其原始字节 SHA-256 等于锁身份。两种路径必须不同。其余 execution sources
+沿用现有 plan、request、package、wheel 与 build/ABI owner facts。
+模板提供 authority 绑定，当前进程测量、生命周期、结果和终态由原生 owner 填写；
+测试 authority fixture 不构成生产信任。
+
+Python 在构造运行时前验证有效配置、依赖闭包、环境、世界数量、种子与两种锁文件。
+`run_recorder` 和 `production_evidence` 是不参与执行配置比较的传输设置。
+原生构造再次检查摘要、配置、种子、世界数量与正数 `total_timesteps`，使用现有
+PlanCompiler ledger 角色持久化输入，并在创建世界前准入 journal。
+各世界种子为所选种子加索引，拒绝 uint32 溢出。原生观测保存真实 episode seed、
+世界/episode generation、state/RNG 摘要与 batch generation。
+步数预算为 `ceil(total_timesteps / n_envs)`；算法 rollout 取整或现有评估步骤造成的
+额外已提交步骤也会记录。这不表示优化器收敛。
+
+facade 负责进程 boot 身份、唯一 incarnation 以及世界索引到 receipt 世界的显式关联。
+composition instance ID 仍属于 composition 证据。`bind_runtime_scope` 要求有序、
+唯一、非空的 world/episode/request 身份，允许空 entity 集，只接受身份单调增加和
+十进制 epoch 不回退。owner 改变、身份丢失、generation 缺失以及 shrink/regrow ABA
+替换均会阻止完成。现有单世界绑定方法保留原有契约。
+
+每次 step 前后检查完整健康的世界覆盖、composition、实际 CPU topology 和 episode
+generation。完成前重测输入与进程来源，核对已提交预算，持久化
+`runtime-cpu-scheduler-topology`、`runtime-world-scope-binding`、
+`runtime-training-observation` 与 `runtime-training-validation`，随后记录原生结果、
+drain、shutdown、reclamation 及既有 durable RunReceipt。executable graph 和
+system-contribution 摘要分别保留各自含义。reset/setup、投影、generation、输入或
+module 漂移、预算不足和放弃运行均不能产生 completed receipt。成功终结后的 finish
+幂等；不确定的终结写入不能宣称成功。
+
+`WorldBatchVecEnv.close()` 原生终结后使用 `ReadOnlyAuditor` 重开 ledger，将原生
+规范 receipt 的原字节原子导出到 `run_receipt_path`，再验证 observation，并经
+`join_run_receipt_path` 关联实际 topology 与 scope artifact。Python 不生成 receipt
+或完成事实。receipt/input/artifact 缺失或损坏、失败终态、run/lock 身份和 topology
+不符都会拒绝关联；清理逻辑仍会执行。结果位于 `resolved_training_run`。
+
+重复比较要求完整的原生身份与世界覆盖。显式 `policy` 比较轴只允许配置中的
+`policy`、`policy_kwargs` 差异，其余配置仍必须一致。测试覆盖有界 CPU WorldBatch
+执行、两种构建和证据拒绝。完整注册 Air 训练及 CUDA GPU 主机上具有 receipt 的重复/A-B 运行、
+生产 release 授权和外部持久可用性仍需独立执行证据。ADR 生命周期保持 proposed。

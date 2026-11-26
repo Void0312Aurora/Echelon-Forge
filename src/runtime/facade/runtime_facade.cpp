@@ -26,8 +26,29 @@ RuntimeFacade::RuntimeFacade(const RuntimeBatchConfig &config) : RuntimeFacade(c
 // Out-of-line so std::unique_ptr<IWorldBatchBackend> can stay incomplete at
 // the public header boundary.
 RuntimeFacade::RuntimeFacade(RuntimeFacade &&) noexcept = default;
-RuntimeFacade &RuntimeFacade::operator=(RuntimeFacade &&) noexcept = default;
-RuntimeFacade::~RuntimeFacade() = default;
+RuntimeFacade &RuntimeFacade::operator=(RuntimeFacade &&other) noexcept {
+    if (this == &other) return *this;
+    if (identity_ && identity_->run_recorder) {
+        try {
+            fail_recorded_run("recorded run replaced before explicit finish");
+            finish_recorded_run();
+        } catch (...) {
+        }
+    }
+    runtime_ = std::move(other.runtime_);
+    identity_ = std::move(other.identity_);
+    return *this;
+}
+RuntimeFacade::~RuntimeFacade() {
+    if (identity_ && identity_->run_recorder) {
+        try {
+            fail_recorded_run("recorded run abandoned before explicit finish");
+            finish_recorded_run();
+        } catch (...) {
+            // A failed terminal write never becomes a completion claim.
+        }
+    }
+}
 
 RuntimeNativeSnapshotFacts RuntimeFacade::native_snapshot_facts(std::size_t world_index) const {
     return runtime_->native_snapshot_facts(world_index);

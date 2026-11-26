@@ -166,7 +166,86 @@ world count, environment settings, scenario path and ScenarioCompiler dependency
 closure before constructing the execution runtime. Evidence transport paths are
 excluded from the configuration comparison. Rejection here means the current
 invocation does not match the experiment owner's lock; acceptance does not
-establish native execution, completion or comparability. Current-training native
-RunRecorder integration and receipt-bound repeat/A-B runs remain open.
+establish native execution, completion or comparability. The opt-in native training binding below extends this preflight to the current
+WorldBatch execution owner. Receipt-bound full Air repeat/A-B runs on a CUDA-capable GPU host remain
+a separate execution gate.
 
 See [qualification evidence and remaining gates](../work/issues/rfc_qualified_composition_implementation.md). Lifecycle remains proposed; this checkpoint does not establish owner approval or production admission.
+
+
+### Opt-in native training RunRecorder
+
+`EF_ENABLE_TRAINING_RUN_RECORDER` defaults to `OFF`. Both static `ef_facade`
+and shared `ef_facade_backend` compile the same facade hooks; only `ON` links
+those consumers to the existing native RunRecorder. The ordinary constructor,
+RunReceipt v1 fields, canonicalization and default execution behavior remain
+unchanged. `RuntimeFacade.training_run_recorder_enabled()` reports the build
+capability. Explicit recorder construction or reopening on an `OFF` build
+raises `training_recorder.disabled`.
+
+On an `ON` build, `runtime.run_recorder.enabled=true` selects native recording
+for the maintained execution `WorldBatchVecEnv` factory. Its configuration
+supplies `run_id`, `writer_id`, `ledger_root`, `header_path`,
+`receipt_template_path`, `resolved_input_lock_path`, `run_receipt_path`, and
+`execution_sources`. The projection path contains the full pre-run experiment
+document. `execution_sources.resolved_input_lock_path` contains only the exact
+canonical input-lock payload whose SHA-256 is the lock identity. These paths
+must differ. Other execution sources are the existing resolved execution plan,
+composition request, package, wheel and explicit build/ABI owner facts. Header
+and receipt templates supply authority bindings; native owners replace current
+process measurements, journal, lifecycle, scope, results and terminal fields.
+Qualification authority fixtures do not establish production trust.
+
+Before native construction, Python validates the effective configuration,
+scenario dependency closure, environment settings, world count, seed and both
+lock file roles. `run_recorder` and `production_evidence` are transport settings
+excluded from the execution configuration comparison. The native constructor
+independently checks the payload digest, configuration, seed, world count and
+positive `total_timesteps`, stages owner input bytes through the existing
+PlanCompiler ledger role and admits the journal before constructing worlds.
+Training world seeds are the selected seed plus world index; uint32 overflow
+is rejected. Native step observations retain actual episode seeds, world and
+episode generations, state/RNG digests, and the batch generation. The required
+batch step budget is `ceil(total_timesteps / n_envs)`; extra committed steps
+are retained, including algorithm rollout rounding and maintained assessment
+steps. This is a runtime execution budget, not an optimizer convergence claim.
+
+The facade owns a process boot identity, a unique incarnation and an explicit
+receipt world association for each native world index. Composition instance
+IDs remain composition evidence. `bind_runtime_scope` accepts sorted, unique,
+nonempty world, episode and request identities, allows an empty entity set,
+and journals monotonic additions with nonregressing decimal epoch strings.
+Changing owner identity, losing an identity, or missing a generation fences
+the recorder. The existing single-world binding method retains its contract.
+The composition incarnation also fences shrink/regrow ABA replacement.
+
+Before and after each step, native code checks complete healthy world coverage,
+composition identity, realized CPU topology and episode generations. Completion
+rechecks source provenance and the committed execution budget, persists
+`runtime-cpu-scheduler-topology`, `runtime-world-scope-binding`,
+`runtime-training-observation` and `runtime-training-validation`, then records
+native results, drain, shutdown, reclamation and the existing durable RunReceipt.
+The executable graph and system-contribution digests retain their distinct
+meanings. A reset/setup failure, projection failure, generation replacement,
+input/module drift, incomplete budget, abandonment or failed world prevents a
+completed receipt. Explicit finish is idempotent after durable finalization;
+uncertain terminal writes never become completion claims.
+
+`WorldBatchVecEnv.close()` finalizes natively and reopens through a
+`ReadOnlyAuditor` ledger handle. Python exports those exact canonical receipt
+bytes atomically to `run_receipt_path`, validates the receipt-bound observation
+and joins through `join_run_receipt_path` with the durable topology and world
+scope artifacts. It creates no receipt or completion status. Missing/corrupt
+receipt, input or artifact bytes, a failed receipt, mismatched run/lock identity
+or topology prevents the evidence join. A successful join is exposed as
+`resolved_training_run`; cleanup still runs if finalization or reopening fails.
+
+Repeat comparison requires complete native identities and world coverage.
+An intentional `policy` axis permits the embedded configuration's `policy` and
+`policy_kwargs` keys to differ; all other configuration fields remain checked.
+This does not permit arbitrary configuration changes under a policy label.
+Tests cover bounded CPU WorldBatch execution and owner contract failures under
+both feature builds. Full registered Air training, receipt-bound repeat and
+policy A/B on a CUDA-capable GPU host, production release authorization, and external durable
+availability require their own execution evidence. The lifecycle of this ADR
+remains proposed.

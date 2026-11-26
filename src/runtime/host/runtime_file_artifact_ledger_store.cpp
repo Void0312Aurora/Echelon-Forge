@@ -88,7 +88,8 @@ bool role_can_write_artifact_media(RuntimeArtifactLedgerRole role, std::string_v
                media_type == "application/vnd.echelon-forge.runtime-state.v1+octets" ||
                media_type ==
                    "application/vnd.echelon-forge.runtime-cpu-scheduler-topology.v1+json" ||
-               media_type == "application/vnd.echelon-forge.runtime-world-scope-binding.v1+json";
+               media_type == "application/vnd.echelon-forge.runtime-world-scope-binding.v1+json" ||
+               media_type == "application/vnd.echelon-forge.training-run-observation.v1+json";
     case RuntimeArtifactLedgerRole::PlanCompiler:
         return media_type == "application/vnd.echelon-forge.resolved-execution-plan.v1+json" ||
                media_type == "application/vnd.echelon-forge.runtime-composition-request.v1+json" ||
@@ -2111,7 +2112,7 @@ bool RuntimeFileArtifactLedgerStore::availability_report(std::string &report_jso
                        (control & SE_DACL_PROTECTED) != 0;
         if (descriptor != nullptr) LocalFree(descriptor);
 #else
-        struct stat root_stat {};
+        struct stat root_stat{};
         private_root = ::stat(root_.c_str(), &root_stat) == 0 &&
                        (root_stat.st_mode & (S_IRWXG | S_IRWXO)) == 0;
 #endif

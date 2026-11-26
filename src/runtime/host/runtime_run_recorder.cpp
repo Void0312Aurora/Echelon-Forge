@@ -18,6 +18,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <nlohmann/json.hpp>
 
@@ -675,7 +676,7 @@ std::optional<std::string> digest_path(const std::filesystem::path &path, std::s
                : std::nullopt;
 }
 
-std::string module_identity(std::string value) {
+std::string sanitize_module_segment(std::string value) {
     std::transform(value.begin(), value.end(), value.begin(), [](const unsigned char character) {
         return static_cast<char>(std::tolower(character));
     });
@@ -685,6 +686,11 @@ std::string module_identity(std::string value) {
             character = '_';
         }
     }
+    return value;
+}
+
+std::string module_identity(std::string value) {
+    value = sanitize_module_segment(std::move(value));
     if (value.empty() || !(value.front() >= 'a' && value.front() <= 'z')) {
         value = "module_" + value;
     }
@@ -718,7 +724,13 @@ std::optional<std::filesystem::path> current_process_executable_path(std::string
 }
 
 bool collect_loaded_module_digests(Json &modules, std::string &detail) {
-    std::map<std::string, std::filesystem::path> observed_paths;
+    const auto normalize_module_path = [](const std::filesystem::path &raw) {
+        std::error_code error;
+        auto canonical = std::filesystem::weakly_canonical(raw, error);
+        if (!error && !canonical.empty()) return canonical;
+        return raw.lexically_normal();
+    };
+    std::vector<std::filesystem::path> unique_paths;
 #if defined(_WIN32)
     const HANDLE snapshot =
         CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, GetCurrentProcessId());
@@ -734,14 +746,7 @@ bool collect_loaded_module_digests(Json &modules, std::string &detail) {
         return false;
     }
     do {
-        const std::filesystem::path path(entry.szExePath);
-        const auto identity = module_identity(path.filename().string());
-        const auto [_, inserted] = observed_paths.emplace(identity, path);
-        if (!inserted && observed_paths.at(identity) != path) {
-            CloseHandle(snapshot);
-            detail = "loaded native module basenames are ambiguous";
-            return false;
-        }
+        unique_paths.push_back(normalize_module_path(std::filesystem::path(entry.szExePath)));
     } while (Module32NextW(snapshot, &entry) != FALSE);
     CloseHandle(snapshot);
 #elif defined(__linux__)
@@ -753,17 +758,79 @@ bool collect_loaded_module_digests(Json &modules, std::string &detail) {
         const std::filesystem::path path(line.substr(path_start));
         std::error_code error;
         if (!std::filesystem::is_regular_file(path, error) || error) continue;
-        const auto identity = module_identity(path.filename().string());
-        const auto [_, inserted] = observed_paths.emplace(identity, path);
-        if (!inserted && observed_paths.at(identity) != path) {
-            detail = "loaded native module basenames are ambiguous";
-            return false;
-        }
+        unique_paths.push_back(normalize_module_path(path));
     }
 #else
     detail = "loaded native module discovery is unsupported on this platform";
     return false;
 #endif
+    std::sort(unique_paths.begin(), unique_paths.end());
+    unique_paths.erase(std::unique(unique_paths.begin(), unique_paths.end()), unique_paths.end());
+
+    std::map<std::string, std::vector<std::filesystem::path>> grouped;
+    for (const auto &path : unique_paths) {
+        grouped[module_identity(path.filename().string())].push_back(path);
+    }
+
+    std::map<std::string, std::filesystem::path> observed_paths;
+    for (const auto &[base_identity, paths] : grouped) {
+        if (paths.size() == 1U) {
+            observed_paths.emplace(base_identity, paths.front());
+            continue;
+        }
+        std::vector<std::string> resolved_keys;
+        for (std::size_t depth = 1U; depth <= 4U && resolved_keys.empty(); ++depth) {
+            std::vector<std::string> candidates;
+            std::set<std::string> seen;
+            bool valid = true;
+            for (const auto &path : paths) {
+                std::vector<std::string> segments;
+                auto parent = path.parent_path();
+                for (std::size_t step = 0U; step < depth && !parent.empty(); ++step) {
+                    const auto segment = parent.filename().string();
+                    if (!segment.empty()) segments.push_back(sanitize_module_segment(segment));
+                    const auto next = parent.parent_path();
+                    if (next == parent) break;
+                    parent = next;
+                }
+                if (segments.empty()) {
+                    valid = false;
+                    break;
+                }
+                std::reverse(segments.begin(), segments.end());
+                std::string candidate = base_identity;
+                for (const auto &segment : segments) {
+                    candidate += ":" + segment;
+                }
+                if (candidate.size() > 128U || !identifier_string(Json(candidate)) ||
+                    grouped.count(candidate) != 0U || observed_paths.count(candidate) != 0U ||
+                    !seen.insert(candidate).second) {
+                    valid = false;
+                    break;
+                }
+                candidates.push_back(std::move(candidate));
+            }
+            if (valid) resolved_keys = std::move(candidates);
+        }
+        if (resolved_keys.empty()) {
+            for (const auto &path : paths) {
+                const auto prefix =
+                    base_identity.substr(0U, std::min<std::size_t>(base_identity.size(), 115U));
+                const auto digest =
+                    runtime::authority_contracts::sha256_hex(path.generic_string()).substr(0U, 12U);
+                resolved_keys.push_back(prefix + ":" + digest);
+            }
+        }
+        for (std::size_t index = 0U; index < paths.size(); ++index) {
+            const auto &candidate = resolved_keys[index];
+            const auto &path = paths[index];
+            const auto [_, inserted] = observed_paths.emplace(candidate, path);
+            if (!inserted && observed_paths.at(candidate) != path) {
+                detail = "loaded native module basenames are ambiguous";
+                return false;
+            }
+        }
+    }
     modules = Json::object();
     for (const auto &[identity, path] : observed_paths) {
         const auto digest = digest_path(path, detail);
@@ -1251,12 +1318,12 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::admit(std::string_view header_json)
             // A resumed strict journal already contains the original durable
             // admission frame. Reconstruct the receipt projection without
             // appending a second admission event under the recovery fence.
-            lifecycle_events_.push_back(Json{
-                {"sequence", 0U},
-                {"event", "journal_admitted"},
-                {"timestamp", admitted_at_},
-                {"epoch", incarnation_epoch_},
-                {"durable_sequence", 0U}}.dump());
+            lifecycle_events_.push_back(Json{{"sequence", 0U},
+                                             {"event", "journal_admitted"},
+                                             {"timestamp", admitted_at_},
+                                             {"epoch", incarnation_epoch_},
+                                             {"durable_sequence", 0U}}
+                                            .dump());
         }
     }
     return {true, {}, {}};
@@ -1336,6 +1403,59 @@ RuntimeRunRecorderStatus RuntimeRunRecorder::bind_runtime_identity(
     incarnation_epoch_ = incarnation_epoch;
     execution_scope_json_ = candidate.dump();
     return {true, {}, {}};
+}
+
+RuntimeRunRecorderStatus RuntimeRunRecorder::bind_runtime_scope(std::string_view boot,
+                                                                std::string_view incarnation,
+                                                                std::string_view scope_json) {
+    if (state_ != RuntimeRunRecorderState::Admitted)
+        return failure("recorder.state", "runtime scope requires an admitted journal");
+    try {
+        const auto scope = Json::parse(scope_json);
+        if (!identifier_string(Json(boot)) || !generation_string(Json(incarnation)) ||
+            incarnation == "0" ||
+            !exact_fields(scope,
+                          {"world_ids", "entity_ids", "episode_ids", "request_ids", "epochs"}) ||
+            !sorted_identifiers(scope.at("world_ids")) ||
+            !sorted_identifiers(scope.at("entity_ids"), true) ||
+            !sorted_identifiers(scope.at("episode_ids")) ||
+            !sorted_identifiers(scope.at("request_ids")) ||
+            !exact_fields(scope.at("epochs"), {"world", "entity", "episode", "request"}))
+            return reject_after_admission("recorder.identity", "runtime scope is not canonical");
+        for (const auto &epoch : scope.at("epochs"))
+            if (!generation_string(epoch))
+                return reject_after_admission("recorder.identity", "runtime epoch is invalid");
+        if (scope.at("epochs").at("world") == "0" || scope.at("epochs").at("episode") == "0" ||
+            scope.at("epochs").at("request") == "0")
+            return reject_after_admission("recorder.identity", "runtime scope has no generation");
+        if (incarnation_epoch_ != "0") {
+            if (host_boot_id_ != boot || incarnation_epoch_ != incarnation)
+                return reject_after_admission("recorder.identity", "runtime owner changed");
+            const auto prior = Json::parse(execution_scope_json_);
+            for (const auto *field : {"world_ids", "entity_ids", "episode_ids", "request_ids"})
+                for (const auto &identity : prior.at(field))
+                    if (std::find(scope.at(field).begin(), scope.at(field).end(), identity) ==
+                        scope.at(field).end())
+                        return reject_after_admission("recorder.identity",
+                                                      "runtime scope lost identity");
+            for (const auto &epoch : prior.at("epochs").items())
+                if (!generation_less_equal(epoch.value(), scope.at("epochs").at(epoch.key())))
+                    return reject_after_admission("recorder.identity", "runtime epoch regressed");
+            if (execution_scope_json_ == scope.dump()) return {true, {}, {}};
+        }
+        const auto status = append(next_sequence_, Json{{"event", "runtime_identity_bound"},
+                                                        {"host_boot_id", boot},
+                                                        {"incarnation_epoch", incarnation},
+                                                        {"execution_scope", scope}}
+                                                       .dump());
+        if (!status) return status;
+        host_boot_id_ = boot;
+        incarnation_epoch_ = incarnation;
+        execution_scope_json_ = scope.dump();
+        return {true, {}, {}};
+    } catch (const Json::exception &error) {
+        return reject_after_admission("recorder.identity", error.what());
+    }
 }
 
 RuntimeRunRecorderStatus RuntimeRunRecorder::observe_entity(std::string_view entity_id,

@@ -597,6 +597,21 @@ class ComparisonResult:
     reason: str
 
 
+def _strip_policy_config_keys(config: Mapping[str, Any]) -> dict[str, Any]:
+    stripped: dict[str, Any] = {}
+    for key, value in config.items():
+        if key in {"policy", "policy_kwargs"}:
+            continue
+        if key == "hyperparameters" and isinstance(value, Mapping):
+            filtered_hp = {hp_k: hp_v for hp_k, hp_v in value.items() if hp_k != "policy_kwargs"}
+            if not filtered_hp and "policy_kwargs" in value:
+                continue
+            stripped[key] = filtered_hp
+        else:
+            stripped[key] = value
+    return stripped
+
+
 def compare_resolved_input_locks(
     left: ResolvedInputLock,
     right: ResolvedInputLock,
@@ -635,10 +650,16 @@ def compare_resolved_input_locks(
         "effective_seed_set",
         "evaluation_protocol",
     ):
-        if (
-            left_data["input_lock"][axis] != right_data["input_lock"][axis]
-            and axis not in intentional_axes
-        ):
+        left_input = left_data["input_lock"][axis]
+        right_input = right_data["input_lock"][axis]
+        if axis == "config" and "policy" in intentional_axes:
+            # Training configuration embeds the policy selector and its kwargs
+            # (both top-level and under `hyperparameters`). An intentional policy
+            # axis permits only those keys to differ while keeping remaining
+            # hyperparameters strict.
+            left_input = _strip_policy_config_keys(left_input)
+            right_input = _strip_policy_config_keys(right_input)
+        if left_input != right_input and axis not in intentional_axes:
             differences.append(axis)
     left_native = left_data["native_runtime"]
     right_native = right_data["native_runtime"]

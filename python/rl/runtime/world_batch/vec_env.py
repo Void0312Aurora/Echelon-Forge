@@ -159,6 +159,7 @@ class WorldBatchVecEnv(
         production_package_digest: str | None = None,
         production_wheel_digest: str | None = None,
         require_production_evidence_binding: bool = False,
+        native_run_recorder_config: dict[str, Any] | None = None,
         action_wrapper_kwargs: dict[str, Any] | None = None,
         air_combat_post_launch_assessment_enabled: bool = False,
         air_combat_post_launch_assessment_stages: Sequence[str] | str | None = None,
@@ -250,8 +251,11 @@ class WorldBatchVecEnv(
             )
         )
         self._compiled_scenario = ScenarioCompiler.compile_path(self.scenario_path)
+        self._native_run_recorder_config = native_run_recorder_config
+        self.resolved_training_run = None
         self._runtime_adapter = _RuntimeFacadeAdapter(
             self.n_envs,
+            native_run_recorder_config=native_run_recorder_config,
             use_typed_observation_view=bool(use_typed_observation_view),
             production_rollout_path=production_rollout_path,
             production_rollout_key=production_rollout_key,
@@ -955,6 +959,8 @@ class WorldBatchVecEnv(
             # subsequent steps until an explicit full reset is published.
             if self._projection_failure_reason is None:
                 self._projection_failure_reason = f"step_wait failed ({type(exc).__name__})"
+            if getattr(self, "_native_run_recorder_config", None) is not None:
+                self._runtime_adapter.facade.fail_recorded_run(self._projection_failure_reason)
             raise
         finally:
             # Never replay the pending action after a failed, possibly mutating
@@ -970,6 +976,8 @@ class WorldBatchVecEnv(
             observations = self._reset_worlds_and_publish_observations()
         except BaseException as exc:
             self._projection_failure_reason = f"reset failed ({type(exc).__name__})"
+            if getattr(self, "_native_run_recorder_config", None) is not None:
+                self._runtime_adapter.facade.fail_recorded_run(self._projection_failure_reason)
             raise
         self._projection_failure_reason = None
         return observations
@@ -1065,10 +1073,30 @@ class WorldBatchVecEnv(
         self._reset_options()
         return observations
 
+    def mark_recorded_run_failed(self, reason: str) -> None:
+        if getattr(self, "_native_run_recorder_config", None) is None or self._closed:
+            return
+        if self._projection_failure_reason is None:
+            self._projection_failure_reason = str(reason or "training_incomplete_exit")
+        self._runtime_adapter.facade.fail_recorded_run(self._projection_failure_reason)
+
     def close(self) -> None:
-        self._clear_policy_observation_device_cache()
-        self._actions = None
-        self._closed = True
+        if self._closed:
+            return
+        try:
+            if getattr(self, "_native_run_recorder_config", None) is not None:
+                from python.training.input_lock import reopen_training_input_lock
+
+                if self._projection_failure_reason is not None:
+                    self._runtime_adapter.facade.fail_recorded_run(self._projection_failure_reason)
+                self._runtime_adapter.facade.finish_recorded_run()
+                self.resolved_training_run = reopen_training_input_lock(
+                    self._native_run_recorder_config
+                )
+        finally:
+            self._clear_policy_observation_device_cache()
+            self._actions = None
+            self._closed = True
 
     def get_images(self) -> Sequence[np.ndarray | None]:
         if self.render_mode != "rgb_array":
